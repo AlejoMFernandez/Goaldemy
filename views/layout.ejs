@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Goaldemy</title>
+	<link rel="icon" href="/public/img/goaldemy.png" />
+	<link rel="stylesheet" href="/public/styles.css" />
+</head>
+<body>
+	<header class="site-header">
+		<div class="container nav">
+			<a class="brand" href="/">Goaldemy</a>
+			<nav>
+				<ul class="menu">
+					<li><a href="/section/coach">Coach</a></li>
+					<li><a href="/section/keepers">Keepers</a></li>
+					<li><a href="/section/defenders">Defenders</a></li>
+					<li><a href="/section/midfielders">Midfielders</a></li>
+					<li><a href="/section/attackers">Attackers</a></li>
+					<li><a class="btn btn-add" href="/players/new">+ New player</a></li>
+				</ul>
+			</nav>
+		</div>
+	</header>
+	<main class="container">
+		<%- body %>
+	</main>
+	<footer class="site-footer">
+		<div class="container">GOALDEMY • MongoDB • Express</div>
+	</footer>
+</body>
+</html>

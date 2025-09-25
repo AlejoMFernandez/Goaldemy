@@ -1,0 +1,131 @@
+<h2 class="title"><%= slug.toUpperCase() %></h2>
+
+<section class="toolbar">
+	<a class="btn btn-add" href="/players/new">+ New player</a>
+</section>
+
+<!-- Filtro por club -->
+<div class="club-filter">
+	<a class="club-pill <%= !selectedTeamId ? 'active' : '' %>" href="/section/<%= slug %>">All</a>
+	<% teams.forEach(t => { %>
+		<a class="club-pill <%= String(selectedTeamId)===String(t.id) ? 'active' : '' %>" href="/section/<%= slug %>?teamId=<%= t.id %>" title="<%= t.name %>">
+			<img src="<%= t.logo %>" alt="<%= t.name %>" />
+		</a>
+	<% }) %>
+</div>
+
+<section class="grid players">
+	<% players.forEach(p => { const pl = p.player; %>
+	<div class="jugador-item">
+		<div class="jugador-card">
+			<div class="jugador-nombre"><%= pl.name %></div>
+			<div class="jugador-img-container">
+				<img
+					src="https://images.fotmob.com/image_resources/playerimages/<%= pl.id %>.png"
+					alt="<%= pl.name %>"
+					class="jugador-img"
+					onerror="this.onerror=null;this.src='<%= p.teamLogo %>'"
+				/>
+			</div>
+		</div>
+		<div class="jugador-acciones">
+			<a href="#ver" class="jugador-btn btn-ver" title="Ver"
+				data-img="https://images.fotmob.com/image_resources/playerimages/<%= pl.id %>.png"
+				data-fallback="<%= p.teamLogo %>"
+				data-name="<%= pl.name %>"
+				data-team="<%= p.teamName %>"
+				data-pos="<%= pl.positionIdsDesc || '-' %>"
+				data-number="<%= pl.shirtNumber || '-' %>"
+				data-country="<%= pl.cname || pl.ccode || '-' %>"
+				data-age="<%= pl.age || '-' %>"
+				data-height="<%= pl.height || '-' %>"
+				data-value="<%= (pl.transferValue!=null?('$'+pl.transferValue.toLocaleString()):'-') %>">
+				<img src="/public/img/ver.svg" alt="Ver">
+			</a>
+
+			<a href="/teams/<%= p.teamId %>/players/<%= pl.id %>/edit" class="jugador-btn btn-editar" title="Editar">
+				<img src="/public/img/editar.svg" alt="Editar">
+			</a>
+
+			<a href="#eliminar" class="jugador-btn btn-eliminar" title="Eliminar"
+			   data-action="/teams/<%= p.teamId %>/players/<%= pl.id %>/delete"
+			   data-section="<%= p.section %>">
+				<img src="/public/img/eliminar.svg" alt="Eliminar">
+			</a>
+		</div>
+
+		<form class="delete-form" method="post" action="/teams/<%= p.teamId %>/players/<%= pl.id %>/delete" style="display:none">
+			<input type="hidden" name="section" value="<%= p.section %>"/>
+		</form>
+	</div>
+	<% }) %>
+</section>
+
+<!-- Modal Ver -->
+<div id="playerModal" class="modal-backdrop" hidden>
+	<div class="modal">
+		<button class="modal-close" aria-label="Cerrar">&times;</button>
+		<div class="modal-body">
+			<img id="mImg" class="modal-thumb" src="" alt="player" />
+			<h3 id="mName"></h3>
+			<ul class="meta">
+				<li><strong>Team:</strong> <span id="mTeam"></span></li>
+				<li><strong>Pos:</strong> <span id="mPos"></span></li>
+				<li><strong>Number:</strong> <span id="mNumber"></span></li>
+				<li><strong>Country:</strong> <span id="mCountry"></span></li>
+				<li><strong>Age:</strong> <span id="mAge"></span></li>
+				<li><strong>Height:</strong> <span id="mHeight"></span>cm</li>
+				<li><strong>Market:</strong> <span id="mValue"></span></li>
+			</ul>
+			<p class="links"><a id="mSearch" target="_blank" rel="noopener">Buscar en Google</a></p>
+		</div>
+	</div>
+</div>
+
+<script>
+// Modal
+const modal = document.getElementById('playerModal');
+const mImg = document.getElementById('mImg');
+const mName = document.getElementById('mName');
+const mTeam = document.getElementById('mTeam');
+const mPos = document.getElementById('mPos');
+const mNumber = document.getElementById('mNumber');
+const mCountry = document.getElementById('mCountry');
+const mAge = document.getElementById('mAge');
+const mHeight = document.getElementById('mHeight');
+const mValue = document.getElementById('mValue');
+const mSearch = document.getElementById('mSearch');
+
+function openModalFrom(el) {
+	const img = el.dataset.img, fb = el.dataset.fallback;
+	mImg.src = img;
+	mImg.onerror = () => { mImg.onerror = null; mImg.src = fb; };
+	mName.textContent = el.dataset.name || '';
+	mTeam.textContent = el.dataset.team || '';
+	mPos.textContent = el.dataset.pos || '-';
+	mNumber.textContent = el.dataset.number || '-';
+	mCountry.textContent = el.dataset.country || '-';
+	mAge.textContent = el.dataset.age || '-';
+	mHeight.textContent = el.dataset.height || '-';
+	mValue.textContent = el.dataset.value || '-';
+	mSearch.href = 'https://www.google.com/search?q=' + encodeURIComponent((el.dataset.name || '') + ' football');
+	modal.hidden = false;
+	document.body.style.overflow = 'hidden';
+}
+function closeModal(){ modal.hidden = true; document.body.style.overflow = ''; }
+
+document.querySelectorAll('.jugador-btn.btn-ver').forEach(a => {
+	a.addEventListener('click', (e) => { e.preventDefault(); openModalFrom(a); });
+});
+document.querySelectorAll('.jugador-btn.btn-eliminar').forEach(a => {
+	a.addEventListener('click', (e) => {
+		e.preventDefault();
+		const card = a.closest('.jugador-item');
+		const form = card.querySelector('.delete-form');
+		form.submit();
+	});
+});
+modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+document.querySelector('.modal-close')?.addEventListener('click', closeModal);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
+</script>

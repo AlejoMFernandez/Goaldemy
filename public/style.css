@@ -1,0 +1,171 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap");
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+}
+
+body { background:#ECEFF1; }
+
+/* Layout base */
+.container { width: min(1100px, 92%); margin: 0 auto; }
+
+/* Header */
+.site-header { background:#1D3557; color:#F4F4F4; position:sticky; top:0; z-index:100; box-shadow:0 4px 16px rgba(13,37,72,.3); }
+.header-inner{ display:flex; align-items:center; justify-content:space-between; padding:14px 0; }
+.brand{ font-weight:800; letter-spacing:.4px; }
+.site-nav{ display:flex; gap:14px; align-items:center; }
+.nav-link{ color:#F4F4F4; text-decoration:none; padding:6px 10px; border-radius:8px; }
+.nav-link:hover{ background:rgba(255,255,255,.08); }
+.btn{ display:inline-block; border:none; border-radius:10px; padding:10px 14px; text-decoration:none; cursor:pointer; }
+.btn-small{ padding:8px 12px; border-radius:8px; }
+.btn-primary{ background:#2A9D8F; color:#fff; }
+.btn-primary:hover{ filter:brightness(1.05); }
+.menu{ align-items: center;}
+
+/* Footer */
+.site-footer{ margin-top:40px; background:#0f2344; color:#F4F4F4; }
+.footer-inner{ padding:20px 0; text-align:center; font-size:.9rem; opacity:.85; }
+
+/* Página */
+.page-content{ padding:26px 0; }
+.page-title{ color:#1D3557; margin-bottom:16px; font-weight:800; text-align:center; }
+
+.jugadores-grid {
+    display: flex;
+    gap: 28px 60px;
+    padding: 20px 0 40px 0;
+    max-width: 1600px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Cada item contiene la card y, a la derecha, la columna de botones por fuera */
+.jugador-item {
+    align-items: center;
+    position: relative;
+    width: 180px;
+}
+.jugador-card {
+    background: #1D3557;
+    border-radius: 24px;
+    box-shadow: 0 6px 20px rgba(13, 37, 72, 0.35);
+    position: relative;
+    height: 180px;
+    width: 180px;
+    overflow: hidden;
+    padding: 0;
+    display: block;
+    transition: box-shadow 0.18s, transform 0.18s;
+    color: #F4F4F4;
+    font-family: 'Montserrat', sans-serif;
+}
+/* .jugador-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 36px rgba(13,37,72,0.45);
+} */
+.jugador-img-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 65%; /* reducir imagen */
+    width: 100%;
+    border-radius: 0;
+    background: none;
+    border: none;
+    overflow: visible;
+}
+.jugador-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: bottom center;
+    display: block;
+    filter: drop-shadow(0 -5px 15px rgba(0,0,0,0.3));
+}
+.jugador-nombre {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    font-size: 1.19rem;
+    font-weight: 600;
+    color: #F4F4F4;
+    line-height: 1.1;
+    text-align: center;
+    padding-inline: 10px;
+}
+.jugador-acciones { /* ahora fuera de la card */
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+    position: absolute;
+    right: 0px;
+    transform: translate(50%, -50%);
+    top: 50%;
+}
+.jugador-btn {
+    display: grid;
+    place-items: center;
+    height: 40px;
+    border-radius: 19px;
+    background: transparent;
+    transition: transform 0.12s, background-color 0.12s;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    padding: 6px;
+    justify-content: end;
+}
+.btn-ver { background-color: #2A9D8F; }
+.btn-editar { background-color: #FFD65C; }
+.btn-eliminar { background-color: #FF6B6B; }
+.jugador-btn img {
+    width: 28px;
+    height: auto;
+    display: block;
+}
+.jugador-btn:hover { transform: scale(1.1); }
+.jugador-btn:focus { outline: 2px solid rgba(255,255,255,0.1); outline-offset: 2px; }
+@media (max-width: 600px) {
+    .jugadores-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+    .jugador-card { height: 200px; width: 100%; border-radius: 18px; }
+    .jugador-item { grid-template-columns: 1fr auto; }
+    .jugador-nombre { font-size: 1.15rem; }
+    .jugador-btn { width: 42px; height: 42px; border-radius: 10px; }
+}
+
+/* Filtro por club */
+.club-filter{ display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:10px 0 24px; }
+.club-filter a{ display:inline-block; border-radius:12px; padding:6px; background:#fff;}
+.club-filter img{ height:40px; display:block; }
+
+/* Detalle de jugador */
+.player-detail{ background:#1D3557; color:#F4F4F4; border-radius:18px; box-shadow:0 6px 20px rgba(13,37,72,.35); padding:18px; display:grid; grid-template-columns: 150px 1fr; gap:18px; align-items:center; }
+.player-detail img{ width:150px; height:150px; object-fit:cover; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+.player-detail h1{ margin:0 0 6px 0; font-size:1.4rem; }
+.player-detail p{ margin:4px 0; }
+.back-link{ display:inline-block; margin-top:14px; color:#1D3557; text-decoration:none; font-weight:700; }
+.back-link:hover{ text-decoration:underline; }
+
+/* Formularios (Nuevo/Editar) */
+.form-card{ background:#ffffff; border-radius:14px; box-shadow:0 8px 24px rgba(13,37,72,.18); padding:18px; max-width:560px; margin:0 auto; }
+.form-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-row + .form-row{ margin-top:12px; }
+.form-card label{ font-size:.9rem; color:#1D3557; font-weight:600; margin-bottom:6px; display:block; }
+.form-card input[type="text"],
+.form-card input[type="number"],
+.form-card input[type="url"]{ width:100%; padding:10px 12px; border:1px solid #cdd6e0; border-radius:10px; font-size:.95rem; }
+.form-card input[type="submit"]{ margin-top:14px; background:#2A9D8F; color:#fff; border:none; border-radius:10px; padding:10px 14px; cursor:pointer; }
+.form-card input[type="submit"]:hover{ filter:brightness(1.05); }
+
+/* Equipos */
+.teams-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:20px; }
+.team-card{ background:#ffffff; border-radius:16px; box-shadow:0 6px 20px rgba(13,37,72,.15); padding:16px; text-align:center; }
+.team-logo{ width:72px; height:72px; object-fit:contain; display:block; margin:0 auto 10px; }
+.team-name{ color:#1D3557; font-weight:800; margin-bottom:8px; }

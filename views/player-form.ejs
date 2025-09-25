@@ -1,0 +1,57 @@
+<h2 class="title"><%= mode === 'new' ? 'Nuevo jugador' : 'Editar jugador' %></h2>
+<% if(mode==='edit'){ %><p style="margin:-6px 0 18px; color: var(--muted); font-size:.8rem; letter-spacing:.5px;">Editando registro existente</p><% } %>
+
+<form class="form" method="post" action="<%= mode==='new' ? '/players' : ('/teams/' + selectedTeamId + '/players/' + player.id) %>">
+	<% if (mode === 'edit') { %>
+	<input type="hidden" name="_method" value="POST" />
+	<% } %>
+
+	<label>Equipo</label>
+	<select name="teamId" required>
+		<option value="">Seleccione un equipo</option>
+		<% teams.forEach(t => { %>
+			<option value="<%= t.id %>" <%= String(selectedTeamId)===String(t.id)?'selected':'' %>><%= t.name %></option>
+		<% }) %>
+	</select>
+
+	<label>Sección (posición)</label>
+	<select name="section" required>
+		<% sections.forEach(s => { %>
+			<option value="<%= s %>" <%= s===selectedSection?'selected':'' %>><%= s %></option>
+		<% }) %>
+	</select>
+
+	<label>Nombre</label>
+	<input type="text" name="name" value="<%= player.name || '' %>" required />
+
+	<label>Número de camiseta</label>
+	<input type="number" name="shirtNumber" value="<%= player.shirtNumber || '' %>" />
+
+	<label>País (ccode)</label>
+	<input type="text" name="ccode" value="<%= player.ccode || '' %>" maxlength="3" />
+
+	<label>País (nombre)</label>
+	<input type="text" name="cname" value="<%= player.cname || '' %>" />
+
+	<label>Altura (cm)</label>
+	<input type="number" name="height" value="<%= player.height || '' %>" />
+
+	<label>Edad</label>
+	<input type="number" name="age" value="<%= player.age || '' %>" />
+
+	<label>Fecha de Nacimiento</label>
+	<input type="date" name="dateOfBirth" value="<%= (player.dateOfBirth || '').slice(0,10) %>" />
+
+	<label>Valor de mercado</label>
+	<input type="number" name="transferValue" value="<%= player.transferValue || '' %>" />
+
+	<label>Posiciones (positionIds)</label>
+	<input type="text" name="positionIds" value="<%= player.positionIds || '' %>" placeholder="ej: 115,87" />
+
+	<label>Posiciones Desc (positionIdsDesc)</label>
+	<input type="text" name="positionIdsDesc" value="<%= player.positionIdsDesc || '' %>" placeholder="ej: ST,LW" />
+
+	<div class="row end">
+		<button class="btn" type="submit"><%= mode==='new' ? 'Crear' : 'Guardar' %></button>
+	</div>
+</form>

@@ -1,0 +1,17 @@
+<h2 class="title">TEAMS</h2>
+
+<section class="grid-teams teams">
+	<% teams.forEach(t => { %>
+	<article class="card team">
+		<img src="<%= t.logo %>" alt="<%= t.name %>" />
+		<h3><%= t.name %></h3>
+		<div class="row">
+			<a class="btn outline" href="/section/keepers?teamId=<%= t.id %>">Keepers</a>
+			<a class="btn outline" href="/section/defenders?teamId=<%= t.id %>">Defenders</a>
+			<a class="btn outline" href="/section/midfielders?teamId=<%= t.id %>">Midfielders</a>
+			<a class="btn outline" href="/section/attackers?teamId=<%= t.id %>">Attackers</a>
+		</div>
+	</article>
+	<% }) %>
+</section>
+<!-- cierre único de la grid -->
