@@ -1,15 +1,21 @@
 <script>
-import { RouterLink } from 'vue-router';
 import AppH1 from '../components/AppH1.vue';
 import { subscribeToAuthStateChanges } from '../services/auth';
+import { getUserLevel } from '../services/xp';
+import { getUserAchievements } from '../services/achievements';
+import { getUserXpByGame } from '../services/games';
+import ProfileHeaderCard from '../components/profile/ProfileHeaderCard.vue';
+import AchievementsCard from '../components/profile/AchievementsCard.vue';
+import XpByGameCard from '../components/profile/XpByGameCard.vue';
+import ProgressCard from '../components/profile/ProgressCard.vue';
+import ConnectionsCard from '../components/profile/ConnectionsCard.vue';
+import CommunityCard from '../components/profile/CommunityCard.vue';
 
 let unsubscribeAuth = () => {};
 
 export default {
   name: 'Profile',
-  components: {
-    AppH1
-  },
+  components: { AppH1, ProfileHeaderCard, AchievementsCard, XpByGameCard, ProgressCard, ConnectionsCard, CommunityCard },
   data() {
     return {
       user: {
@@ -19,71 +25,142 @@ export default {
         bio: null,
         career: null,
       },
-    }
+      levelInfo: null,
+      levelLoading: false,
+      achievements: [],
+      achLoading: false,
+      xpByGame: [],
+      xpByGameLoading: false,
+      // Placeholders for future community data
+      followerCount: 0,
+      followingCount: 0,
+      groupCount: 0,
+      forumsCount: 0,
+      messagesCount: 0,
+      discussionsStartedCount: 0,
+    };
   },
   computed: {
     avatarInitial() {
-      if (!this.user?.email) return '?';
+      if (!this.user || !this.user.email) return '?';
       const letter = this.user.email.trim()[0] || '?';
       return letter.toUpperCase();
-    }
+    },
+    displayName() {
+      return this.user?.display_name || this.user?.email || '—';
+    },
+    progressPercent() {
+      if (!this.levelInfo) return 0;
+      if (!this.levelInfo.next_level_xp) return 100;
+      const completed = this.levelInfo.next_level_xp - (this.levelInfo.xp_to_next ?? 0);
+      const denom = this.levelInfo.next_level_xp || 1;
+      const pct = Math.max(0, Math.min(100, Math.round((completed / denom) * 100)));
+      return pct;
+    },
+    xpNow() {
+      return this.levelInfo?.xp_total ?? 0;
+    },
   },
   mounted() {
-    unsubscribeAuth = subscribeToAuthStateChanges(async userState => {
+    unsubscribeAuth = subscribeToAuthStateChanges(async (userState) => {
+      console.debug('[Profile.vue] auth state:', userState?.id)
       this.user = userState;
+      if (this.user && this.user.id) {
+        this.levelLoading = true;
+        console.debug('[Profile.vue] loading level for', this.user.id)
+        try {
+          const { data, error } = await getUserLevel(this.user.id);
+          if (error) console.error('getUserLevel error:', error);
+          this.levelInfo = Array.isArray(data) ? data[0] : data;
+        } catch (e) {
+          console.error('getUserLevel exception:', e);
+          this.levelInfo = null;
+        } finally {
+          this.levelLoading = false;
+          console.debug('[Profile.vue] level loaded')
+        }
+
+        // Load achievements
+        this.achLoading = true;
+        console.debug('[Profile.vue] loading achievements')
+        try {
+          const { data: ach, error: achErr } = await getUserAchievements(this.user.id);
+          if (achErr) console.error('load achievements error:', achErr);
+          this.achievements = ach || [];
+        } catch (e) {
+          console.error('achievements exception:', e);
+          this.achievements = [];
+        } finally {
+          this.achLoading = false;
+          console.debug('[Profile.vue] achievements loaded')
+        }
+
+        // Load XP by game via service
+        this.xpByGameLoading = true;
+        console.debug('[Profile.vue] loading xp by game')
+        try {
+          const { data: xpRows, error: xpErr } = await getUserXpByGame(this.user.id);
+          if (xpErr) console.error('load xp by game error:', xpErr);
+          this.xpByGame = xpRows || [];
+        } catch (e) {
+          console.error('xp by game exception:', e);
+          this.xpByGame = [];
+        } finally {
+          this.xpByGameLoading = false;
+          console.debug('[Profile.vue] xp by game loaded')
+        }
+      } else {
+        this.levelInfo = null;
+        this.achievements = [];
+        this.xpByGame = [];
+      }
     });
   },
   unmounted() {
     unsubscribeAuth();
-  }
-}
+  },
+};
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl">
-
-    <div class="mb-4">
+  <div class="mx-auto max-w-5xl pb-8">
+    <div class="mb-4 flex items-center justify-between gap-2">
       <AppH1>Mi Perfil</AppH1>
-      <RouterLink to="/profileedit" class="text-sm text-blue-500 hover:underline">Editar perfil</RouterLink>
+  <router-link to="/profile-edit" class="text-sm text-blue-500 hover:underline">Editar perfil</router-link>
     </div>
-    <!-- Header card -->
-    <section class="card card-hover p-6 mb-6 flex items-center gap-4 animate-[fade-in_500ms_ease_forwards] opacity-0">
-      <div class="relative grid place-items-center size-16 rounded-2xl bg-gradient-to-br from-[oklch(0.70_0.21_270)] to-[oklch(0.55_0.21_270)] text-white font-extrabold text-xl shadow-lg">
-        <span>{{ avatarInitial }}</span>
-      </div>
-      <div class="min-w-0">
-        <p class="text-sm uppercase tracking-wide text-slate-400">Usuario</p>
-        <p class="truncate text-lg font-semibold text-white">{{ user.email || '—' }}</p>
-      </div>
-    </section>
 
-    <!-- Details grid -->
-    <section class="grid gap-4 md:grid-cols-2">
+  <section class="grid gap-4 md:grid-cols-12">
 
-      <!-- Correo electrónico -->
-      <div class="card p-4 animate-[fade-in_500ms_ease_100ms_forwards] opacity-0">
-        <p class="text-xs uppercase tracking-wide text-slate-400">Correo electrónico</p>
-        <p class="mt-1 text-slate-100">{{ user.email || '—' }}</p>
-      </div>
-
-      <!-- Nombre para mostrar -->
-      <div class="card p-4 animate-[fade-in_500ms_ease_150ms_forwards] opacity-0">
-        <p class="text-xs uppercase tracking-wide text-slate-400">Nombre para mostrar</p>
-        <p class="mt-1 text-slate-100">{{ user.display_name }}</p>
-      </div>
-
-      <!-- Carrera -->
-      <div class="card p-4 animate-[fade-in_500ms_ease_200ms_forwards] opacity-0">
-        <p class="text-xs uppercase tracking-wide text-slate-400">Carrera</p>
-        <p class="mt-1 text-slate-100">{{ user.career || 'No establecida' }}</p>
+      <!-- Columna izquierda: avatar, nombre, carrera, bio -->
+      <div class="flex flex-col gap-4 md:col-span-8">
+        <ProfileHeaderCard
+          :avatar-initial="avatarInitial"
+          :display-name="displayName"
+          :email="user.email"
+          :career="user.career"
+          :bio="user.bio"
+        />
+        <AchievementsCard :achievements="achievements" :loading="achLoading" />
+        <XpByGameCard :items="xpByGame" :loading="xpByGameLoading" />
+        <div class="rounded-lg border border-white/10 p-4">
+          <p class="text-xs uppercase tracking-wide text-slate-400">Detalles del usuario</p>
+          <ul class="mt-1 text-slate-300 text-sm space-y-1 list-disc list-inside">
+            <li>Compañía: —</li>
+            <li>Localidad: —</li>
+            <li>Social media: —</li>
+            <li>Teléfono: —</li>
+            <li>Work email: —</li>
+          </ul>
+        </div>
       </div>
 
-      <!-- Biografía (ocupa dos columnas en desktop) -->
-      <div class="card p-4 md:col-span-2 animate-[fade-in_500ms_ease_250ms_forwards] opacity-0">
-        <p class="text-xs uppercase tracking-wide text-slate-400">Biografía</p>
-        <p class="mt-1 whitespace-pre-line text-slate-100">{{ user.bio || 'No establecida' }}</p>
+      <!-- Columna derecha: nivel, XP, achievements y progreso -->
+      <div class="flex flex-col gap-4 md:col-span-4">
+        <ProgressCard :level-info="levelInfo" :loading="levelLoading" :xp-now="xpNow" :progress-percent="progressPercent" />
+        <ConnectionsCard :follower-count="followerCount" :following-count="followingCount" :group-count="groupCount" />
+        <CommunityCard :forums-count="forumsCount" :messages-count="messagesCount" :discussions-started-count="discussionsStartedCount" />
       </div>
-
+      
     </section>
   </div>
 </template>

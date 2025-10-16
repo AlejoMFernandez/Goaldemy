@@ -1,6 +1,7 @@
 <script>
 import AppH1 from '../../components/AppH1.vue';
 import { getAllPlayers, buildOptions } from '../../services/players';
+import { awardXp, unlockAchievementWithToast } from '../../services/xp';
 
 export default {
   name: 'GuessPlayer',
@@ -45,6 +46,19 @@ export default {
         this.streak += 1;
         this.score += this.streak; // multiplicador por racha
         this.triggerConfetti();
+        // Award fixed XP per correct answer (e.g., 10 XP)
+        awardXp({ amount: 10, reason: 'correct_answer', gameId: null, sessionId: null, meta: { game: 'guess-player' } })
+          .then(({ error }) => { if (error) console.error('awardXp error:', error); })
+          .catch((e) => console.error('awardXp exception:', e));
+        // Unlock achievements (best-effort)
+        if (this.attempts === 0) {
+          unlockAchievementWithToast('first_correct', { game: 'guess-player' })
+            .catch(() => {});
+        }
+        if (this.streak === 3) {
+          unlockAchievementWithToast('streak_3', { game: 'guess-player' })
+            .catch(() => {});
+        }
       } else {
         this.streak = 0;
       }

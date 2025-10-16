@@ -2,13 +2,15 @@
 import AppNavBar from './components/AppNavBar.vue';
 import AppFooter from './components/AppFooter.vue';
 import Home from './pages/Home.vue';
+import AppToast from './components/AppToast.vue';
 
 export default {
   name: 'App',
   components: {
     Home,
     AppNavBar,
-    AppFooter
+    AppFooter,
+    AppToast,
   }
 }
 </script>
@@ -20,5 +22,6 @@ export default {
       <RouterView />
     </main>
     <AppFooter />
+    <AppToast />
   </div>
 </template>

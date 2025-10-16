@@ -16,7 +16,18 @@ export default {
   async mounted() {
     try {
       this.loading = true;
+      console.debug('[Games.vue] mounted -> fetching games…');
+      const timer = setTimeout(() => {
+        if (this.loading) {
+          console.warn('[Games.vue] fetchGames timeout reached');
+          this.error = 'Tiempo de espera al cargar juegos. Revisa conexión o permisos (RLS).';
+          this.loading = false;
+        }
+      }, 8000);
+
       this.games = await fetchGames();
+      console.debug('[Games.vue] games loaded:', this.games);
+      clearTimeout(timer);
     } catch (err) {
       console.error('[Games.vue] Failed to load games:', err);
       this.error = 'No pudimos cargar los juegos por ahora. Intentalo más tarde.';

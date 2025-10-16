@@ -49,6 +49,7 @@ export default {
                     <li><RouterLink class="hover:text-white transition-colors" to="/">Home</RouterLink></li>
                     <li><RouterLink class="hover:text-white transition-colors" to="/chat">Chat Global</RouterLink></li>
                     <li><RouterLink class="hover:text-white transition-colors" to="/games">Juegos</RouterLink></li>
+                    <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Leaderboards</RouterLink></li>
                     <template v-if="user.id === null">
                         <li><RouterLink class="hover:text-white transition-colors" to="/login">Iniciar sesión</RouterLink></li>
                         <li>

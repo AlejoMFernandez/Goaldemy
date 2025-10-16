@@ -36,3 +36,42 @@ export async function updateUserProfile(id, newData) {
         throw new Error("error.message");
     }
 }
+
+// Public helpers for reading basic profile info (via view if available)
+export async function getPublicProfilesByIds(ids = []) {
+    if (!ids.length) return { data: [], error: null }
+    // Prefer the compatibility view. It exposes user_id; alias it as id for consumers.
+    let { data, error } = await supabase
+        .from('v_user_profiles')
+        .select('id:user_id, display_name, username, email, avatar_url')
+        .in('user_id', ids)
+
+    if (error) {
+        // Fallback to base table which uses id as primary key
+        const res = await supabase
+            .from('user_profiles')
+            .select('id, display_name, username, email, avatar_url')
+            .in('id', ids)
+        data = res.data; error = res.error
+    }
+    return { data, error }
+}
+
+export async function getPublicProfile(id) {
+    // Prefer view; filter by user_id, expose id alias for consumers.
+    let { data, error } = await supabase
+        .from('v_user_profiles')
+        .select('id:user_id, display_name, username, email, avatar_url')
+        .eq('user_id', id)
+        .maybeSingle()
+
+    if (error) {
+        const res = await supabase
+            .from('user_profiles')
+            .select('id, display_name, username, email, avatar_url')
+            .eq('id', id)
+            .maybeSingle()
+        data = res.data; error = res.error
+    }
+    return { data, error }
+}

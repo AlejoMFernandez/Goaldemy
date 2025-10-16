@@ -6,20 +6,28 @@ let user = {
     email: null,
 }
 let observers = [];
+let readyResolved = false;
+let resolveReady;
+export const authReady = new Promise((resolve) => { resolveReady = resolve; });
 
 loadUserCurrentAuthState();
 async function loadUserCurrentAuthState() {
     const { data, error } = await supabase.auth.getUser();
     if (error) {
         console.error('[Auth.vue loadUserCurrentAuthState]:', error);
+        setAuthUserState({ id: null, email: null });
+        if (!readyResolved && resolveReady) { readyResolved = true; resolveReady(true); }
         return;
     }
-    setAuthUserState({
-        id: data.user.id,
-        email: data.user.email,
-    });
-
+    const u = data?.user || null;
+    if (!u) {
+        setAuthUserState({ id: null, email: null });
+        if (!readyResolved && resolveReady) { readyResolved = true; resolveReady(true); }
+        return;
+    }
+    setAuthUserState({ id: u.id, email: u.email });
     loadExtendedProfile();
+    if (!readyResolved && resolveReady) { readyResolved = true; resolveReady(true); }
 }
 
 async function loadExtendedProfile() {
@@ -40,15 +48,14 @@ export async function register(email, password) {
             throw new Error("error.message");
         }
 
-        setAuthUserState({
-            id: data.user.id,
-            email: data.user.email,
-        });
-
-        await createUserProfile({
-            id: data.user.id,
-            email: data.user.email,
-        });
+        const u = data?.user || null;
+        // If email confirmation is required, user can be null here
+        if (u) {
+            setAuthUserState({ id: u.id, email: u.email });
+            await createUserProfile({ id: u.id, email: u.email });
+        } else {
+            setAuthUserState({ id: null, email: email });
+        }
 
     } catch (error) {
         console.error('[Register.vue register]:', error);
@@ -67,12 +74,13 @@ export async function login(email, password) {
         throw new Error("error.message");
     }
 
-    setAuthUserState({
-        id: data.user.id,
-        email: data.user.email,
-    });
-
-    loadExtendedProfile();
+    const u = data?.user || null;
+    if (u) {
+        setAuthUserState({ id: u.id, email: u.email });
+        loadExtendedProfile();
+    } else {
+        setAuthUserState({ id: null, email: null });
+    }
 }
 
 export async function logout() {
@@ -119,3 +127,22 @@ function setAuthUserState(newState){
     };
     notifyAll();
 }
+
+// Accessor para router u otros módulos que necesiten el user actual sin subscribirse
+export function getAuthUser() {
+    return { ...user };
+}
+
+// Mantener sincronía con cambios de sesión (login/logout/refresh) de Supabase
+try {
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+        const u = session?.user || null;
+        if (u) {
+            setAuthUserState({ id: u.id, email: u.email });
+            loadExtendedProfile();
+        } else {
+            setAuthUserState({ id: null, email: null });
+        }
+    });
+    // Nota: en dev HMR esta suscripción se reemplaza; no requiere limpieza manual aquí
+} catch {}
