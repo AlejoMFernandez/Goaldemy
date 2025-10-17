@@ -5,16 +5,63 @@
     -- Extensions
     create extension if not exists pgcrypto;
 
-    -- Games catalog
-    create table if not exists public.games (
-      id uuid primary key default gen_random_uuid(),
-      slug text not null unique,
-      name text not null,
-      description text,
-      cover_url text,
-      is_active boolean not null default true,
-      created_at timestamptz not null default now()
-    );
+        -- Games catalog
+        create table if not exists public.games (
+            id uuid primary key default gen_random_uuid(),
+            -- Note: on existing databases this column may be missing; a compat block below will add it if needed
+            slug text not null unique,
+            name text not null,
+            description text,
+            cover_url text,
+            is_active boolean not null default true,
+            created_at timestamptz not null default now()
+        );
+
+        -- Compatibility: ensure `slug` column exists and enforce uniqueness with a constraint (required for ON CONFLICT)
+        do $$
+        declare has_slug boolean;
+        declare has_constraint boolean;
+        begin
+            select exists(
+                select 1 from information_schema.columns
+                where table_schema='public' and table_name='games' and column_name='slug'
+            ) into has_slug;
+
+            if not has_slug then
+                alter table public.games add column slug text;
+            end if;
+
+            -- Drop legacy partial unique index if present; ON CONFLICT cannot target partial indexes reliably
+            if exists (
+                select 1 from pg_indexes where schemaname='public' and indexname='games_slug_unique_idx'
+            ) then
+                execute 'drop index if exists public.games_slug_unique_idx';
+            end if;
+
+            -- Create a proper unique constraint on slug (allows multiple NULLs, fine for legacy rows)
+            select exists(
+                select 1 from pg_constraint
+                where conrelid = 'public.games'::regclass and conname = 'games_slug_unique'
+            ) into has_constraint;
+
+            if not has_constraint then
+                alter table public.games add constraint games_slug_unique unique (slug);
+            end if;
+        end $$;
+
+        -- Compatibility: add cover_url column if it doesn't exist (used by seeds and UI)
+        do $$
+        declare has_cover boolean;
+        begin
+            select exists(
+                select 1 from information_schema.columns
+                where table_schema='public' and table_name='games' and column_name='cover_url'
+            ) into has_cover;
+
+            if not has_cover then
+                alter table public.games add column cover_url text;
+            end if;
+        end $$;
         -- XP events (awarded points per action)
         create table if not exists public.xp_events (
             id uuid primary key default gen_random_uuid(),
@@ -142,6 +189,48 @@
     (9, 2200),
     (10, 2700)
     on conflict (level) do nothing;
+
+                -- Seed games for existing demos (idempotent). If slug column exists, use upsert by slug.
+                do $$
+                declare has_slug boolean;
+                begin
+                    select exists(
+                        select 1 from information_schema.columns
+                        where table_schema='public' and table_name='games' and column_name='slug'
+                    ) into has_slug;
+
+                    if has_slug then
+                        insert into public.games (slug, name, description, cover_url)
+                        values
+                            ('guess-player', 'Adivina el jugador', 'Adivina el nombre del jugador a partir de su foto', null),
+                            ('nationality', 'Nacionalidad correcta', 'Selecciona la nacionalidad del jugador', null)
+                        on conflict (slug) do nothing;
+                    else
+                        -- If slug still doesn't exist for some reason, skip seeding to avoid errors
+                        null;
+                    end if;
+                end $$;
+
+                -- Backfill xp_events.game_id from meta->>'game' if missing (only if games.slug exists)
+                do $$
+                declare has_slug boolean;
+                begin
+                    select exists(
+                        select 1 from information_schema.columns
+                        where table_schema='public' and table_name='games' and column_name='slug'
+                    ) into has_slug;
+
+                    if has_slug then
+                        update public.xp_events e
+                        set game_id = g.id
+                        from public.games g
+                        where e.game_id is null
+                            and (e.meta ->> 'game') = g.slug;
+                    end if;
+                exception when others then
+                    -- ignore backfill failures in idempotent setup
+                    null;
+                end $$;
 
     -- ============================
     -- Compatibility Views

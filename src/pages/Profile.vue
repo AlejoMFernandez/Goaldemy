@@ -6,7 +6,7 @@ import { getUserAchievements } from '../services/achievements';
 import { getUserXpByGame } from '../services/games';
 import ProfileHeaderCard from '../components/profile/ProfileHeaderCard.vue';
 import AchievementsCard from '../components/profile/AchievementsCard.vue';
-import XpByGameCard from '../components/profile/XpByGameCard.vue';
+// XpByGameCard inlined into XpDonutChart list
 import XpDonutChart from '../components/profile/XpDonutChart.vue';
 import ProgressCard from '../components/profile/ProgressCard.vue';
 import ConnectionsCard from '../components/profile/ConnectionsCard.vue';
@@ -16,7 +16,7 @@ let unsubscribeAuth = () => {};
 
 export default {
   name: 'Profile',
-  components: { AppH1, ProfileHeaderCard, AchievementsCard, XpByGameCard, XpDonutChart, ProgressCard, ConnectionsCard, CommunityCard },
+  components: { AppH1, ProfileHeaderCard, AchievementsCard, XpDonutChart, ProgressCard, ConnectionsCard, CommunityCard },
   data() {
     return {
       user: {
@@ -136,6 +136,7 @@ export default {
       <div class="flex flex-col gap-4 md:col-span-8">
         <ProfileHeaderCard
           :avatar-initial="avatarInitial"
+          :avatar-url="user.avatar_url"
           :display-name="displayName"
           :email="user.email"
           :career="user.career"
@@ -143,7 +144,6 @@ export default {
         />
   <AchievementsCard :achievements="achievements" :loading="achLoading" />
   <XpDonutChart :items="xpByGame" :loading="xpByGameLoading" />
-        <XpByGameCard :items="xpByGame" :loading="xpByGameLoading" />
         <div class="rounded-lg border border-white/10 p-4">
           <p class="text-xs uppercase tracking-wide text-slate-400">Detalles del usuario</p>
           <ul class="mt-1 text-slate-300 text-sm space-y-1 list-disc list-inside">
@@ -158,7 +158,7 @@ export default {
 
       <!-- Columna derecha: nivel, XP, achievements y progreso -->
       <div class="flex flex-col gap-4 md:col-span-4">
-        <ProgressCard :level-info="levelInfo" :loading="levelLoading" :xp-now="xpNow" :progress-percent="progressPercent" />
+  <ProgressCard :level-info="levelInfo" :loading="levelLoading" :xp-now="xpNow" :progress-percent="progressPercent" :achievements-count="achievements.length" />
         <ConnectionsCard :follower-count="followerCount" :following-count="followingCount" :group-count="groupCount" />
         <CommunityCard :forums-count="forumsCount" :messages-count="messagesCount" :discussions-started-count="discussionsStartedCount" />
       </div>

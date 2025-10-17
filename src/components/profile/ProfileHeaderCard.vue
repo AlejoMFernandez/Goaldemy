@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
   avatarInitial: { type: String, required: true },
+  avatarUrl: { type: String, required: false, default: '' },
   displayName: { type: String, required: true },
   email: { type: String, required: false, default: '' },
   career: { type: String, required: false, default: '' },
@@ -11,8 +12,9 @@ defineProps({
 <template>
   <div class="card p-6 flex flex-col gap-4">
     <div class="flex items-center gap-4">
-      <div class="relative grid place-items-center size-16 rounded-2xl bg-gradient-to-br from-[oklch(0.70_0.21_270)] to-[oklch(0.55_0.21_270)] text-white font-extrabold text-xl shadow-lg">
-        <span>{{ avatarInitial }}</span>
+      <div class="relative size-16 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[oklch(0.70_0.21_270)] to-[oklch(0.55_0.21_270)] text-white font-extrabold text-xl grid place-items-center">
+        <img v-if="avatarUrl" :src="avatarUrl" alt="avatar" class="w-full h-full object-cover" />
+        <span v-else>{{ avatarInitial }}</span>
       </div>
       <div class="min-w-0">
         <p class="text-sm uppercase tracking-wide text-slate-400">Usuario</p>

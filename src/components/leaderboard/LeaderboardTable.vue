@@ -44,8 +44,16 @@ const props = defineProps({
             <span v-else-if="(r.rank ?? (i+1)) === 3">🥉</span>
             <span v-else>{{ r.rank ?? (i+1) }}</span>
           </td>
-          <td class="px-3 py-2 text">
-            {{ r.email || r.display_name || r.user_id?.slice(0,8) }}
+          <td class="px-3 py-2">
+            <div class="flex items-center gap-2">
+              <div class="h-7 w-7 rounded-lg overflow-hidden bg-white/10 grid place-items-center text-[11px] font-bold text-slate-200">
+                <img v-if="r.avatar_url" :src="r.avatar_url" alt="avatar" class="w-full h-full object-cover" />
+                <span v-else>{{ (r.email || r.display_name || r.user_id)?.[0]?.toUpperCase() ?? '?' }}</span>
+              </div>
+              <RouterLink :to="{ path: '/u/' + r.user_id }" class="hover:underline truncate">
+                {{ r.email || r.display_name || r.user_id?.slice(0,8) }}
+              </RouterLink>
+            </div>
           </td>
           <td class="px-3 py-2 text-right font-semibold text-white text-base">{{ r.total_xp }}</td>
         </tr>

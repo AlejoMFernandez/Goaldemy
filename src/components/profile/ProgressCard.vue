@@ -4,6 +4,7 @@ defineProps({
   loading: { type: Boolean, default: false },
   xpNow: { type: Number, default: 0 },
   progressPercent: { type: Number, default: 0 },
+  achievementsCount: { type: Number, default: 0 },
 })
 </script>
 
@@ -15,7 +16,6 @@ defineProps({
       <div v-else>
         <div class="flex items-center gap-2">
           <span class="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 px-2 py-0.5 text-sm">Nivel {{ levelInfo ? levelInfo.level : '—' }}</span>
-          <span class="text-slate-200 text-sm">{{ xpNow }} XP</span>
         </div>
         <div class="mt-3 grid grid-cols-2 gap-3">
           <div class="rounded-lg border border-white/10 p-3">
@@ -24,7 +24,7 @@ defineProps({
           </div>
           <div class="rounded-lg border border-white/10 p-3">
             <p class="text-[10px] uppercase tracking-wider text-slate-400">Achievements</p>
-            <p class="text-white text-lg font-semibold">0</p>
+            <p class="text-white text-lg font-semibold">{{ achievementsCount }}</p>
           </div>
         </div>
         <div class="mt-4">

@@ -42,7 +42,6 @@ export default {
         maintainAspectRatio: false,
         plugins: {
           legend: { position: 'bottom', labels: { color: '#cbd5e1', boxWidth: 12 } },
-          title: { display: true, text: 'XP total por juego', color: '#e2e8f0', font: { size: 14 } }
         },
         layout: { padding: 8 },
       }
@@ -53,12 +52,23 @@ export default {
 
 <template>
   <div class="rounded-lg border border-white/10 p-4 w-full">
-    <p class="text-xs uppercase tracking-wide text-slate-400">XP por juego (dona)</p>
+    <p class="text-xs uppercase tracking-wide text-slate-400">XP por juego</p>
     <div class="mt-2 min-h-56">
       <div v-if="loading" class="text-slate-300">Cargando…</div>
       <div v-else-if="!items.length" class="text-slate-500">Aún no hay XP para graficar</div>
-      <div v-else style="height: 240px;">
-        <Doughnut :data="chartData" :options="chartOptions" />
+      <div v-else>
+        <div style="height: 240px;">
+          <Doughnut :data="chartData" :options="chartOptions" />
+        </div>
+        <div class="mt-4 rounded-lg bg-white/3 border border-white/10 p-3">
+          <p class="text-[10px] uppercase tracking-wider text-slate-400">Detalle</p>
+          <ul class="mt-1 space-y-1">
+            <li v-for="g in items" :key="g.id" class="flex items-center gap-2 text-sm text-slate-200">
+              <span class="truncate">{{ g.name }}</span>
+              <span class="ml-auto text-slate-100 font-medium">{{ g.xp }} XP</span>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>

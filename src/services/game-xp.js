@@ -1,4 +1,5 @@
 import { awardXp, unlockAchievementWithToast } from './xp'
+import { supabase } from './supabase'
 
 /**
  * Award XP for a correct answer and handle common achievements
@@ -8,9 +9,20 @@ import { awardXp, unlockAchievementWithToast } from './xp'
  * @param {number} [opts.attemptIndex=0] - zero-based index of the attempt to unlock 'first_correct'
  * @param {number} [opts.streak=1] - current streak to decide streak achievements
  */
+const gameIdCache = new Map()
+
+async function getGameIdBySlug(slug) {
+  if (gameIdCache.has(slug)) return gameIdCache.get(slug)
+  const { data, error } = await supabase.from('games').select('id').eq('slug', slug).maybeSingle()
+  const id = error ? null : data?.id ?? null
+  if (id) gameIdCache.set(slug, id)
+  return id
+}
+
 export async function awardXpForCorrect({ gameCode, amount = 10, attemptIndex = 0, streak = 1 }) {
   try {
-    await awardXp({ amount, reason: 'correct_answer', gameId: null, sessionId: null, meta: { game: gameCode } })
+    const gameId = await getGameIdBySlug(gameCode)
+    await awardXp({ amount, reason: 'correct_answer', gameId, sessionId: null, meta: { game: gameCode } })
   } catch {}
   try {
     if (attemptIndex === 0) {

@@ -10,6 +10,7 @@ import Games from '../pages/Games.vue';
 import GuessPlayer from '../pages/games/GuessPlayer.vue';
 import NationalityGame from '../pages/games/NationalityGame.vue';
 import Leaderboards from '../pages/Leaderboards.vue';
+import UserPublic from '../pages/UserPublic.vue';
 
 const routes = [
     { path: '/', component: Home },
@@ -22,6 +23,7 @@ const routes = [
     { path: '/games/guess-player', component: GuessPlayer, meta: { requiresAuth: true } },
     { path: '/games/nationality', component: NationalityGame, meta: { requiresAuth: true } },
     { path: '/leaderboards', component: Leaderboards },
+    { path: '/u/:id', component: UserPublic },
 ]
 
 const router = createRouter({
