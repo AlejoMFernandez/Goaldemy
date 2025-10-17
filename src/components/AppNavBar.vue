@@ -79,12 +79,15 @@ export default {
                                 <ul class="container mx-auto px-4 py-3 flex flex-col gap-3 text-slate-200">
                                     <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/">Home</RouterLink></li>
                                     <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/chat">Chat Global</RouterLink></li>
+                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/games">Juegos</RouterLink></li>
+                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leaderboards">Leaderboards</RouterLink></li>
                         <template v-if="user.id === null">
                                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/login">Iniciar sesión</RouterLink></li>
                                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/register">Registrarse</RouterLink></li>
                         </template>
                         <template v-else>
                                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/profile">Perfil</RouterLink></li>
+                                        <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/profile-edit">Editar perfil</RouterLink></li>
                             <li>
                                 <form action="#" @submit.prevent="handleLogout">
                                     <button class="block w-full text-left rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-200 transition hover:border-white/25 hover:text-white" type="submit">{{ user.email }} · Cerrar sesión</button>
