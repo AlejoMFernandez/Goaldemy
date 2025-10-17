@@ -5,45 +5,36 @@
     -- Extensions
     create extension if not exists pgcrypto;
 
-    -- ============================
-    return query
-    with filtered as (
-
     -- Games catalog
     create table if not exists public.games (
-    id uuid primary key default gen_random_uuid(),
-    slug text not null unique,
-    name text not null,
-    description text,
-    cover_url text,
-    is_active boolean not null default true,
-    created_at timestamptz not null default now()
+      id uuid primary key default gen_random_uuid(),
+      slug text not null unique,
+      name text not null,
+      description text,
+      cover_url text,
+      is_active boolean not null default true,
+      created_at timestamptz not null default now()
     );
+        -- XP events (awarded points per action)
+        create table if not exists public.xp_events (
+            id uuid primary key default gen_random_uuid(),
+            user_id uuid not null references auth.users(id) on delete cascade,
+            game_id uuid references public.games(id) on delete set null,
+            amount int not null check (amount >= 0),
+            reason text not null default 'correct_answer',
+            session_id uuid,
+            meta jsonb not null default '{}'::jsonb,
+            created_at timestamptz not null default now()
+        );
 
-    -- User profiles (one row per auth user)
-    ),
-    user_base as (
-        -- include all users from auth
-        select u.id as user_id from auth.users u
-    )
-    select
-        ub.user_id,
-        (p.username)::text as username,
-        -- Force using email when available; no name fallback here
-        (coalesce(u.email, p.email))::text as display_name,
-        (p.avatar_url)::text as avatar_url,
-        coalesce(t.xp_total, 0)::bigint as xp_total,
-        dense_rank() over (order by coalesce(t.xp_total, 0) desc) as rank
-    from user_base ub
-    left join totals t on t.user_id = ub.user_id
-    left join public.v_user_profiles p on p.user_id = ub.user_id
-    left join auth.users u on u.id = ub.user_id
-    order by coalesce(t.xp_total, 0) desc, ub.user_id
-    reason text not null default 'correct_answer',
-    session_id uuid,
-    meta jsonb not null default '{}'::jsonb,
-    created_at timestamptz not null default now()
-    );
+        -- Global chat table (for GlobalChat.vue)
+        create table if not exists public.global_chat_messages (
+            id uuid primary key default gen_random_uuid(),
+            sender_id uuid not null references auth.users(id) on delete cascade,
+            email text,
+            content text not null check (length(content) > 0),
+            created_at timestamptz not null default now()
+        );
 
     -- Game sessions (optional per-run tracking)
     create table if not exists public.game_sessions (
@@ -90,6 +81,9 @@
     create index if not exists idx_xp_events_user_created_at on public.xp_events (user_id, created_at desc);
     create index if not exists idx_xp_events_game_created_at on public.xp_events (game_id, created_at desc);
     create index if not exists idx_xp_events_session on public.xp_events (session_id);
+
+    create index if not exists idx_chat_created_at on public.global_chat_messages (created_at desc);
+    create index if not exists idx_chat_sender on public.global_chat_messages (sender_id, created_at desc);
 
     create index if not exists idx_sessions_user_started_at on public.game_sessions (user_id, started_at desc);
     create index if not exists idx_sessions_game_started_at on public.game_sessions (game_id, started_at desc);
@@ -296,6 +290,25 @@
     end if;
     end $$;
 
+        -- Global chat RLS
+        alter table public.global_chat_messages enable row level security;
+        do $$ begin
+            if not exists (
+                select 1 from pg_policies where schemaname = 'public' and tablename = 'global_chat_messages' and policyname = 'Chat readable (auth)'
+            ) then
+                create policy "Chat readable (auth)" on public.global_chat_messages
+                for select to authenticated using (true);
+            end if;
+        end $$;
+        do $$ begin
+            if not exists (
+                select 1 from pg_policies where schemaname = 'public' and tablename = 'global_chat_messages' and policyname = 'Send own chat message'
+            ) then
+                create policy "Send own chat message" on public.global_chat_messages
+                for insert to authenticated with check (sender_id = auth.uid());
+            end if;
+        end $$;
+
     -- Game sessions
     alter table public.game_sessions enable row level security;
     do $$ begin
@@ -466,62 +479,58 @@
 
     grant execute on function public.get_user_level(uuid) to authenticated;
 
-    -- Leaderboard (overall / weekly / monthly), optional filtered by game
-    create or replace function public.get_leaderboard(
-    p_period text default 'all_time',
-    p_game_id uuid default null,
-    p_limit int default 50,
-    p_offset int default 0
-    ) returns table (
-    user_id uuid,
-    username text,
-    email text,
-    display_name text,
-    avatar_url text,
-    xp_total bigint,
-    rank bigint
-    )
-    language plpgsql
-    security definer
-    set search_path = public
-    as $$
-    begin
-    return query
-    with filtered as (
-        select e.user_id, e.amount, e.created_at
-        from public.xp_events e
-        where (p_game_id is null or e.game_id = p_game_id)
-        and case
-            when lower(p_period) in ('weekly','week') then e.created_at >= date_trunc('week', now())
-            when lower(p_period) in ('monthly','month') then e.created_at >= date_trunc('month', now())
-            else true
-        end
-    ),
-    totals as (
-        -- Qualify all column references to avoid ambiguity with OUT params
-        select f.user_id, sum(f.amount)::bigint as xp_total
-        from filtered f
-        group by f.user_id
-    ),
-    ranked as (
-        select t.user_id, t.xp_total, dense_rank() over (order by t.xp_total desc) as rnk
-        from totals t
-    )
-    select
-        ub.user_id,
-        (p.username)::text as username,
-        (coalesce(u.email, p.email))::text as email,
-        -- For compatibility, keep display_name equal to email so the UI still works
-        (coalesce(u.email, p.email))::text as display_name,
-        (p.avatar_url)::text as avatar_url,
-        coalesce(t.xp_total, 0)::bigint as xp_total,
-        dense_rank() over (order by coalesce(t.xp_total, 0) desc) as rank
-    from ranked r
-    left join public.v_user_profiles p on p.user_id = r.user_id
-    left join auth.users u on u.id = r.user_id
-    order by r.xp_total desc, r.user_id
-    limit p_limit offset p_offset;
-    end$$;
+        -- Leaderboard (overall / weekly / monthly), optional filtered by game
+        create or replace function public.get_leaderboard(
+            p_period text default 'all_time',
+            p_game_id uuid default null,
+            p_limit int default 50,
+            p_offset int default 0
+        ) returns table (
+            user_id uuid,
+            username text,
+            email text,
+            display_name text,
+            avatar_url text,
+            xp_total bigint,
+            rank bigint
+        )
+        language plpgsql
+        security definer
+        set search_path = public
+        as $$
+        begin
+            return query
+            with filtered as (
+                select e.user_id, e.amount, e.created_at
+                from public.xp_events e
+                where (p_game_id is null or e.game_id = p_game_id)
+                    and (
+                        case
+                            when lower(p_period) in ('weekly','week') then e.created_at >= date_trunc('week', now())
+                            when lower(p_period) in ('monthly','month') then e.created_at >= date_trunc('month', now())
+                            else true
+                        end
+                    )
+            ),
+            totals as (
+                select f.user_id, sum(f.amount)::bigint as xp_total
+                from filtered f
+                group by f.user_id
+            )
+            select
+                t.user_id,
+                (p.username)::text as username,
+                (coalesce(u.email, p.email))::text as email,
+                (coalesce(u.email, p.email))::text as display_name,
+                (p.avatar_url)::text as avatar_url,
+                t.xp_total,
+                dense_rank() over (order by t.xp_total desc) as rank
+            from totals t
+            left join public.v_user_profiles p on p.user_id = t.user_id
+            left join auth.users u on u.id = t.user_id
+            order by t.xp_total desc, t.user_id
+            limit p_limit offset p_offset;
+        end$$;
 
     grant execute on function public.get_leaderboard(text, uuid, int, int) to authenticated;
 

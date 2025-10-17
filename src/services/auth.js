@@ -45,7 +45,7 @@ export async function register(email, password) {
 
         if (error) {
             console.error('[Register.vue register]:', error);
-            throw new Error("error.message");
+            throw new Error(error.message || 'Registration failed');
         }
 
         const u = data?.user || null;
@@ -59,7 +59,7 @@ export async function register(email, password) {
 
     } catch (error) {
         console.error('[Register.vue register]:', error);
-        throw new Error("error.message");
+        throw new Error(error?.message || 'Registration failed');
     }
 }
 
@@ -71,7 +71,7 @@ export async function login(email, password) {
 
     if (error) {
         console.error('[Login.vue login]:', error);
-        throw new Error("error.message");
+        throw new Error(error.message || 'Login failed');
     }
 
     const u = data?.user || null;
@@ -90,6 +90,26 @@ export async function logout() {
         id: null,
         email: null,
     });
+}
+
+// Enviar email de reseteo de contraseña
+export async function resetPasswordForEmail(email) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/login',
+    })
+    if (error) {
+        console.error('[auth.js resetPasswordForEmail]:', error)
+        throw new Error(error.message || 'No se pudo enviar el email de reseteo')
+    }
+}
+
+// Completar cambio de contraseña cuando el usuario vuelve desde el email (opcional)
+export async function updatePassword(newPassword) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) {
+        console.error('[auth.js updatePassword]:', error)
+        throw new Error(error.message || 'No se pudo actualizar la contraseña')
+    }
 }
 
 export async function updateAuthUserData(data) {

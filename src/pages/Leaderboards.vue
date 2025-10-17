@@ -8,7 +8,6 @@ import { fetchGames } from '../services/games'
 
 export default {
   name: 'Leaderboards',
-  components: { AppH1, LeaderboardTable },
   components: { AppH1, LeaderboardTable, PeriodTabs, GameFilter },
   data() {
     return {

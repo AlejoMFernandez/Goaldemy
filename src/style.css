@@ -75,3 +75,27 @@ body { font-family: var(--font-sans); }
 .list-move, .list-enter-active, .list-leave-active { transition: all 250ms ease; }
 .list-enter-from, .list-leave-to { opacity: 0; transform: translateY(6px); }
 .list-leave-active { position: absolute; }
+
+/* Floating XP badge animation */
+.xp-float {
+    position: absolute;
+    z-index: 30;
+    padding: 6px 10px;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 12px;
+    color: #dcfce7;
+    background: rgba(16,185,129,0.12);
+    border: 1px solid rgba(16,185,129,0.35);
+    animation: xp-pop 900ms ease-out forwards;
+    pointer-events: none;
+}
+.xp-float.tr {
+    background: rgba(16,185,129,0.18);
+    border-color: rgba(16,185,129,0.45);
+}
+@keyframes xp-pop {
+    0% { opacity: 0; transform: translate(-50%, 8px) scale(0.96); }
+    15% { opacity: 1; transform: translate(-50%, 0) scale(1.0); }
+    100% { opacity: 0; transform: translate(-50%, -26px) scale(0.98); }
+}

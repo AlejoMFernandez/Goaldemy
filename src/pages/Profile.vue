@@ -7,6 +7,7 @@ import { getUserXpByGame } from '../services/games';
 import ProfileHeaderCard from '../components/profile/ProfileHeaderCard.vue';
 import AchievementsCard from '../components/profile/AchievementsCard.vue';
 import XpByGameCard from '../components/profile/XpByGameCard.vue';
+import XpDonutChart from '../components/profile/XpDonutChart.vue';
 import ProgressCard from '../components/profile/ProgressCard.vue';
 import ConnectionsCard from '../components/profile/ConnectionsCard.vue';
 import CommunityCard from '../components/profile/CommunityCard.vue';
@@ -15,7 +16,7 @@ let unsubscribeAuth = () => {};
 
 export default {
   name: 'Profile',
-  components: { AppH1, ProfileHeaderCard, AchievementsCard, XpByGameCard, ProgressCard, ConnectionsCard, CommunityCard },
+  components: { AppH1, ProfileHeaderCard, AchievementsCard, XpByGameCard, XpDonutChart, ProgressCard, ConnectionsCard, CommunityCard },
   data() {
     return {
       user: {
@@ -140,7 +141,8 @@ export default {
           :career="user.career"
           :bio="user.bio"
         />
-        <AchievementsCard :achievements="achievements" :loading="achLoading" />
+  <AchievementsCard :achievements="achievements" :loading="achLoading" />
+  <XpDonutChart :items="xpByGame" :loading="xpByGameLoading" />
         <XpByGameCard :items="xpByGame" :loading="xpByGameLoading" />
         <div class="rounded-lg border border-white/10 p-4">
           <p class="text-xs uppercase tracking-wide text-slate-400">Detalles del usuario</p>

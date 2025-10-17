@@ -1,47 +1,82 @@
 import { supabase } from './supabase';
 
+function normalizeGame(row) {
+  const cover = row?.cover_url ?? row?.image ?? null
+  return {
+    ...row,
+    cover_url: cover,
+    image: cover,
+  }
+}
+
 // Fetch list of games from Supabase 'games' table
 export async function fetchGames() {
   console.debug('[games.js] fetchGames start')
-  const { data, error } = await supabase
+  // First try with cover_url
+  let { data, error } = await supabase
     .from('games')
-    .select('id,name,description,image,created_at')
-    .order('created_at', { ascending: false });
+    .select('id, name, description, cover_url, created_at')
+    .order('created_at', { ascending: false })
+
+  // Fallback to legacy schema using image
+  if (error && (error.code === '42703' || /column .* does not exist/i.test(error.message || ''))) {
+    const res = await supabase
+      .from('games')
+      .select('id, name, description, image, created_at')
+      .order('created_at', { ascending: false })
+    data = res.data; error = res.error
+  }
 
   if (error) {
-    console.error('[games.js fetchGames] Error fetching games:', error);
-    throw error;
+    console.error('[games.js fetchGames] Error fetching games:', error)
+    throw error
   }
   console.debug('[games.js] fetchGames ok, rows:', data?.length ?? 0)
-  return data || [];
+  return (data || []).map(normalizeGame)
 }
 
 // Optionally fetch a single game by id (useful later)
 export async function fetchGameById(id) {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('games')
-    .select('id,name,description,image,created_at')
+    .select('id, name, description, cover_url, created_at')
     .eq('id', id)
-    .maybeSingle();
+    .maybeSingle()
 
-  if (error) {
-    console.error('[games.js fetchGameById] Error fetching game:', error);
-    throw error;
+  if (error && (error.code === '42703' || /column .* does not exist/i.test(error.message || ''))) {
+    const res = await supabase
+      .from('games')
+      .select('id, name, description, image, created_at')
+      .eq('id', id)
+      .maybeSingle()
+    data = res.data; error = res.error
   }
 
-  return data;
+  if (error) {
+    console.error('[games.js fetchGameById] Error fetching game:', error)
+    throw error
+  }
+
+  return data ? normalizeGame(data) : null
 }
 
 // Fetch multiple games by IDs and return a map
 export async function fetchGamesByIds(ids = []) {
   if (!ids.length) return {}
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('games')
     .select('id, name, cover_url')
     .in('id', ids)
+  if (error && (error.code === '42703' || /column .* does not exist/i.test(error.message || ''))) {
+    const res = await supabase
+      .from('games')
+      .select('id, name, image')
+      .in('id', ids)
+    data = res.data; error = res.error
+  }
   if (error) throw error
   const map = {}
-  ;(data || []).forEach(g => { map[g.id] = g })
+  ;(data || []).forEach(g => { map[g.id] = normalizeGame(g) })
   return map
 }
 

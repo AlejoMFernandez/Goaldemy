@@ -3,6 +3,7 @@ import AppH1 from '../components/AppH1.vue';
 import AppButton from '../components/AppButton.vue';
 import { fetchLastGlobalChatMessages, saveGlobalChatMessage, suscribeToGlobalChatMessages } from '../services/global-chat';
 import { subscribeToAuthStateChanges } from '../services/auth';
+import { formatShortDate } from '../services/formatters';
 
 let unsubscribeAuth = () => {};
 let unsubscribeChat = () => {};
@@ -27,14 +28,18 @@ export default {
   },
   methods: {
     async handleSubmit() {
-      saveGlobalChatMessage({
+      const raw = this.newMessage.content || ''
+      // Trim trailing whitespace/newlines; block empty messages
+      const trimmedEnd = raw.replace(/\s+$/g, '')
+      if (trimmedEnd.trim().length === 0) return
+      await saveGlobalChatMessage({
         sender_id: this.user.id,
         email: this.user.email,
-        content: this.newMessage.content
+        content: trimmedEnd
       })
-
-      this.newMessage.content = '';
+      this.newMessage.content = ''
     },
+    formatShortDate,
   },
   async mounted() {
     unsubscribeAuth = subscribeToAuthStateChanges(userState => this.user = userState); 
@@ -80,7 +85,7 @@ export default {
               <div class="m-0 text-sm font-semibold text-slate-200"><span>{{ message.email }}</span></div>
               <div class="my-1 whitespace-pre-line">{{ message.content }}</div>
               <!-- hora formateada a: dia/mes SIN AÑO hora:minutos -->
-              <div class="m-0 text-xs font-light text-slate-400">{{ new Date(message.created_at).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) }}</div>
+              <div class="m-0 text-xs font-light text-slate-400">{{ formatShortDate(message.created_at) }}</div>
             </li>
         </ol>
       </section>
@@ -99,6 +104,7 @@ export default {
               class="input min-h-40"
               placeholder="Escribe tu mensaje"
               v-model="newMessage.content"
+              @keydown.enter.exact.prevent="handleSubmit"
             ></textarea>
           </div>
           <AppButton type="submit">Enviar</AppButton>

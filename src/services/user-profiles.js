@@ -10,7 +10,7 @@ export async function getUserProfileById(id) {
 
     if (error) {
         console.error('[user-profiles.js getUserProfileById] - User Nº:', id, error);
-        throw new Error("error.message");
+        throw new Error(error.message || 'Failed to fetch user profile');
     }
     return data;
 }
@@ -21,7 +21,7 @@ export async function createUserProfile(data) {
         .insert([data]);
     if (error) {
         console.error('[user-profiles.js createUserProfile]:', error);
-        throw new Error("error.message");
+        throw new Error(error.message || 'Failed to create user profile');
     }
 }
 
@@ -33,7 +33,7 @@ export async function updateUserProfile(id, newData) {
 
     if (error) {
         console.error('[user-profiles.js updateUserProfile] - User Nº:', id, error);
-        throw new Error("error.message");
+        throw new Error(error.message || 'Failed to update user profile');
     }
 }
 
