@@ -31,11 +31,7 @@ export default {
             <router-link to="/games" class="rounded-full border border-white/15 px-3 py-1.5 text-slate-200 hover:bg-white/5">← Volver</router-link>
             <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-1.5 flex items-center gap-2">
               <span class="text-slate-300 text-[10px] uppercase tracking-wider">Puntaje</span>
-<<<<<<< HEAD
-              <span class="text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ attempts * 10 }}/{{ score }}</span>
-=======
               <span class="text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
             </div>
           </div>
         </div>
@@ -53,10 +49,8 @@ export default {
               <div class="flex flex-col items-center">
                 <p class="text-slate-200 mb-2 text-center text-base">¿De qué país es <strong class="text-white">{{ current?.name }}</strong>?</p>
                 <img v-if="current" :src="current.image" :alt="current.name" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg" />
-<<<<<<< HEAD
-=======
                 <div class="mt-1 text-xs text-slate-300" v-if="streak > 0">Racha: {{ streak }}</div>
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
+                <div class="mt-1 text-xs text-slate-300" v-if="streak > 0">Racha: {{ streak }}</div>
               </div>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">

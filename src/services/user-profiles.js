@@ -26,17 +26,6 @@ export async function createUserProfile(data) {
 }
 
 export async function updateUserProfile(id, newData) {
-<<<<<<< HEAD
-    const { data, error } = await supabase
-        .from('user_profiles')
-        .update(newData)
-        .eq('id', id);
-
-    if (error) {
-        console.error('[user-profiles.js updateUserProfile] - User Nº:', id, error);
-        throw new Error(error.message || 'Failed to update user profile');
-    }
-=======
     // Try to update; if backend complains about unknown columns in schema cache, progressively remove them and retry.
     let payload = { ...(newData || {}) }
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -64,7 +53,6 @@ export async function updateUserProfile(id, newData) {
     }
     // If we exhausted retries and still not returned, throw
     throw new Error('Failed to update user profile after retries')
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
 }
 
 // Public helpers for reading basic profile info (via view if available)

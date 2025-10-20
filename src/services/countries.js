@@ -8,16 +8,8 @@ export function countryCodeFromName(name) {
   const code = nameToCode.get(String(name).toLowerCase());
   return code || null;
 }
-
-<<<<<<< HEAD
-export function flagUrl(code, width = 40) {
-  if (!code) return null;
-  // flagcdn expects lowercase iso-like codes
-  return `https://flagcdn.com/w${width}/${code.toLowerCase()}.png`;
-=======
 export function flagUrl(code, _width = 40) {
   if (!code) return null;
   // Always use w40 per requirement; size is controlled with CSS
   return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
 }

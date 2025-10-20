@@ -3,27 +3,16 @@ import AppH1 from '../components/AppH1.vue';
 import AppButton from '../components/AppButton.vue';
 import { subscribeToAuthStateChanges, updateAuthUserData } from '../services/auth';
 import { supabase } from '../services/supabase';
-<<<<<<< HEAD
-=======
 import countriesMap from '../codeCOUNTRYS.json';
 import { flagUrl } from '../services/countries';
 import SearchSelect from '../components/SearchSelect.vue';
 import { getAllPlayers, getAllTeams } from '../services/players';
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
 
 let unsubscribeAuth = () => {};
 
 export default {
   name: 'ProfileEdit',
-  components: {
-    AppH1,
-<<<<<<< HEAD
-    AppButton
-=======
-    AppButton,
-    SearchSelect,
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
-  },
+  components: { AppH1, AppButton, SearchSelect },
   data() {
     return {
       formData: {
@@ -31,11 +20,6 @@ export default {
         bio: '',
         career: '',
         avatar_url: '',
-<<<<<<< HEAD
-      },
-      avatarFile: null,
-      loading: false,
-=======
         nationality_code: '',
         favorite_team: '',
         favorite_player: '',
@@ -45,7 +29,6 @@ export default {
       countries: Object.entries(countriesMap).map(([code, name]) => ({ code: code.toLowerCase(), name })).sort((a,b) => a.name.localeCompare(b.name,'es')),
       players: getAllPlayers().map(p => ({ value: p.name, label: p.name })),
       teams: getAllTeams().map(t => ({ value: t.name, label: t.name })),
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
     }
   },
   computed: {
@@ -82,13 +65,10 @@ export default {
         display_name: userState.display_name ?? '',
         bio: userState.bio ?? '',
         career: userState.career ?? '',
-        avatar_url: userState.avatar_url ?? '',
-<<<<<<< HEAD
-=======
-        nationality_code: userState.nationality_code ?? '',
-        favorite_team: userState.favorite_team ?? '',
-        favorite_player: userState.favorite_player ?? '',
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
+  avatar_url: userState.avatar_url ?? '',
+  nationality_code: userState.nationality_code ?? '',
+  favorite_team: userState.favorite_team ?? '',
+  favorite_player: userState.favorite_player ?? '',
       }
       this.user = userState
     });
@@ -144,8 +124,6 @@ export default {
           v-model="formData.career"
         />
       </div>
-<<<<<<< HEAD
-=======
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label class="label" for="nationality">Nacionalidad</label>
@@ -164,7 +142,24 @@ export default {
       <div>
         <SearchSelect label="Jugador favorito" v-model="formData.favorite_player" :options="players" placeholder="Escribe 3 letras para filtrar" />
       </div>
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="label" for="nationality">Nacionalidad</label>
+          <div class="flex items-center gap-2">
+            <img v-if="formData.nationality_code" :src="flagUrl(formData.nationality_code, 24)" :alt="formData.nationality_code" width="24" height="16" class="rounded ring-1 ring-white/10" />
+            <select id="nationality" v-model="formData.nationality_code" class="select w-full">
+              <option value="">— Selecciona un país —</option>
+              <option v-for="c in countries" :key="c.code" :value="c.code">{{ c.name }}</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <SearchSelect label="Equipo favorito" v-model="formData.favorite_team" :options="teams" placeholder="Escribe 3 letras para filtrar" />
+        </div>
+      </div>
+      <div>
+        <SearchSelect label="Jugador favorito" v-model="formData.favorite_player" :options="players" placeholder="Escribe 3 letras para filtrar" />
+      </div>
       <!-- redireccionamos a perfil -->
       <AppButton type="submit">Guardar cambios</AppButton>
     </form>

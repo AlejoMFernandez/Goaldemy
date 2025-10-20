@@ -36,11 +36,7 @@ async function loadExtendedProfile() {
 }
 
 // Funciones de manejo de usuario
-<<<<<<< HEAD
-export async function register(email, password) {
-=======
 export async function register(email, password, profileData = {}) {
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
     try {
         const { data, error } = await supabase.auth.signUp({
             email,
@@ -56,9 +52,6 @@ export async function register(email, password, profileData = {}) {
         // If email confirmation is required, user can be null here
         if (u) {
             setAuthUserState({ id: u.id, email: u.email });
-<<<<<<< HEAD
-            await createUserProfile({ id: u.id, email: u.email });
-=======
             // Attempt to create extended profile; ignore unknown columns
             const base = { id: u.id, email: u.email }
             const allowed = ['display_name','bio','career','avatar_url','nationality_code','favorite_team','favorite_player']
@@ -67,7 +60,6 @@ export async function register(email, password, profileData = {}) {
                 // If insertion fails due to unknown column, try minimal
                 try { await createUserProfile(base) } catch {}
             }
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
         } else {
             setAuthUserState({ id: null, email: email });
         }

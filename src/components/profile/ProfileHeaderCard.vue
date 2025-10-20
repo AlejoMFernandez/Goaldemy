@@ -6,12 +6,9 @@ defineProps({
   email: { type: String, required: false, default: '' },
   career: { type: String, required: false, default: '' },
   bio: { type: String, required: false, default: '' },
-<<<<<<< HEAD
-=======
   nationalityCode: { type: String, required: false, default: '' },
   favoriteTeam: { type: String, required: false, default: '' },
   favoritePlayer: { type: String, required: false, default: '' },
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
 })
 </script>
 
@@ -28,8 +25,6 @@ defineProps({
         <p class="text-slate-300 text-sm">{{ email || '—' }}</p>
       </div>
     </div>
-<<<<<<< HEAD
-=======
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
       <div>
         <p class="text-xs uppercase tracking-wide text-slate-400">Nacionalidad</p>
@@ -47,7 +42,6 @@ defineProps({
         <p class="mt-1 text-slate-100">{{ favoritePlayer || '—' }}</p>
       </div>
     </div>
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
     <div>
       <p class="text-xs uppercase tracking-wide text-slate-400">Carrera</p>
       <p class="mt-1 text-slate-100">{{ career || 'No establecida' }}</p>

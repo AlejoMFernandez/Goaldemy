@@ -41,12 +41,9 @@ export default {
         :avatar-url="user?.avatar_url"
         :display-name="displayName"
         :email="user?.email"
-<<<<<<< HEAD
-=======
         :nationality-code="user?.nationality_code"
         :favorite-team="user?.favorite_team"
         :favorite-player="user?.favorite_player"
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
         :career="user?.career"
         :bio="user?.bio"
       />

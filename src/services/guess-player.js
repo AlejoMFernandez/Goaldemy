@@ -42,13 +42,6 @@ export async function pickAnswer(state, option, confettiHost) {
   const correct = option.value === state.current.name
   if (correct) {
     // Award XP and achievements using standardized helper
-<<<<<<< HEAD
-  await awardXpForCorrect({ gameCode: 'guess-player', amount: 10, attemptIndex: state.attempts, streak: state.streak + 1 })
-  onCorrect(state)
-  spawnXpBadge(confettiHost, '+10 XP', { position: 'top-right' })
-  } else {
-    onIncorrect(state)
-=======
   const nextStreak = state.streak + 1
   await awardXpForCorrect({ gameCode: 'guess-player', amount: 10, attemptIndex: state.attempts, streak: nextStreak, corrects: state.corrects + 1 })
   onCorrect(state)
@@ -57,7 +50,6 @@ export async function pickAnswer(state, option, confettiHost) {
   } else {
     onIncorrect(state)
     state.streak = 0
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
   }
   state.feedback = correct ? '¡Correcto!' : `Incorrecto: era ${state.current.name}`
   return correct

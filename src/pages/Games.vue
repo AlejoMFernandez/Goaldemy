@@ -37,17 +37,12 @@ export default {
   },
   methods: {
     onPlay(game) {
-<<<<<<< HEAD
-      // TODO: route to a game page or open modal when available
-      alert(`Próximamente: ${game.name}`);
-=======
       // Known demo routes by slug
       const slug = game.slug || ''
       if (slug === 'guess-player') return this.$router.push('/games/guess-player')
       if (slug === 'nationality') return this.$router.push('/games/nationality')
       // Fallback
       alert(`Próximamente: ${game.name}`)
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
     }
   }
 }

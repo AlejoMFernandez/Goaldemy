@@ -77,13 +77,6 @@ export async function pick(state, option, confettiHost) {
   const correct = option.value === state.current.cname
   if (correct) {
     // First award XP with current attempt/streak values (before increment)
-<<<<<<< HEAD
-    await awardXpForCorrect({ gameCode: 'nationality', amount: 10, attemptIndex: state.attempts, streak: state.streak + 1 })
-  onCorrect(state)
-  spawnXpBadge(confettiHost, '+10 XP', { position: 'top-right' })
-  } else {
-    onIncorrect(state)
-=======
   const nextStreak = state.streak + 1
   await awardXpForCorrect({ gameCode: 'nationality', amount: 10, attemptIndex: state.attempts, streak: nextStreak, corrects: state.corrects + 1 })
     onCorrect(state)
@@ -92,7 +85,6 @@ export async function pick(state, option, confettiHost) {
   } else {
     onIncorrect(state)
     state.streak = 0
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
   }
   state.feedback = correct ? '¡Correcto!' : `Incorrecto: era ${state.current.cname}`
   return correct

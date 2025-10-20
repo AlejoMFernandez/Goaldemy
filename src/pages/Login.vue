@@ -87,14 +87,10 @@ export default {
       <p v-if="error" class="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg p-2">{{ error }}</p>
       <div class="pt-2 flex justify-between items-center">
         <AppButton type="submit">Acceder</AppButton>
-<<<<<<< HEAD
-        <button type="button" @click="handleResetPassword" class="text-slate-300 hover:text-white text-sm underline-offset-2 hover:underline disabled:opacity-60" :disabled="loading">¿Olvidaste tu contraseña?</button>
-=======
         <div class="flex items-center gap-3">
           <button type="button" @click="handleResetPassword" class="text-slate-300 hover:text-white text-sm underline-offset-2 hover:underline disabled:opacity-60" :disabled="loading">¿Olvidaste tu contraseña?</button>
           <RouterLink to="/register" class="text-slate-300 hover:text-white text-sm underline-offset-2 hover:underline">¿No tienes cuenta?</RouterLink>
         </div>
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
       </div>
     </form>
   </div>
