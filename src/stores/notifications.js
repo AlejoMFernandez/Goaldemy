@@ -1,7 +1,7 @@
 import { reactive } from 'vue'
 
 // Simple global notifications store (singleton)
-// Currently supports only 'achievement' toasts, but can be extended.
+// Supports 'achievement' and 'level' toasts.
 const state = reactive({
   items: [], // { id, type, title, iconUrl, earnedAt }
 })
@@ -20,8 +20,8 @@ function push(item, ttlMs = 5000) {
   return id
 }
 
-export function pushAchievementToast({ title, iconUrl, earnedAt }) {
-  return push({ type: 'achievement', title, iconUrl, earnedAt })
+export function pushAchievementToast({ title, iconUrl, earnedAt, points = null }) {
+  return push({ type: 'achievement', title, iconUrl, earnedAt, points })
 }
 
 export function pushLevelUpToast({ level }) {

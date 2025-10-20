@@ -50,7 +50,7 @@ export default {
         <li v-if="!items.length" class="px-3 py-2 text-slate-400">Sin resultados</li>
       </ul>
     </div>
-    <p v-if="modelValue" class="mt-1 text-xs text-slate-400">Seleccionado: {{ modelValue }}</p>
+    
   </div>
 </template>
 

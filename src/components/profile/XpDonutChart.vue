@@ -17,6 +17,9 @@ export default {
     items: { type: Array, required: true }, // [{ id, name, xp }]
     loading: { type: Boolean, default: false },
   },
+  data() {
+    return { chartRef: null }
+  },
   computed: {
     chartData() {
       const labels = this.items.map(i => i.name)
@@ -41,10 +44,44 @@ export default {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { color: '#cbd5e1', boxWidth: 12 } },
+          // Legend below the chart with extra spacing to separate from the donut
+          legend: {
+            position: 'bottom',
+            labels: { color: '#cbd5e1', boxWidth: 12, padding: 16 },
+            padding: 16,
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const v = ctx.parsed ?? ctx.raw ?? 0
+                const nf = new Intl.NumberFormat('es-AR')
+                return ` ${nf.format(v)} XP`
+              }
+            }
+          }
         },
-        layout: { padding: 8 },
+        // Extra bottom padding creates a clearer gap between the chart area and the legend
+        layout: { padding: { top: 8, right: 8, bottom: 16, left: 8 } },
       }
+    }
+  },
+  methods: {
+    onChartMounted(el) {
+      this.chartRef = el
+    },
+    highlightIndex(i) {
+      const c = this.chartRef?.chart
+      if (!c) return
+      c.setActiveElements([{ datasetIndex: 0, index: i }])
+      c.tooltip?.setActiveElements?.([{ datasetIndex: 0, index: i }], { x: 0, y: 0 })
+      c.update()
+    },
+    clearHighlight() {
+      const c = this.chartRef?.chart
+      if (!c) return
+      c.setActiveElements([])
+      c.tooltip?.setActiveElements?.([], { x: 0, y: 0 })
+      c.update()
     }
   }
 }
@@ -58,14 +95,15 @@ export default {
       <div v-else-if="!items.length" class="text-slate-500">Aún no hay XP para graficar</div>
       <div v-else>
         <div style="height: 240px;">
-          <Doughnut :data="chartData" :options="chartOptions" />
+          <Doughnut ref="chart" :data="chartData" :options="chartOptions" :height="240" :width="240" v-slot="{ chart }" >
+          </Doughnut>
         </div>
-        <div class="mt-4 rounded-lg bg-white/3 border border-white/10 p-3">
+        <div class="mt-6 rounded-lg bg-white/3 border border-white/10 p-3">
           <p class="text-[10px] uppercase tracking-wider text-slate-400">Detalle</p>
           <ul class="mt-1 space-y-1">
-            <li v-for="g in items" :key="g.id" class="flex items-center gap-2 text-sm text-slate-200">
+            <li v-for="(g,idx) in items" :key="g.id" class="flex items-center gap-2 text-sm text-slate-200 rounded px-2 py-1">
               <span class="truncate">{{ g.name }}</span>
-              <span class="ml-auto text-slate-100 font-medium">{{ g.xp }} XP</span>
+              <span class="ml-auto text-slate-100 font-medium">{{ new Intl.NumberFormat('es-AR').format(g.xp) }} XP</span>
             </li>
           </ul>
         </div>
@@ -75,4 +113,5 @@ export default {
 </template>
 
 <style scoped>
+canvas { cursor: pointer; }
 </style>

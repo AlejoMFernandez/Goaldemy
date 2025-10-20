@@ -4,6 +4,7 @@ import { subscribeToAuthStateChanges } from '../services/auth';
 import { getUserLevel } from '../services/xp';
 import { getUserAchievements } from '../services/achievements';
 import { getUserXpByGame } from '../services/games';
+import { getPublicProfile } from '../services/user-profiles';
 import ProfileHeaderCard from '../components/profile/ProfileHeaderCard.vue';
 import AchievementsCard from '../components/profile/AchievementsCard.vue';
 // XpByGameCard inlined into XpDonutChart list
@@ -19,6 +20,7 @@ export default {
   components: { AppH1, ProfileHeaderCard, AchievementsCard, XpDonutChart, ProgressCard, ConnectionsCard, CommunityCard },
   data() {
     return {
+      // This holds the profile being viewed (own or other user's)
       user: {
         id: null,
         email: null,
@@ -26,6 +28,8 @@ export default {
         bio: null,
         career: null,
       },
+      // Authenticated user's id (used when no :id param)
+      currentAuthId: null,
       levelInfo: null,
       levelLoading: false,
       achievements: [],
@@ -63,63 +67,93 @@ export default {
     },
   },
   mounted() {
+    // Subscribe to auth to know the default profile id when there's no :id param
     unsubscribeAuth = subscribeToAuthStateChanges(async (userState) => {
       console.debug('[Profile.vue] auth state:', userState?.id)
-      this.user = userState;
-      if (this.user && this.user.id) {
-        this.levelLoading = true;
-        console.debug('[Profile.vue] loading level for', this.user.id)
-        try {
-          const { data, error } = await getUserLevel(this.user.id);
-          if (error) console.error('getUserLevel error:', error);
-          this.levelInfo = Array.isArray(data) ? data[0] : data;
-        } catch (e) {
-          console.error('getUserLevel exception:', e);
-          this.levelInfo = null;
-        } finally {
-          this.levelLoading = false;
-          console.debug('[Profile.vue] level loaded')
-        }
-
-        // Load achievements
-        this.achLoading = true;
-        console.debug('[Profile.vue] loading achievements')
-        try {
-          const { data: ach, error: achErr } = await getUserAchievements(this.user.id);
-          if (achErr) console.error('load achievements error:', achErr);
-          this.achievements = ach || [];
-        } catch (e) {
-          console.error('achievements exception:', e);
-          this.achievements = [];
-        } finally {
-          this.achLoading = false;
-          console.debug('[Profile.vue] achievements loaded')
-        }
-
-        // Load XP by game via service
-        this.xpByGameLoading = true;
-        console.debug('[Profile.vue] loading xp by game')
-        try {
-          const { data: xpRows, error: xpErr } = await getUserXpByGame(this.user.id);
-          if (xpErr) console.error('load xp by game error:', xpErr);
-          this.xpByGame = xpRows || [];
-        } catch (e) {
-          console.error('xp by game exception:', e);
-          this.xpByGame = [];
-        } finally {
-          this.xpByGameLoading = false;
-          console.debug('[Profile.vue] xp by game loaded')
-        }
-      } else {
-        this.levelInfo = null;
-        this.achievements = [];
-        this.xpByGame = [];
-      }
+      this.currentAuthId = userState?.id || null
+      // Reload if viewing own profile and auth changed
+      this.ensureLoad()
     });
+    // Initial load
+    this.ensureLoad()
+    // React to route changes (/u/:id)
+    this.$watch(() => this.$route.params.id, () => this.ensureLoad())
   },
   unmounted() {
     unsubscribeAuth();
   },
+  methods: {
+    async ensureLoad() {
+      const paramId = this.$route.params.id
+      const targetId = paramId || this.currentAuthId
+      if (!targetId) {
+        // Anonymous and no target id
+        this.user = { id: null, email: null, display_name: null, bio: null, career: null }
+        this.levelInfo = null
+        this.achievements = []
+        this.xpByGame = []
+        return
+      }
+      await this.loadFor(targetId)
+    },
+    async loadFor(userId) {
+      try {
+        // Load public profile info for display (works for own and others)
+        const { data: profile, error } = await getPublicProfile(userId)
+        if (error) console.error('[Profile.vue] getPublicProfile error:', error)
+        // Fall back: at least set id when not found
+        this.user = profile ? { ...profile, id: userId } : { id: userId }
+      } catch (e) {
+        console.error('[Profile.vue] getPublicProfile exception:', e)
+        this.user = { id: userId }
+      }
+
+      // Level
+      this.levelLoading = true
+      try {
+        const { data, error } = await getUserLevel(userId)
+        if (error) console.error('getUserLevel error:', error)
+        this.levelInfo = Array.isArray(data) ? data[0] : data
+      } catch (e) {
+        console.error('getUserLevel exception:', e)
+        this.levelInfo = null
+      } finally {
+        this.levelLoading = false
+      }
+
+      // Achievements
+      this.achLoading = true
+      try {
+        const { data: ach, error: achErr } = await getUserAchievements(userId)
+        if (achErr) console.error('load achievements error:', achErr)
+        this.achievements = ach || []
+      } catch (e) {
+        console.error('achievements exception:', e)
+        this.achievements = []
+      } finally {
+        this.achLoading = false
+      }
+
+      // XP by game
+      this.xpByGameLoading = true
+      try {
+        const { data: xpRows, error: xpErr } = await getUserXpByGame(userId)
+        // Silenciar el caso esperado de RPC inexistente que ya cubrimos con fallback
+        if (xpErr && !(xpErr.code === 'PGRST202' || /Could not find the function/i.test(xpErr.message || ''))) {
+          console.error('load xp by game error:', xpErr)
+        }
+        this.xpByGame = xpRows || []
+      } catch (e) {
+        // Evitar ruido si el backend no tiene el RPC todavía
+        if (!(e?.code === 'PGRST202' || /Could not find the function/i.test(e?.message || ''))) {
+          console.error('xp by game exception:', e)
+        }
+        this.xpByGame = []
+      } finally {
+        this.xpByGameLoading = false
+      }
+    }
+  }
 };
 </script>
 
@@ -127,7 +161,7 @@ export default {
   <div class="mx-auto max-w-5xl pb-8">
     <div class="mb-4 flex items-center justify-between gap-2">
       <AppH1>Mi Perfil</AppH1>
-  <router-link to="/profile-edit" class="text-sm text-blue-500 hover:underline">Editar perfil</router-link>
+    <router-link v-if="($route.params.id || currentAuthId) === currentAuthId" to="/profile-edit" class="text-sm text-blue-500 hover:underline">Editar perfil</router-link>
     </div>
 
   <section class="grid gap-4 md:grid-cols-12">

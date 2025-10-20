@@ -6,9 +6,10 @@ const items = computed(() => notificationsState.items)
 </script>
 
 <template>
-  <div class="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[90vw]">
+  <div class="fixed bottom-4 right-4 z-50 w-80 max-w-[90vw]">
+    <div class="flex flex-col gap-3">
     <transition-group name="toast" tag="div">
-      <div v-for="n in items" :key="n.id" class="rounded-lg bg-slate-800/95 backdrop-blur border border-slate-700 p-3 shadow-lg flex items-start gap-3">
+      <div v-for="n in items" :key="n.id" class="rounded-lg bg-slate-800/95 backdrop-blur border border-slate-700 p-3 shadow-lg flex items-start gap-3 mb-2">
         <div class="shrink-0">
           <template v-if="n.type === 'achievement'">
             <img v-if="n.iconUrl" :src="n.iconUrl" alt="icon" class="w-10 h-10 rounded" />
@@ -31,6 +32,7 @@ const items = computed(() => notificationsState.items)
           <template v-if="n.type === 'achievement'">
             <p class="text-sm font-semibold text-slate-100">¡Logro desbloqueado!</p>
             <p class="text-xs text-slate-200 whitespace-normal break-words leading-snug">{{ n.title }}</p>
+            <p v-if="n.points" class="text-[11px] text-emerald-300 mt-0.5">+{{ n.points }} XP</p>
           </template>
           <template v-else-if="n.type === 'level'">
             <p class="text-sm font-semibold text-slate-100">¡Subiste de nivel!</p>
@@ -44,6 +46,7 @@ const items = computed(() => notificationsState.items)
         <button @click="removeNotification(n.id)" class="text-slate-400 hover:text-slate-200">✕</button>
       </div>
     </transition-group>
+    </div>
   </div>
 </template>
 

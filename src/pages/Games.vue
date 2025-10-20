@@ -41,6 +41,7 @@ export default {
       const slug = game.slug || ''
       if (slug === 'guess-player') return this.$router.push('/games/guess-player')
       if (slug === 'nationality') return this.$router.push('/games/nationality')
+      if (slug === 'player-position') return this.$router.push('/games/player-position')
       // Fallback
       alert(`Próximamente: ${game.name}`)
     }
@@ -56,6 +57,7 @@ export default {
       <div class="flex flex-wrap gap-3">
         <router-link class="rounded-lg border border-white/10 px-3 py-2 text-slate-200 hover:bg-white/5" to="/games/guess-player">Demo: Adivina el jugador</router-link>
         <router-link class="rounded-lg border border-white/10 px-3 py-2 text-slate-200 hover:bg-white/5" to="/games/nationality">Demo: Nacionalidad correcta</router-link>
+        <router-link class="rounded-lg border border-white/10 px-3 py-2 text-slate-200 hover:bg-white/5" to="/games/player-position">Demo: Posición del jugador</router-link>
       </div>
 
       <div v-if="loading" class="text-slate-300">Cargando juegos…</div>

@@ -9,8 +9,9 @@ import ProfileEdit from '../pages/ProfileEdit.vue';
 import Games from '../pages/Games.vue';
 import GuessPlayer from '../pages/games/GuessPlayer.vue';
 import NationalityGame from '../pages/games/NationalityGame.vue';
+import PlayerPosition from '../pages/games/PlayerPosition.vue';
 import Leaderboards from '../pages/Leaderboards.vue';
-import UserPublic from '../pages/UserPublic.vue';
+// Reuse Profile for public view by id
 
 const routes = [
     { path: '/', component: Home },
@@ -22,8 +23,9 @@ const routes = [
     { path: '/games', component: Games },
     { path: '/games/guess-player', component: GuessPlayer, meta: { requiresAuth: true } },
     { path: '/games/nationality', component: NationalityGame, meta: { requiresAuth: true } },
+    { path: '/games/player-position', component: PlayerPosition, meta: { requiresAuth: true } },
     { path: '/leaderboards', component: Leaderboards },
-    { path: '/u/:id', component: UserPublic },
+    { path: '/u/:id', component: Profile },
 ]
 
 const router = createRouter({

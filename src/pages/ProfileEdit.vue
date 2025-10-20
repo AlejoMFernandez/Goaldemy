@@ -39,6 +39,7 @@ export default {
     }
   },
   methods: {
+    flagUrl,
     async handleSubmit(){
       try {
         this.loading = true;
@@ -123,24 +124,6 @@ export default {
           placeholder="Tu carrera"
           v-model="formData.career"
         />
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <label class="label" for="nationality">Nacionalidad</label>
-          <div class="flex items-center gap-2">
-            <img v-if="formData.nationality_code" :src="flagUrl(formData.nationality_code, 24)" :alt="formData.nationality_code" width="24" height="16" class="rounded ring-1 ring-white/10" />
-            <select id="nationality" v-model="formData.nationality_code" class="select w-full">
-              <option value="">— Selecciona un país —</option>
-              <option v-for="c in countries" :key="c.code" :value="c.code">{{ c.name }}</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <SearchSelect label="Equipo favorito" v-model="formData.favorite_team" :options="teams" placeholder="Escribe 3 letras para filtrar" />
-        </div>
-      </div>
-      <div>
-        <SearchSelect label="Jugador favorito" v-model="formData.favorite_player" :options="players" placeholder="Escribe 3 letras para filtrar" />
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>

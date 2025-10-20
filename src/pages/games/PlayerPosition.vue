@@ -1,13 +1,13 @@
 <script>
 import AppH1 from '../../components/AppH1.vue';
-import { initState, loadPlayers, nextRound, pickAnswer, optionClass } from '../../services/guess-player';
+import { initState, loadPlayers, nextRound, pickAnswer, optionClass } from '../../services/player-position';
 import { initScoring } from '../../services/scoring'
 
 export default {
-  name: 'GuessPlayer',
+  name: 'PlayerPosition',
   components: { AppH1 },
   data() {
-  return { ...initState(), ...initScoring() };
+    return { ...initState(), ...initScoring() };
   },
   mounted() {
     loadPlayers(this);
@@ -26,9 +26,9 @@ export default {
 
 <template>
   <section class="grid place-items-center h-full">
-  <div class="space-y-3 w-full max-w-4xl">
+    <div class="space-y-3 w-full max-w-4xl">
       <div class="flex items-center justify-between">
-        <AppH1>Adivina el jugador</AppH1>
+        <AppH1>Posición del jugador</AppH1>
         <div class="flex items-center gap-2">
           <router-link to="/games" class="rounded-full border border-white/15 px-3 py-1.5 text-slate-200 hover:bg-white/5">← Volver</router-link>
           <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-1.5 flex items-center gap-2">
@@ -54,7 +54,7 @@ export default {
         <Transition name="round-fade" mode="out-in">
           <div :key="roundKey">
             <div class="flex flex-col items-center">
-              <p class="text-slate-200 mb-2 text-center text-base">¿Quién es este jugador?</p>
+              <p class="text-slate-200 mb-2 text-center text-base">¿Cuál es la posición de este jugador?</p>
               <img v-if="current" :src="current.image" :alt="current.name" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg" />
             </div>
 
@@ -79,6 +79,4 @@ export default {
   opacity: 0;
   transform: translateY(6px) scale(0.99);
 }
-
-/* reserved for game local styles */
 </style>

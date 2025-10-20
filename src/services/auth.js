@@ -15,17 +15,17 @@ async function loadUserCurrentAuthState() {
     const { data, error } = await supabase.auth.getUser();
     if (error) {
         console.error('[Auth.vue loadUserCurrentAuthState]:', error);
-        setAuthUserState({ id: null, email: null });
+        setAuthUserState({ id: null, email: null }, { replace: true });
         if (!readyResolved && resolveReady) { readyResolved = true; resolveReady(true); }
         return;
     }
     const u = data?.user || null;
     if (!u) {
-        setAuthUserState({ id: null, email: null });
+        setAuthUserState({ id: null, email: null }, { replace: true });
         if (!readyResolved && resolveReady) { readyResolved = true; resolveReady(true); }
         return;
     }
-    setAuthUserState({ id: u.id, email: u.email });
+    setAuthUserState({ id: u.id, email: u.email }, { replace: true });
     loadExtendedProfile();
     if (!readyResolved && resolveReady) { readyResolved = true; resolveReady(true); }
 }
@@ -51,7 +51,7 @@ export async function register(email, password, profileData = {}) {
         const u = data?.user || null;
         // If email confirmation is required, user can be null here
         if (u) {
-            setAuthUserState({ id: u.id, email: u.email });
+            setAuthUserState({ id: u.id, email: u.email }, { replace: true });
             // Attempt to create extended profile; ignore unknown columns
             const base = { id: u.id, email: u.email }
             const allowed = ['display_name','bio','career','avatar_url','nationality_code','favorite_team','favorite_player']
@@ -83,10 +83,10 @@ export async function login(email, password) {
 
     const u = data?.user || null;
     if (u) {
-        setAuthUserState({ id: u.id, email: u.email });
+        setAuthUserState({ id: u.id, email: u.email }, { replace: true });
         loadExtendedProfile();
     } else {
-        setAuthUserState({ id: null, email: null });
+        setAuthUserState({ id: null, email: null }, { replace: true });
     }
 }
 
@@ -96,7 +96,7 @@ export async function logout() {
     setAuthUserState({
         id: null,
         email: null,
-    });
+    }, { replace: true });
 }
 
 // Enviar email de reseteo de contraseña
@@ -147,7 +147,13 @@ function notifyAll() {
     observers.forEach(notify);
 }
 
-function setAuthUserState(newState){
+function setAuthUserState(newState, opts = {}){
+    const { replace = false } = opts || {}
+    // If replacing or switching to a different user id, reset to a clean base first
+    const isIdChange = Object.prototype.hasOwnProperty.call(newState, 'id') && newState.id !== user.id
+    if (replace || isIdChange) {
+        user = { id: null, email: null }
+    }
     user = {
         ...user,
         ...newState
@@ -165,10 +171,10 @@ try {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
         const u = session?.user || null;
         if (u) {
-            setAuthUserState({ id: u.id, email: u.email });
+            setAuthUserState({ id: u.id, email: u.email }, { replace: true });
             loadExtendedProfile();
         } else {
-            setAuthUserState({ id: null, email: null });
+            setAuthUserState({ id: null, email: null }, { replace: true });
         }
     });
     // Nota: en dev HMR esta suscripción se reemplaza; no requiere limpieza manual aquí

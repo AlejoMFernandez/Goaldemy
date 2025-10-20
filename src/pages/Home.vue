@@ -11,12 +11,9 @@ export default {
 
 <template>
   <section class="relative grid place-items-center h-full overflow-hidden">
-    <!-- Aurora background -->
-    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
-      <div class="absolute -top-24 left-0 right-0 h-72 blur-3xl opacity-60"
-           style="background: radial-gradient(60% 60% at 30% 40%, oklch(0.70 0.21 270 / 0.4), transparent), radial-gradient(50% 50% at 70% 60%, oklch(0.62 0.21 270 / 0.35), transparent)"></div>
-      <div class="absolute bottom-0 left-0 right-0 h-72 blur-2xl opacity-40"
-           style="background: radial-gradient(50% 50% at 20% 70%, oklch(0.55 0.21 270 / 0.35), transparent), radial-gradient(60% 60% at 80% 80%, oklch(0.70 0.21 270 / 0.25), transparent)"></div>
+    <!-- Aurora scoped to Home only -->
+    <div aria-hidden="true" class="aurora-root">
+      <div class="accent"></div>
     </div>
     <div class="space-y-4 text-center max-w-2xl">
       <AppH1>Bienvenido a Goaldemy</AppH1>
@@ -29,3 +26,7 @@ export default {
     </div>
   </section>
 </template>
+
+<style scoped>
+/* No aurora-specific styles here; it's global via .aurora-root */
+</style>

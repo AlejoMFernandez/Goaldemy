@@ -32,6 +32,9 @@ export default {
             <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-1.5 flex items-center gap-2">
               <span class="text-slate-300 text-[10px] uppercase tracking-wider">Puntaje</span>
               <span class="text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
+              <div v-if="streak > 0" class="rounded-full border border-green-500/60 bg-green-500/10 text-green-300 text-xs px-2.5 py-1 font-semibold">
+                Racha: {{ streak }}
+              </div>
             </div>
           </div>
         </div>
@@ -39,18 +42,20 @@ export default {
       <div v-if="loading" class="text-slate-300">Cargando…</div>
         <div v-else class="relative card p-4">
           <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden"></div>
-          <div class="pointer-events-none absolute left-1/2 -translate-x-1/2 -bottom-16 z-10" v-if="feedback">
-            <div :class="['rounded-full px-3 py-1.5 border text-sm', feedback.startsWith('¡') ? 'border-green-500 bg-green-500/15 text-green-300' : 'border-red-500 bg-red-500/15 text-red-300']">
-              {{ feedback }}
-            </div>
+          <div class="absolute right-3 top-3 z-10" v-if="streak > 0">
           </div>
+          <transition name="fade-slide">
+            <div v-if="feedback" class="pointer-events-none absolute right-3 bottom-3 z-10">
+              <div :class="['rounded-full px-3 py-1.5 border text-sm', feedback.startsWith('¡') ? 'border-green-500 bg-green-500/15 text-green-300' : 'border-red-500 bg-red-500/15 text-red-300']">
+                {{ feedback }}
+              </div>
+            </div>
+          </transition>
           <Transition name="round-fade" mode="out-in">
             <div :key="roundKey">
               <div class="flex flex-col items-center">
                 <p class="text-slate-200 mb-2 text-center text-base">¿De qué país es <strong class="text-white">{{ current?.name }}</strong>?</p>
                 <img v-if="current" :src="current.image" :alt="current.name" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg" />
-                <div class="mt-1 text-xs text-slate-300" v-if="streak > 0">Racha: {{ streak }}</div>
-                <div class="mt-1 text-xs text-slate-300" v-if="streak > 0">Racha: {{ streak }}</div>
               </div>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">

@@ -24,15 +24,20 @@ export function initAchievementsRealtime() {
             if (!currentUserId || row.user_id !== currentUserId) return
             const { data: achievement, error } = await supabase
               .from('achievements')
-              .select('name, icon_url')
+              .select('name, icon_url, points')
               .eq('id', row.achievement_id)
               .single()
             if (!error && achievement) {
-              pushAchievementToast({
-                title: achievement.name,
-                iconUrl: achievement.icon_url || null,
-                earnedAt: row.earned_at || new Date().toISOString(),
-              })
+              // Stagger slightly when multiple achievements arrive at the exact same time
+              const delay = 120 * (Math.random() * 2) // 0-240ms random
+              setTimeout(() => {
+                pushAchievementToast({
+                  title: achievement.name,
+                  iconUrl: achievement.icon_url || null,
+                  earnedAt: row.earned_at || new Date().toISOString(),
+                  points: achievement.points || null,
+                })
+              }, delay)
             }
           }
         )

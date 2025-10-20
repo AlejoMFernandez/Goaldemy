@@ -203,7 +203,8 @@
                         insert into public.games (slug, name, description, cover_url)
                         values
                             ('guess-player', 'Adivina el jugador', 'Adivina el nombre del jugador a partir de su foto', null),
-                            ('nationality', 'Nacionalidad correcta', 'Selecciona la nacionalidad del jugador', null)
+                            ('nationality', 'Nacionalidad correcta', 'Selecciona la nacionalidad del jugador', null),
+                            ('player-position', 'Posición del jugador', 'Elegí la posición correcta del jugador mostrado', null)
                         on conflict (slug) do nothing;
                     else
                         -- If slug still doesn't exist for some reason, skip seeding to avoid errors
@@ -236,11 +237,7 @@
     -- Compatibility Views
     -- ============================
 
-<<<<<<< HEAD
-    -- Create a view that always exposes user_id, username, display_name, avatar_url
-=======
-    -- Create a view that always exposes user_id, username, display_name, email, avatar_url and new optional fields
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
+    -- Create a view that always exposes user_id, username, display_name, email, avatar_url and optional fields
     do $$
     declare
     v_id_col text;
@@ -248,12 +245,10 @@
     has_display_name boolean;
     has_avatar_url boolean;
     has_email boolean;
-<<<<<<< HEAD
-=======
     has_nationality boolean;
     has_fav_team boolean;
     has_fav_player boolean;
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
+    
     v_sql text;
     begin
     select column_name into v_id_col
@@ -565,6 +560,32 @@
     end$$;
 
     grant execute on function public.award_xp(int, text, uuid, uuid, jsonb) to authenticated;
+
+        -- Aggregate XP by game for a user (defaults to current user if null)
+        create or replace function public.get_user_xp_by_game(
+            p_user_id uuid default null
+        ) returns table (
+            game_id uuid,
+            name text,
+            cover_url text,
+            xp bigint
+        )
+        language sql
+        security definer
+        set search_path = public
+        as $$
+            select e.game_id,
+                         g.name,
+                         g.cover_url,
+                         sum(e.amount)::bigint as xp
+            from public.xp_events e
+            left join public.games g on g.id = e.game_id
+            where e.user_id = coalesce(p_user_id, auth.uid())
+            group by e.game_id, g.name, g.cover_url
+            order by xp desc nulls last
+        $$;
+
+        grant execute on function public.get_user_xp_by_game(uuid) to authenticated;
 
     -- Total XP helper
     create or replace function public.get_user_total_xp(

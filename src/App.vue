@@ -16,7 +16,7 @@ export default {
 </script>
 
 <template>
-  <div class="min-h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-slate-100 grid grid-rows-[70px_1fr_68px]">
+  <div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-slate-100 grid grid-rows-[auto_1fr_auto]">
     <AppNavBar />
     <main class="container mx-auto px-4 py-8">
       <RouterView />
