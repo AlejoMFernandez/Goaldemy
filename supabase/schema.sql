@@ -236,7 +236,11 @@
     -- Compatibility Views
     -- ============================
 
+<<<<<<< HEAD
     -- Create a view that always exposes user_id, username, display_name, avatar_url
+=======
+    -- Create a view that always exposes user_id, username, display_name, email, avatar_url and new optional fields
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
     do $$
     declare
     v_id_col text;
@@ -244,6 +248,12 @@
     has_display_name boolean;
     has_avatar_url boolean;
     has_email boolean;
+<<<<<<< HEAD
+=======
+    has_nationality boolean;
+    has_fav_team boolean;
+    has_fav_player boolean;
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
     v_sql text;
     begin
     select column_name into v_id_col
@@ -258,17 +268,36 @@
     else
         select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='username') into has_username;
         select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='display_name') into has_display_name;
+<<<<<<< HEAD
     select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='avatar_url') into has_avatar_url;
     -- optional email column support
     select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='email') into has_email;
 
         v_sql := 'create or replace view public.v_user_profiles as select '
+=======
+        select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='avatar_url') into has_avatar_url;
+    -- optional email column support
+        select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='email') into has_email;
+        select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='nationality_code') into has_nationality;
+        select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='favorite_team') into has_fav_team;
+        select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='favorite_player') into has_fav_player;
+
+    v_sql := 'create or replace view public.v_user_profiles as select '
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
         || quote_ident(v_id_col) || ' as user_id, '
         || case when has_username then 'username' else 'NULL::text' end || ' as username, '
         || case when has_display_name then 'display_name' else 'NULL::text' end || ' as display_name, '
         || case when has_email then 'email' else 'NULL::text' end || ' as email, '
+<<<<<<< HEAD
         || case when has_avatar_url then 'avatar_url' else 'NULL::text' end || ' as avatar_url '
         || 'from public.user_profiles';
+=======
+    || case when has_avatar_url then 'avatar_url' else 'NULL::text' end || ' as avatar_url, '
+    || case when has_nationality then 'nationality_code' else 'NULL::text' end || ' as nationality_code, '
+    || case when has_fav_team then 'favorite_team' else 'NULL::text' end || ' as favorite_team, '
+    || case when has_fav_player then 'favorite_player' else 'NULL::text' end || ' as favorite_player '
+    || 'from public.user_profiles';
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
 
     execute v_sql;
     end if;
@@ -314,7 +343,25 @@
     end if;
     end $$;
 
+<<<<<<< HEAD
     -- Profiles
+=======
+        -- Profiles: ensure optional columns exist (idempotent)
+        do $$
+        begin
+            if exists (select 1 from information_schema.tables where table_schema='public' and table_name='user_profiles') then
+                begin
+                        alter table public.user_profiles add column if not exists avatar_url text;
+                    alter table public.user_profiles add column if not exists nationality_code text;
+                    alter table public.user_profiles add column if not exists favorite_team text;
+                    alter table public.user_profiles add column if not exists favorite_player text;
+                    alter table public.user_profiles add column if not exists is_public boolean not null default true;
+                exception when others then null; end;
+            end if;
+        end $$;
+
+        -- Profiles
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
     alter table public.user_profiles enable row level security;
     do $$ begin
     if not exists (
@@ -339,7 +386,11 @@
     if v_col is null then
         raise notice 'Skipping owner policies for public.user_profiles: no user id column (user_id or id) found.';
     else
+<<<<<<< HEAD
         if not exists (
+=======
+    if not exists (
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
         select 1 from pg_policies where schemaname = 'public' and tablename = 'user_profiles' and policyname = 'Insert own profile'
         ) then
         execute format('create policy "Insert own profile" on public.user_profiles for insert to authenticated with check (%I = auth.uid())', v_col);
@@ -359,6 +410,19 @@
     end if;
     end $$;
 
+<<<<<<< HEAD
+=======
+        -- Public read policy (optional): allow anonymous to read profiles marked as public
+        do $$ begin
+            if not exists (
+                select 1 from pg_policies where schemaname='public' and tablename='user_profiles' and policyname='Profiles readable (public)'
+            ) then
+                create policy "Profiles readable (public)" on public.user_profiles
+                for select to anon using (coalesce(is_public, true));
+            end if;
+        end $$;
+
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
     -- XP events
     alter table public.xp_events enable row level security;
     do $$ begin

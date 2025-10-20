@@ -26,6 +26,7 @@ export async function createUserProfile(data) {
 }
 
 export async function updateUserProfile(id, newData) {
+<<<<<<< HEAD
     const { data, error } = await supabase
         .from('user_profiles')
         .update(newData)
@@ -35,6 +36,35 @@ export async function updateUserProfile(id, newData) {
         console.error('[user-profiles.js updateUserProfile] - User Nº:', id, error);
         throw new Error(error.message || 'Failed to update user profile');
     }
+=======
+    // Try to update; if backend complains about unknown columns in schema cache, progressively remove them and retry.
+    let payload = { ...(newData || {}) }
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const { error } = await supabase
+            .from('user_profiles')
+            .update(payload)
+            .eq('id', id)
+
+        if (!error) return
+
+        const msg = (error.message || '')
+        // Parse `'column_name' column` from PostgREST error
+        const m = msg.match(/'([^']+)' column/i)
+        if (m && payload && m[1] in payload) {
+            // Remove the offending column and retry
+            const bad = m[1]
+            console.warn('[user-profiles.js] removing unknown column and retrying:', bad)
+            const { [bad]: _omit, ...rest } = payload
+            payload = rest
+            continue
+        }
+        // If we cannot identify the column, throw the original error
+        console.error('[user-profiles.js updateUserProfile] - User Nº:', id, error)
+        throw new Error(error.message || 'Failed to update user profile')
+    }
+    // If we exhausted retries and still not returned, throw
+    throw new Error('Failed to update user profile after retries')
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
 }
 
 // Public helpers for reading basic profile info (via view if available)

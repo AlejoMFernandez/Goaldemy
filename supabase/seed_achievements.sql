@@ -5,7 +5,16 @@
 insert into public.achievements (code, name, description, icon_url, points)
 values
   ('first_correct', 'Primer acierto', 'Consigue tu primer respuesta correcta', 'https://img.icons8.com/color/48/ok.png', 10),
+<<<<<<< HEAD
   ('streak_3', 'Racha de 3', 'Acumula una racha de 3 aciertos seguidos', 'https://img.icons8.com/color/48/party-baloons.png', 20)
+=======
+  ('streak_3', 'Racha de 3', 'Acumula una racha de 3 aciertos seguidos', 'https://img.icons8.com/color/48/party-baloons.png', 20),
+  ('streak_5', 'Racha de 5', 'Acumula una racha de 5 aciertos seguidos', 'https://img.icons8.com/color/48/confetti.png', 30),
+  ('streak_10', 'Racha de 10', 'Acumula una racha de 10 aciertos seguidos', 'https://img.icons8.com/color/48/trophy.png', 50),
+  ('ten_correct', 'Diez aciertos', 'Consigue 10 respuestas correctas', 'https://img.icons8.com/color/48/ten.png', 25),
+  ('xp_100', '100 XP', 'Alcanza 100 puntos de experiencia', 'https://img.icons8.com/color/48/star.png', 15),
+  ('xp_1000', '1000 XP', 'Alcanza 1000 puntos de experiencia', 'https://img.icons8.com/color/48/crown.png', 80)
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
 on conflict (code) do update set
   name = excluded.name,
   description = excluded.description,

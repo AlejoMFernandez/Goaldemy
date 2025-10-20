@@ -35,8 +35,13 @@ export default {
         <div class="border-b border-white/10 bg-gradient-to-b from-slate-900/70 to-slate-900/30 backdrop-blur supports-[backdrop-filter]:bg-slate-900/40">
             <nav class="container mx-auto flex items-center justify-between px-4 py-4">
                 <RouterLink to="/" class="group inline-flex items-center gap-2">
+<<<<<<< HEAD
                     <span class="inline-block size-2 rounded-full bg-[oklch(0.70_0.21_270)] group-hover:animate-pulse"></span>
                     <span class="text-lg font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-300">Goaldemy</span>
+=======
+                    <img src="/src/assets/iconclaro.png" alt="Goaldemy" class="h-6 w-auto" />
+                    <span class="sr-only">Goaldemy</span>
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
                 </RouterLink>
                 <button @click="toggle" class="md:hidden inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-slate-200 hover:border-white/20 hover:text-white">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

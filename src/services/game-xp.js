@@ -19,7 +19,11 @@ async function getGameIdBySlug(slug) {
   return id
 }
 
+<<<<<<< HEAD
 export async function awardXpForCorrect({ gameCode, amount = 10, attemptIndex = 0, streak = 1 }) {
+=======
+export async function awardXpForCorrect({ gameCode, amount = 10, attemptIndex = 0, streak = 1, corrects = 1 }) {
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
   try {
     const gameId = await getGameIdBySlug(gameCode)
     await awardXp({ amount, reason: 'correct_answer', gameId, sessionId: null, meta: { game: gameCode } })
@@ -31,5 +35,17 @@ export async function awardXpForCorrect({ gameCode, amount = 10, attemptIndex = 
     if (streak === 3) {
       await unlockAchievementWithToast('streak_3', { game: gameCode })
     }
+<<<<<<< HEAD
+=======
+    if (streak === 5) {
+      await unlockAchievementWithToast('streak_5', { game: gameCode })
+    }
+    if (streak === 10) {
+      await unlockAchievementWithToast('streak_10', { game: gameCode })
+    }
+    if (corrects === 10) {
+      await unlockAchievementWithToast('ten_correct', { game: gameCode })
+    }
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
   } catch {}
 }

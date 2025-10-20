@@ -15,14 +15,22 @@ export async function fetchGames() {
   // First try with cover_url
   let { data, error } = await supabase
     .from('games')
+<<<<<<< HEAD
     .select('id, name, description, cover_url, created_at')
+=======
+    .select('id, slug, name, description, cover_url, created_at')
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
     .order('created_at', { ascending: false })
 
   // Fallback to legacy schema using image
   if (error && (error.code === '42703' || /column .* does not exist/i.test(error.message || ''))) {
     const res = await supabase
       .from('games')
+<<<<<<< HEAD
       .select('id, name, description, image, created_at')
+=======
+      .select('id, slug, name, description, image, created_at')
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
       .order('created_at', { ascending: false })
     data = res.data; error = res.error
   }
@@ -39,14 +47,22 @@ export async function fetchGames() {
 export async function fetchGameById(id) {
   let { data, error } = await supabase
     .from('games')
+<<<<<<< HEAD
     .select('id, name, description, cover_url, created_at')
+=======
+    .select('id, slug, name, description, cover_url, created_at')
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
     .eq('id', id)
     .maybeSingle()
 
   if (error && (error.code === '42703' || /column .* does not exist/i.test(error.message || ''))) {
     const res = await supabase
       .from('games')
+<<<<<<< HEAD
       .select('id, name, description, image, created_at')
+=======
+      .select('id, slug, name, description, image, created_at')
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
       .eq('id', id)
       .maybeSingle()
     data = res.data; error = res.error
@@ -65,12 +81,20 @@ export async function fetchGamesByIds(ids = []) {
   if (!ids.length) return {}
   let { data, error } = await supabase
     .from('games')
+<<<<<<< HEAD
     .select('id, name, cover_url')
+=======
+    .select('id, slug, name, cover_url')
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
     .in('id', ids)
   if (error && (error.code === '42703' || /column .* does not exist/i.test(error.message || ''))) {
     const res = await supabase
       .from('games')
+<<<<<<< HEAD
       .select('id, name, image')
+=======
+      .select('id, slug, name, image')
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
       .in('id', ids)
     data = res.data; error = res.error
   }

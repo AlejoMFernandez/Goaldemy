@@ -8,7 +8,11 @@ defineProps({
 <template>
   <div class="rounded-lg border border-white/10 p-4 w-full">
     <div class="flex items-center justify-between">
+<<<<<<< HEAD
       <p class="text-xs uppercase tracking-wide text-slate-400">Achievements</p>
+=======
+      <p class="text-xs uppercase tracking-wide text-slate-400">Logros</p>
+>>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
       <span class="text-[10px] text-slate-400">{{ achievements.length }}</span>
     </div>
     <div class="mt-2 space-y-2 text-sm text-slate-300">
