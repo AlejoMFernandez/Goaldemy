@@ -98,7 +98,7 @@ export async function getPublicProfilesByIds(ids = []) {
 }
 
 export async function getPublicProfile(id) {
-        const fields = ['id','display_name','email','avatar_url','nationality_code','favorite_team','favorite_player','career','bio']
+    const fields = ['id','display_name','email','avatar_url','nationality_code','favorite_team','favorite_player','career','bio','linkedin_url','github_url','x_url','instagram_url']
         const { data, error } = await supabase
                 .from('user_profiles')
                 .select(fields.join(', '))

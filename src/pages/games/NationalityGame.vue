@@ -23,16 +23,16 @@ export default {
 </script>
 
 <template>
-    <section class="grid place-items-center h-full">
+  <section class="grid place-items-center">
     <div class="space-y-3 w-full max-w-4xl">
-        <div class="flex items-center justify-between">
-          <AppH1>Nacionalidad correcta</AppH1>
-          <div class="flex items-center gap-2">
-            <router-link to="/games" class="rounded-full border border-white/15 px-3 py-1.5 text-slate-200 hover:bg-white/5">← Volver</router-link>
-            <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-1.5 flex items-center gap-2">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <AppH1 class="text-2xl md:text-4xl mb-1 sm:mb-0">Nacionalidad correcta</AppH1>
+          <div class="flex items-center gap-2 self-stretch sm:self-auto">
+            <router-link to="/games" class="rounded-full border border-white/15 px-2 py-1 text-xs sm:text-sm text-slate-200 hover:bg-white/5">← Volver</router-link>
+            <div class="rounded-xl bg-slate-900/60 border border-white/15 px-2.5 py-1.5 flex items-center gap-2">
               <span class="text-slate-300 text-[10px] uppercase tracking-wider">Puntaje</span>
-              <span class="text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
-              <div v-if="streak > 0" class="rounded-full border border-green-500/60 bg-green-500/10 text-green-300 text-xs px-2.5 py-1 font-semibold">
+              <span class="text-white font-extrabold text-base sm:text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
+              <div v-if="streak > 0" class="rounded-full border border-green-500/60 bg-green-500/10 text-green-300 text-[11px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-1 font-semibold">
                 ×{{ streak }}
               </div>
             </div>

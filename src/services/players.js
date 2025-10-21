@@ -16,8 +16,13 @@ export function getAllPlayers() {
           name: member.name,
           teamId: team.id,
           teamName: team.name,
+          teamLogo: team.logo,
           ccode: member.ccode,
           cname: member.cname,
+          // Include both a broad numeric positionId (0: GK, 1: DF, 2: MF, 3: FW)
+          // and the descriptive string list (e.g., "CB", "LB,LWB", "ST"),
+          // so game logic can group reliably and still have a readable descriptor.
+          positionId: member.positionId,
           position: member.positionIdsDesc,
           image: playerImageUrl(member.id),
         });
@@ -29,6 +34,29 @@ export function getAllPlayers() {
 
 export function getAllTeams() {
   return teams.map(t => ({ id: t.id, name: t.name, logo: t.logo }));
+}
+
+function _normalizeName(s) {
+  return (s || '')
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .trim()
+}
+
+export function findTeamByName(name) {
+  const target = _normalizeName(name)
+  if (!target) return null
+  const all = getAllTeams()
+  return all.find(t => _normalizeName(t.name) === target) || null
+}
+
+export function findPlayerByName(name) {
+  const target = _normalizeName(name)
+  if (!target) return null
+  const all = getAllPlayers()
+  return all.find(p => _normalizeName(p.name) === target) || null
 }
 
 // Utility: pick n distinct random items from an array

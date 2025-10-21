@@ -1,6 +1,7 @@
 // Simple wrappers for XP-related RPCs
 import { supabase } from './supabase'
-import { pushAchievementToast } from '../stores/notifications'
+import { pushAchievementToast, pushLevelUpToast } from '../stores/notifications'
+import { setKnownLevel as _setKnownLevelRealtime } from './levelup-realtime'
 
 /**
  * Award XP to the current authenticated user.
@@ -19,6 +20,29 @@ export async function awardXp({ amount, reason = 'correct_answer', gameId = null
     p_session_id: sessionId,
     p_meta: meta,
   })
+  // Fallback: after awarding, verify if level increased and toast if Realtime missed it
+  try {
+    const { data: me } = await supabase.auth.getUser()
+    const userId = me?.user?.id || null
+    if (userId) {
+      const { data: lvlData } = await getUserLevel(null)
+      const info = Array.isArray(lvlData) ? lvlData[0] : lvlData
+      const newLevel = info?.level ?? null
+      if (newLevel != null) {
+        const key = `gl:last_level:${userId}`
+        let prev = null
+        try {
+          const raw = localStorage.getItem(key)
+          prev = raw != null ? Number(raw) : null
+        } catch {}
+        if (prev != null && Number.isFinite(prev) && newLevel > prev) {
+          pushLevelUpToast({ level: newLevel })
+        }
+        try { localStorage.setItem(key, String(newLevel)) } catch {}
+        try { _setKnownLevelRealtime(newLevel) } catch {}
+      }
+    }
+  } catch {}
   return { data, error }
 }
 
@@ -136,19 +160,27 @@ export async function getUserMaxStreakByGame(userId = null) {
       .eq('user_id', authId)
     if (evErr) return { data: [], error: evErr }
 
-    const maxByGame = new Map()
+    const maxById = new Map()
+    const maxBySlug = new Map()
     for (const e of (events || [])) {
       if (!e) continue
       const sRaw = e.meta?.streak
       const s = typeof sRaw === 'number' ? sRaw : Number(sRaw)
       if (!Number.isFinite(s)) continue
       const gid = e.game_id || null
-      const prev = maxByGame.get(gid) || 0
-      if (s > prev) maxByGame.set(gid, s)
+      if (gid) {
+        const prev = maxById.get(gid) || 0
+        if (s > prev) maxById.set(gid, s)
+      } else {
+        const slug = typeof e?.meta?.game === 'string' ? e.meta.game : null
+        if (!slug) continue
+        const prev = maxBySlug.get(slug) || 0
+        if (s > prev) maxBySlug.set(slug, s)
+      }
     }
 
     // Enrich names for known game ids
-    const ids = Array.from(maxByGame.keys()).filter(k => k)
+    const ids = Array.from(maxById.keys()).filter(k => k)
     let nameMap = {}
     if (ids.length) {
       const { data, error } = await supabase.from('games').select('id, name').in('id', ids)
@@ -159,9 +191,20 @@ export async function getUserMaxStreakByGame(userId = null) {
     }
 
     const rows = []
-    for (const [gid, streak] of maxByGame.entries()) {
+    for (const [gid, streak] of maxById.entries()) {
       if (!gid) continue // ignore unknown bucket for streaks
       rows.push({ id: gid, name: nameMap[gid] || 'Juego', streak })
+    }
+    // Add slug-based streaks using friendly names
+    try {
+      const { friendlyNameForSlug } = await import('./games')
+      for (const [slug, streak] of maxBySlug.entries()) {
+        rows.push({ id: slug, name: friendlyNameForSlug(slug), streak })
+      }
+    } catch {
+      for (const [slug, streak] of maxBySlug.entries()) {
+        rows.push({ id: slug, name: 'Juego', streak })
+      }
     }
     rows.sort((a, b) => (b.streak || 0) - (a.streak || 0))
     return { data: rows, error: null }

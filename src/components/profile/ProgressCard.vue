@@ -10,8 +10,7 @@ defineProps({
 
 <template>
   <div class="card p-6">
-    <p class="text-xs uppercase tracking-wide text-slate-400">Progreso</p>
-    <div class="mt-2">
+    <div>
       <div v-if="loading" class="text-slate-300">Cargando…</div>
       <div v-else>
         <div class="flex items-center gap-2">

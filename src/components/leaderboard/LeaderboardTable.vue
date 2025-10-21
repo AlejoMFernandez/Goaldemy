@@ -8,7 +8,8 @@ const props = defineProps({
 
 <template>
   <div class="rounded-xl border border-white/10 overflow-hidden">
-    <table class="w-full text-sm text-slate-200">
+    <div class="overflow-x-auto">
+  <table class="min-w-[560px] w-full text-xs sm:text-sm text-slate-200">
       <thead class="bg-white/5">
         <tr>
           <th class="px-3 py-2 text-left">#</th>
@@ -72,7 +73,8 @@ const props = defineProps({
           <td class="px-3 py-2 text-right font-semibold text-white text-base">{{ r.total_xp }}</td>
         </tr>
       </tbody>
-    </table>
+  </table>
+    </div>
   </div>
   
 </template>

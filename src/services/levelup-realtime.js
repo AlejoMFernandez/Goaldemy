@@ -7,6 +7,8 @@ let lastKnownLevel = null
 let initialized = false
 let authUnsubscribe = null
 
+const storageKeyForUser = (id) => `gl:last_level:${id}`
+
 async function fetchLevel(userId) {
   try {
     const { data, error } = await supabase.rpc('get_user_level', { p_user_id: userId })
@@ -25,6 +27,7 @@ export function initLevelUpRealtime() {
   const ensureSubscribed = async () => {
     if (!currentUserId || channel) return
     lastKnownLevel = await fetchLevel(currentUserId)
+    try { if (lastKnownLevel != null) localStorage.setItem(storageKeyForUser(currentUserId), String(lastKnownLevel)) } catch {}
     channel = supabase
       .channel('xp_events_levelup')
       .on(
@@ -39,6 +42,7 @@ export function initLevelUpRealtime() {
             pushLevelUpToast({ level: newLevel })
           }
           lastKnownLevel = newLevel ?? lastKnownLevel
+          try { if (lastKnownLevel != null) localStorage.setItem(storageKeyForUser(currentUserId), String(lastKnownLevel)) } catch {}
         }
       )
       .subscribe()
@@ -72,4 +76,10 @@ export function teardownLevelUpRealtime() {
     lastKnownLevel = null
     initialized = false
   }
+}
+
+// Allow other modules (e.g., fallback post-award checks) to sync the known level
+export function setKnownLevel(level) {
+  lastKnownLevel = typeof level === 'number' ? level : Number(level || 0) || lastKnownLevel
+  try { if (currentUserId && lastKnownLevel != null) localStorage.setItem(storageKeyForUser(currentUserId), String(lastKnownLevel)) } catch {}
 }

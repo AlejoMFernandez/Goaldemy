@@ -14,6 +14,7 @@ import { getUserMaxStreakByGame } from '../services/xp';
 import { checkAndUnlockSpecials } from '../services/special-badges';
 import ConnectionsCard from '../components/profile/ConnectionsCard.vue';
 import CommunityCard from '../components/profile/CommunityCard.vue';
+import { findTeamByName, findPlayerByName } from '../services/players';
 
 let unsubscribeAuth = () => {};
 
@@ -48,6 +49,10 @@ export default {
       forumsCount: 0,
       messagesCount: 0,
       discussionsStartedCount: 0,
+      // Derived visuals for header
+      favTeamLogo: '',
+      favPlayerImage: '',
+      socials: [],
     };
   },
   computed: {
@@ -69,6 +74,9 @@ export default {
     },
     xpNow() {
       return this.levelInfo?.xp_total ?? 0;
+    },
+    isSelf() {
+      return (this.$route.params.id || this.currentAuthId) === this.currentAuthId
     },
   },
   mounted() {
@@ -108,6 +116,22 @@ export default {
         if (error) console.error('[Profile.vue] getPublicProfile error:', error)
         // Fall back: at least set id when not found
         this.user = profile ? { ...profile, id: userId } : { id: userId }
+        // Derive logos from favorites
+        try {
+          const team = this.user?.favorite_team ? findTeamByName(this.user.favorite_team) : null
+          this.favTeamLogo = team?.logo || ''
+        } catch {}
+        try {
+          const player = this.user?.favorite_player ? findPlayerByName(this.user.favorite_player) : null
+          this.favPlayerImage = player?.image || ''
+        } catch {}
+  // Build socials from profile fields
+  const s = []
+  if (this.user?.linkedin_url) s.push({ type: 'linkedin', url: this.user.linkedin_url })
+  if (this.user?.github_url) s.push({ type: 'github', url: this.user.github_url })
+  if (this.user?.x_url) s.push({ type: 'twitter', url: this.user.x_url })
+  if (this.user?.instagram_url) s.push({ type: 'instagram', url: this.user.instagram_url })
+  this.socials = s
       } catch (e) {
         console.error('[Profile.vue] getPublicProfile exception:', e)
         this.user = { id: userId }
@@ -193,7 +217,6 @@ export default {
   <div class="mx-auto max-w-5xl pb-8">
     <div class="mb-4 flex items-center justify-between gap-2">
       <AppH1>Mi Perfil</AppH1>
-    <router-link v-if="($route.params.id || currentAuthId) === currentAuthId" to="/profile-edit" class="text-sm text-blue-500 hover:underline">Editar perfil</router-link>
     </div>
 
   <section class="grid gap-4 md:grid-cols-12">
@@ -208,6 +231,10 @@ export default {
           :nationality-code="user.nationality_code"
           :favorite-team="user.favorite_team"
           :favorite-player="user.favorite_player"
+          :favorite-team-logo="favTeamLogo"
+          :favorite-player-image="favPlayerImage"
+          :socials="socials"
+          :can-edit="isSelf"
           :career="user.career"
           :bio="user.bio"
         />
@@ -216,6 +243,7 @@ export default {
         <div class="rounded-lg border border-white/10 p-4">
           <p class="text-xs uppercase tracking-wide text-slate-400">Detalles del usuario</p>
           <ul class="mt-1 text-slate-300 text-sm space-y-1 list-disc list-inside">
+            <li>Carrera: {{ user.career || '—' }}</li>
             <li>Compañía: —</li>
             <li>Localidad: —</li>
             <li>Social media: —</li>

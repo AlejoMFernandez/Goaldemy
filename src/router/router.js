@@ -10,6 +10,7 @@ import Games from '../pages/Games.vue';
 import GuessPlayer from '../pages/games/GuessPlayer.vue';
 import NationalityGame from '../pages/games/NationalityGame.vue';
 import PlayerPosition from '../pages/games/PlayerPosition.vue';
+import WhoIs from '../pages/games/WhoIs.vue';
 import Leaderboards from '../pages/Leaderboards.vue';
 // Reuse Profile for public view by id
 
@@ -24,6 +25,7 @@ const routes = [
     { path: '/games/guess-player', component: GuessPlayer, meta: { requiresAuth: true } },
     { path: '/games/nationality', component: NationalityGame, meta: { requiresAuth: true } },
     { path: '/games/player-position', component: PlayerPosition, meta: { requiresAuth: true } },
+    { path: '/games/who-is', component: WhoIs, meta: { requiresAuth: true } },
     { path: '/leaderboards', component: Leaderboards },
     { path: '/u/:id', component: Profile },
 ]

@@ -129,17 +129,20 @@ export default {
 <template>
     <header class="sticky top-0 z-40">
         <div class="border-b border-white/10 bg-gradient-to-b from-slate-900/70 to-slate-900/30 backdrop-blur supports-[backdrop-filter]:bg-slate-900/40">
-            <nav class="container mx-auto flex items-center justify-between px-4 py-4">
-                <RouterLink to="/" class="group inline-flex items-center gap-2">
+            <nav class="container mx-auto flex items-center justify-between px-4 py-4 gap-3">
+                <RouterLink to="/" class="group inline-flex items-center gap-2 flex-none">
                     <img src="/src/assets/iconclaro.png" alt="Goaldemy" class="h-10 w-auto" />
                     <span class="sr-only">Goaldemy</span>
                 </RouterLink>
-                <button @click="toggle" class="md:hidden inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-slate-200 hover:border-white/20 hover:text-white">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    <span>Menú</span>
-                </button>
+                <!-- Mobile controls: only menu button (logo + menú) -->
+                <div class="md:hidden flex items-center gap-2 flex-1 justify-end">
+                    <button @click="toggle" class="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-slate-200 hover:border-white/20 hover:text-white">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span>Menú</span>
+                    </button>
+                </div>
 
                 <ul class="hidden md:flex items-center gap-4 text-slate-200">
                     <li><RouterLink class="hover:text-white transition-colors" to="/">Home</RouterLink></li>
@@ -209,72 +212,77 @@ export default {
                 </ul>
             </nav>
 
-            <!-- Mobile header -->
+            <!-- Mobile header menu options -->
             <transition name="fade-slide">
                 <div v-if="isOpen" class="md:hidden border-t border-white/10">
                     <ul class="container mx-auto px-4 py-3 flex flex-col gap-3 text-slate-200">
+                        <!-- Row: searchbar - user dropdown -->
+                        <li>
+                            <div class="flex items-center gap-2">
+                                <div class="relative flex-1" data-search-box>
+                                    <input type="search" v-model="q" @input="onSearchInput" placeholder="Buscar usuarios" class="searchbox w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20" />
+                                    <div v-if="searchOpen" data-search-dropdown class="absolute z-50 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl">
+                                        <ul>
+                                            <li v-for="u in results" :key="u.id" @click="isOpen=false; goUser(u)" class="px-3 py-2 hover:bg-white/5 cursor-pointer text-sm flex items-center gap-2">
+                                                <img v-if="u.avatar_url" :src="u.avatar_url" class="w-8 h-8 rounded-lg object-cover flex-none" alt="avatar" />
+                                                <div v-else class="w-8 h-8 rounded-lg bg-slate-700 text-[11px] grid place-items-center flex-none">{{ (u.email||'?')[0]?.toUpperCase() }}</div>
+                                                <div class="truncate">
+                                                    <span class="text-slate-100">{{ u.display_name || u.username || (u.email || u.id) }}</span>
+                                                    <span class="ml-1 text-slate-400">· {{ u.email }}</span>
+                                                </div>
+                                            </li>
+                                            <li v-if="!results.length && !searching" class="px-3 py-2 text-slate-400 text-sm">Sin resultados</li>
+                                            <li v-if="searching" class="px-3 py-2 text-slate-400 text-sm">Buscando…</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="relative flex-none">
+                                    <template v-if="user.id === null">
+                                        <RouterLink @click="isOpen=false" to="/login" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-sm text-slate-200 hover:border-white/20">Iniciar sesión</RouterLink>
+                                    </template>
+                                    <template v-else>
+                                        <button data-user-button @click.stop="menuOpen = !menuOpen" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-2 py-1.5 text-sm text-slate-200 hover:border-white/20">
+                                            <img v-if="user.avatar_url" :src="user.avatar_url" class="w-7 h-7 rounded-full object-cover" alt="avatar" />
+                                            <div v-else class="w-7 h-7 rounded-full bg-slate-700 grid place-items-center text-xs">{{ avatarInitial() }}</div>
+                                            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                                        </button>
+                                        <div v-if="menuOpen" data-user-menu class="absolute right-0 mt-2 w-64 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl overflow-hidden z-50">
+                                            <div class="px-3 py-3 border-b border-white/10">
+                                                <div v-if="!levelInfo && levelLoading" class="mt-1 h-2 rounded bg-white/10 overflow-hidden">
+                                                    <div class="h-full w-1/3 bg-[oklch(0.62_0.21_270)] animate-pulse"></div>
+                                                </div>
+                                                <div v-else>
+                                                    <div class="mt-1 flex items-center justify-between text-xs text-slate-300">
+                                                        <span>Nivel {{ levelInfo?.level ?? '—' }}</span>
+                                                        <span class="text-slate-200 font-medium">{{ xpNow }} XP</span>
+                                                    </div>
+                                                    <div class="mt-1 h-2 rounded bg-white/10 overflow-hidden">
+                                                        <div class="h-full bg-[oklch(0.62_0.21_270)]" :style="{ width: (progressPercent||0) + '%' }"></div>
+                                                    </div>
+                                                    <div class="mt-1 text-[11px] text-slate-400">
+                                                        <template v-if="levelInfo?.next_level_xp">
+                                                            Faltan {{ levelInfo?.xp_to_next }} XP para el nivel {{ (levelInfo?.next_level ?? (levelInfo?.level||0)+1) }}
+                                                        </template>
+                                                        <template v-else>
+                                                            Nivel máximo alcanzado
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <RouterLink @click="isOpen=false; menuOpen=false" to="/profile" class="block px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Ver Perfil</RouterLink>
+                                            <button @click="handleLogout" class="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Cerrar sesión</button>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </li>
+
+                        <!-- Nav items -->
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/">Home</RouterLink></li>
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/chat">Chat Global</RouterLink></li>
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/games">Juegos</RouterLink></li>
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leaderboards">Leaderboards</RouterLink></li>
-                        <li class="pt-2">
-                            <div class="relative">
-                                <input type="search" v-model="q" @input="onSearchInput" placeholder="Buscar usuarios" class="searchbox w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20" />
-                                <div v-if="searchOpen" class="absolute z-30 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl">
-                                    <ul>
-                                        <li v-for="u in results" :key="u.id" @click="isOpen=false; goUser(u)" class="px-3 py-2 hover:bg-white/5 cursor-pointer text-sm flex items-center gap-2">
-                                            <img v-if="u.avatar_url" :src="u.avatar_url" class="w-8 h-8 rounded-lg object-cover flex-none" alt="avatar" />
-                                            <div v-else class="w-8 h-8 rounded-lg bg-slate-700 text-[11px] grid place-items-center flex-none">{{ (u.email||'?')[0]?.toUpperCase() }}</div>
-                                            <div class="truncate">
-                                                <span class="text-slate-100">{{ u.display_name || u.username || (u.email || u.id) }}</span>
-                                                <span class="ml-1 text-slate-400">· {{ u.email }}</span>
-                                            </div>
-                                        </li>
-                                        <li v-if="!results.length && !searching" class="px-3 py-2 text-slate-400 text-sm">Sin resultados</li>
-                                        <li v-if="searching" class="px-3 py-2 text-slate-400 text-sm">Buscando…</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </li>
-                        <template v-if="user.id === null">
-                                <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/login">Iniciar sesión</RouterLink></li>
-                                <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/register">Registrarse</RouterLink></li>
-                        </template>
-                        <template v-else>
-                            <li>
-                                <button @click="menuOpen = !menuOpen" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-sm text-slate-200 hover:border-white/20">
-                                    <img v-if="user.avatar_url" :src="user.avatar_url" class="w-7 h-7 rounded-full object-cover" alt="avatar" />
-                                    <div v-else class="w-7 h-7 rounded-full bg-slate-700 grid place-items-center text-xs">{{ avatarInitial() }}</div>
-                                    <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
-                                </button>
-                                <div v-if="menuOpen" class="mt-2 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl overflow-hidden">
-                                    <div class="px-3 py-3 border-b border-white/10">
-                                        <div v-if="!levelInfo && levelLoading" class="mt-1 h-2 rounded bg-white/10 overflow-hidden">
-                                            <div class="h-full w-1/3 bg-[oklch(0.62_0.21_270)] animate-pulse"></div>
-                                        </div>
-                                        <div v-else>
-                                            <div class="mt-1 flex items-center justify-between text-xs text-slate-300">
-                                                <span>Nivel {{ levelInfo?.level ?? '—' }}</span>
-                                                <span class="text-slate-200 font-medium">{{ xpNow }} XP</span>
-                                            </div>
-                                            <div class="mt-1 h-2 rounded bg-white/10 overflow-hidden">
-                                                <div class="h-full bg-[oklch(0.62_0.21_270)]" :style="{ width: (progressPercent||0) + '%' }"></div>
-                                            </div>
-                                            <div class="mt-1 text-[11px] text-slate-400">
-                                                <template v-if="levelInfo?.next_level_xp">
-                                                    Faltan {{ levelInfo?.xp_to_next }} XP para el nivel {{ (levelInfo?.next_level ?? (levelInfo?.level||0)+1) }}
-                                                </template>
-                                                <template v-else>
-                                                    Nivel máximo alcanzado
-                                                </template>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <RouterLink @click="isOpen=false; menuOpen=false" to="/profile" class="block px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Ver Perfil</RouterLink>
-                                    <button @click="handleLogout" class="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Cerrar sesión</button>
-                                </div>
-                            </li>
-                        </template>
                     </ul>
                 </div>
             </transition>

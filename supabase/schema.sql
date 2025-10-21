@@ -383,6 +383,10 @@
                     alter table public.user_profiles add column if not exists favorite_team text;
                     alter table public.user_profiles add column if not exists favorite_player text;
                     alter table public.user_profiles add column if not exists is_public boolean not null default true;
+                        alter table public.user_profiles add column if not exists linkedin_url text;
+                        alter table public.user_profiles add column if not exists github_url text;
+                        alter table public.user_profiles add column if not exists x_url text;
+                        alter table public.user_profiles add column if not exists instagram_url text;
                 exception when others then null; end;
             end if;
         end $$;
@@ -606,15 +610,22 @@
         security definer
         set search_path = public
         as $$
-            select e.game_id,
-                         g.name,
-                         g.cover_url,
-                         sum(e.amount)::bigint as xp
-            from public.xp_events e
-            left join public.games g on g.id = e.game_id
-            where e.user_id = coalesce(p_user_id, auth.uid())
-            group by e.game_id, g.name, g.cover_url
-            order by xp desc nulls last
+            with enriched as (
+                select
+                    coalesce(e.game_id, gslug.id) as gid,
+                    sum(e.amount)::bigint as xp
+                from public.xp_events e
+                left join public.games gslug on gslug.slug = (e.meta->>'game')
+                where e.user_id = coalesce(p_user_id, auth.uid())
+                group by coalesce(e.game_id, gslug.id)
+            )
+            select en.gid as game_id,
+                   g.name,
+                   g.cover_url,
+                   en.xp
+            from enriched en
+            left join public.games g on g.id = en.gid
+            order by en.xp desc nulls last
         $$;
 
         grant execute on function public.get_user_xp_by_game(uuid) to authenticated;
@@ -707,10 +718,18 @@
         as $$
         begin
             return query
-            with filtered as (
+            with gfilter as (
+                select id, slug from public.games where id = p_game_id
+            ),
+            filtered as (
                 select e.user_id, e.amount, e.created_at
                 from public.xp_events e
-                where (p_game_id is null or e.game_id = p_game_id)
+                left join gfilter gf on true
+                where (
+                        p_game_id is null
+                        or e.game_id = p_game_id
+                        or (e.game_id is null and gf.slug is not null and (e.meta->>'game') = gf.slug)
+                    )
                     and (
                         case
                             when lower(p_period) in ('weekly','week') then e.created_at >= date_trunc('week', now())
@@ -723,6 +742,11 @@
                 select f.user_id, sum(f.amount)::bigint as xp_total
                 from filtered f
                 group by f.user_id
+            ),
+            all_time_totals as (
+                select e.user_id, sum(e.amount)::bigint as xp_global
+                from public.xp_events e
+                group by e.user_id
             )
             select
                 t.user_id,
@@ -733,7 +757,7 @@
                 t.xp_total,
                 (
                   select lt.level from public.level_thresholds lt
-                  where lt.xp_required <= t.xp_total
+                  where lt.xp_required <= coalesce(a.xp_global, 0)
                   order by lt.level desc
                   limit 1
                 )::int as user_level,
@@ -741,6 +765,7 @@
             from totals t
             left join public.v_user_profiles p on p.user_id = t.user_id
             left join auth.users u on u.id = t.user_id
+            left join all_time_totals a on a.user_id = t.user_id
             order by t.xp_total desc, t.user_id
             limit p_limit offset p_offset;
         end$$;
@@ -760,17 +785,18 @@
         set search_path = public
         as $$
             with base as (
-                select e.game_id, nullif(e.meta->>'streak','')::int as streak
+                select coalesce(e.game_id, gslug.id) as gid, nullif(e.meta->>'streak','')::int as streak
                 from public.xp_events e
+                left join public.games gslug on gslug.slug = (e.meta->>'game')
                 where e.user_id = coalesce(p_user_id, auth.uid())
                   and e.meta ? 'streak'
             )
-            select b.game_id,
+            select b.gid as game_id,
                    coalesce(g.name, 'Juego') as name,
                    max(b.streak)::int as max_streak
             from base b
-            left join public.games g on g.id = b.game_id
-            group by b.game_id, g.name
+            left join public.games g on g.id = b.gid
+            group by b.gid, g.name
             order by max(b.streak) desc nulls last;
         $$;
 

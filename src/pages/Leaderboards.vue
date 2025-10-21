@@ -27,7 +27,21 @@ export default {
   methods: {
     async loadGames() {
       try {
-        this.games = await fetchGames()
+        const all = await fetchGames()
+        const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        // 1) Sólo juegos con UUID (existen en DB)
+        // 2) Ocultar 'name-correct' y el slug legacy 'quien-es'
+        const filtered = (all || [])
+          .filter(g => uuid.test(String(g.id || '')))
+          .filter(g => g.slug !== 'name-correct' && g.slug !== 'quien-es')
+
+        // 3) Deduplicar por nombre (hay casos en DB con dos filas con mismo nombre)
+        const byName = new Map()
+        for (const g of filtered) {
+          const key = (g.name || '').toLowerCase().trim()
+          if (!byName.has(key)) byName.set(key, { id: g.id, slug: g.slug, name: g.name })
+        }
+        this.games = Array.from(byName.values())
       } catch (e) {
         this.games = []
       }
@@ -44,14 +58,34 @@ export default {
         })
         if (error) console.error('getLeaderboard error:', error)
         const base = Array.isArray(data) ? data : (data ? [data] : [])
-        this.rows = base.map((r, idx) => ({
+        const mapped = base.map((r, idx) => ({
           rank: r.rank ?? (this.page * this.limit + idx + 1),
           user_id: r.user_id,
           display_name: r.display_name || r.username || r.user_id?.slice(0,8),
           avatar_url: r.avatar_url || null,
-          level: r.level ?? r.user_level ?? computeLevelFromXp(r.xp_total ?? 0, thresholds),
+          // Prefer server-provided global level. As a fallback, compute from all-time thresholds only if server omitted it.
+          level: r.user_level ?? r.level ?? null,
           total_xp: r.xp_total ?? 0,
         }))
+        this.rows = mapped
+
+        // If any level is missing (older DB without global level), fetch per-user global level as a fallback
+        if (this.rows.some(r => r.level == null)) {
+          try {
+            const { getUserLevel } = await import('../services/xp')
+            const promises = this.rows.map(async (r, i) => {
+              if (r.level != null) return null
+              const { data } = await getUserLevel(r.user_id)
+              const info = Array.isArray(data) ? data[0] : data
+              const lvl = info?.level ?? null
+              if (lvl != null) this.$set ? this.$set(this.rows, i, { ...r, level: lvl }) : (this.rows[i] = { ...r, level: lvl })
+              return null
+            })
+            await Promise.all(promises)
+          } catch (e) {
+            // ignore fallback errors, UI can show — for missing levels
+          }
+        }
       } catch (e) {
         console.error('getLeaderboard exception:', e)
         this.rows = []

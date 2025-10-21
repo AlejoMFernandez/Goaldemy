@@ -1,25 +1,50 @@
 import { supabase } from './supabase';
 import { getAuthUser } from './auth';
 
+const FALLBACK_NAMES = {
+  'guess-player': 'Adivina el jugador',
+  'who-is': '¿Quién es?',
+  // mantener compatibilidad histórica si existieran eventos con este slug
+  'quien-es': '¿Quién es?',
+  'nationality': 'Nacionalidad correcta',
+  'player-position': 'Posición correcta',
+  'name-correct': 'Nombre correcto',
+}
+const FALLBACK_DESC = {
+  'guess-player': 'El clásico: adiviná el jugador',
+  'who-is': 'Escribe el nombre a partir de la foto borrosa y pistas',
+  'quien-es': 'Escribe el nombre a partir de la foto borrosa y pistas',
+  'nationality': 'Selecciona la nacionalidad correcta del jugador',
+  'player-position': 'Elegí la posición correcta del jugador mostrado',
+  'name-correct': 'Elegí el nombre correcto del jugador mostrado',
+}
+
+const KNOWN_GAMES = [
+  { slug: 'name-correct', name: FALLBACK_NAMES['name-correct'], description: FALLBACK_DESC['name-correct'], cover_url: null },
+  { slug: 'nationality', name: FALLBACK_NAMES['nationality'], description: FALLBACK_DESC['nationality'], cover_url: '/games/gamenationality.png' },
+  { slug: 'player-position', name: FALLBACK_NAMES['player-position'], description: FALLBACK_DESC['player-position'], cover_url: null },
+  { slug: 'guess-player', name: FALLBACK_NAMES['guess-player'], description: FALLBACK_DESC['guess-player'], cover_url: null },
+  { slug: 'who-is', name: FALLBACK_NAMES['who-is'], description: FALLBACK_DESC['who-is'], cover_url: null },
+]
+
+export function friendlyNameForSlug(slug) {
+  return FALLBACK_NAMES[slug] || 'Juego'
+}
+
+function friendlyDescForSlug(slug) {
+  return FALLBACK_DESC[slug] || 'Próximamente…'
+}
+
 function normalizeGame(row) {
   const cover = row?.cover_url ?? row?.image ?? null
   const slug = row?.slug || ''
-  const fallbackNames = {
-    'guess-player': 'Adivina el jugador',
-    'nationality': 'Nacionalidad correcta',
-    'player-position': 'Posición del jugador',
-  }
-  const fallbackDesc = {
-    'guess-player': 'Adivina el nombre del jugador a partir de su foto',
-    'nationality': 'Selecciona la nacionalidad correcta del jugador',
-    'player-position': 'Elegí la posición correcta del jugador mostrado',
-  }
   return {
     ...row,
+    id: (row && row.id != null) ? row.id : (slug || undefined),
     cover_url: cover,
     image: cover,
-    name: row?.name || fallbackNames[slug] || 'Juego',
-    description: row?.description || fallbackDesc[slug] || 'Próximamente…',
+    name: row?.name || friendlyNameForSlug(slug),
+    description: row?.description || friendlyDescForSlug(slug),
   }
 }
 
@@ -46,7 +71,15 @@ export async function fetchGames() {
     throw error
   }
   console.debug('[games.js] fetchGames ok, rows:', data?.length ?? 0)
-  return (data || []).map(normalizeGame)
+  const normalized = (data || []).map(normalizeGame)
+  // Ensure baseline known games also appear in client UI (filter, etc.)
+  const bySlug = new Map(normalized.map(g => [g.slug, g]))
+  for (const kg of KNOWN_GAMES) {
+    if (!bySlug.has(kg.slug)) {
+      bySlug.set(kg.slug, normalizeGame({ id: kg.slug, slug: kg.slug, name: kg.name, description: kg.description, cover_url: kg.cover_url ?? null }))
+    }
+  }
+  return Array.from(bySlug.values())
 }
 
 // Optionally fetch a single game by id (useful later)
@@ -162,8 +195,9 @@ async function fallbackAggregateForCurrentUser(userId) {
     const rows = []
     for (const [gid, xp] of sums.entries()) {
       if (gid) {
-        const g = map[gid] || { name: 'Juego', cover_url: null }
-        rows.push({ id: gid, name: g.name || 'Juego', cover_url: g.cover_url || null, xp })
+        const g = map[gid]
+        const name = g?.name || friendlyNameForSlug(gid)
+        rows.push({ id: gid, name, cover_url: g?.cover_url || null, xp })
       } else if (xp > 0) {
         // Bucket for events without game_id
         rows.push({ id: 'unknown', name: 'Otros', cover_url: null, xp })

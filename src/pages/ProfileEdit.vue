@@ -23,6 +23,10 @@ export default {
         nationality_code: '',
         favorite_team: '',
         favorite_player: '',
+        linkedin_url: '',
+        github_url: '',
+        x_url: '',
+        instagram_url: '',
       },
       avatarFile: null,
       loading: false,
@@ -70,6 +74,10 @@ export default {
   nationality_code: userState.nationality_code ?? '',
   favorite_team: userState.favorite_team ?? '',
   favorite_player: userState.favorite_player ?? '',
+  linkedin_url: userState.linkedin_url ?? '',
+  github_url: userState.github_url ?? '',
+  x_url: userState.x_url ?? '',
+  instagram_url: userState.instagram_url ?? '',
       }
       this.user = userState
     });
@@ -142,6 +150,48 @@ export default {
       </div>
       <div>
         <SearchSelect label="Jugador favorito" v-model="formData.favorite_player" :options="players" placeholder="Escribe 3 letras para filtrar" />
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label for="linkedin" class="label">LinkedIn</label>
+          <input
+            id="linkedin"
+            type="url"
+            class="input"
+            placeholder="https://www.linkedin.com/in/tuusuario"
+            v-model="formData.linkedin_url"
+          />
+        </div>
+        <div>
+          <label for="github" class="label">GitHub</label>
+          <input
+            id="github"
+            type="url"
+            class="input"
+            placeholder="https://github.com/tuusuario"
+            v-model="formData.github_url"
+          />
+        </div>
+        <div>
+          <label for="xurl" class="label">X (Twitter)</label>
+          <input
+            id="xurl"
+            type="url"
+            class="input"
+            placeholder="https://x.com/tuusuario"
+            v-model="formData.x_url"
+          />
+        </div>
+        <div>
+          <label for="instagram" class="label">Instagram</label>
+          <input
+            id="instagram"
+            type="url"
+            class="input"
+            placeholder="https://instagram.com/tuusuario"
+            v-model="formData.instagram_url"
+          />
+        </div>
       </div>
       <!-- redireccionamos a perfil -->
       <AppButton type="submit">Guardar cambios</AppButton>
