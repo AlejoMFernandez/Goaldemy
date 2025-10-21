@@ -190,6 +190,38 @@
     (10, 2700)
     on conflict (level) do nothing;
 
+        -- Special achievements (placeholders)
+        insert into public.achievements (code, name, description, icon_url, points)
+        values
+            ('streak_dual_100', 'Doble Centurión', 'Alcanzá racha de 100 o más en al menos 2 juegos', '/badges/special/streak-dual-100.svg', 500),
+            ('xp_multi_5k_3', 'Tricampeón de XP', 'Superá 5000 XP en al menos 3 juegos distintos', '/badges/special/xp-multi-5k-3.svg', 500)
+        on conflict (code) do nothing;
+
+    -- Extend levels to 30 with increasing difficulty segments
+    -- 11-20: start delta 600 and +100 per level; 21-30: start delta 1650 and +150 per level
+    insert into public.level_thresholds(level, xp_required) values
+    (11, 3300),
+    (12, 4000),
+    (13, 4800),
+    (14, 5700),
+    (15, 6700),
+    (16, 7800),
+    (17, 9000),
+    (18, 10300),
+    (19, 11700),
+    (20, 13200),
+    (21, 14850),
+    (22, 16650),
+    (23, 18600),
+    (24, 20700),
+    (25, 22950),
+    (26, 25350),
+    (27, 27900),
+    (28, 30600),
+    (29, 33450),
+    (30, 36450)
+    on conflict (level) do nothing;
+
                 -- Seed games for existing demos (idempotent). If slug column exists, use upsert by slug.
                 do $$
                 declare has_slug boolean;
@@ -666,6 +698,7 @@
             display_name text,
             avatar_url text,
             xp_total bigint,
+            user_level int,
             rank bigint
         )
         language plpgsql
@@ -698,6 +731,12 @@
                 (coalesce(u.email, p.email))::text as display_name,
                 (p.avatar_url)::text as avatar_url,
                 t.xp_total,
+                (
+                  select lt.level from public.level_thresholds lt
+                  where lt.xp_required <= t.xp_total
+                  order by lt.level desc
+                  limit 1
+                )::int as user_level,
                 dense_rank() over (order by t.xp_total desc) as rank
             from totals t
             left join public.v_user_profiles p on p.user_id = t.user_id
@@ -707,6 +746,35 @@
         end$$;
 
     grant execute on function public.get_leaderboard(text, uuid, int, int) to authenticated;
+
+        -- Max streak per game for a user, based on xp_events.meta->>'streak'
+        create or replace function public.get_user_max_streak_by_game(
+            p_user_id uuid default null
+        ) returns table (
+            game_id uuid,
+            name text,
+            max_streak int
+        )
+        language sql
+        security definer
+        set search_path = public
+        as $$
+            with base as (
+                select e.game_id, nullif(e.meta->>'streak','')::int as streak
+                from public.xp_events e
+                where e.user_id = coalesce(p_user_id, auth.uid())
+                  and e.meta ? 'streak'
+            )
+            select b.game_id,
+                   coalesce(g.name, 'Juego') as name,
+                   max(b.streak)::int as max_streak
+            from base b
+            left join public.games g on g.id = b.game_id
+            group by b.game_id, g.name
+            order by max(b.streak) desc nulls last;
+        $$;
+
+        grant execute on function public.get_user_max_streak_by_game(uuid) to authenticated;
 
     -- ============================
     -- Notes:

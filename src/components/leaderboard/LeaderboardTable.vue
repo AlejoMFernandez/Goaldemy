@@ -1,7 +1,7 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 const props = defineProps({
-  rows: { type: Array, default: () => [] }, // [{rank, user_id, display_name, total_xp, game_name?}]
+  rows: { type: Array, default: () => [] }, // [{rank, user_id, display_name, total_xp, level?}]
   loading: { type: Boolean, default: false },
 })
 </script>
@@ -13,6 +13,7 @@ const props = defineProps({
         <tr>
           <th class="px-3 py-2 text-left">#</th>
           <th class="px-3 py-2 text-left">Usuario</th>
+          <th class="px-3 py-2 text-right">Nivel</th>
           <th class="px-3 py-2 text-right">XP</th>
         </tr>
       </thead>
@@ -54,6 +55,19 @@ const props = defineProps({
                 {{ r.email || r.display_name || r.user_id?.slice(0,8) }}
               </RouterLink>
             </div>
+          </td>
+          <td class="px-3 py-2 text-right">
+            <span v-if="r.level != null"
+              :class="[
+                'inline-flex items-center rounded-full px-2 py-0.5 text-sm ml-auto border',
+                r.level >= 30 ? 'border-red-500/40 bg-red-500/10 text-red-300' :
+                r.level >= 20 ? 'border-orange-500/40 bg-orange-500/10 text-orange-300' :
+                r.level >= 10 ? 'border-amber-500/40 bg-amber-500/10 text-amber-300' :
+                                'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+              ]">
+              {{ r.level }}
+            </span>
+            <span v-else class="text-slate-400">—</span>
           </td>
           <td class="px-3 py-2 text-right font-semibold text-white text-base">{{ r.total_xp }}</td>
         </tr>

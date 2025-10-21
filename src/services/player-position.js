@@ -77,8 +77,7 @@ export async function pickAnswer(state, option, confettiHost) {
     onIncorrect(state)
     state.streak = 0
   }
-  const correctLabel = POS_LABEL[state.current.position] || state.current.position
-  state.feedback = correct ? '¡Correcto!' : `Incorrecto: era ${correctLabel}`
+  state.feedback = ''
   return correct
 }
 

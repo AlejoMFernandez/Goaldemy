@@ -3,7 +3,7 @@ import AppH1 from '../components/AppH1.vue'
 import LeaderboardTable from '../components/leaderboard/LeaderboardTable.vue'
 import PeriodTabs from '../components/leaderboard/PeriodTabs.vue'
 import GameFilter from '../components/leaderboard/GameFilter.vue'
-import { getLeaderboard } from '../services/xp'
+import { getLeaderboard, fetchLevelThresholds, computeLevelFromXp } from '../services/xp'
 import { fetchGames } from '../services/games'
 
 export default {
@@ -35,6 +35,7 @@ export default {
     async load() {
       this.loading = true
       try {
+        const thresholds = await fetchLevelThresholds().catch(() => [])
         const { data, error } = await getLeaderboard({
           period: this.period,
           gameId: this.gameId || null,
@@ -48,6 +49,7 @@ export default {
           user_id: r.user_id,
           display_name: r.display_name || r.username || r.user_id?.slice(0,8),
           avatar_url: r.avatar_url || null,
+          level: r.level ?? r.user_level ?? computeLevelFromXp(r.xp_total ?? 0, thresholds),
           total_xp: r.xp_total ?? 0,
         }))
       } catch (e) {

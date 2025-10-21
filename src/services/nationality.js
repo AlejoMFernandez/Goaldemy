@@ -86,6 +86,6 @@ export async function pick(state, option, confettiHost) {
     onIncorrect(state)
     state.streak = 0
   }
-  state.feedback = correct ? '¡Correcto!' : `Incorrecto: era ${state.current.cname}`
+  state.feedback = ''
   return correct
 }

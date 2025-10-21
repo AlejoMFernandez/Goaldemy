@@ -49,6 +49,32 @@ export async function getLeaderboard({ period = 'all_time', gameId = null, limit
   return { data, error }
 }
 
+// Cache level thresholds to compute level client-side when needed
+let _levelThresholdsCache = null
+let _levelThresholdsAt = 0
+
+export async function fetchLevelThresholds(force = false) {
+  const now = Date.now()
+  if (!force && _levelThresholdsCache && (now - _levelThresholdsAt < 60_000)) {
+    return _levelThresholdsCache
+  }
+  const { data, error } = await supabase.from('level_thresholds').select('level, xp_required').order('level', { ascending: true })
+  if (error) return []
+  _levelThresholdsCache = Array.isArray(data) ? data : []
+  _levelThresholdsAt = now
+  return _levelThresholdsCache
+}
+
+export function computeLevelFromXp(xp, thresholds) {
+  if (!Array.isArray(thresholds) || thresholds.length === 0) return 1
+  const x = typeof xp === 'number' ? xp : Number(xp || 0)
+  let lvl = 1
+  for (const t of thresholds) {
+    if ((t?.xp_required ?? 0) <= x && (t?.level ?? 0) >= lvl) lvl = t.level
+  }
+  return lvl
+}
+
 /**
  * Fetch current user's XP events minimal fields to aggregate by game on the client.
  */
@@ -80,4 +106,66 @@ export async function unlockAchievementWithToast(code, meta = null) {
   // To avoid duplicate toasts (RPC + Realtime), do not toast here.
   // Realtime listener on user_achievements will handle the toast on INSERT.
   return await unlockAchievement(code, meta)
+}
+
+/**
+ * Get user's max streak per game. Preferred via RPC get_user_max_streak_by_game.
+ * Fallback (current user only): scan xp_events meta.streak and aggregate.
+ * Always returns items like: [{ id, name, streak }]
+ */
+export async function getUserMaxStreakByGame(userId = null) {
+  // Try RPC first
+  try {
+    const { data, error } = await supabase.rpc('get_user_max_streak_by_game', { p_user_id: userId })
+    const rows = (data || []).map(r => ({ id: r.game_id || 'unknown', name: r.name || 'Juego', streak: r.max_streak ?? 0 }))
+    if (!error) return { data: rows, error: null }
+    // If error continues, fall through to fallback
+  } catch {}
+
+  // Fallback: only if requesting own data (RLS restriction)
+  try {
+    const { data: me } = await supabase.auth.getUser()
+    const authId = me?.user?.id || null
+    const targetId = userId || authId
+    if (!authId || !targetId || targetId !== authId) {
+      return { data: [], error: null }
+    }
+    const { data: events, error: evErr } = await supabase
+      .from('xp_events')
+      .select('game_id, meta')
+      .eq('user_id', authId)
+    if (evErr) return { data: [], error: evErr }
+
+    const maxByGame = new Map()
+    for (const e of (events || [])) {
+      if (!e) continue
+      const sRaw = e.meta?.streak
+      const s = typeof sRaw === 'number' ? sRaw : Number(sRaw)
+      if (!Number.isFinite(s)) continue
+      const gid = e.game_id || null
+      const prev = maxByGame.get(gid) || 0
+      if (s > prev) maxByGame.set(gid, s)
+    }
+
+    // Enrich names for known game ids
+    const ids = Array.from(maxByGame.keys()).filter(k => k)
+    let nameMap = {}
+    if (ids.length) {
+      const { data, error } = await supabase.from('games').select('id, name').in('id', ids)
+      if (!error) {
+        nameMap = {}
+        for (const g of data || []) nameMap[g.id] = g.name || 'Juego'
+      }
+    }
+
+    const rows = []
+    for (const [gid, streak] of maxByGame.entries()) {
+      if (!gid) continue // ignore unknown bucket for streaks
+      rows.push({ id: gid, name: nameMap[gid] || 'Juego', streak })
+    }
+    rows.sort((a, b) => (b.streak || 0) - (a.streak || 0))
+    return { data: rows, error: null }
+  } catch (e) {
+    return { data: [], error: e }
+  }
 }

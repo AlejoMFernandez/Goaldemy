@@ -10,6 +10,8 @@ import AchievementsCard from '../components/profile/AchievementsCard.vue';
 // XpByGameCard inlined into XpDonutChart list
 import XpDonutChart from '../components/profile/XpDonutChart.vue';
 import ProgressCard from '../components/profile/ProgressCard.vue';
+import { getUserMaxStreakByGame } from '../services/xp';
+import { checkAndUnlockSpecials } from '../services/special-badges';
 import ConnectionsCard from '../components/profile/ConnectionsCard.vue';
 import CommunityCard from '../components/profile/CommunityCard.vue';
 
@@ -36,6 +38,9 @@ export default {
       achLoading: false,
       xpByGame: [],
       xpByGameLoading: false,
+  maxStreaks: [],
+  maxStreaksLoading: false,
+  streaksMap: {},
       // Placeholders for future community data
       followerCount: 0,
       followingCount: 0,
@@ -152,6 +157,33 @@ export default {
       } finally {
         this.xpByGameLoading = false
       }
+
+      // Max streaks by game
+      this.maxStreaksLoading = true
+      try {
+        const { data: sRows } = await getUserMaxStreakByGame(userId)
+        this.maxStreaks = sRows || []
+        const map = {}
+        for (const r of this.maxStreaks) if (r && r.id) map[r.id] = r.streak || 0
+        this.streaksMap = map
+      } catch (e) {
+        this.maxStreaks = []
+        this.streaksMap = {}
+      } finally {
+        this.maxStreaksLoading = false
+      }
+
+      // Attempt to unlock special badges when viewing own profile
+      try {
+        const isSelf = (this.$route.params.id || this.currentAuthId) === this.currentAuthId
+        const res = await checkAndUnlockSpecials(userId, this.xpByGame, this.maxStreaks, isSelf)
+        const r = res?.results || {}
+        const anyNew = [r.streak_dual_100, r.xp_multi_5k_3].some(x => x && x.data === true)
+        if (anyNew) {
+          const { data: ach } = await getUserAchievements(userId)
+          this.achievements = ach || this.achievements
+        }
+      } catch {}
     }
   }
 };
@@ -180,7 +212,7 @@ export default {
           :bio="user.bio"
         />
   <AchievementsCard :achievements="achievements" :loading="achLoading" />
-  <XpDonutChart :items="xpByGame" :loading="xpByGameLoading" />
+  <XpDonutChart :items="xpByGame" :streaks-by-game="streaksMap" :loading="xpByGameLoading || maxStreaksLoading" />
         <div class="rounded-lg border border-white/10 p-4">
           <p class="text-xs uppercase tracking-wide text-slate-400">Detalles del usuario</p>
           <ul class="mt-1 text-slate-300 text-sm space-y-1 list-disc list-inside">
@@ -194,7 +226,7 @@ export default {
       </div>
 
       <!-- Columna derecha: nivel, XP, achievements y progreso -->
-      <div class="flex flex-col gap-4 md:col-span-4">
+    <div class="flex flex-col gap-4 md:col-span-4">
   <ProgressCard :level-info="levelInfo" :loading="levelLoading" :xp-now="xpNow" :progress-percent="progressPercent" :achievements-count="achievements.length" />
         <ConnectionsCard :follower-count="followerCount" :following-count="followingCount" :group-count="groupCount" />
         <CommunityCard :forums-count="forumsCount" :messages-count="messagesCount" :discussions-started-count="discussionsStartedCount" />

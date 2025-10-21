@@ -33,7 +33,7 @@ export default {
               <span class="text-slate-300 text-[10px] uppercase tracking-wider">Puntaje</span>
               <span class="text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
               <div v-if="streak > 0" class="rounded-full border border-green-500/60 bg-green-500/10 text-green-300 text-xs px-2.5 py-1 font-semibold">
-                Racha: {{ streak }}
+                ×{{ streak }}
               </div>
             </div>
           </div>
@@ -44,13 +44,7 @@ export default {
           <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden"></div>
           <div class="absolute right-3 top-3 z-10" v-if="streak > 0">
           </div>
-          <transition name="fade-slide">
-            <div v-if="feedback" class="pointer-events-none absolute right-3 bottom-3 z-10">
-              <div :class="['rounded-full px-3 py-1.5 border text-sm', feedback.startsWith('¡') ? 'border-green-500 bg-green-500/15 text-green-300' : 'border-red-500 bg-red-500/15 text-red-300']">
-                {{ feedback }}
-              </div>
-            </div>
-          </transition>
+          <!-- Removed extra feedback chip; options indicate correcto/incorrecto -->
           <Transition name="round-fade" mode="out-in">
             <div :key="roundKey">
               <div class="flex flex-col items-center">

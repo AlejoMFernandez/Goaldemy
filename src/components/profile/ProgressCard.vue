@@ -15,7 +15,18 @@ defineProps({
       <div v-if="loading" class="text-slate-300">Cargando…</div>
       <div v-else>
         <div class="flex items-center gap-2">
-          <span class="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 px-2 py-0.5 text-sm">Nivel {{ levelInfo ? levelInfo.level : '—' }}</span>
+          <span
+            v-if="levelInfo"
+            :class="[
+              'inline-flex items-center rounded-full px-2 py-0.5 text-sm border',
+              levelInfo.level >= 30 ? 'border-red-500/40 bg-red-500/10 text-red-300' :
+              levelInfo.level >= 20 ? 'border-orange-500/40 bg-orange-500/10 text-orange-300' :
+              levelInfo.level >= 10 ? 'border-amber-500/40 bg-amber-500/10 text-amber-300' :
+                                       'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+            ]">
+            Nivel {{ levelInfo.level }}
+          </span>
+          <span v-else class="inline-flex items-center rounded-full px-2 py-0.5 text-sm border border-white/20 text-slate-300">Nivel —</span>
         </div>
         <div class="mt-3 grid grid-cols-2 gap-3">
           <div class="rounded-lg border border-white/10 p-3">
@@ -23,7 +34,7 @@ defineProps({
             <p class="text-white text-lg font-semibold">{{ xpNow }}</p>
           </div>
           <div class="rounded-lg border border-white/10 p-3">
-            <p class="text-[10px] uppercase tracking-wider text-slate-400">Achievements</p>
+            <p class="text-[10px] uppercase tracking-wider text-slate-400">Logros</p>
             <p class="text-white text-lg font-semibold">{{ achievementsCount }}</p>
           </div>
         </div>

@@ -22,7 +22,7 @@ async function getGameIdBySlug(slug) {
 export async function awardXpForCorrect({ gameCode, amount = 10, attemptIndex = 0, streak = 1, corrects = 1 }) {
   try {
     const gameId = await getGameIdBySlug(gameCode)
-    await awardXp({ amount, reason: 'correct_answer', gameId, sessionId: null, meta: { game: gameCode } })
+    await awardXp({ amount, reason: 'correct_answer', gameId, sessionId: null, meta: { game: gameCode, streak, corrects } })
   } catch {}
   try {
     if (attemptIndex === 0) {

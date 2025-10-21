@@ -111,6 +111,14 @@ export default {
                     document.addEventListener('click', this._onDocClick)
                     // Watch menu open to fetch level lazily
                     this.$watch('menuOpen', (open) => { if (open) this.loadLevelIfNeeded() })
+                    // Clear search box when navigating to a user profile
+                    this.$watch(() => this.$route.fullPath, (p) => {
+                        if (p?.startsWith?.('/u/')) {
+                            this.q = ''
+                            this.results = []
+                            this.searchOpen = false
+                        }
+                    })
         },
         unmounted() {
             document.removeEventListener('click', this._onDocClick)
@@ -141,14 +149,14 @@ export default {
                     <!-- Search -->
                     <li class="relative w-56">
                         <div class="relative" data-search-box>
-                            <input type="search" v-model="q" @input="onSearchInput" placeholder="Buscar usuarios" class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20" />
+                            <input type="search" v-model="q" @input="onSearchInput" placeholder="Buscar usuarios" class="searchbox w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20" />
                             <svg class="absolute right-2 top-1.5 h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         </div>
                         <div v-if="searchOpen" data-search-dropdown class="absolute z-30 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl">
                             <ul>
                                 <li v-for="u in results" :key="u.id" @click="goUser(u)" class="px-3 py-2 hover:bg-white/5 cursor-pointer text-sm flex items-center gap-2">
-                                    <img v-if="u.avatar_url" :src="u.avatar_url" class="w-6 h-6 rounded" alt="avatar" />
-                                    <div v-else class="w-6 h-6 rounded bg-slate-700 text-[10px] grid place-items-center">{{ (u.email||'?')[0]?.toUpperCase() }}</div>
+                                    <img v-if="u.avatar_url" :src="u.avatar_url" class="w-8 h-8 rounded-lg object-cover flex-none" alt="avatar" />
+                                    <div v-else class="w-8 h-8 rounded-lg bg-slate-700 text-[11px] grid place-items-center flex-none">{{ (u.email||'?')[0]?.toUpperCase() }}</div>
                                     <div class="truncate">
                                         <span class="text-slate-100">{{ u.display_name || u.username || (u.email || u.id) }}</span>
                                         <span class="ml-1 text-slate-400">· {{ u.email }}</span>
@@ -211,12 +219,12 @@ export default {
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leaderboards">Leaderboards</RouterLink></li>
                         <li class="pt-2">
                             <div class="relative">
-                                <input type="search" v-model="q" @input="onSearchInput" placeholder="Buscar usuarios" class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20" />
+                                <input type="search" v-model="q" @input="onSearchInput" placeholder="Buscar usuarios" class="searchbox w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20" />
                                 <div v-if="searchOpen" class="absolute z-30 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl">
                                     <ul>
                                         <li v-for="u in results" :key="u.id" @click="isOpen=false; goUser(u)" class="px-3 py-2 hover:bg-white/5 cursor-pointer text-sm flex items-center gap-2">
-                                            <img v-if="u.avatar_url" :src="u.avatar_url" class="w-6 h-6 rounded" alt="avatar" />
-                                            <div v-else class="w-6 h-6 rounded bg-slate-700 text-[10px] grid place-items-center">{{ (u.email||'?')[0]?.toUpperCase() }}</div>
+                                            <img v-if="u.avatar_url" :src="u.avatar_url" class="w-8 h-8 rounded-lg object-cover flex-none" alt="avatar" />
+                                            <div v-else class="w-8 h-8 rounded-lg bg-slate-700 text-[11px] grid place-items-center flex-none">{{ (u.email||'?')[0]?.toUpperCase() }}</div>
                                             <div class="truncate">
                                                 <span class="text-slate-100">{{ u.display_name || u.username || (u.email || u.id) }}</span>
                                                 <span class="ml-1 text-slate-400">· {{ u.email }}</span>
@@ -274,3 +282,13 @@ export default {
         </div>
     </header>
 </template>
+
+<style scoped>
+/* Make search avatars/initials uniform */
+.searchbox::-ms-clear { display: none; width: 0; height: 0; }
+.searchbox::-ms-reveal { display: none; width: 0; height: 0; }
+.searchbox::-webkit-search-decoration,
+.searchbox::-webkit-search-cancel-button,
+.searchbox::-webkit-search-results-button,
+.searchbox::-webkit-search-results-decoration { display: none; }
+</style>

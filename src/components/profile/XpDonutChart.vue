@@ -15,6 +15,7 @@ export default {
   components: { Doughnut },
   props: {
     items: { type: Array, required: true }, // [{ id, name, xp }]
+    streaksByGame: { type: Object, default: () => ({}) }, // { [gameId]: maxStreak }
     loading: { type: Boolean, default: false },
   },
   data() {
@@ -103,7 +104,10 @@ export default {
           <ul class="mt-1 space-y-1">
             <li v-for="(g,idx) in items" :key="g.id" class="flex items-center gap-2 text-sm text-slate-200 rounded px-2 py-1">
               <span class="truncate">{{ g.name }}</span>
-              <span class="ml-auto text-slate-100 font-medium">{{ new Intl.NumberFormat('es-AR').format(g.xp) }} XP</span>
+              <span class="ml-auto flex items-center gap-3">
+                <span v-if="streaksByGame[g.id]" class="text-emerald-300/90">×{{ streaksByGame[g.id] }}</span>
+                <span class="text-slate-100 font-medium">{{ new Intl.NumberFormat('es-AR').format(g.xp) }} XP</span>
+              </span>
             </li>
           </ul>
         </div>
