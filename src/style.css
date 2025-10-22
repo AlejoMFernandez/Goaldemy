@@ -57,8 +57,12 @@ body { font-family: var(--font-sans); background-color: #0b1220; color-scheme: d
     border-radius: var(--radius-card);
     border: 1px solid rgba(255,255,255,0.08);
     background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(12px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+.backdrop-blur { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+/* Mobile fix: some devices render backdrop-filter as solid white; disable on small screens */
+@media (max-width: 640px) {
+    .backdrop-blur { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
 .card-hover {
     transition: transform 300ms ease;

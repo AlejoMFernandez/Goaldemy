@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive } from 'vue'
+import { onMounted, reactive, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { fetchGames, gameRouteForSlug } from '../services/games'
 import { isChallengeAvailable, fetchDailyWinStreak } from '../services/game-modes'
@@ -35,30 +35,75 @@ function cardClasses(slug) {
 function toChallenge(slug) {
   return `${gameRouteForSlug(slug)}?mode=challenge`
 }
+
+// Totals for today's statuses (wins, losses, neutral) based on availability/result
+const totals = computed(() => {
+  const vals = Object.values(state.availability || {})
+  let win = 0, loss = 0, neutral = 0
+  for (const av of vals) {
+    if (!av || av.available !== false) continue // count only games ya jugados hoy
+    if (av.result === 'win') win++
+    else if (av.result === 'loss') loss++
+    else neutral++
+  }
+  return { win, loss, neutral }
+})
 </script>
 
 <template>
-  <section class="container mx-auto px-4 py-8">
-  <h1 class="text-2xl md:text-4xl font-bold text-white mb-1">Jugar por <span class="text-emerald-400 uppercase">PUNTOS</span></h1>
-  <p class="text-slate-300 mb-4">Modo por XP: jugá <strong class="text-slate-100 font-semibold">UNA VEZ POR DÍA</strong>.</p>
+  <section class="container mx-auto px-4 py-4 md:py-8">
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div>
+        <h1 class="text-2xl md:text-4xl font-bold text-white mb-1">Jugar por <span class="text-emerald-400 uppercase">PUNTOS</span></h1>
+        <p class="text-slate-300">Modo por XP: jugá <strong class="text-slate-100 font-semibold">UNA VEZ POR DÍA</strong>.</p>
+      </div>
+      <!-- Right-side mini card with totals -->
+      <div class="shrink-0 hidden sm:block">
+        <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-200">
+          <div class="flex items-end gap-3">
+            <!-- Wins -->
+            <div class="flex flex-col items-center gap-1" title="✓ Ganados hoy">
+              <div class="h-9 w-9 rounded-full grid place-items-center shadow-xl ring-2 ring-emerald-400/50 bg-emerald-500/20">
+                <div class="text-emerald-400 text-2xl font-extrabold leading-none">✓</div>
+              </div>
+              <div class="text-m tabular-nums text-slate-100 font-semibold">{{ totals.win }}</div>
+            </div>
+            <!-- Losses -->
+            <div class="flex flex-col items-center gap-1" title="✕ Perdidos hoy">
+              <div class="h-9 w-9 rounded-full grid place-items-center shadow-xl ring-2 ring-red-400/50 bg-red-500/20">
+                <div class="text-red-400 text-2xl font-extrabold leading-none">✕</div>
+              </div>
+              <div class="text-m tabular-nums text-slate-100 font-semibold">{{ totals.loss }}</div>
+            </div>
+            <!-- Neutral -->
+            <div class="flex flex-col items-center gap-1" title="– Jugados sin win/loss">
+              <div class="h-9 w-9 rounded-full grid place-items-center shadow-xl ring-2 ring-slate-400/40 bg-white/10">
+                <div class="text-slate-300 text-2xl font-extrabold leading-none">–</div>
+              </div>
+              <div class="text-m tabular-nums text-slate-100 font-semibold">{{ totals.neutral }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <div v-if="state.loading" class="text-slate-400">Cargando…</div>
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+  <div v-if="state.loading" class="text-slate-400">Cargando…</div>
+  <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3">
       <RouterLink v-for="g in state.games" :key="g.slug" :to="toChallenge(g.slug)" :class="cardClasses(g.slug)">
-        <!-- Mask overlay only dims/blurs the card content -->
-  <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="absolute inset-0 z-10 rounded-xl bg-black/25 backdrop-blur-md pointer-events-none"></div>
+  <!-- Mask overlay SOLO BLUR (6px) usando pseudo-elemento to reliably trigger backdrop-filter -->
+        <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="mask-dim rounded-xl"></div>
         <!-- Result icon above the mask so it stays vivid -->
-        <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="absolute inset-0 z-20 grid place-items-center pointer-events-none">
-          <div v-if="state.availability[g.slug]?.result==='win'"
-               class="h-12 w-12 rounded-full grid place-items-center shadow-xl ring-2 ring-emerald-400/50 bg-emerald-500/20">
+     <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="absolute inset-0 z-20 grid place-items-center pointer-events-none">
+    <div v-if="state.availability[g.slug]?.result==='win'"
+      class="h-12 w-12 rounded-full grid place-items-center ring-2 ring-emerald-400/50 bg-emerald-500/20">
             <div class="text-emerald-400 text-3xl font-extrabold">✓</div>
           </div>
-          <div v-else-if="state.availability[g.slug]?.result==='loss'"
-               class="h-12 w-12 rounded-full grid place-items-center shadow-xl ring-2 ring-red-400/50 bg-red-500/20">
+    <div v-else-if="state.availability[g.slug]?.result==='loss'"
+      class="h-12 w-12 rounded-full grid place-items-center ring-2 ring-red-400/50 bg-red-500/20">
             <div class="text-red-400 text-3xl font-extrabold">✕</div>
           </div>
-          <div v-else
-               class="h-12 w-12 rounded-full grid place-items-center shadow-xl ring-2 ring-slate-400/40 bg-white/10">
+    <div v-else
+      class="h-12 w-12 rounded-full grid place-items-center ring-2 ring-slate-400/40 bg-white/10">
             <div class="text-slate-300 text-3xl font-extrabold">–</div>
           </div>
         </div>
@@ -80,3 +125,14 @@ function toChallenge(slug) {
     </div>
   </section>
 </template>
+
+<style scoped>
+/* Mask: remove colors and slightly darken without blur */
+.mask-dim { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
+.mask-dim::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  -webkit-backdrop-filter: saturate(0) brightness(0.82);
+  backdrop-filter: saturate(0) brightness(0.82) blur(1px);
+}
+</style>

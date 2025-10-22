@@ -88,7 +88,8 @@ export function countryFlag(p, width = 32) {
   return flagUrl(code, width)
 }
 export function teamLogo(p) { return p?.teamLogo || null }
-export function blurForLives(lives) { return lives >= 3 ? 10 : lives === 2 ? 6 : lives === 1 ? 3 : 0 }
+// Slightly stronger blur so it's noticeable on mobile devices too
+export function blurForLives(lives) { return lives >= 3 ? 14 : lives === 2 ? 9 : lives === 1 ? 5 : 0 }
 
 export function nextRound(state) {
   if (!state.allPlayers.length) return

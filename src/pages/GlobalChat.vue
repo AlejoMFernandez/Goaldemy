@@ -27,6 +27,9 @@ export default {
     };
   },
   methods: {
+    isOwn(msg) {
+      return !!msg && (msg.sender_id === this.user.id || msg.email === this.user.email)
+    },
     async handleSubmit() {
       const raw = this.newMessage.content || ''
       // Trim trailing whitespace/newlines; block empty messages
@@ -70,46 +73,49 @@ export default {
 <template>
   <div>
     <AppH1>Chat general</AppH1>
-    <div class="flex flex-col md:flex-row gap-6">
-      <section
-        class="card w-full md:w-9/12 max-h-[60vh] overflow-y-auto p-4"
-        ref="chatContainer"
-      >
-        <h2 class="sr-only">Lista de mensajes</h2>
-        <ol class="relative flex flex-col gap-4 items-start">
-            <li
-              v-for="message in messages"
-              :key="message.id"
-              class="w-fit max-w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-slate-100 shadow-sm"
-            >
-              <div class="m-0 text-sm font-semibold text-slate-200"><span>{{ message.email }}</span></div>
-              <div class="my-1 whitespace-pre-line">{{ message.content }}</div>
-              <!-- hora formateada a: dia/mes SIN AÑO hora:minutos -->
-              <div class="m-0 text-xs font-light text-slate-400">{{ formatShortDate(message.created_at) }}</div>
-            </li>
-        </ol>
-      </section>
-      <section class="md:w-3/12 w-full">
-        <h2 class="mb-4 text-2xl">Enviar mensaje</h2>
-        <form action="#" @submit.prevent="handleSubmit" class="card card-hover p-4 space-y-4">
-          <div>
-            <span class="label">Correo electrónico</span>
-            {{ user.email }}
+    <section class="card p-0 overflow-hidden">
+      <!-- Chat messages area -->
+      <div class="flex flex-col h-[60vh] sm:h-[70vh]">
+        <div class="flex-1 overflow-y-auto p-4" ref="chatContainer">
+          <h2 class="sr-only">Lista de mensajes</h2>
+          <ol class="relative flex flex-col gap-3 items-start">
+              <li
+                v-for="message in messages"
+                :key="message.id"
+                :class="[
+                  'w-fit max-w-[90%] sm:max-w-[75%] rounded-2xl px-3 py-2 text-slate-100 shadow-sm border',
+                  isOwn(message)
+                    ? 'ml-auto bg-emerald-500/15 border-emerald-400/30'
+                    : 'bg-white/5 border-white/10'
+                ]"
+              >
+                <div class="m-0 text-xs sm:text-sm font-semibold text-slate-300" v-if="!isOwn(message)"><span>{{ message.email }}</span></div>
+                <div class="my-1 whitespace-pre-line break-words">{{ message.content }}</div>
+                <div class="m-0 text-[11px] text-slate-400 text-right">{{ formatShortDate(message.created_at) }}</div>
+              </li>
+          </ol>
+        </div>
+        <!-- Input bar (WhatsApp-like) -->
+        <form action="#" @submit.prevent="handleSubmit" class="p-2 bg-slate-900/60 border-t border-white/10">
+          <div class="flex items-center gap-2">
+            <div class="flex-1 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 pl-3 pr-1.5 py-1.5">
+              <input
+                v-model="newMessage.content"
+                type="text"
+                placeholder="Escribe un mensaje"
+                class="flex-1 bg-transparent outline-none text-slate-100 placeholder-slate-400"
+                @keydown.enter.exact.prevent="handleSubmit"
+              />
+              <button type="submit" class="shrink-0 rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 text-white h-10 w-10 grid place-items-center">
+                <!-- paper plane icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+                  <path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+              </button>
+            </div>
           </div>
-          <div>
-            <label for="content" class="label">Contenido</label>
-            <textarea
-              required
-              id="content"
-              class="input min-h-40"
-              placeholder="Escribe tu mensaje"
-              v-model="newMessage.content"
-              @keydown.enter.exact.prevent="handleSubmit"
-            ></textarea>
-          </div>
-          <AppButton type="submit">Enviar</AppButton>
         </form>
-      </section>
-    </div>
+      </div>
+    </section>
   </div>
 </template>
