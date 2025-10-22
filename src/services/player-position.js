@@ -25,6 +25,10 @@ export function initState() {
     corrects: 0,
     roundKey: 0,
     loading: true,
+    // modes
+    allowXp: true,
+    xpEarned: 0,
+    maxStreak: 0,
   }
 }
 
@@ -68,11 +72,17 @@ export async function pickAnswer(state, option, confettiHost) {
   if (correct) {
     const nextStreak = state.streak + 1
     const nextCorrects = (state.corrects || 0) + 1
-    await awardXpForCorrect({ gameCode: 'player-position', amount: 10, attemptIndex: state.attempts, streak: nextStreak, corrects: nextCorrects })
+    if (state.allowXp) {
+      await awardXpForCorrect({ gameCode: 'player-position', amount: 10, attemptIndex: state.attempts, streak: nextStreak, corrects: nextCorrects })
+      state.xpEarned += 10
+    }
     onCorrect(state)
     state.streak = nextStreak
     state.corrects = nextCorrects
-    spawnXpBadge(confettiHost, '+10 XP', { position: 'top-right' })
+    state.maxStreak = Math.max(state.maxStreak || 0, nextStreak)
+    if (state.allowXp) {
+      spawnXpBadge(confettiHost, '+10 XP', { position: 'top-right' })
+    }
   } else {
     onIncorrect(state)
     state.streak = 0

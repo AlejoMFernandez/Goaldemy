@@ -23,6 +23,9 @@ export function initState() {
     streak: 0,
     roundKey: 0,
     loading: true,
+    // modes
+    allowXp: true,
+    xpEarned: 0,
   }
 }
 
@@ -121,10 +124,16 @@ export async function submitGuess(state, confettiHost) {
   if (correct) {
     state.answered = true
     const nextStreak = state.streak + 1
-  await awardXpForCorrect({ gameCode: 'who-is', amount: 10, attemptIndex: state.attempts, streak: nextStreak, corrects: state.corrects + 1 })
+    if (state.allowXp) {
+      await awardXpForCorrect({ gameCode: 'who-is', amount: 10, attemptIndex: state.attempts, streak: nextStreak, corrects: state.corrects + 1 })
+      state.xpEarned += 10
+    }
     onCorrect(state)
     state.streak = nextStreak
-    spawnXpBadge(confettiHost, '+10 XP', { position: 'top-right' })
+    state.maxStreak = Math.max(state.maxStreak || 0, nextStreak)
+    if (state.allowXp) {
+      spawnXpBadge(confettiHost, '+10 XP', { position: 'top-right' })
+    }
     state.feedback = ''
     return true
   } else {

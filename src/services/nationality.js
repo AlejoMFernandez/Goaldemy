@@ -20,6 +20,9 @@ export function initState() {
     streak: 0,
     roundKey: 0,
     loading: true,
+    // Modes support
+    allowXp: true,
+    xpEarned: 0,
   }
 }
 
@@ -115,10 +118,16 @@ export async function pick(state, option, confettiHost) {
   if (correct) {
     // First award XP with current attempt/streak values (before increment)
   const nextStreak = state.streak + 1
-  await awardXpForCorrect({ gameCode: 'nationality', amount: 10, attemptIndex: state.attempts, streak: nextStreak, corrects: state.corrects + 1 })
+  if (state.allowXp) {
+    await awardXpForCorrect({ gameCode: 'nationality', amount: 10, attemptIndex: state.attempts, streak: nextStreak, corrects: state.corrects + 1 })
+    state.xpEarned += 10
+  }
     onCorrect(state)
     state.streak = nextStreak
-    spawnXpBadge(confettiHost, '+10 XP', { position: 'top-right' })
+    state.maxStreak = Math.max(state.maxStreak || 0, nextStreak)
+    if (state.allowXp) {
+      spawnXpBadge(confettiHost, '+10 XP', { position: 'top-right' })
+    }
   } else {
     onIncorrect(state)
     state.streak = 0

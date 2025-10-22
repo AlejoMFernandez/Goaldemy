@@ -1,0 +1,2 @@
+-- Deprecated: avatar uploads removed from the app UI.
+-- This file is intentionally left blank.

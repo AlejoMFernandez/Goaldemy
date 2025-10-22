@@ -18,6 +18,10 @@ export default {
                 avatar_url: null,
             },
             isOpen: false,
+            infoOpen: false,
+            playOpen: false,
+            _infoCloseTimer: null,
+            _playCloseTimer: null,
             q: '',
             searchOpen: false,
             searching: false,
@@ -78,6 +82,25 @@ export default {
         avatarInitial() {
             const letter = (this.user?.email || '?').trim()[0] || '?'
             return letter.toUpperCase()
+        },
+        // Dropdown controls (less sensitive hover)
+        onInfoEnter() {
+            if (this._infoCloseTimer) { clearTimeout(this._infoCloseTimer); this._infoCloseTimer = null }
+            this.infoOpen = true
+            this.playOpen = false
+        },
+        onInfoLeave() {
+            if (this._infoCloseTimer) clearTimeout(this._infoCloseTimer)
+            this._infoCloseTimer = setTimeout(() => { this.infoOpen = false }, 220)
+        },
+        onPlayEnter() {
+            if (this._playCloseTimer) { clearTimeout(this._playCloseTimer); this._playCloseTimer = null }
+            this.playOpen = true
+            this.infoOpen = false
+        },
+        onPlayLeave() {
+            if (this._playCloseTimer) clearTimeout(this._playCloseTimer)
+            this._playCloseTimer = setTimeout(() => { this.playOpen = false }, 220)
         }
     },
     computed: {
@@ -107,6 +130,16 @@ export default {
                         if (this.searchOpen && search && !search.contains(e.target) && searchBox && !searchBox.contains(e.target)) {
                             this.searchOpen = false
                         }
+                        const infoMenu = this.$el.querySelector('[data-info-menu]')
+                        const infoBtn = this.$el.querySelector('[data-info-button]')
+                        if (this.infoOpen && infoMenu && !infoMenu.contains(e.target) && infoBtn && !infoBtn.contains(e.target)) {
+                            this.infoOpen = false
+                        }
+                        const playMenu = this.$el.querySelector('[data-play-menu]')
+                        const playBtn = this.$el.querySelector('[data-play-button]')
+                        if (this.playOpen && playMenu && !playMenu.contains(e.target) && playBtn && !playBtn.contains(e.target)) {
+                            this.playOpen = false
+                        }
                     }
                     document.addEventListener('click', this._onDocClick)
                     // Watch menu open to fetch level lazily
@@ -118,6 +151,8 @@ export default {
                             this.results = []
                             this.searchOpen = false
                         }
+                        this.infoOpen = false
+                        this.playOpen = false
                     })
         },
         unmounted() {
@@ -147,8 +182,46 @@ export default {
                 <ul class="hidden md:flex items-center gap-4 text-slate-200">
                     <li><RouterLink class="hover:text-white transition-colors" to="/">Home</RouterLink></li>
                     <li><RouterLink class="hover:text-white transition-colors" to="/chat">Chat Global</RouterLink></li>
-                    <li><RouterLink class="hover:text-white transition-colors" to="/games">Juegos</RouterLink></li>
+                    
                     <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Leaderboards</RouterLink></li>
+                    <!-- Info dropdown (hover) -->
+                    <li class="relative"
+                        @mouseenter="onInfoEnter"
+                        @mouseleave="onInfoLeave">
+                        <button data-info-button class="inline-flex items-center gap-1 px-0 py-1.5 text-slate-200 hover:text-white">
+                            Información
+                            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                        </button>
+                        <div v-if="infoOpen" data-info-menu class="absolute left-0 mt-2 w-56 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl overflow-hidden z-30"
+                             @mouseenter="onInfoEnter" @mouseleave="onInfoLeave">
+                            <RouterLink @click="infoOpen=false" to="/about/me" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">¿Quién soy?</RouterLink>
+                            <RouterLink @click="infoOpen=false" to="/about/goaldemy" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">¿Qué es Goaldemy?</RouterLink>
+                            <RouterLink @click="infoOpen=false" to="/about/objetivo" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">Objetivo</RouterLink>
+                        </div>
+                    </li>
+                    <!-- Play dropdown (hover) with descriptions -->
+                    <li class="relative"
+                        @mouseenter="onPlayEnter"
+                        @mouseleave="onPlayLeave">
+                        <button data-play-button class="inline-flex items-center gap-1 px-0 py-1.5 text-slate-200 hover:text-white">
+                            Jugar
+                            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                        </button>
+                        <div v-if="playOpen" data-play-menu class="absolute left-0 mt-2 w-56 rounded-2xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-30"
+                             @mouseenter="onPlayEnter" @mouseleave="onPlayLeave">
+                            <div class="p-3">
+                                <h4 class="text-slate-400 text-xs uppercase tracking-wider mb-2">Modos de juego</h4>
+                                <RouterLink @click="playOpen=false" to="/play/points" class="block rounded-lg p-2 hover:bg-white/5">
+                                    <div class="text-sm text-slate-100 font-medium">Jugar por puntos</div>
+                                    <p class="text-slate-400 text-xs">Desafío diario con cronómetro. 1 intento por día. Sumá XP.</p>
+                                </RouterLink>
+                                <RouterLink @click="playOpen=false" to="/play/free" class="mt-1 block rounded-lg p-2 hover:bg-white/5">
+                                    <div class="text-sm text-slate-100 font-medium">Jugar libre</div>
+                                    <p class="text-slate-400 text-xs">Practicá sin límite de partidas. No suma XP.</p>
+                                </RouterLink>
+                            </div>
+                        </div>
+                    </li>
                     <!-- Search -->
                     <li class="relative w-56">
                         <div class="relative" data-search-box>
@@ -281,8 +354,27 @@ export default {
                         <!-- Nav items -->
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/">Home</RouterLink></li>
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/chat">Chat Global</RouterLink></li>
-                        <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/games">Juegos</RouterLink></li>
+                        
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leaderboards">Leaderboards</RouterLink></li>
+                                                <li>
+                                                    <details class="group">
+                                                        <summary class="cursor-pointer hover:text-white">Info</summary>
+                                                        <ul class="mt-1 pl-3 flex flex-col gap-1 text-slate-300">
+                                                            <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/about/me">¿Quién soy?</RouterLink></li>
+                                                            <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/about/goaldemy">¿Qué es Goaldemy?</RouterLink></li>
+                                                            <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/about/objetivo">Objetivo</RouterLink></li>
+                                                        </ul>
+                                                    </details>
+                                                </li>
+                                                <li>
+                                                    <details class="group">
+                                                        <summary class="cursor-pointer hover:text-white">Jugar</summary>
+                                                        <ul class="mt-1 pl-3 flex flex-col gap-1 text-slate-300">
+                                                            <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/play/points">Jugar por puntos</RouterLink></li>
+                                                            <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/play/free">Jugar libre</RouterLink></li>
+                                                        </ul>
+                                                    </details>
+                                                </li>
                     </ul>
                 </div>
             </transition>

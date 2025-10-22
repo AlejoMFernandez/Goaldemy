@@ -35,6 +35,17 @@ function friendlyDescForSlug(slug) {
   return FALLBACK_DESC[slug] || 'Próximamente…'
 }
 
+// Map slug to in-app route
+export function gameRouteForSlug(slug) {
+  switch ((slug || '').toString()) {
+    case 'guess-player': return '/games/guess-player'
+    case 'nationality': return '/games/nationality'
+    case 'player-position': return '/games/player-position'
+    case 'who-is': return '/games/who-is'
+    default: return '/games'
+  }
+}
+
 function normalizeGame(row) {
   const cover = row?.cover_url ?? row?.image ?? null
   const slug = row?.slug || ''
@@ -104,6 +115,27 @@ export async function fetchGameById(id) {
     throw error
   }
 
+  return data ? normalizeGame(data) : null
+}
+
+// Fetch a single game by slug (to resolve UUIDs for modes/sessions)
+export async function fetchGameBySlug(slug) {
+  if (!slug) return null
+  let { data, error } = await supabase
+    .from('games')
+    .select('id, slug, name, description, cover_url, created_at')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (error && (error.code === '42703' || /column .* does not exist/i.test(error.message || ''))) {
+    const res = await supabase
+      .from('games')
+      .select('id, slug, name, description, image, created_at')
+      .eq('slug', slug)
+      .maybeSingle()
+    data = res.data; error = res.error
+  }
+  if (error) return null
   return data ? normalizeGame(data) : null
 }
 
