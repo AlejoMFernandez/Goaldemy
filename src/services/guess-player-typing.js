@@ -1,8 +1,9 @@
 import { getAllPlayers } from './players'
 import { spawnXpBadge } from './ui-effects'
-import { onCorrect, onIncorrect } from './scoring'
+import { onCorrect } from './scoring'
 import { awardXpForCorrect } from './game-xp'
-import { flagUrl } from './countries'
+import { flagUrl, countryCodeFromName } from './countries'
+import countryMap from '../codeCOUNTRYS.json'
 
 export function initState() {
   return {
@@ -79,7 +80,13 @@ export function broadPos(p) {
 }
 
 export function posLabel(p) { return broadPos(p) }
-export function countryFlag(p, width = 32) { return flagUrl(p?.ccode || p?.cname, width) }
+export function countryFlag(p, width = 32) {
+  // Prefer validated code from codeCOUNTRYS.json; fallback to mapping by name
+  const raw = (p?.ccode || '').toString().toLowerCase()
+  const validCode = raw && Object.prototype.hasOwnProperty.call(countryMap, raw) ? raw : null
+  const code = validCode || countryCodeFromName(p?.cname)
+  return flagUrl(code, width)
+}
 export function teamLogo(p) { return p?.teamLogo || null }
 export function blurForLives(lives) { return lives >= 3 ? 10 : lives === 2 ? 6 : lives === 1 ? 3 : 0 }
 
@@ -138,10 +145,11 @@ export async function submitGuess(state, confettiHost) {
     return true
   } else {
     state.lives = Math.max(0, state.lives - 1)
-    onIncorrect(state)
     if (state.lives === 0) {
       state.answered = true
       state.streak = 0
+      // Count this round as an attempt (lost round)
+      state.attempts += 1
     }
     return false
   }

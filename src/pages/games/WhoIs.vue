@@ -18,6 +18,11 @@ export default {
       availability: { available: true, reason: null },
       showSummary: false,
       lifetimeMaxStreak: 0,
+  // UI extras
+  suggestOpen: false,
+      selectedIndex: -1,
+      revealImage: false,
+      justPicked: false,
   // XP progress summary
   levelBefore: null,
   levelAfter: null,
@@ -29,6 +34,27 @@ export default {
   xpToNextAfter: null,
     }
   },
+  computed: {
+    // Suggestions after 3+ chars, up to 12
+    suggestions() {
+      const q = (this.guess || '').toString().trim()
+      if (!q || q.length < 3) return []
+      const nq = q.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
+      const arr = this.allPlayers || []
+      const out = []
+      const seen = new Set()
+      for (const p of arr) {
+        const n = (p?.name || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
+        if (n.includes(nq)) {
+          const key = n
+          if (!seen.has(key)) { seen.add(key); out.push(p) }
+        }
+        if (out.length >= 12) break
+      }
+      return out
+    }
+  },
+  watch: {},
   mounted() {
     const mode = (this.$route.query.mode || '').toString().toLowerCase()
     if (mode === 'free') this.mode = 'free'
@@ -46,10 +72,43 @@ export default {
     }
   },
   methods: {
-    nextRound() { nextRound(this) },
+    nextRound() {
+      // Ensure the new round starts blurred again
+      this.revealImage = false
+      nextRound(this)
+    },
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
+    chooseSuggestion(p) {
+      if (!p) return
+      this.guess = p.name || ''
+      this.suggestOpen = false
+      this.selectedIndex = -1
+      this.justPicked = true
+    },
+    moveSelection(dir) {
+      const n = this.suggestions.length
+      if (!n) return
+      if (this.selectedIndex < 0) this.selectedIndex = 0
+      else this.selectedIndex = (this.selectedIndex + dir + n) % n
+      this.suggestOpen = true
+    },
+    async onEnterKey() {
+      if (this.suggestOpen && this.selectedIndex >= 0 && this.suggestions[this.selectedIndex]) {
+        this.chooseSuggestion(this.suggestions[this.selectedIndex])
+        return
+      }
+      await this.submit()
+    },
     async submit() {
       const ok = await submitGuess(this, this.$refs.confettiHost)
+      if (!ok) {
+        // clear input and reopen suggestions for a fresh try
+        this.guess = ''
+        this.suggestOpen = true
+        this.selectedIndex = -1
+        this.justPicked = false
+      }
+      if (ok) this.revealImage = true
       if (this.mode === 'challenge' && (ok || this.lives === 0)) {
         try {
           const result = ok ? 'win' : 'loss'
@@ -75,10 +134,14 @@ export default {
         return
       }
       if (ok || this.lives === 0) {
-        setTimeout(() => this.nextRound(), 1000)
+        // reveal image briefly, then reset and go to next round (blur must be back)
+        this.revealImage = true
+        setTimeout(() => {
+          this.nextRound()
+        }, 1000)
       }
     },
-    blurPx() { return blurForLives(this.lives) },
+    blurPx() { return this.revealImage ? 0 : blurForLives(this.lives) },
     posBadge() { return this.current ? posLabel(this.current) : '' },
     flagSrc() { return this.current ? countryFlag(this.current, 40) : '' },
     teamLogo() { return this.current ? teamLogo(this.current) : '' },
@@ -127,31 +190,52 @@ export default {
       <div v-if="loading" class="text-slate-300">Cargando…</div>
       <div v-else class="relative card p-4">
         <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden"></div>
+        <!-- Lives top-left with animated loss -->
+        <div class="absolute top-2 left-2 z-10 select-none">
+          <div class="relative inline-block rounded-full px-2.5 py-1.5 bg-white/5 ring-1 ring-white/10">
+            <!-- Base placeholders -->
+            <div class="flex items-center gap-1.5">
+              <span v-for="i in 3" :key="'base-'+i" class="h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full inline-block bg-white/20"></span>
+            </div>
+            <!-- Active lives overlay with leave animation -->
+            <TransitionGroup name="life" tag="div" class="absolute inset-0 flex items-center gap-1.5 px-2.5 py-1.5">
+              <span v-for="i in lives" :key="'live-'+i" class="h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full inline-block bg-red-400"></span>
+            </TransitionGroup>
+          </div>
+        </div>
         <Transition name="round-fade" mode="out-in">
           <div :key="roundKey">
             <div class="flex flex-col items-center gap-2">
               <p class="text-slate-200 text-center text-base">¿Quién es este jugador?</p>
-              <div class="flex items-center gap-2 text-xs">
-                <span class="rounded-full border border-white/15 bg-white/5 text-slate-200 px-2 py-0.5">{{ posBadge() }}</span>
-                <img v-if="flagSrc()" :src="flagSrc()" alt="flag" width="28" height="20" class="rounded ring-1 ring-white/10" style="aspect-ratio: 20/14;" />
-                <img v-if="teamLogo()" :src="teamLogo()" alt="team" width="22" height="22" class="rounded-sm ring-1 ring-white/10 object-cover" />
+              <div class="flex items-center gap-3 text-sm">
+                <span class="rounded-full border border-white/15 bg-white/5 text-slate-200 px-3 py-1 text-sm">{{ posBadge() }}</span>
+                <img v-if="flagSrc()" :src="flagSrc()" alt="flag" width="36" height="26" class="object-cover" style="aspect-ratio: 20/14;" />
+                <img v-if="teamLogo()" :src="teamLogo()" alt="team" width="32" height="32" class="object-cover" />
               </div>
-              <img v-if="current" :src="current.image" :alt="current.name" :style="{ filter: `blur(${blurPx()}px)` }" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg" />
+              <img v-if="current" :src="current.image" :alt="current.name" :style="{ filter: `blur(${blurPx()}px)` }" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg blur-img" />
             </div>
 
-            <form class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-2" @submit.prevent="submit">
-              <input v-model="guess" :disabled="answered" type="text" placeholder="Escribe al menos 3 letras" class="flex-1 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-white/20" />
-              <button type="submit" :disabled="answered || (guess?.length || 0) < 3" class="rounded-lg border border-white/15 bg-white/10 text-slate-100 px-3 py-2 disabled:opacity-50">Adivinar</button>
+            <form class="relative flex flex-col items-center gap-2 mt-3" @submit.prevent="submit">
+              <div class="relative w-full max-w-md">
+                <input v-model="guess" @focus="suggestOpen=true" @input="suggestOpen = (guess?.length||0) >= 3; selectedIndex=-1" 
+                       @keydown.down.prevent="moveSelection(1)" @keydown.up.prevent="moveSelection(-1)" @keydown.enter.prevent="onEnterKey"
+                       :disabled="answered" type="text" placeholder="Escribe al menos 3 letras"
+                       class="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-white/20" />
+                <!-- suggestions -->
+                <div v-if="suggestOpen && !answered && (suggestions.length>0)" class="absolute z-20 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/90 backdrop-blur shadow-lg max-h-64 overflow-auto">
+                  <ul>
+                    <li v-for="(p,idx) in suggestions" :key="p.id" @click.prevent="chooseSuggestion(p)"
+                        :class="['px-3 py-2 cursor-pointer text-slate-200 flex items-center gap-2', idx===selectedIndex ? 'bg-white/10' : 'hover:bg-white/5']">
+                      <img :src="p.image" :alt="p.name" class="h-6 w-6 object-cover rounded" />
+                      <span class="truncate">{{ p.name }}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <button type="button" @click="submit" :disabled="answered || (guess?.length || 0) < 3" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 border border-white/10 text-white px-4 py-2 disabled:opacity-50">Adivinar</button>
             </form>
 
-            <div class="mt-2 text-xs text-slate-300 flex items-center gap-2">
-              <span class="uppercase tracking-wide">Vidas:</span>
-              <div class="flex gap-1">
-                <span :class="['h-2.5 w-2.5 rounded-full', lives >= 1 ? 'bg-red-400' : 'bg-white/15']"></span>
-                <span :class="['h-2.5 w-2.5 rounded-full', lives >= 2 ? 'bg-red-400' : 'bg-white/15']"></span>
-                <span :class="['h-2.5 w-2.5 rounded-full', lives >= 3 ? 'bg-red-400' : 'bg-white/15']"></span>
-              </div>
-            </div>
+            <!-- Removed old lives row; now shown as hearts on top-left -->
 
             <div v-if="answered && lives === 0" class="mt-2 text-slate-300 text-sm">Era <strong class="text-white">{{ current?.name }}</strong></div>
           </div>
@@ -224,4 +308,12 @@ export default {
 }
 
 /* reserved for game local styles */
+/* Smooth blur change on reveal/hints */
+.blur-img { transition: filter 220ms ease; }
+
+/* Lives loss animation using TransitionGroup */
+.life-leave-active { transition: transform 220ms ease, opacity 220ms ease; }
+.life-leave-to { transform: scale(0); opacity: 0; }
+.life-enter-active { transition: transform 160ms ease, opacity 160ms ease; }
+.life-enter-from { transform: scale(0.8); opacity: 0.6; }
 </style>

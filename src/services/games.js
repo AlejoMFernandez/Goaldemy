@@ -9,6 +9,10 @@ const FALLBACK_NAMES = {
   'nationality': 'Nacionalidad correcta',
   'player-position': 'Posición correcta',
   'name-correct': 'Nombre correcto',
+  'value-order': 'Valor de mercado',
+  'age-order': 'Ordenar por edad',
+  'height-order': 'Ordenar por altura',
+  'shirt-number': 'Número de camiseta',
 }
 const FALLBACK_DESC = {
   'guess-player': 'El clásico: adiviná el jugador',
@@ -17,6 +21,10 @@ const FALLBACK_DESC = {
   'nationality': 'Selecciona la nacionalidad correcta del jugador',
   'player-position': 'Elegí la posición correcta del jugador mostrado',
   'name-correct': 'Elegí el nombre correcto del jugador mostrado',
+  'value-order': 'Ordená 5 jugadores de más caro a más barato',
+  'age-order': 'Ordená 5 jugadores del más viejo al más joven',
+  'height-order': 'Ordená 5 jugadores del más alto al más bajo',
+  'shirt-number': 'Elegí el número de camiseta correcto',
 }
 
 const KNOWN_GAMES = [
@@ -25,6 +33,10 @@ const KNOWN_GAMES = [
   { slug: 'player-position', name: FALLBACK_NAMES['player-position'], description: FALLBACK_DESC['player-position'], cover_url: null },
   { slug: 'guess-player', name: FALLBACK_NAMES['guess-player'], description: FALLBACK_DESC['guess-player'], cover_url: null },
   { slug: 'who-is', name: FALLBACK_NAMES['who-is'], description: FALLBACK_DESC['who-is'], cover_url: null },
+  { slug: 'value-order', name: FALLBACK_NAMES['value-order'], description: FALLBACK_DESC['value-order'], cover_url: null },
+  { slug: 'age-order', name: FALLBACK_NAMES['age-order'], description: FALLBACK_DESC['age-order'], cover_url: null },
+  { slug: 'height-order', name: FALLBACK_NAMES['height-order'], description: FALLBACK_DESC['height-order'], cover_url: null },
+  { slug: 'shirt-number', name: FALLBACK_NAMES['shirt-number'], description: FALLBACK_DESC['shirt-number'], cover_url: null },
 ]
 
 export function friendlyNameForSlug(slug) {
@@ -42,6 +54,10 @@ export function gameRouteForSlug(slug) {
     case 'nationality': return '/games/nationality'
     case 'player-position': return '/games/player-position'
     case 'who-is': return '/games/who-is'
+    case 'value-order': return '/games/value-order'
+    case 'age-order': return '/games/age-order'
+    case 'height-order': return '/games/height-order'
+    case 'shirt-number': return '/games/shirt-number'
     default: return '/games'
   }
 }

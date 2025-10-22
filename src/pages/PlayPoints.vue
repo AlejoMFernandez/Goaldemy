@@ -49,15 +49,17 @@ function toChallenge(slug) {
   <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="absolute inset-0 z-10 rounded-xl bg-black/25 backdrop-blur-md pointer-events-none"></div>
         <!-- Result icon above the mask so it stays vivid -->
         <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="absolute inset-0 z-20 grid place-items-center pointer-events-none">
-          <div
-            v-if="!(g.slug==='who-is' && state.availability[g.slug]?.result==='loss')"
-            class="h-12 w-12 rounded-full grid place-items-center shadow-xl ring-2 ring-emerald-400/50 bg-emerald-500/20">
+          <div v-if="state.availability[g.slug]?.result==='win'"
+               class="h-12 w-12 rounded-full grid place-items-center shadow-xl ring-2 ring-emerald-400/50 bg-emerald-500/20">
             <div class="text-emerald-400 text-3xl font-extrabold">✓</div>
           </div>
-          <div
-            v-else
-            class="h-12 w-12 rounded-full grid place-items-center shadow-xl ring-2 ring-red-400/50 bg-red-500/20">
+          <div v-else-if="state.availability[g.slug]?.result==='loss'"
+               class="h-12 w-12 rounded-full grid place-items-center shadow-xl ring-2 ring-red-400/50 bg-red-500/20">
             <div class="text-red-400 text-3xl font-extrabold">✕</div>
+          </div>
+          <div v-else
+               class="h-12 w-12 rounded-full grid place-items-center shadow-xl ring-2 ring-slate-400/40 bg-white/10">
+            <div class="text-slate-300 text-3xl font-extrabold">–</div>
           </div>
         </div>
         <!-- Daily win streak: flame chip at top-right ABOVE blur mask -->

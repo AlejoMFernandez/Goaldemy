@@ -17,7 +17,8 @@ export async function isChallengeAvailable(slug) {
   const { id: userId } = getAuthUser() || {}
   if (!userId) return { available: false, reason: 'Debes iniciar sesión' }
   const gameId = await getGameId(slug)
-  if (!gameId) return { available: false, reason: 'Juego no disponible' }
+  // If the game is not registered in DB yet, allow playing (no persisted session)
+  if (!gameId) return { available: true, reason: null, result: null }
   const { data, error } = await supabase
     .from('game_sessions')
     .select('id, started_at, metadata')
@@ -36,7 +37,9 @@ export async function isChallengeAvailable(slug) {
 export async function startChallengeSession(slug, seconds) {
   const { id: userId } = getAuthUser() || {}
   const gameId = await getGameId(slug)
-  if (!userId || !gameId) throw new Error('No se pudo iniciar la sesión')
+  // If no DB game exists, start a non-persisted session by returning null
+  if (!userId) throw new Error('No se pudo iniciar la sesión')
+  if (!gameId) return null
   const metadata = { mode: 'challenge', seconds: seconds }
   const { data, error } = await supabase
     .from('game_sessions')

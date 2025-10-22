@@ -24,6 +24,10 @@ export function getAllPlayers() {
           // so game logic can group reliably and still have a readable descriptor.
           positionId: member.positionId,
           position: member.positionIdsDesc,
+          height: member.height ?? null,
+          age: member.age ?? null,
+          transferValue: member.transferValue ?? null,
+          shirtNumber: member.shirtNumber ?? null,
           image: playerImageUrl(member.id),
         });
       }

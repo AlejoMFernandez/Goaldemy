@@ -10,6 +10,10 @@ import GuessPlayer from '../pages/games/GuessPlayer.vue';
 import NationalityGame from '../pages/games/NationalityGame.vue';
 import PlayerPosition from '../pages/games/PlayerPosition.vue';
 import WhoIs from '../pages/games/WhoIs.vue';
+import ValueOrder from '../pages/games/ValueOrder.vue';
+import AgeOrder from '../pages/games/AgeOrder.vue';
+import HeightOrder from '../pages/games/HeightOrder.vue';
+import ShirtNumber from '../pages/games/ShirtNumber.vue';
 import Leaderboards from '../pages/Leaderboards.vue';
 import AboutMe from '../pages/AboutMe.vue';
 import AboutGoaldemy from '../pages/AboutGoaldemy.vue';
@@ -29,6 +33,10 @@ const routes = [
     { path: '/games/nationality', component: NationalityGame, meta: { requiresAuth: true } },
     { path: '/games/player-position', component: PlayerPosition, meta: { requiresAuth: true } },
     { path: '/games/who-is', component: WhoIs, meta: { requiresAuth: true } },
+    { path: '/games/value-order', component: ValueOrder, meta: { requiresAuth: true } },
+    { path: '/games/age-order', component: AgeOrder, meta: { requiresAuth: true } },
+    { path: '/games/height-order', component: HeightOrder, meta: { requiresAuth: true } },
+    { path: '/games/shirt-number', component: ShirtNumber, meta: { requiresAuth: true } },
     { path: '/leaderboards', component: Leaderboards },
     { path: '/u/:id', component: Profile },
     // About / Info
