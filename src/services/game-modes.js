@@ -117,14 +117,20 @@ export async function fetchDailyWinStreak(slug) {
   }
   let streak = 0
   const today = new Date()
-  // Iterate backwards day by day
-  for (let i=0;i<365;i++) {
+  const todayKey = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString().slice(0,10)
+  const playedToday = byDay.has(todayKey)
+  // If today hasn't been played, start counting from yesterday so the chip still shows the running streak.
+  const startOffset = playedToday ? 0 : 1
+  for (let i = startOffset; i < 365; i++) {
     const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i)
     const key = d.toISOString().slice(0,10)
     const res = byDay.get(key)
-    if (res === 'win') streak += 1
-    else if (res == null) break // no jugó => corta
-    else break // loss => corta
+    if (res === 'win') {
+      streak += 1
+      continue
+    }
+    // If there's a day without play or a loss, streak is cut
+    break
   }
   return streak
 }
