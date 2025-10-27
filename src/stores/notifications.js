@@ -3,7 +3,7 @@ import { reactive } from 'vue'
 // Simple global notifications store (singleton)
 // Supports 'achievement' and 'level' toasts.
 const state = reactive({
-  items: [], // { id, type, title, iconUrl, earnedAt }
+  items: [], // { id, type, title, iconUrl, earnedAt, level }
 })
 
 // Dedupe guard for level-up toasts: avoid duplicates within a short window
@@ -38,3 +38,20 @@ export function pushLevelUpToast({ level }) {
 }
 
 export { state as notificationsState, remove as removeNotification }
+
+// Generic helpers
+export function pushErrorToast(message, ttlMs = 6000) {
+  return push({ type: 'error', title: normalizeMessage(message) }, ttlMs)
+}
+export function pushSuccessToast(message, ttlMs = 4000) {
+  return push({ type: 'success', title: normalizeMessage(message) }, ttlMs)
+}
+export function pushInfoToast(message, ttlMs = 4000) {
+  return push({ type: 'info', title: normalizeMessage(message) }, ttlMs)
+}
+
+function normalizeMessage(msg) {
+  if (!msg) return 'Operación realizada'
+  if (typeof msg === 'string') return msg
+  return msg.message || msg.error || 'Ocurrió un error'
+}

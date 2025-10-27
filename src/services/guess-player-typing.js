@@ -133,15 +133,13 @@ export async function submitGuess(state, confettiHost) {
     state.answered = true
     const nextStreak = state.streak + 1
     if (state.allowXp) {
-      await awardXpForCorrect({ gameCode: 'who-is', amount: 10, attemptIndex: state.attempts, streak: nextStreak, corrects: state.corrects + 1 })
-      state.xpEarned += 10
+      await awardXpForCorrect({ gameCode: 'who-is', amount: 50, attemptIndex: state.attempts, streak: nextStreak, corrects: state.corrects + 1 })
+      state.xpEarned += 50
     }
     onCorrect(state)
     state.streak = nextStreak
     state.maxStreak = Math.max(state.maxStreak || 0, nextStreak)
-    if (state.allowXp) {
-      spawnXpBadge(confettiHost, '+10 XP', { position: 'top-right' })
-    }
+    if (state.allowXp) { spawnXpBadge(confettiHost, '+50 XP', { position: 'top-right' }) }
     state.feedback = ''
     return true
   } else {

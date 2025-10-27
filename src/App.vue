@@ -3,6 +3,8 @@ import AppNavBar from './components/AppNavBar.vue';
 import AppFooter from './components/AppFooter.vue';
 import Home from './pages/Home.vue';
 import AppToast from './components/AppToast.vue';
+import AppLoader from './components/AppLoader.vue';
+import { authReady } from './services/auth';
 
 export default {
   name: 'App',
@@ -11,17 +13,32 @@ export default {
     AppNavBar,
     AppFooter,
     AppToast,
+    AppLoader,
+  },
+  data() {
+    return {
+      authBooting: true,
+    }
+  },
+  computed: {
+    isAuthLayout() {
+      return this.$route?.meta?.layout === 'auth'
+    }
+  },
+  async mounted() {
+    try { await authReady; } finally { this.authBooting = false }
   }
 }
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-slate-100 grid grid-rows-[auto_1fr_auto]">
-    <AppNavBar />
-    <main class="container mx-auto px-4 py-8">
-      <RouterView />
+  <div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-slate-100" :class="isAuthLayout ? 'grid grid-rows-[1fr]' : 'grid grid-rows-[auto_1fr_auto]'">
+    <AppNavBar v-if="!isAuthLayout" />
+    <main :class="isAuthLayout ? 'min-h-screen grid place-items-center px-4 py-8' : 'container mx-auto px-4 py-8'">
+      <AppLoader v-if="authBooting" />
+      <RouterView v-else />
     </main>
-    <AppFooter />
+    <AppFooter v-if="!isAuthLayout" />
     <AppToast />
   </div>
 </template>

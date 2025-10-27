@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { pushInfoToast } from '../stores/notifications';
 import { subscribeToAuthStateChanges, authReady, getAuthUser } from '../services/auth';
 import Home from '../pages/Home.vue';
 import GlobalChat from '../pages/GlobalChat.vue';
@@ -18,14 +19,15 @@ import Leaderboards from '../pages/Leaderboards.vue';
 import AboutMe from '../pages/AboutMe.vue';
 import AboutGoaldemy from '../pages/AboutGoaldemy.vue';
 import AboutObjective from '../pages/AboutObjective.vue';
+import NotFound from '../pages/NotFound.vue';
 import PlayPoints from '../pages/PlayPoints.vue';
 import PlayFree from '../pages/PlayFree.vue';
 // Reuse Profile for public view by id
 
 const routes = [
     { path: '/', component: Home },
-    { path: '/login', component: Login },
-    { path: '/register', component: Register },
+    { path: '/login', component: Login, meta: { layout: 'auth' } },
+    { path: '/register', component: Register, meta: { layout: 'auth' } },
     { path: '/chat', component: GlobalChat, meta: { requiresAuth: true } },
     { path: '/profile', component: Profile, meta: { requiresAuth: true } },
     { path: '/profile-edit', component: ProfileEdit, meta: { requiresAuth: true } },
@@ -46,6 +48,8 @@ const routes = [
     // Play landing pages
     { path: '/play/points', component: PlayPoints, meta: { requiresAuth: true } },
     { path: '/play/free', component: PlayFree },
+    // 404 fallback
+    { path: '/:pathMatch(.*)*', component: NotFound },
 ]
 
 const router = createRouter({
@@ -63,7 +67,12 @@ router.beforeEach(async (to, from) => {
     await authReady;
     user = getAuthUser();
     if (to.meta.requiresAuth && !user.id) {
+        try { if (to.path !== '/login') pushInfoToast('Necesitás iniciar sesión'); } catch {}
         return '/login';
+    }
+    // If user is logged-in, avoid showing auth pages
+    if (user.id && (to.path === '/login' || to.path === '/register')) {
+        return '/'
     }
 });
 

@@ -5,6 +5,7 @@ import { initScoring, onCorrect, onIncorrect } from '../../services/scoring'
 import { awardXpForCorrect } from '../../services/game-xp'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
 import { getUserLevel } from '../../services/xp'
+import { gameSummaryBlurb } from '../../services/games'
 
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -35,7 +36,8 @@ export default {
       allowXp: true,
       xpEarned: 0,
       // modes / challenge timing
-      mode: 'normal',
+  mode: 'normal',
+  reviewMode: false,
       overlayOpen: false,
       availability: { available: true, reason: null },
       chosenSeconds: 30,
@@ -60,18 +62,46 @@ export default {
     const mode = (this.$route.query.mode || '').toString().toLowerCase()
     if (mode === 'free') this.mode = 'free'
     else if (mode === 'challenge') this.mode = 'challenge'
+    else if (mode === 'review') { this.mode = 'challenge'; this.reviewMode = true }
     else this.mode = 'normal'
     if (this.mode === 'free') this.allowXp = false
 
     this.load()
     this.nextRound()
 
-    if (this.mode === 'challenge') {
+    if (this.reviewMode) {
+      import('../../services/game-modes').then(async (mod) => {
+        const last = await mod.fetchTodayLastSession('shirt-number')
+        if (last) {
+          const m = last.metadata || {}
+          this.score = Number(last.score_final || 0)
+          this.maxStreak = Number(m.maxStreak || 0)
+          this.corrects = Number(m.corrects || 0)
+          this.timeOver = true
+          // Populate XP summary from snapshot if available
+          const v = m.xpView || {}
+          if (v && (v.levelAfter != null)) {
+            this.levelBefore = v.levelBefore ?? null
+            this.xpBeforeTotal = v.xpBeforeTotal ?? 0
+            this.levelAfter = v.levelAfter ?? null
+            this.xpAfterTotal = v.xpAfterTotal ?? 0
+            this.beforePercent = v.beforePercent ?? 0
+            this.afterPercent = v.afterPercent ?? 0
+            this.xpToNextAfter = v.xpToNextAfter ?? null
+            this.progressShown = this.afterPercent
+          }
+          // Lifetime best for header
+          try { this.lifetimeMaxStreak = Math.max(await mod.fetchLifetimeMaxStreak('shirt-number') || 0, this.maxStreak || 0) } catch {}
+          this.showSummary = true
+        }
+      }).catch(()=>{})
+    } else if (this.mode === 'challenge') {
       this.overlayOpen = true
       this.checkAvailability()
     }
   },
   methods: {
+    blurb() { return gameSummaryBlurb('shirt-number') },
     load() {
       // Only players with a valid shirt number
       const all = getAllPlayers().filter(p => Number.isFinite(p?.shirtNumber))
@@ -166,7 +196,8 @@ export default {
           if (this.timeLeft <= 0) {
             this.timeOver = true
             clearInterval(this.timer)
-            completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak }).catch(()=>{})
+            const result = (this.corrects || 0) >= 10 ? 'win' : 'loss'
+            completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects }).catch(()=>{})
             ;(async () => {
               try {
                 const { data } = await getUserLevel(null)
@@ -179,11 +210,23 @@ export default {
                 this.afterPercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
                 this.xpToNextAfter = toNext ?? null
               } catch {}
+              // Persist a small snapshot so review mode can show the exact same progress later
+              try {
+                await completeChallengeSession(this.sessionId, this.score, this.xpEarned, {
+                  xpView: {
+                    levelBefore: this.levelBefore, xpBeforeTotal: this.xpBeforeTotal,
+                    levelAfter: this.levelAfter, xpAfterTotal: this.xpAfterTotal,
+                    beforePercent: this.beforePercent, afterPercent: this.afterPercent,
+                    xpToNextAfter: this.xpToNextAfter, xpEarned: this.xpEarned
+                  }
+                })
+              } catch {}
               this.progressShown = this.beforePercent
               this.showSummary = true
               requestAnimationFrame(() => setTimeout(() => { this.progressShown = this.afterPercent }, 40))
             })()
             fetchLifetimeMaxStreak('shirt-number').then(v => this.lifetimeMaxStreak = Math.max(v || 0, this.maxStreak || 0)).catch(()=>{})
+            import('../../services/game-modes').then(mod => mod.checkAndUnlockDailyWins('shirt-number')).catch(()=>{})
           }
         }, 1000)
       } catch (e) {
@@ -251,7 +294,8 @@ export default {
         <div v-if="showSummary" class="absolute inset-0 z-30 grid place-items-center bg-slate-900/80 backdrop-blur rounded-xl">
           <div class="w-full max-w-md rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/95 to-slate-900/80 p-5 shadow-2xl text-center">
             <h3 class="text-white text-xl font-semibold mb-1">¡Buen juego!</h3>
-            <p class="text-slate-300 text-sm mb-3">Así te fue en el desafío de hoy.</p>
+            <p class="text-slate-300 text-sm mb-1">Así te fue en el desafío de hoy.</p>
+            <p class="text-slate-400 text-xs mb-3">{{ blurb() }}</p>
             <div class="grid grid-cols-3 gap-2 mb-4">
               <div class="rounded-lg bg-white/5 border border-white/10 p-2">
                 <div class="text-[10px] uppercase tracking-wider text-slate-400">Puntaje</div>
@@ -278,6 +322,7 @@ export default {
               <div v-if="(xpToNextAfter ?? null) !== null" class="mt-1 text-xs text-slate-400">Te faltan <span class="text-white font-medium">{{ xpToNextAfter }}</span> XP para el próximo nivel.</div>
             </div>
             <div class="mt-4 flex justify-center gap-2">
+              <button @click="showSummary=false" class="rounded-full border border-white/20 hover:bg-white/5 text-white px-4 py-2">Cerrar</button>
               <router-link to="/play/points" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 text-white px-4 py-2">Volver a los juegos</router-link>
             </div>
           </div>

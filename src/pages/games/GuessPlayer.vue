@@ -13,6 +13,7 @@ export default {
       ...initState(), 
       ...initScoring(),
       mode: 'normal',
+      reviewMode: false,
       overlayOpen: false,
       chosenSeconds: 30,
       timeLeft: 0,
@@ -37,6 +38,7 @@ export default {
     const mode = (this.$route.query.mode || '').toString().toLowerCase()
     if (mode === 'free') this.mode = 'free'
     else if (mode === 'challenge') this.mode = 'challenge'
+    else if (mode === 'review') { this.mode = 'challenge'; this.reviewMode = true }
     else this.mode = 'normal'
 
     if (this.mode === 'free') this.allowXp = false
@@ -44,7 +46,32 @@ export default {
     loadPlayers(this)
     nextRound(this)
 
-    if (this.mode === 'challenge') {
+    if (this.reviewMode) {
+      import('../../services/game-modes').then(async (mod) => {
+        const last = await mod.fetchTodayLastSession('guess-player')
+        if (last) {
+          const m = last.metadata || {}
+          this.score = Number(last.score_final || 0)
+          this.maxStreak = Number(m.maxStreak || 0)
+          this.corrects = Number(m.corrects || 0)
+          this.timeOver = true
+          // Restore XP summary if snapshot exists
+          const v = m.xpView || {}
+          if (v && (v.levelAfter != null)) {
+            this.levelBefore = v.levelBefore ?? null
+            this.xpBeforeTotal = v.xpBeforeTotal ?? 0
+            this.levelAfter = v.levelAfter ?? null
+            this.xpAfterTotal = v.xpAfterTotal ?? 0
+            this.beforePercent = v.beforePercent ?? 0
+            this.afterPercent = v.afterPercent ?? 0
+            this.xpToNextAfter = v.xpToNextAfter ?? null
+            this.progressShown = this.afterPercent
+          }
+          try { this.lifetimeMaxStreak = Math.max(await mod.fetchLifetimeMaxStreak('guess-player') || 0, this.maxStreak || 0) } catch {}
+          this.showSummary = true
+        }
+      }).catch(()=>{})
+    } else if (this.mode === 'challenge') {
       this.overlayOpen = true
       this.checkAvailability()
     }
@@ -86,7 +113,8 @@ export default {
           if (this.timeLeft <= 0) {
             this.timeOver = true
             clearInterval(this.timer)
-            completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak }).catch(()=>{})
+            const result = (this.corrects || 0) >= 10 ? 'win' : 'loss'
+            completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects }).catch(()=>{})
             // fetch XP/level after to build friendly summary
             ;(async () => {
               try {
@@ -100,12 +128,23 @@ export default {
                 this.afterPercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
                 this.xpToNextAfter = toNext ?? null
               } catch {}
+              try {
+                await completeChallengeSession(this.sessionId, this.score, this.xpEarned, {
+                  xpView: {
+                    levelBefore: this.levelBefore, xpBeforeTotal: this.xpBeforeTotal,
+                    levelAfter: this.levelAfter, xpAfterTotal: this.xpAfterTotal,
+                    beforePercent: this.beforePercent, afterPercent: this.afterPercent,
+                    xpToNextAfter: this.xpToNextAfter, xpEarned: this.xpEarned
+                  }
+                })
+              } catch {}
               this.progressShown = this.beforePercent
               this.showSummary = true
               // trigger animation to after percent
               requestAnimationFrame(() => setTimeout(() => { this.progressShown = this.afterPercent }, 40))
             })()
             fetchLifetimeMaxStreak('guess-player').then(v => this.lifetimeMaxStreak = Math.max(v || 0, this.maxStreak || 0)).catch(()=>{})
+            import('../../services/game-modes').then(mod => mod.checkAndUnlockDailyWins('guess-player')).catch(()=>{})
           }
         }, 1000)
       } catch (e) {

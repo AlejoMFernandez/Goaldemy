@@ -28,25 +28,28 @@ function cardClasses(slug) {
   const disabled = av && av.available === false
   return [
     'relative card p-4 transition',
-    disabled ? 'pointer-events-none select-none' : 'card-hover'
+    disabled ? 'card-hover' : 'card-hover'
   ]
 }
 
 function toChallenge(slug) {
+  const av = state.availability[slug]
+  if (av && av.available === false) {
+    return `${gameRouteForSlug(slug)}?mode=review`
+  }
   return `${gameRouteForSlug(slug)}?mode=challenge`
 }
 
-// Totals for today's statuses (wins, losses, neutral) based on availability/result
+// Totals for today's statuses (wins, losses) based on availability/result
 const totals = computed(() => {
   const vals = Object.values(state.availability || {})
-  let win = 0, loss = 0, neutral = 0
+  let win = 0, loss = 0
   for (const av of vals) {
     if (!av || av.available !== false) continue // count only games ya jugados hoy
     if (av.result === 'win') win++
     else if (av.result === 'loss') loss++
-    else neutral++
   }
-  return { win, loss, neutral }
+  return { win, loss }
 })
 </script>
 
@@ -74,13 +77,6 @@ const totals = computed(() => {
                 <div class="text-red-400 text-2xl font-extrabold leading-none">✕</div>
               </div>
               <div class="text-m tabular-nums text-slate-100 font-semibold">{{ totals.loss }}</div>
-            </div>
-            <!-- Neutral -->
-            <div class="flex flex-col items-center gap-1" title="– Jugados sin win/loss">
-              <div class="h-9 w-9 rounded-full grid place-items-center shadow-xl ring-2 ring-slate-400/40 bg-white/10">
-                <div class="text-slate-300 text-2xl font-extrabold leading-none">–</div>
-              </div>
-              <div class="text-m tabular-nums text-slate-100 font-semibold">{{ totals.neutral }}</div>
             </div>
           </div>
         </div>
@@ -120,6 +116,9 @@ const totals = computed(() => {
         </div>
         <h3 class="text-white font-medium">{{ g.name }}</h3>
         <p class="text-slate-400 text-xs mt-2">{{ g.description || 'Desafío diario' }}</p>
+        <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="mt-2">
+          <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ring-1 ring-white/20 bg-white/5 text-slate-200">Ver resultado de hoy →</span>
+        </div>
         <!-- Centered played badge handled by overlay above -->
       </RouterLink>
     </div>

@@ -16,6 +16,7 @@ export default {
   props: {
     items: { type: Array, required: true }, // [{ id, name, xp }]
     streaksByGame: { type: Object, default: () => ({}) }, // { [gameId]: maxStreak }
+    dailyBestByName: { type: Object, default: () => ({}) }, // { [gameName]: bestDailyStreak }
     loading: { type: Boolean, default: false },
   },
   data() {
@@ -99,13 +100,14 @@ export default {
           <Doughnut ref="chart" :data="chartData" :options="chartOptions" :height="240" :width="240" v-slot="{ chart }" >
           </Doughnut>
         </div>
-        <div class="mt-6 rounded-lg bg-white/3 border border-white/10 p-3">
+        <div class="rounded-lg bg-white/3 border border-white/10 p-3">
           <p class="text-[10px] uppercase tracking-wider text-slate-400">Detalle</p>
           <ul class="mt-1 space-y-1">
             <li v-for="(g,idx) in items" :key="g.id" class="flex items-center gap-2 text-sm text-slate-200 rounded px-2 py-1">
               <span class="truncate">{{ g.name }}</span>
-              <span class="ml-auto flex items-center gap-3">
-                <span v-if="streaksByGame[g.id]" class="text-emerald-300/90">×{{ streaksByGame[g.id] }}</span>
+              <span class="ml-auto flex items-center gap-2">
+                <span v-if="streaksByGame[g.id]" class="inline-flex items-center rounded-full px-2 py-0.5 ring-1 ring-emerald-400/40 bg-emerald-500/10 text-emerald-200 text-xs" title="Mejor racha en juego">×{{ streaksByGame[g.id] }}</span>
+                <span v-if="dailyBestByName[g.name]" class="inline-flex items-center rounded-full px-2 py-0.5 ring-1 ring-orange-400/40 bg-orange-500/10 text-amber-200 text-xs" title="Mejor racha por día">🔥{{ dailyBestByName[g.name] }}</span>
                 <span class="text-slate-100 font-medium">{{ new Intl.NumberFormat('es-AR').format(g.xp) }} XP</span>
               </span>
             </li>

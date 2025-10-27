@@ -6,6 +6,7 @@ import { initScoring } from '../../services/scoring'
 import { getUserLevel } from '../../services/xp'
 import { awardXpForCorrect } from '../../services/game-xp'
 import { spawnXpBadge } from '../../services/ui-effects'
+import { gameSummaryBlurb } from '../../services/games'
 
 export default {
   name: 'HeightOrder',
@@ -13,6 +14,8 @@ export default {
   data() {
     return {
       mode: 'normal',
+      reviewMode: false,
+      locked: false,
       overlayOpen: false,
       availability: { available: true, reason: null },
       items: [],
@@ -43,12 +46,30 @@ export default {
     const mode = (this.$route.query.mode || '').toString().toLowerCase()
     if (mode === 'free') this.mode = 'free'
     else if (mode === 'challenge') this.mode = 'challenge'
+    else if (mode === 'review') { this.mode = 'challenge'; this.reviewMode = true }
     if (this.mode === 'free') this.allowXp = false
     this.setup()
-    if (this.mode === 'challenge') { this.overlayOpen = true; this.checkAvailability() }
+    if (this.reviewMode) {
+      import('../../services/game-modes').then(async (mod) => {
+        const last = await mod.fetchTodayLastSession('height-order')
+        if (last?.metadata?.finalOrder && Array.isArray(last.metadata.finalOrder)) {
+          const saved = last.metadata
+          this.items = saved.items || this.items
+          this.slots = saved.finalOrder
+          this.correctness = saved.correctness || []
+          this.answered = true
+          this.score = Number(last.score_final || 0)
+          this.xpEarned = Number(last.xp_earned || 0)
+          this.corrects = saved.corrects ?? this.correctness.filter(Boolean).length
+          this.showSummary = true
+          this.locked = true
+        }
+      }).catch(()=>{})
+    } else if (this.mode === 'challenge') { this.overlayOpen = true; this.checkAvailability() }
   },
   methods: {
     setup() {
+      this.locked = false
       const all = getAllPlayers().filter(p => Number.isFinite(p?.height))
       const picks = sampleDistinct(all, 5)
       this.items = picks
@@ -58,9 +79,11 @@ export default {
       this.selectedIndex = null
       this.score = 0; this.attempts = 0; this.corrects = 0
     },
+    blurb() { return gameSummaryBlurb('height-order') },
     metric(p) { return Number(p?.height || 0) },
-    selectCard(i) { this.selectedIndex = i },
+    selectCard(i) { if (this.locked) return; this.selectedIndex = i },
     clickSlot(pos) {
+      if (this.locked) return
       if (this.selectedIndex != null) {
         if (this.slots[pos] == null) { this.slots[pos] = this.selectedIndex; this.selectedIndex = null }
         return
@@ -79,10 +102,11 @@ export default {
       if (this.slots[pos] != null) { this.selectedFromSlot = pos }
     },
     isPlaced(i) { return this.slots.includes(i) },
-    onDragStartFromList(e, i) { e.dataTransfer.setData('text/plain', JSON.stringify({ from: 'list', index: i })) },
-    onDragStartFromSlot(e, pos) { const idx = this.slots[pos]; if (idx==null) return; e.dataTransfer.setData('text/plain', JSON.stringify({ from: 'slot', pos, index: idx })) },
+    onDragStartFromList(e, i) { if (this.locked) { e.preventDefault(); return } e.dataTransfer.setData('text/plain', JSON.stringify({ from: 'list', index: i })) },
+    onDragStartFromSlot(e, pos) { if (this.locked) { e.preventDefault(); return } const idx = this.slots[pos]; if (idx==null) return; e.dataTransfer.setData('text/plain', JSON.stringify({ from: 'slot', pos, index: idx })) },
     onDragOverSlot(e) { e.preventDefault() },
     onDropOnSlot(e, pos) {
+      if (this.locked) { e.preventDefault(); return }
       e.preventDefault();
       try { const payload = JSON.parse(e.dataTransfer.getData('text/plain')||'{}'); if (!payload) return;
         if (payload.from==='list') { if (this.slots[pos]==null) this.slots[pos] = payload.index }
@@ -93,6 +117,7 @@ export default {
       } catch {}
     },
     async check() {
+      if (this.locked) return
       if (this.slots.some(x => x == null)) return
       // Sort desc by height, but allow ties interchangeable
       const sorted = [...this.items].map((p, idx) => ({ idx, v: this.metric(p) }))
@@ -128,7 +153,8 @@ export default {
       const delayMs = 1200
       if (this.mode === 'challenge') {
         const result = correctPositions === 5 ? 'win' : 'loss'
-        try { await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, correctPositions }) } catch {}
+  try { await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, correctPositions, finalOrder: [...this.slots], correctness: [...this.correctness], items: this.items, corrects: correctPositions }) } catch {}
+  try { const mod = await import('../../services/game-modes'); await mod.checkAndUnlockDailyWins('height-order') } catch {}
         try {
           const { data } = await getUserLevel(null)
           const info = Array.isArray(data) ? data[0] : data
@@ -141,6 +167,7 @@ export default {
           this.xpToNextAfter = toNext ?? null
         } catch {}
         setTimeout(() => { this.progressShown = this.beforePercent; this.showSummary = true; requestAnimationFrame(()=> setTimeout(()=>{ this.progressShown = this.afterPercent }, 40)) }, delayMs)
+        this.locked = true
       } else if (this.mode === 'free') {
         setTimeout(() => { this.setup() }, delayMs)
       }
@@ -202,11 +229,12 @@ export default {
           <button v-for="(slot, i) in slots" :key="'slot'+i" @click="clickSlot(i)" @dragover="onDragOverSlot" @drop="onDropOnSlot($event, i)" @mouseenter="hoveredSlot=i" @mouseleave="hoveredSlot=null" class="h-40 rounded-lg border bg-white/5 transition ring-offset-1" :class="[
             answered ? (correctness[i] ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10') : 'border-white/15 text-slate-400',
             (selectedFromSlot===i) ? 'ring-2 ring-sky-400' : '',
-            (hoveredSlot===i && (selectedIndex!=null || selectedFromSlot!=null)) ? 'ring-2 ring-amber-400' : ''
+            (hoveredSlot===i && (selectedIndex!=null || selectedFromSlot!=null)) ? 'ring-2 ring-amber-400' : '',
+            locked ? 'cursor-not-allowed' : ''
           ]">
             <template v-if="slot != null">
               <div class="flex flex-col items-center justify-center h-full text-slate-200">
-                <img :src="items[slot].image" :alt="items[slot].name" class="h-16 w-16 object-cover rounded mb-2" draggable="true" @dragstart="onDragStartFromSlot($event, i)" />
+                <img :src="items[slot].image" :alt="items[slot].name" class="h-16 w-16 object-cover rounded mb-2" :draggable="!locked" @dragstart="onDragStartFromSlot($event, i)" />
                 <div class="text-slate-100 text-sm sm:text-base text-center leading-tight px-1 whitespace-normal break-words">{{ items[slot].name }}</div>
                 <div v-if="answered" class="text-[12px] mt-1" :class="correctness[i] ? 'text-emerald-300' : 'text-red-300'">
                   {{ items[slot].height }} cm
@@ -220,7 +248,7 @@ export default {
         </div>
 
         <div class="grid grid-cols-5 gap-2">
-          <button v-for="(p,i) in items" :key="p.id" :disabled="isPlaced(i)" @click="selectCard(i)" draggable="true" @dragstart="onDragStartFromList($event, i)" :class="['rounded-lg border p-2 bg-white/5 text-left', selectedIndex===i ? 'ring-2 ring-sky-400 border-white/20' : 'border-white/15', isPlaced(i) ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/10']">
+          <button v-for="(p,i) in items" :key="p.id" :disabled="isPlaced(i) || locked" @click="selectCard(i)" :draggable="!locked" @dragstart="onDragStartFromList($event, i)" :class="['rounded-lg border p-2 bg-white/5 text-left', selectedIndex===i ? 'ring-2 ring-sky-400 border-white/20' : 'border-white/15', (isPlaced(i) || locked) ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/10']">
             <div class="flex items-center gap-2">
               <img :src="p.image" :alt="p.name" class="h-10 w-10 object-cover rounded" />
               <div class="min-w-0">
@@ -231,12 +259,13 @@ export default {
         </div>
 
         <div class="mt-4 flex items-center justify-center">
-          <button @click="check" :disabled="slots.some(x=>x==null)" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 border border-white/10 text-white px-5 py-2 text-sm font-semibold disabled:opacity-50">Comprobar</button>
+          <button @click="check" :disabled="slots.some(x=>x==null) || locked" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 border border-white/10 text-white px-5 py-2 text-sm font-semibold disabled:opacity-50">Comprobar</button>
         </div>
         <div v-if="showSummary && mode==='challenge'" class="absolute inset-0 z-30 grid place-items-center bg-slate-900/80 backdrop-blur rounded-xl">
           <div class="w-full max-w-md rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/95 to-slate-900/80 p-5 shadow-2xl text-center">
             <h3 class="text-white text-xl font-semibold mb-1">¡Buen juego!</h3>
-            <p class="text-slate-300 text-sm mb-3">Tu resultado en el desafío de hoy.</p>
+            <p class="text-slate-300 text-sm mb-1">Tu resultado en el desafío de hoy.</p>
+            <p class="text-slate-400 text-xs mb-3">{{ blurb() }}</p>
             <div class="grid grid-cols-3 gap-2 mb-4">
               <div class="rounded-lg bg-white/5 border border-white/10 p-2">
                 <div class="text-[10px] uppercase tracking-wider text-slate-400">Puntaje</div>
@@ -263,6 +292,7 @@ export default {
               <div v-if="(xpToNextAfter ?? null) !== null" class="mt-1 text-xs text-slate-400">Te faltan <span class="text-white font-medium">{{ xpToNextAfter }}</span> XP para el próximo nivel.</div>
             </div>
             <div class="mt-4 flex justify-center gap-2">
+              <button @click="showSummary=false" class="rounded-full border border-white/20 hover:bg-white/5 text-white px-4 py-2">Cerrar</button>
               <router-link to="/play/points" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 text-white px-4 py-2">Volver a los juegos</router-link>
             </div>
           </div>

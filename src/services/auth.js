@@ -1,5 +1,6 @@
 import { supabase } from '../services/supabase';
 import { createUserProfile, getUserProfileById, updateUserProfile } from './user-profiles';
+import { pushSuccessToast, pushInfoToast, pushErrorToast } from '../stores/notifications';
 
 let user = {
     id: null,
@@ -45,6 +46,7 @@ export async function register(email, password, profileData = {}) {
 
         if (error) {
             console.error('[Register.vue register]:', error);
+            pushErrorToast(error.message || 'No se pudo registrar');
             throw new Error(error.message || 'Registration failed');
         }
 
@@ -63,9 +65,11 @@ export async function register(email, password, profileData = {}) {
         } else {
             setAuthUserState({ id: null, email: email });
         }
+        pushSuccessToast('Registro exitoso. Revisá tu email si se requiere confirmación.');
 
     } catch (error) {
         console.error('[Register.vue register]:', error);
+        try { pushErrorToast(error?.message || 'No se pudo registrar'); } catch {}
         throw new Error(error?.message || 'Registration failed');
     }
 }
@@ -78,6 +82,7 @@ export async function login(email, password) {
 
     if (error) {
         console.error('[Login.vue login]:', error);
+        try { pushErrorToast(error.message || 'No se pudo iniciar sesión'); } catch {}
         throw new Error(error.message || 'Login failed');
     }
 
@@ -85,8 +90,33 @@ export async function login(email, password) {
     if (u) {
         setAuthUserState({ id: u.id, email: u.email }, { replace: true });
         loadExtendedProfile();
+        try { pushSuccessToast('Sesión iniciada'); } catch {}
     } else {
         setAuthUserState({ id: null, email: null }, { replace: true });
+    }
+}
+
+// Iniciar sesión/registro con Google (OAuth)
+export async function continueWithGoogle(redirectPath = '/profile') {
+    try {
+        // Nota: En web, este método redirige automáticamente al proveedor
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}${redirectPath}`,
+                queryParams: { prompt: 'select_account' }
+            }
+        });
+        if (error) {
+            console.error('[auth.js continueWithGoogle]:', error);
+            try { pushErrorToast(error.message || 'No se pudo iniciar con Google'); } catch {}
+            throw new Error(error.message || 'Google OAuth failed');
+        }
+        try { pushInfoToast('Redirigiendo a Google…'); } catch {}
+        return data;
+    } catch (e) {
+        // Ya se notificó con toast arriba si es un error de Supabase
+        throw e;
     }
 }
 
@@ -97,6 +127,7 @@ export async function logout() {
         id: null,
         email: null,
     }, { replace: true });
+    try { pushInfoToast('Cerraste sesión'); } catch {}
 }
 
 // Enviar email de reseteo de contraseña
@@ -106,8 +137,10 @@ export async function resetPasswordForEmail(email) {
     })
     if (error) {
         console.error('[auth.js resetPasswordForEmail]:', error)
+        try { pushErrorToast(error.message || 'No se pudo enviar el email de reseteo') } catch {}
         throw new Error(error.message || 'No se pudo enviar el email de reseteo')
     }
+    try { pushSuccessToast('Te enviamos un email para recuperar tu contraseña') } catch {}
 }
 
 // Completar cambio de contraseña cuando el usuario vuelve desde el email (opcional)
@@ -115,16 +148,20 @@ export async function updatePassword(newPassword) {
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     if (error) {
         console.error('[auth.js updatePassword]:', error)
+        try { pushErrorToast(error.message || 'No se pudo actualizar la contraseña') } catch {}
         throw new Error(error.message || 'No se pudo actualizar la contraseña')
     }
+    try { pushSuccessToast('Contraseña actualizada') } catch {}
 }
 
 export async function updateAuthUserData(data) {
     try {
         await updateUserProfile(user.id, data);
         setAuthUserState(data);
+        try { pushSuccessToast('Perfil actualizado') } catch {}
     } catch (error) {
         console.error('[auth.js updateAuthUserData]:', error);
+        try { pushErrorToast(error?.message || 'No se pudo actualizar tu perfil') } catch {}
         throw error;
     }
 }

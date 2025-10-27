@@ -1,9 +1,10 @@
 <script>
 import AppH1 from '../../components/AppH1.vue'
 import { initState, loadPlayers, nextRound, submitGuess, blurForLives, posLabel, countryFlag, teamLogo } from '../../services/guess-player-typing'
-import { initScoring } from '../../services/scoring'
+import { initScoring, GAME_SCORING } from '../../services/scoring'
 import { getUserLevel } from '../../services/xp'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
+import { gameSummaryBlurb } from '../../services/games'
 
 export default {
   name: 'WhoIs',
@@ -11,8 +12,9 @@ export default {
   data() {
     return { 
   ...initState(), 
-  ...initScoring(20),
+  ...initScoring(GAME_SCORING['who-is']?.pointsPerCorrect || 50),
       mode: 'normal',
+      reviewMode: false,
       overlayOpen: false,
       sessionId: null,
       availability: { available: true, reason: null },
@@ -23,6 +25,7 @@ export default {
       selectedIndex: -1,
       revealImage: false,
       justPicked: false,
+  lastResultOk: false,
   // XP progress summary
   levelBefore: null,
   levelAfter: null,
@@ -59,6 +62,7 @@ export default {
     const mode = (this.$route.query.mode || '').toString().toLowerCase()
     if (mode === 'free') this.mode = 'free'
     else if (mode === 'challenge') this.mode = 'challenge'
+    else if (mode === 'review') { this.mode = 'challenge'; this.reviewMode = true }
     else this.mode = 'normal'
 
     if (this.mode === 'free') this.allowXp = false
@@ -66,7 +70,29 @@ export default {
     loadPlayers(this)
     nextRound(this)
 
-    if (this.mode === 'challenge') {
+    if (this.reviewMode) {
+      import('../../services/game-modes').then(async (mod) => {
+        const last = await mod.fetchTodayLastSession('who-is')
+        if (last) {
+          const m = last.metadata || {}
+          this.showSummary = true
+          this.levelBefore = null
+          this.xpBeforeTotal = 0
+          this.levelAfter = null
+          this.xpAfterTotal = 0
+          this.progressShown = 0
+          this.maxStreak = Number(m.maxStreak || 0)
+          // Lifetime best streak in review
+          try { this.lifetimeMaxStreak = Math.max(await mod.fetchLifetimeMaxStreak('who-is') || 0, this.maxStreak || 0) } catch {}
+          // Show the exact player that was played today
+          try {
+            if (!this.allPlayers || !this.allPlayers.length) { loadPlayers(this) }
+            const p = (this.allPlayers || []).find(pl => pl.id === m.playerId)
+            if (p) { this.current = p; this.revealImage = true; this.answered = true }
+          } catch {}
+        }
+      }).catch(()=>{})
+    } else if (this.mode === 'challenge') {
       this.overlayOpen = true
       this.checkAvailability()
     }
@@ -77,6 +103,7 @@ export default {
       this.revealImage = false
       nextRound(this)
     },
+    blurb() { return gameSummaryBlurb('who-is') },
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
     chooseSuggestion(p) {
       if (!p) return
@@ -100,7 +127,8 @@ export default {
       await this.submit()
     },
     async submit() {
-      const ok = await submitGuess(this, this.$refs.confettiHost)
+  const ok = await submitGuess(this, this.$refs.confettiHost)
+  this.lastResultOk = !!ok
       if (!ok) {
         // clear input and reopen suggestions for a fresh try
         this.guess = ''
@@ -112,7 +140,7 @@ export default {
       if (this.mode === 'challenge' && (ok || this.lives === 0)) {
         try {
           const result = ok ? 'win' : 'loss'
-          await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, maxStreak: this.maxStreak })
+          await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, maxStreak: this.maxStreak, playerId: this.current?.id })
         } catch (e) { console.error('[WhoIs complete]', e) }
         // fetch xp/level after
         try {
@@ -126,11 +154,28 @@ export default {
           this.afterPercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
           this.xpToNextAfter = toNext ?? null
         } catch {}
-        this.progressShown = this.beforePercent
-        this.showSummary = true
-        requestAnimationFrame(() => setTimeout(() => { this.progressShown = this.afterPercent }, 40))
+        // Delay summary so el acierto no se tapa enseguida
+        const delayMs = GAME_SCORING['who-is']?.summaryDelayMs ?? 3000
+        setTimeout(() => {
+          this.progressShown = this.beforePercent
+          this.showSummary = true
+          requestAnimationFrame(() => setTimeout(() => { this.progressShown = this.afterPercent }, 40))
+        }, delayMs)
+        // Save a snapshot so review can show the same progress
+        try {
+          await completeChallengeSession(this.sessionId, this.score, this.xpEarned, {
+            xpView: {
+              levelBefore: this.levelBefore, xpBeforeTotal: this.xpBeforeTotal,
+              levelAfter: this.levelAfter, xpAfterTotal: this.xpAfterTotal,
+              beforePercent: this.beforePercent, afterPercent: this.afterPercent,
+              xpToNextAfter: this.xpToNextAfter, xpEarned: this.xpEarned
+            }
+          })
+        } catch {}
         // fetch lifetime for summary
         try { const mod = await import('../../services/game-modes'); const v = await mod.fetchLifetimeMaxStreak('who-is'); this.lifetimeMaxStreak = Math.max(v || 0, this.maxStreak || 0) } catch(_) {}
+        // Daily achievements after completing challenge
+        try { const mod = await import('../../services/game-modes'); await mod.checkAndUnlockDailyWins('who-is') } catch {}
         return
       }
       if (ok || this.lives === 0) {
@@ -212,7 +257,8 @@ export default {
                 <img v-if="flagSrc()" :src="flagSrc()" alt="flag" width="36" height="26" class="object-cover" style="aspect-ratio: 20/14;" />
                 <img v-if="teamLogo()" :src="teamLogo()" alt="team" width="32" height="32" class="object-cover" />
               </div>
-              <img v-if="current" :src="current.image" :alt="current.name" :style="{ filter: `blur(${blurPx()}px)` }" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg blur-img" />
+              <img v-if="current" :src="current.image" :alt="current.name" :style="{ filter: `blur(${blurPx()}px)` }" class="mb-2 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg blur-img" />
+              <div v-if="answered && lastResultOk" class="text-emerald-300 text-sm">¡Correcto! El jugador era: <span class="text-white font-medium">{{ current?.name }}</span></div>
             </div>
 
             <form class="relative flex flex-col items-center gap-2 mt-3" @submit.prevent="submit">
@@ -260,7 +306,8 @@ export default {
         <div v-if="showSummary" class="absolute inset-0 z-30 grid place-items-center bg-slate-900/80 backdrop-blur rounded-xl">
           <div class="w-full max-w-md rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/95 to-slate-900/80 p-5 shadow-2xl text-center">
             <h3 class="text-white text-xl font-semibold mb-1">Resultado del desafío</h3>
-            <p class="text-slate-300 text-sm mb-3">Así quedaste hoy.</p>
+            <p class="text-slate-300 text-sm mb-1">Así quedaste hoy.</p>
+            <p class="text-slate-400 text-xs mb-3">{{ blurb() }}</p>
             <div class="grid grid-cols-3 gap-2 mb-4">
               <div class="rounded-lg bg-white/5 border border-white/10 p-2">
                 <div class="text-[10px] uppercase tracking-wider text-slate-400">Puntaje</div>
@@ -287,7 +334,8 @@ export default {
                 <span v-if="(xpToNextAfter ?? null) !== null" class="ml-2">Te faltan <span class="text-white font-medium">{{ xpToNextAfter }}</span> XP para el próximo nivel.</span>
               </div>
             </div>
-            <div class="mt-4 flex justify-center">
+            <div class="mt-4 flex justify-center gap-2">
+              <button @click="showSummary=false" class="rounded-full border border-white/20 hover:bg-white/5 text-white px-4 py-2">Cerrar</button>
               <router-link to="/play/points" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 text-white px-4 py-2">Volver a los juegos</router-link>
             </div>
           </div>

@@ -243,10 +243,13 @@ export default {
                             </ul>
                         </div>
                     </li>
-                    <template v-if="user.id === null">
-                        <li><RouterLink class="hover:text-white transition-colors" to="/login">Iniciar sesión</RouterLink></li>
-                        <li><RouterLink class="rounded-full bg-[oklch(0.62_0.21_270)] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[oklch(0.55_0.21_270)/30] transition hover:bg-[oklch(0.55_0.21_270)]" to="/register">Registrarse</RouterLink></li>
-                    </template>
+                                        <template v-if="user.id === null">
+                                                <li>
+                                                    <RouterLink class="rounded-full bg-[oklch(0.62_0.21_270)] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[oklch(0.55_0.21_270)/30] transition hover:bg-[oklch(0.55_0.21_270)]" to="/login">
+                                                        Acceder
+                                                    </RouterLink>
+                                                </li>
+                                        </template>
                     <template v-else>
                         <li class="relative">
                             <button data-user-button @click="menuOpen = !menuOpen" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-2 py-1.5 text-sm text-slate-200 hover:border-white/20">
@@ -312,7 +315,7 @@ export default {
 
                                 <div class="relative flex-none">
                                     <template v-if="user.id === null">
-                                        <RouterLink @click="isOpen=false" to="/login" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-sm text-slate-200 hover:border-white/20">Iniciar sesión</RouterLink>
+                                        <RouterLink @click="isOpen=false" to="/login" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-sm text-slate-200 hover:border-white/20">Acceder</RouterLink>
                                     </template>
                                     <template v-else>
                                         <button data-user-button @click.stop="menuOpen = !menuOpen" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-2 py-1.5 text-sm text-slate-200 hover:border-white/20">

@@ -6,6 +6,7 @@ import { flagUrl } from '../services/countries';
 import countriesMap from '../codeCOUNTRYS.json';
 import SearchSelect from '../components/SearchSelect.vue';
 import { getAllPlayers, getAllTeams } from '../services/players';
+import { pushErrorToast, pushSuccessToast } from '../stores/notifications';
 
 export default {
   name: 'Register',
@@ -17,8 +18,8 @@ export default {
   data() {
     const countries = Object.entries(countriesMap).map(([code, name]) => ({ code: code.toLowerCase(), name }))
       .sort((a, b) => a.name.localeCompare(b.name, 'es'))
-    const players = getAllPlayers().map(p => ({ value: p.name, label: p.name }))
-    const teams = getAllTeams().map(t => ({ value: t.name, label: t.name }))
+  const players = getAllPlayers().map(p => ({ value: p.name, label: p.name, image: p.image }))
+  const teams = getAllTeams().map(t => ({ value: t.name, label: t.name, image: t.logo }))
     return {
       user:{
         email: '',
@@ -43,12 +44,14 @@ export default {
         this.loading = true;
         this.error = ''
         this.notice = ''
+        // Feedback: reforzar restricción mínima de 6 caracteres en cliente
         if ((this.user.password || '').length < 6) {
-          this.error = 'La contraseña debe tener al menos 6 caracteres.'
+          try { pushErrorToast('Tu contraseña es muy corta. Debe tener al menos 6 caracteres.') } catch {}
           return
         }
         if (this.user.password !== this.user.confirm) {
           this.error = 'Las contraseñas no coinciden.'
+          try { pushErrorToast(this.error) } catch {}
           return
         }
         const profile = {
@@ -58,21 +61,31 @@ export default {
         }
         await register(this.user.email, this.user.password, profile);
         this.notice = 'Revisá tu correo para confirmar tu cuenta.'
+        try { pushSuccessToast('Registro exitoso') } catch {}
         this.$router.push('/profile');
       } catch(error){
         console.error(error);
         this.error = error?.message || 'No se pudo registrar.'
+        try { pushErrorToast(this.error) } catch {}
       } finally {
         this.loading = false;
       }
-    },
+    }
   }
 }
 </script>
 
 <template>
-  <div class="mx-auto max-w-lg">
-    <AppH1>Registrarse</AppH1>
+  <RouterLink to="/" class="fixed top-4 left-4 z-50 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-slate-100 hover:bg-white/10">
+    <span aria-hidden>←</span>
+    <span>Volver</span>
+  </RouterLink>
+  <div class="w-full max-w-md">
+    <div class="text-center mb-6">
+      <img src="/iconclaro.png" alt="Goaldemy" class="mx-auto h-auto w-12 mb-2" />
+      <h1 class="text-2xl font-bold">Crear cuenta en GOALDEMY</h1>
+      <p class="text-slate-300 text-sm">Unite para jugar, sumar XP y desbloquear logros</p>
+    </div>
 
     <form action="#" @submit.prevent="handleSubmit" class="card card-hover p-6 space-y-4">
       <div class="grid grid-cols-1 gap-3">
@@ -98,7 +111,6 @@ export default {
             placeholder="••••••••"
             v-model="user.password"
           />
-          <p class="text-xs text-slate-400 mt-1">Debe tener 6 caracteres o más.</p>
         </div>
         <div>
           <label for="confirm" class="label">Confirmar contraseña</label>
@@ -125,17 +137,27 @@ export default {
           </div>
         </div>
         <div>
-          <SearchSelect label="Equipo favorito" v-model="user.favorite_team" :options="teams" placeholder="Escribe 3 letras para filtrar" />
+          <SearchSelect label="Equipo favorito" :show-images="true" v-model="user.favorite_team" :options="teams" placeholder="Escribe 3 letras para filtrar" />
         </div>
         <div class="md:col-span-2">
-          <SearchSelect label="Jugador favorito" v-model="user.favorite_player" :options="players" placeholder="Escribe 3 letras para filtrar" />
+          <SearchSelect label="Jugador favorito" :show-images="true" v-model="user.favorite_player" :options="players" placeholder="Escribe 3 letras para filtrar" />
         </div>
       </div>
-      <p v-if="error" class="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg p-2">{{ error }}</p>
-      <p v-if="notice" class="text-sm text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2">{{ notice }}</p>
-      <div class="pt-2">
-        <AppButton type="submit">Registrarse</AppButton>
+      
+      <div class="pt-2 space-y-3">
+        <AppButton type="submit" class="w-full">Crear cuenta</AppButton>
+        <!-- Divider -->
+        <div class="flex items-center gap-3 text-slate-400 text-xs my-5">
+          <div class="h-px flex-1 bg-white/10"></div>
+          <span>o</span>
+          <div class="h-px flex-1 bg-white/10"></div>
+        </div>
+        <button type="button" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-slate-100 hover:bg-white/10">
+          <img src="/social/google.png" alt="Google" class="w-5 h-5" />
+          <span>Registrarse con Google</span>
+        </button>
       </div>
     </form>
+    <p class="mt-4 text-center text-sm text-slate-300">¿Ya tenés cuenta? <RouterLink class="text-sky-300 hover:text-sky-200" to="/login">Acceder</RouterLink></p>
   </div>
 </template>

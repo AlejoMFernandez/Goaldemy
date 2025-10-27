@@ -43,8 +43,14 @@ export function friendlyNameForSlug(slug) {
   return FALLBACK_NAMES[slug] || 'Juego'
 }
 
-function friendlyDescForSlug(slug) {
+export function friendlyDescForSlug(slug) {
   return FALLBACK_DESC[slug] || 'Próximamente…'
+}
+
+export function gameSummaryBlurb(slug) {
+  const base = friendlyDescForSlug(slug)
+  // Mensaje genérico de lo que se gana; los juegos puntuales ya muestran métricas en el popup
+  return `${base}. Ganás XP por acierto y sumás a tu racha diaria.`
 }
 
 // Map slug to in-app route
@@ -224,13 +230,15 @@ async function fallbackAggregateForCurrentUser(userId) {
     // Client-side aggregate: sum amounts by game_id for current user
     const { data: events, error: evErr } = await supabase
       .from('xp_events')
-      .select('game_id, amount')
+      .select('game_id, amount, reason')
       .eq('user_id', authId)
     if (evErr) return { data: [], error: evErr }
 
     const sums = new Map()
     for (const e of (events || [])) {
       if (!e) continue
+      // Excluir XP de logros del gráfico por juego
+      if ((e.reason || '') === 'achievement') continue
       const gid = e.game_id || null
       const prev = sums.get(gid) || 0
       sums.set(gid, prev + (e.amount || 0))

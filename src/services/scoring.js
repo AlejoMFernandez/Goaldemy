@@ -20,3 +20,16 @@ export function resetRound(state) {
   state.feedback = null
   state.roundKey += 1
 }
+
+// Central scoring map per game to compare and tune values together
+// Usage: import { GAME_SCORING } and read GAME_SCORING['who-is'].pointsPerCorrect, etc.
+export const GAME_SCORING = {
+  'who-is': { pointsPerCorrect: 50, summaryDelayMs: 3000 },
+  'guess-player': { pointsPerCorrect: 10, summaryDelayMs: 1200 },
+  'nationality': { pointsPerCorrect: 10, summaryDelayMs: 0 },
+  'player-position': { pointsPerCorrect: 10, summaryDelayMs: 0 },
+  'shirt-number': { pointsPerCorrect: 10, summaryDelayMs: 0 },
+  'value-order': { pointsPerCorrect: 10, summaryDelayMs: 1200 },
+  'age-order': { pointsPerCorrect: 10, summaryDelayMs: 1200 },
+  'height-order': { pointsPerCorrect: 10, summaryDelayMs: 1200 },
+}

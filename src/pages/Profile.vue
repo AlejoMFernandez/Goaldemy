@@ -42,6 +42,8 @@ export default {
   maxStreaks: [],
   maxStreaksLoading: false,
   streaksMap: {},
+  dailyStreaksItems: [], // [{ slug, name, current, best }]
+  dailyStreaksLoading: false,
       // Placeholders for future community data
       followerCount: 0,
       followingCount: 0,
@@ -182,7 +184,7 @@ export default {
         this.xpByGameLoading = false
       }
 
-      // Max streaks by game
+  // Max streaks by game
       this.maxStreaksLoading = true
       try {
         const { data: sRows } = await getUserMaxStreakByGame(userId)
@@ -195,6 +197,31 @@ export default {
         this.streaksMap = {}
       } finally {
         this.maxStreaksLoading = false
+      }
+
+      // Daily streaks (current and best) - own profile only due to RLS
+      try {
+        const isSelf = (this.$route.params.id || this.currentAuthId) === this.currentAuthId
+        this.dailyStreaksLoading = true
+        if (!isSelf) {
+          this.dailyStreaksItems = []
+        } else {
+          const mod = await import('../services/game-modes')
+          const games = mod.getDailyGamesList()
+          const rows = await Promise.all(games.map(async g => {
+            const [cur, best] = await Promise.all([
+              mod.fetchDailyWinStreak(g.slug).catch(() => 0),
+              mod.fetchMaxDailyWinStreak(g.slug).catch(() => 0),
+            ])
+            return { slug: g.slug, name: g.name, current: cur || 0, best: best || 0 }
+          }))
+          // Order by best desc
+          this.dailyStreaksItems = rows.sort((a,b) => (b.best||0) - (a.best||0))
+        }
+      } catch (e) {
+        this.dailyStreaksItems = []
+      } finally {
+        this.dailyStreaksLoading = false
       }
 
       // Attempt to unlock special badges when viewing own profile
@@ -239,7 +266,11 @@ export default {
           :bio="user.bio"
         />
   <AchievementsCard :achievements="achievements" :loading="achLoading" />
-  <XpDonutChart :items="xpByGame" :streaks-by-game="streaksMap" :loading="xpByGameLoading || maxStreaksLoading" />
+  <XpDonutChart
+    :items="xpByGame"
+    :streaks-by-game="streaksMap"
+    :daily-best-by-name="Object.fromEntries((dailyStreaksItems||[]).map(r => [r.name, r.best]))"
+    :loading="xpByGameLoading || maxStreaksLoading || dailyStreaksLoading" />
         <div class="rounded-lg border border-white/10 p-4">
           <p class="text-xs uppercase tracking-wide text-slate-400">Detalles del usuario</p>
           <ul class="mt-1 text-slate-300 text-sm space-y-1 list-disc list-inside">
