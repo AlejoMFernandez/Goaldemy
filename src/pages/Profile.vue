@@ -5,6 +5,8 @@ import { getUserLevel } from '../services/xp';
 import { getUserAchievements } from '../services/achievements';
 import { getUserXpByGame } from '../services/games';
 import { getPublicProfile } from '../services/user-profiles';
+import { getStatusWith, sendRequest, disconnectWith } from '../services/connections';
+import { pushErrorToast } from '../stores/notifications';
 import ProfileHeaderCard from '../components/profile/ProfileHeaderCard.vue';
 import AchievementsCard from '../components/profile/AchievementsCard.vue';
 // XpByGameCard inlined into XpDonutChart list
@@ -15,6 +17,8 @@ import { checkAndUnlockSpecials } from '../services/special-badges';
 import ConnectionsCard from '../components/profile/ConnectionsCard.vue';
 import CommunityCard from '../components/profile/CommunityCard.vue';
 import { findTeamByName, findPlayerByName } from '../services/players';
+import { listConnections } from '../services/connections';
+import { getPublicProfilesByIds } from '../services/user-profiles';
 
 let unsubscribeAuth = () => {};
 
@@ -55,6 +59,11 @@ export default {
       favTeamLogo: '',
       favPlayerImage: '',
       socials: [],
+      // Connections state
+      conn: { state: 'none', row: null },
+      connBusy: false,
+      connectionsList: [],
+      connectionsLoading: false,
     };
   },
   computed: {
@@ -79,6 +88,18 @@ export default {
     },
     isSelf() {
       return (this.$route.params.id || this.currentAuthId) === this.currentAuthId
+    },
+    canConnect() { return !this.isSelf && !!this.currentAuthId && !!this.user?.id },
+    connectLabel() {
+      const s = this.conn?.state
+      if (s === 'connected') return 'Conectados'
+      if (s === 'pending_out') return 'Solicitud enviada'
+      if (s === 'pending_in') return 'Responder solicitud'
+      return 'Conectar'
+    },
+    connectDisabled() {
+      const s = this.conn?.state
+      return this.connBusy || s === 'connected' || s === 'pending_out'
     },
   },
   mounted() {
@@ -235,6 +256,38 @@ export default {
           this.achievements = ach || this.achievements
         }
       } catch {}
+
+      // Refresh connection state when profile changes
+      try { await this.refreshConn() } catch {}
+      try { await this.loadConnections(userId) } catch {}
+    }
+    ,
+    async refreshConn() {
+      if (!this.user?.id) return
+      try { this.conn = await getStatusWith(this.user.id) } catch {}
+    },
+    async onConnect() {
+      if (!this.canConnect) return
+      if (this.conn?.state === 'pending_in') { try { pushErrorToast('Abrí Notificaciones para responder') } catch {}; return }
+      this.connBusy = true
+      try { await sendRequest(this.user.id); await this.refreshConn() } catch (e) { try { pushErrorToast(e?.message || 'No se pudo conectar') } catch {} } finally { this.connBusy = false }
+    },
+    async onDisconnect() {
+      if (!this.canConnect) return
+      this.connBusy = true
+      try { await disconnectWith(this.user.id); await this.refreshConn(); await this.loadConnections(this.user.id) } catch (e) { try { pushErrorToast(e?.message || 'No se pudo desconectar') } catch {} } finally { this.connBusy = false }
+    },
+    async loadConnections(userId) {
+      this.connectionsLoading = true
+      try {
+        const { data: rows } = await listConnections(userId)
+        const others = (rows||[]).map(r => (r.user_a===userId? r.user_b : r.user_a)).filter(Boolean)
+        if (!others.length) { this.connectionsList = []; return }
+        const { data: profiles } = await getPublicProfilesByIds(others)
+        this.connectionsList = (profiles||[])
+      } finally {
+        this.connectionsLoading = false
+      }
     }
   }
 };
@@ -243,7 +296,21 @@ export default {
 <template>
   <div class="mx-auto max-w-5xl pb-8">
     <div class="mb-4 flex items-center justify-between gap-2">
-      <AppH1>Mi Perfil</AppH1>
+      <AppH1>{{ isSelf ? 'Mi Perfil' : 'Perfil' }}</AppH1>
+      <div v-if="canConnect" class="flex items-center gap-2">
+        <!-- When connected: show Disconnect -->
+        <template v-if="conn.state==='connected'">
+          <button @click="onDisconnect" :disabled="connBusy" class="rounded-full px-4 py-2 text-sm font-semibold border border-red-400/40 text-red-200 bg-red-500/10 hover:brightness-110">Desconectar</button>
+        </template>
+        <!-- When pending_out: allow cancel -->
+        <template v-else-if="conn.state==='pending_out'">
+          <button @click="onDisconnect" :disabled="connBusy" class="rounded-full px-4 py-2 text-sm font-semibold border border-amber-400/40 text-amber-200 bg-amber-500/10 hover:brightness-110">Cancelar solicitud</button>
+        </template>
+        <!-- Default: connect CTA -->
+        <template v-else>
+          <button @click="onConnect" :disabled="connectDisabled" class="rounded-full px-4 py-2 text-sm font-semibold border bg-[oklch(0.62_0.21_270)] border-white/10 text-white hover:brightness-110">Conectar</button>
+        </template>
+      </div>
     </div>
 
   <section class="grid gap-4 md:grid-cols-12">
@@ -265,6 +332,9 @@ export default {
           :career="user.career"
           :bio="user.bio"
         />
+        <div v-if="canConnect" class="-mt-2 mb-2">
+          <p v-if="conn.state==='pending_in'" class="text-xs text-slate-400">Tenés una solicitud de esta persona. Respondela desde Notificaciones.</p>
+        </div>
   <AchievementsCard :achievements="achievements" :loading="achLoading" />
   <XpDonutChart
     :items="xpByGame"
@@ -287,7 +357,7 @@ export default {
       <!-- Columna derecha: nivel, XP, achievements y progreso -->
     <div class="flex flex-col gap-4 md:col-span-4">
   <ProgressCard :level-info="levelInfo" :loading="levelLoading" :xp-now="xpNow" :progress-percent="progressPercent" :achievements-count="achievements.length" />
-        <ConnectionsCard :follower-count="followerCount" :following-count="followingCount" :group-count="groupCount" />
+  <ConnectionsCard :follower-count="followerCount" :following-count="followingCount" :group-count="groupCount" :connections="connectionsList" :loading="connectionsLoading" />
         <CommunityCard :forums-count="forumsCount" :messages-count="messagesCount" :discussions-started-count="discussionsStartedCount" />
       </div>
       

@@ -17,7 +17,7 @@ values
   ('daily_wins_10', 'Diez del tirón', 'Ganá 10 juegos del día', 'https://img.icons8.com/fluency/48/goal.png', 60),
   ('daily_wins_all', 'Pleno diario', 'Ganá todos los juegos del día', 'https://img.icons8.com/fluency/48/trophy.png', 80),
   -- Rachas por día en un juego específico (genéricos, se registran con meta.game)
-  ('daily_streak_3', 'Racha diaria ×3', 'Ganá el mismo juego 3 días seguidos', 'https://img.icons8.com/fluency/48/party-popper.png', 20),
+  ('daily_streak_3', 'Racha diaria ×3', 'Ganá el mismo juego 3 días seguidos', 'https://img.icons8.com/fluency/48/crown.png', 20),
   ('daily_streak_5', 'Racha diaria ×5', 'Ganá el mismo juego 5 días seguidos', 'https://img.icons8.com/fluency/48/confetti.png', 35),
   ('daily_streak_10', 'Racha diaria ×10', 'Ganá el mismo juego 10 días seguidos', 'https://img.icons8.com/fluency/48/trophy.png', 80),
   -- Superlogro: 5 días seguidos ganando en 3 juegos distintos

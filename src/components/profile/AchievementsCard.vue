@@ -12,15 +12,26 @@ function difficultyFor(a) {
   return ACHIEVEMENTS[code]?.difficulty || null
 }
 
+// Fallback de íconos por código (por si en la DB falta o el link externo cayó)
+const ICONS_BY_CODE = {
+  daily_streak_3: '/achievements/daily-streak-3.svg',
+}
+function iconFor(a) {
+  const url = a?.achievements?.icon_url
+  if (url && typeof url === 'string' && url.trim()) return url
+  const code = a?.achievements?.code
+  return (code && ICONS_BY_CODE[code]) || ''
+}
+
 const selected = ref('all')
 const order = ['épico','difícil','media','fácil', null]
 const tabs = [
   { key: 'all', label: 'Todos' },
-  { key: 'missing', label: 'Pendientes' },
   { key: 'épico', label: 'Épico' },
   { key: 'difícil', label: 'Difícil' },
   { key: 'media', label: 'Media' },
   { key: 'fácil', label: 'Fácil' },
+  { key: 'missing', label: 'Pendientes' },
 ]
 
 const ownedCodes = computed(() => {
@@ -103,7 +114,7 @@ const totalCatalog = computed(() => Object.keys(ACHIEVEMENTS || {}).length)
             class="relative overflow-hidden rounded-xl border bg-gradient-to-br p-3 transition h-28 flex flex-col"
             :class="a._missing ? 'border-white/5 from-slate-900/40 to-slate-800/20 hover:border-white/10' : 'border-white/10 from-slate-900/70 to-slate-800/40 hover:border-white/20'">
             <div class="flex items-start gap-3 flex-1 min-h-0">
-              <img v-if="a.achievements?.icon_url" :src="a.achievements.icon_url" class="w-10 h-10 rounded flex-none" alt="icon" />
+              <img v-if="iconFor(a)" :src="iconFor(a)" class="w-10 h-10 rounded flex-none" alt="icon" />
               <div v-else class="w-10 h-10 rounded bg-slate-700/60 flex items-center justify-center text-slate-300/80 flex-none">🏆</div>
               <div class="min-w-0 flex-1">
                 <p class="font-semibold leading-tight truncate" :class="a._missing ? 'text-slate-200' : 'text-slate-100'">{{ a.achievements?.name || 'Logro' }}</p>

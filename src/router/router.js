@@ -22,7 +22,7 @@ import AboutObjective from '../pages/AboutObjective.vue';
 import NotFound from '../pages/NotFound.vue';
 import PlayPoints from '../pages/PlayPoints.vue';
 import PlayFree from '../pages/PlayFree.vue';
-// Reuse Profile for public view by id
+import Notifications from '../pages/Notifications.vue';
 
 const routes = [
     { path: '/', component: Home },
@@ -40,7 +40,8 @@ const routes = [
     { path: '/games/height-order', component: HeightOrder, meta: { requiresAuth: true } },
     { path: '/games/shirt-number', component: ShirtNumber, meta: { requiresAuth: true } },
     { path: '/leaderboards', component: Leaderboards },
-    { path: '/u/:id', component: Profile },
+    { path: '/u/:id', component: Profile, meta: { requiresAuth: true } },
+    { path: '/notifications', component: Notifications, meta: { requiresAuth: true } },
     // About / Info
     { path: '/about/me', component: AboutMe },
     { path: '/about/goaldemy', component: AboutGoaldemy },

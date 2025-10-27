@@ -4,6 +4,10 @@ import { subscribeToAuthStateChanges } from '../services/auth';
 import { logout } from '../services/auth';
 import { searchPublicProfiles } from '../services/user-profiles';
 import { getUserLevel } from '../services/xp';
+import { fetchUnreadCount, listNotifications, markAsRead } from '../services/notifications';
+import { supabase } from '../services/supabase';
+import { listIncomingRequests, acceptRequest, blockRequest } from '../services/connections';
+import { getPublicProfilesByIds } from '../services/user-profiles';
 
 export default {
   name: 'AppNavBar',
@@ -30,6 +34,13 @@ export default {
             levelInfo: null,
             levelLoading: false,
             _lastLevelAt: 0,
+            notifCount: 0,
+            _notifChannel: null,
+            _connChannel: null,
+            notifOpen: false,
+            notifItems: [],
+            notifLoading: false,
+            notifProfiles: {},
         };
     },
     methods: {
@@ -101,6 +112,126 @@ export default {
         onPlayLeave() {
             if (this._playCloseTimer) clearTimeout(this._playCloseTimer)
             this._playCloseTimer = setTimeout(() => { this.playOpen = false }, 220)
+        },
+        async loadNotifCount() {
+            try {
+                // Unread notifications (excl. connection_request) + pending connection requests
+                const [{ count }, { data: incoming }] = await Promise.all([
+                    fetchUnreadCount(),
+                    listIncomingRequests(),
+                ])
+                const pending = (incoming || []).length
+                this.notifCount = (count || 0) + pending
+            } catch { this.notifCount = 0 }
+        },
+        setupNotifRealtime() {
+            if (!this.user?.id) return
+            if (this._notifChannel) { try { this._notifChannel.unsubscribe() } catch {} this._notifChannel = null }
+            if (this._connChannel) { try { this._connChannel.unsubscribe() } catch {} this._connChannel = null }
+            const ch = supabase.channel(`notifications:${this.user.id}`)
+            ch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `to_user=eq.${this.user.id}` }, () => {
+                this.loadNotifCount()
+                if (this.notifOpen) this.loadNotifMenu()
+            })
+            ch.subscribe()
+            this._notifChannel = ch
+
+            // Connections realtime to reflect pending requests instantly
+            const cch = supabase.channel(`connections:${this.user.id}`)
+            // New incoming pending request
+            cch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'connections', filter: `user_b=eq.${this.user.id}` }, () => {
+                this.loadNotifCount(); if (this.notifOpen) this.loadNotifMenu()
+            })
+            // Status changes (pending -> accepted/blocked) should also refresh
+            cch.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'connections', filter: `user_b=eq.${this.user.id}` }, () => {
+                this.loadNotifCount(); if (this.notifOpen) this.loadNotifMenu()
+            })
+            cch.subscribe()
+            this._connChannel = cch
+        },
+        async loadNotifMenu() {
+            if (!this.user?.id) return
+            this.notifLoading = true
+            try {
+                const [{ data: incoming }, { data: notifs }] = await Promise.all([
+                    listIncomingRequests(),
+                    listNotifications(12),
+                ])
+                // Map to consumable entries (requests)
+                const reqs = (incoming || []).map(r => ({
+                    kind: 'request',
+                    id: r.id,
+                    from: r.user_a,
+                    created_at: r.created_at,
+                }))
+                // Map notification logs we want to show in dropdown
+                const logs = (notifs || [])
+                  .filter(n => n?.type && n.type !== 'connection_request')
+                  .map(n => ({ kind: 'log', id: n.id, type: n.type, from: n.from_user, created_at: n.created_at, read: n.read, payload: n.payload }))
+                // Merge: requests first, then latest logs
+                const items = [...reqs, ...logs].slice(0, 12)
+                this.notifItems = items
+                // Fetch sender profiles for better text
+                const ids = Array.from(new Set(items.map(i => i.from).filter(Boolean)))
+                if (ids.length) {
+                    const { data: profiles } = await getPublicProfilesByIds(ids)
+                    const map = {}
+                    for (const p of profiles || []) map[p.id] = p
+                    this.notifProfiles = map
+                } else {
+                    this.notifProfiles = {}
+                }
+            } finally {
+                this.notifLoading = false
+            }
+        },
+        toggleNotif() {
+            this.notifOpen = !this.notifOpen
+            if (this.notifOpen) this.loadNotifMenu()
+        },
+        nameFor(id) { const p = this.notifProfiles?.[id] || {}; return p.display_name || p.email || 'Usuario' },
+        fmtNotifLine(n) {
+            // For request items
+            const who = this.nameFor(n.from)
+            return `${who} quiere conectarse con vos`
+        },
+        fmtLogSuffix(n) {
+            const who = this.nameFor(n.from)
+            if (n.type === 'friend_accepted') return `aceptó tu solicitud y ahora son amigos`
+            if (n.type === 'friend_added') return `fue agregado como amigo`
+            if (n.type === 'friend_removed') {
+                const initiator = n?.payload?.initiator_id
+                return initiator && initiator === this.user?.id ? `Cancelaste la conexión` : `canceló la conexión`
+            }
+            return 'actividad'
+        },
+        fmtNotifWhen(ts) {
+            const d = new Date(ts)
+            const now = Date.now()
+            const diffMs = now - d.getTime()
+            const oneHour = 60 * 60 * 1000
+            const oneDay = 24 * oneHour
+            if (diffMs < oneDay) {
+                if (diffMs < oneHour) {
+                    const mins = Math.max(1, Math.round(diffMs / (60 * 1000)))
+                    return `Hace ${mins}m`
+                }
+                const hrs = Math.max(1, Math.round(diffMs / oneHour))
+                return `Hace ${hrs}h`
+            }
+            // mm/dd as per example (10/26)
+            const mm = String(d.getMonth() + 1).padStart(2, '0')
+            const dd = String(d.getDate()).padStart(2, '0')
+            return `${mm}/${dd}`
+        },
+        async acceptConn(id) {
+            try { await acceptRequest(id); await this.loadNotifMenu(); await this.loadNotifCount() } catch {}
+        },
+        async rejectConn(id) {
+            try { await blockRequest(id); await this.loadNotifMenu(); await this.loadNotifCount() } catch {}
+        },
+        async markNotif(n) {
+            try { if (n?.kind==='log' && n.id && !n.read) { await markAsRead(n.id); n.read = true; await this.loadNotifCount() } } catch {}
         }
     },
     computed: {
@@ -144,6 +275,8 @@ export default {
                     document.addEventListener('click', this._onDocClick)
                     // Watch menu open to fetch level lazily
                     this.$watch('menuOpen', (open) => { if (open) this.loadLevelIfNeeded() })
+                    // Notifications: load and subscribe when auth ready
+                    this.$watch(() => this.user?.id, async (id) => { if (id) { await this.loadNotifCount(); this.setupNotifRealtime() }})
                     // Clear search box when navigating to a user profile
                     this.$watch(() => this.$route.fullPath, (p) => {
                         if (p?.startsWith?.('/u/')) {
@@ -153,10 +286,22 @@ export default {
                         }
                         this.infoOpen = false
                         this.playOpen = false
+                        this.notifOpen = false
                     })
+                    // Extend outside-click close for notifications
+                    const orig = this._onDocClick
+                    this._onDocClick = (e) => {
+                        orig(e)
+                        const menu = this.$el.querySelector('[data-notif-menu]')
+                        const btn = this.$el.querySelector('[data-notif-button]')
+                        if (this.notifOpen && menu && !menu.contains(e.target) && btn && !btn.contains(e.target)) {
+                            this.notifOpen = false
+                        }
+                    }
         },
         unmounted() {
             document.removeEventListener('click', this._onDocClick)
+            try { if (this._notifChannel) this._notifChannel.unsubscribe() } catch {}
     }
 }
 </script>
@@ -243,13 +388,66 @@ export default {
                             </ul>
                         </div>
                     </li>
-                                        <template v-if="user.id === null">
-                                                <li>
-                                                    <RouterLink class="rounded-full bg-[oklch(0.62_0.21_270)] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[oklch(0.55_0.21_270)/30] transition hover:bg-[oklch(0.55_0.21_270)]" to="/login">
-                                                        Acceder
-                                                    </RouterLink>
-                                                </li>
+                    <li class="relative">
+                        <button data-notif-button @click.stop="toggleNotif" class="relative inline-flex items-center justify-center rounded-full border border-white/10 px-2 py-1.5 hover:border-white/20">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="text-slate-200"><path d="M14 18.5a2 2 0 1 1-4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 9a6 6 0 1 1 12 0c0 2.28.67 3.6 1.2 4.38.4.6.6.9.6 1.12 0 .83-.67 1.5-1.5 1.5H5.7A1.7 1.7 0 0 1 4 14.3c0-.22.2-.52.6-1.12C5.13 12.6 6 11.28 6 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                            <span v-if="notifCount>0" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] grid place-items-center">{{ notifCount }}</span>
+                        </button>
+                        <div v-if="notifOpen" data-notif-menu class="absolute right-0 mt-2 w-96 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-50">
+                            <div class="p-3">
+                                <h4 class="text-slate-400 text-xs uppercase tracking-wider mb-2">Notificaciones</h4>
+                                <div v-if="notifLoading" class="text-slate-400 text-sm">Cargando…</div>
+                                <div v-else-if="!notifItems.length" class="text-slate-400 text-sm">Sin notificaciones</div>
+                                <ul v-else class="flex flex-col gap-2 max-h-72 overflow-auto pr-1">
+                                    <li v-for="n in notifItems" :key="n.id"
+                                        class="relative rounded-lg border border-white/10 p-2 flex items-center gap-2"
+                                        @mouseenter="markNotif(n)">
+                                        <div class="w-8 h-8 rounded bg-sky-500/20 border border-sky-400/30 grid place-items-center text-sky-200">🤝</div>
+                                        <!-- Requests -->
+                                        <template v-if="n.kind==='request'">
+                                            <div class="min-w-0 flex-1">
+                                                <div class="text-slate-100 text-[12px] leading-snug truncate">
+                                                    <router-link :to="`/u/${n.from}`" class="hover:underline">{{ nameFor(n.from) }}</router-link>
+                                                    <span> quiere conectarse con vos</span>
+                                                </div>
+                                                <div class="text-[11px] text-slate-400">{{ fmtNotifWhen(n.created_at) }}</div>
+                                            </div>
+                                            <div class="flex items-center gap-1">
+                                                <button @click.stop="acceptConn(n.id)" title="Aceptar" class="inline-flex items-center justify-center rounded-full border border-emerald-400/40 text-emerald-300 hover:bg-emerald-400/10 w-7 h-7">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                                </button>
+                                                <button @click.stop="rejectConn(n.id)" title="Rechazar" class="inline-flex items-center justify-center rounded-full border border-red-400/40 text-red-300 hover:bg-red-400/10 w-7 h-7">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                                </button>
+                                            </div>
                                         </template>
+                                        <!-- Logs -->
+                                        <template v-else>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="text-slate-100 text-[12px] leading-snug">
+                                                    <router-link :to="`/u/${n.from}`" class="hover:underline">{{ nameFor(n.from) }}</router-link>
+                                                    <span>&nbsp;{{ fmtLogSuffix(n) }}</span>
+                                                </div>
+                                                <div class="text-[11px] text-slate-400">{{ fmtNotifWhen(n.created_at) }}</div>
+                                            </div>
+                                            <!-- Right stripe for unread -->
+                                            <div v-if="!n.read" class="absolute right-0 top-0 h-full w-1 bg-sky-400 rounded-r"></div>
+                                        </template>
+                                    </li>
+                                </ul>
+                                <div class="mt-3 flex justify-end">
+                                    <router-link @click="notifOpen=false" to="/notifications" class="text-slate-300 hover:text-white text-sm">Ver todas</router-link>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <template v-if="user.id === null">
+                            <li>
+                                <RouterLink class="rounded-full bg-[oklch(0.62_0.21_270)] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[oklch(0.55_0.21_270)/30] transition hover:bg-[oklch(0.55_0.21_270)]" to="/login">
+                                    Acceder
+                                </RouterLink>
+                            </li>
+                    </template>
                     <template v-else>
                         <li class="relative">
                             <button data-user-button @click="menuOpen = !menuOpen" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-2 py-1.5 text-sm text-slate-200 hover:border-white/20">
@@ -359,6 +557,7 @@ export default {
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/chat">Chat Global</RouterLink></li>
                         
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leaderboards">Leaderboards</RouterLink></li>
+                        <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/notifications">Notificaciones</RouterLink></li>
                                                 <li>
                                                     <details class="group">
                                                         <summary class="cursor-pointer hover:text-white">Info</summary>

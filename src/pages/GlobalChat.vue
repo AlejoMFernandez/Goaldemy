@@ -89,9 +89,9 @@ export default {
                     : 'bg-white/5 border-white/10'
                 ]"
               >
-                <div class="m-0 text-xs sm:text-sm font-semibold text-slate-300" v-if="!isOwn(message)"><span>{{ message.email }}</span></div>
-                <div class="my-1 whitespace-pre-line break-words">{{ message.content }}</div>
-                <div class="m-0 text-[11px] text-slate-400 text-right">{{ formatShortDate(message.created_at) }}</div>
+                        <div class="m-0 text-xs sm:text-xs font-semibold text-slate-300" v-if="!isOwn(message)"><span>{{ message.display_name || message.email }}</span></div>
+                <div class="whitespace-pre-line break-words text-sm">{{ message.content }}</div>
+                        <div class="m-0 text-[11px] text-slate-400" :class="isOwn(message) ? 'text-right' : 'text-left'">{{ formatShortDate(message.created_at) }}</div>
               </li>
           </ol>
         </div>
