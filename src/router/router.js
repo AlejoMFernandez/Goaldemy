@@ -23,6 +23,8 @@ import NotFound from '../pages/NotFound.vue';
 import PlayPoints from '../pages/PlayPoints.vue';
 import PlayFree from '../pages/PlayFree.vue';
 import Notifications from '../pages/Notifications.vue';
+import DirectChat from '../pages/DirectChat.vue';
+import DirectMessages from '../pages/DirectMessages.vue';
 
 const routes = [
     { path: '/', component: Home },
@@ -42,6 +44,8 @@ const routes = [
     { path: '/leaderboards', component: Leaderboards },
     { path: '/u/:id', component: Profile, meta: { requiresAuth: true } },
     { path: '/notifications', component: Notifications, meta: { requiresAuth: true } },
+    { path: '/messages', component: DirectMessages, meta: { requiresAuth: true } },
+    { path: '/messages/:peerId', component: DirectChat, meta: { requiresAuth: true } },
     // About / Info
     { path: '/about/me', component: AboutMe },
     { path: '/about/goaldemy', component: AboutGoaldemy },

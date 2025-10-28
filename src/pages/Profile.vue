@@ -300,6 +300,7 @@ export default {
       <div v-if="canConnect" class="flex items-center gap-2">
         <!-- When connected: show Disconnect -->
         <template v-if="conn.state==='connected'">
+          <button @click="$router.push('/messages/' + user.id)" class="rounded-full px-4 py-2 text-sm font-semibold border border-white/10 text-white bg-[oklch(0.62_0.21_270)] hover:brightness-110">Mensaje</button>
           <button @click="onDisconnect" :disabled="connBusy" class="rounded-full px-4 py-2 text-sm font-semibold border border-red-400/40 text-red-200 bg-red-500/10 hover:brightness-110">Desconectar</button>
         </template>
         <!-- When pending_out: allow cancel -->

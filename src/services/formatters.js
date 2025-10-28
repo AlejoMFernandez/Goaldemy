@@ -6,3 +6,13 @@ export function formatShortDate(dateStr) {
     return ''
   }
 }
+
+export function formatDayMonth(dateStr) {
+  try {
+    const d = new Date(dateStr)
+    // e.g., 24 sept
+    return d.toLocaleString([], { day: '2-digit', month: 'short' })
+  } catch {
+    return ''
+  }
+}

@@ -6,7 +6,7 @@ const items = computed(() => notificationsState.items)
 </script>
 
 <template>
-  <div class="fixed bottom-4 right-4 z-50 w-80 max-w-[90vw]">
+  <div class="fixed bottom-3 right-5 z-50 w-80 max-w-[90vw]">
     <div class="flex flex-col gap-3">
     <transition-group name="toast" tag="div">
       <div

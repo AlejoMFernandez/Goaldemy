@@ -1,6 +1,8 @@
 <script>
 import AppNavBar from './components/AppNavBar.vue';
 import AppFooter from './components/AppFooter.vue';
+import DirectMessagesDock from './components/DirectMessagesDock.vue';
+import DirectMiniChatHost from './components/DirectMiniChatHost.vue';
 import Home from './pages/Home.vue';
 import AppToast from './components/AppToast.vue';
 import AppLoader from './components/AppLoader.vue';
@@ -14,6 +16,8 @@ export default {
     AppFooter,
     AppToast,
     AppLoader,
+    DirectMessagesDock,
+    DirectMiniChatHost,
   },
   data() {
     return {
@@ -40,5 +44,7 @@ export default {
     </main>
     <AppFooter v-if="!isAuthLayout" />
     <AppToast />
+    <DirectMessagesDock v-if="!isAuthLayout" />
+    <DirectMiniChatHost v-if="!isAuthLayout" />
   </div>
 </template>
