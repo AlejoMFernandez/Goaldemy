@@ -13,6 +13,7 @@ export default {
   data() {
     return {
       open: false,
+      collapsedReady: true,
       user: { id: null, email: null, avatar_url: null, display_name: null },
       threads: [],
       loading: false,
@@ -26,7 +27,17 @@ export default {
   },
   methods: {
     formatDayMonth,
-    toggle() { this.open = !this.open; if (this.open) this.load() },
+    toggle() {
+      if (!this.open) {
+        // Opening: hide collapsed header, then show panel
+        this.collapsedReady = false
+        this.open = true
+        this.load()
+      } else {
+        // Closing: start leave transition; show collapsed after it finishes
+        this.open = false
+      }
+    },
     async load() {
       this.loading = true
       try {
@@ -83,7 +94,7 @@ export default {
     </button>
 
     <!-- Desktop collapsed header (acts as opener) -->
-  <button v-if="!open" @click="toggle" class="hidden sm:flex items-center gap-2 p-3 mt-3 w-[380px] bg-slate-900/95 backdrop-blur rounded-t-2xl border border-white/10 border-b-0 shadow-xl hover:bg-white/5">
+  <button v-if="collapsedReady && !open" @click="toggle" class="hidden sm:flex items-center gap-2 p-3 mt-3 w-[380px] bg-slate-900/95 backdrop-blur rounded-t-2xl border border-white/10 border-b-0 shadow-xl hover:bg-white/5">
       <img v-if="user?.avatar_url" :src="user.avatar_url" alt="avatar" class="h-7 w-7 rounded-full" />
       <div v-else class="h-7 w-7 rounded-full bg-slate-700 grid place-items-center text-xs text-slate-200">
         {{ ((user?.display_name || user?.email || '?').trim()[0] || '?').toUpperCase() }}
@@ -93,8 +104,8 @@ export default {
     </button>
 
     <!-- Bottom sheet panel -->
-    <transition name="sheet">
-      <div v-show="open" class="mt-3 w-[88vw] sm:w-[380px] max-h-[60vh] bg-slate-900/95 backdrop-blur rounded-t-2xl border border-white/10 border-b-0 shadow-xl overflow-hidden">
+    <transition name="sheet" @before-enter="collapsedReady = false" @after-leave="collapsedReady = true">
+      <div v-if="open" class="mt-3 w-[88vw] sm:w-[380px] max-h-[60vh] bg-slate-900/95 backdrop-blur rounded-t-2xl border border-white/10 border-b-0 shadow-xl overflow-hidden">
         <!-- Header clickable whole area -->
         <button @click="toggle" class="w-full text-left flex items-center gap-2 p-3 border-b border-white/10 hover:bg-white/5">
           <img v-if="user?.avatar_url" :src="user.avatar_url" alt="avatar" class="h-7 w-7 rounded-full" />
@@ -184,5 +195,6 @@ export default {
 
 <style scoped>
 .sheet-enter-active, .sheet-leave-active { transition: transform .2s ease, opacity .2s ease; }
-.sheet-enter-from, .sheet-leave-to { transform: translateY(10px); opacity: 0; }
+.sheet-enter-from { transform: translateY(8px); opacity: 0; }
+.sheet-leave-to { transform: translateY(16px); opacity: 0; }
 </style>
