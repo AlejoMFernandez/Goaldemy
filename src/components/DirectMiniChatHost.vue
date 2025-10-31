@@ -34,7 +34,7 @@ export default {
 
 <template>
   <!-- Host pinned near bottom-right (left of the dock); windows spread to the left -->
-  <div class="fixed bottom-0 right-[420px] z-40 flex gap-3 items-end">
+  <div class="hidden sm:flex fixed bottom-0 right-[420px] z-40 gap-3 items-end">
     <template v-for="(w, idx) in windows" :key="w.peerId">
       <!-- Collapsed pill -->
   <button v-if="w.collapsed" class="bg-slate-900/95 backdrop-blur rounded-t-2xl rounded-b-none border border-white/10 border-b-0 shadow-xl p-2 pr-3 flex items-center gap-2 hover:bg-white/5" @click="expand(w.peerId)">

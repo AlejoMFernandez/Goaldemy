@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { pushInfoToast } from '../stores/notifications';
 import { subscribeToAuthStateChanges, authReady, getAuthUser } from '../services/auth';
 import Home from '../pages/Home.vue';
-import GlobalChat from '../pages/GlobalChat.vue';
 import Login from '../pages/Login.vue';
 import Register from '../pages/Register.vue';
 import Profile from '../pages/Profile.vue';
@@ -30,7 +29,6 @@ const routes = [
     { path: '/', component: Home },
     { path: '/login', component: Login, meta: { layout: 'auth' } },
     { path: '/register', component: Register, meta: { layout: 'auth' } },
-    { path: '/chat', component: GlobalChat, meta: { requiresAuth: true } },
     { path: '/profile', component: Profile, meta: { requiresAuth: true } },
     { path: '/profile-edit', component: ProfileEdit, meta: { requiresAuth: true } },
     { path: '/games/guess-player', component: GuessPlayer, meta: { requiresAuth: true } },

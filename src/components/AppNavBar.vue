@@ -314,8 +314,14 @@ export default {
                     <img src="/src/assets/iconclaro.png" alt="Goaldemy" class="h-10 w-auto" />
                     <span class="sr-only">Goaldemy</span>
                 </RouterLink>
-                <!-- Mobile controls: only menu button (logo + menú) -->
+                <!-- Mobile controls: notifications + menu button -->
                 <div class="md:hidden flex items-center gap-2 flex-1 justify-end">
+                    <!-- Notifications icon (mobile) -->
+                    <button @click="$router.push('/notifications')" class="relative inline-flex items-center justify-center rounded-full border border-white/10 p-2 text-slate-200 hover:border-white/20" aria-label="Notificaciones">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="text-slate-200"><path d="M14 18.5a2 2 0 1 1-4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 9a6 6 0 1 1 12 0c0 2.28.67 3.6 1.2 4.38.4.6.6.9.6 1.12 0 .83-.67 1.5-1.5 1.5H5.7A1.7 1.7 0 0 1 4 14.3c0-.22.2-.52.6-1.12C5.13 12.6 6 11.28 6 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                        <span v-if="notifCount>0" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] grid place-items-center">{{ notifCount }}</span>
+                    </button>
+                    <!-- Menu button -->
                     <button @click="toggle" class="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-slate-200 hover:border-white/20 hover:text-white">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -326,7 +332,7 @@ export default {
 
                 <ul class="hidden md:flex items-center gap-4 text-slate-200">
                     <li><RouterLink class="hover:text-white transition-colors" to="/">Home</RouterLink></li>
-                    <li><RouterLink class="hover:text-white transition-colors" to="/chat">Chat Global</RouterLink></li>
+                    
                     
                     <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Leaderboards</RouterLink></li>
                     <!-- Info dropdown (hover) -->
@@ -554,7 +560,6 @@ export default {
 
                         <!-- Nav items -->
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/">Home</RouterLink></li>
-                        <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/chat">Chat Global</RouterLink></li>
                         
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leaderboards">Leaderboards</RouterLink></li>
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/notifications">Notificaciones</RouterLink></li>
