@@ -85,48 +85,42 @@ const totals = computed(() => {
 
   <div v-if="state.loading" class="text-slate-400">Cargando…</div>
   <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3">
-      <RouterLink v-for="g in state.games" :key="g.slug" :to="toChallenge(g.slug)" :class="cardClasses(g.slug)">
-  <!-- Mask overlay SOLO BLUR (6px) usando pseudo-elemento to reliably trigger backdrop-filter -->
-        <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="mask-dim rounded-xl"></div>
-        <!-- Result icon above the mask so it stays vivid -->
-     <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="absolute inset-0 z-20 grid place-items-center pointer-events-none">
-    <div v-if="state.availability[g.slug]?.result==='win'"
-      class="h-12 w-12 rounded-full grid place-items-center ring-2 ring-emerald-400/50 bg-emerald-500/20">
-            <div class="text-emerald-400 text-3xl font-extrabold">✓</div>
+      <RouterLink v-for="g in state.games" :key="g.slug" :to="toChallenge(g.slug)" class="rounded-xl overflow-hidden border border-white/10 bg-slate-900/40 hover:bg-white/5 transition shadow">
+        <!-- Image box -->
+        <div class="relative p-2 sm:p-3 bg-slate-900/50">
+          <img v-if="g.cover_url" :src="g.cover_url" :alt="g.name" class="w-full h-48 object-contain" />
+          <div v-else class="w-full h-48 grid place-items-center bg-white/5 text-slate-400 text-sm">{{ g.name }}</div>
+          <!-- Blur/dim mask only over the image when already played -->
+          <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="mask-dim"></div>
+          <!-- Result icon centered over image -->
+          <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="absolute inset-0 z-20 grid place-items-center pointer-events-none">
+            <div v-if="state.availability[g.slug]?.result==='win'" class="h-12 w-12 rounded-full grid place-items-center ring-2 ring-emerald-400/50 bg-emerald-500/20">
+              <div class="text-emerald-400 text-3xl font-extrabold">✓</div>
+            </div>
+            <div v-else-if="state.availability[g.slug]?.result==='loss'" class="h-12 w-12 rounded-full grid place-items-center ring-2 ring-red-400/50 bg-red-500/20">
+              <div class="text-red-400 text-3xl font-extrabold">✕</div>
+            </div>
           </div>
-    <div v-else-if="state.availability[g.slug]?.result==='loss'"
-      class="h-12 w-12 rounded-full grid place-items-center ring-2 ring-red-400/50 bg-red-500/20">
-            <div class="text-red-400 text-3xl font-extrabold">✕</div>
-          </div>
-    <div v-else
-      class="h-12 w-12 rounded-full grid place-items-center ring-2 ring-slate-400/40 bg-white/10">
-            <div class="text-slate-300 text-3xl font-extrabold">–</div>
+          <!-- Streak chip on top-right -->
+          <div v-if="(state.streaks[g.slug] || 0) > 0" class="absolute top-2 right-2 z-20 pointer-events-none">
+            <div class="inline-flex items-center gap-0.5 rounded-full px-2 py-1 ring-1 bg-orange-500/15 ring-orange-400/40 text-amber-200">
+              <span class="leading-none">🔥</span>
+              <span class="tabular-nums font-semibold text-sm leading-none">{{ state.streaks[g.slug] }}</span>
+            </div>
           </div>
         </div>
-        <!-- Daily win streak: flame chip at top-right ABOVE blur mask -->
-        <div v-if="(state.streaks[g.slug] || 0) > 0" class="absolute top-2 right-2 z-20 pointer-events-none">
-          <div class="inline-flex items-center gap-0.5 rounded-full px-2 py-1 ring-1 bg-orange-500/15 ring-orange-400/40 text-amber-200">
-            <span class="leading-none">🔥</span>
-            <span class="tabular-nums font-semibold text-sm leading-none">{{ state.streaks[g.slug] }}</span>
-          </div>
+        <!-- Bottom bar like Futbol11 -->
+        <div class="px-3 py-3 bg-slate-900/70 border-t border-white/10 text-center">
+          <div class="text-white text-lg font-extrabold tracking-wide">JUGAR</div>
+          <div class="text-slate-300 text-xs">{{ g.name }}</div>
         </div>
-        <div class="rounded-lg overflow-hidden mb-2">
-          <img v-if="g.cover_url" :src="g.cover_url" :alt="g.name" class="w-full h-36 object-cover" />
-          <div v-else class="w-full h-36 grid place-items-center bg-white/5 text-slate-400 text-sm">{{ g.name }}</div>
-        </div>
-        <h3 class="text-white font-medium">{{ g.name }}</h3>
-        <p class="text-slate-400 text-xs mt-2">{{ g.description || 'Desafío diario' }}</p>
-        <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="mt-2">
-          <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ring-1 ring-white/20 bg-white/5 text-slate-200">Ver resultado de hoy →</span>
-        </div>
-        <!-- Centered played badge handled by overlay above -->
       </RouterLink>
     </div>
   </section>
 </template>
 
 <style scoped>
-/* Mask: remove colors and slightly darken without blur */
+/* Mask: remove colors and slightly darken with slight blur (applies over image box) */
 .mask-dim { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
 .mask-dim::before {
   content: '';

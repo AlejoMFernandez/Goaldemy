@@ -33,16 +33,17 @@ async function safeSelect({ table, fields, filters = [], alias = {} }) {
 }
 
 export async function getUserProfileById(id) {
+    // Use maybeSingle to avoid 406 "Cannot coerce result to single JSON" in edge cases
     const { data, error } = await supabase
         .from('user_profiles')
-        .select()
+        .select('*')
         .eq('id', id)
-        .limit(1)
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('[user-profiles.js getUserProfileById] - User Nº:', id, error);
-        throw new Error(error.message || 'Failed to fetch user profile');
+        // Return a minimal object rather than throwing to avoid breaking auth boot
+        return { id };
     }
     return data;
 }

@@ -22,6 +22,7 @@ export default {
   const teams = getAllTeams().map(t => ({ value: t.name, label: t.name, image: t.logo }))
     return {
       user:{
+        display_name: '',
         email: '',
         password: '',
         confirm: '',
@@ -44,6 +45,11 @@ export default {
         this.loading = true;
         this.error = ''
         this.notice = ''
+        if (!(this.user.display_name || '').trim()) {
+          this.error = 'El nombre es obligatorio.'
+          try { pushErrorToast(this.error) } catch {}
+          return
+        }
         // Feedback: reforzar restricción mínima de 6 caracteres en cliente
         if ((this.user.password || '').length < 6) {
           try { pushErrorToast('Tu contraseña es muy corta. Debe tener al menos 6 caracteres.') } catch {}
@@ -55,6 +61,7 @@ export default {
           return
         }
         const profile = {
+          display_name: this.user.display_name.trim(),
           nationality_code: this.user.nationality_code || null,
           favorite_team: this.user.favorite_team?.trim() || null,
           favorite_player: this.user.favorite_player?.trim() || null,
@@ -90,6 +97,18 @@ export default {
     <form action="#" @submit.prevent="handleSubmit" class="card card-hover p-6 space-y-4">
       <div class="grid grid-cols-1 gap-3">
         <div>
+          <label for="display_name" class="label">Nombre</label>
+          <input
+            required
+            type="text"
+            class="input"
+            id="display_name"
+            placeholder="Tu nombre"
+            v-model="user.display_name"
+            autocomplete="name"
+          />
+        </div>
+        <div>
           <label for="email" class="label">Correo electrónico</label>
           <input
             autofocus
@@ -99,6 +118,7 @@ export default {
             id="email"
             placeholder="tu@email.com"
             v-model="user.email"
+            autocomplete="email"
           />
         </div>
         <div>
@@ -110,6 +130,7 @@ export default {
             id="password"
             placeholder="••••••••"
             v-model="user.password"
+            autocomplete="new-password"
           />
         </div>
         <div>
@@ -121,11 +142,14 @@ export default {
             id="confirm"
             placeholder="••••••••"
             v-model="user.confirm"
+            autocomplete="new-password"
           />
         </div>
       </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+      <!-- Campos opcionales -->
+      <div class="card mt-2 p-4 bg-white/0 border border-white/10">
+        <p class="text-xs uppercase tracking-wide text-slate-400 mb-3">Opcional</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label for="nationality" class="label">Nacionalidad</label>
           <div class="flex items-center gap-2">
@@ -141,6 +165,7 @@ export default {
         </div>
         <div class="md:col-span-2">
           <SearchSelect label="Jugador favorito" :show-images="true" v-model="user.favorite_player" :options="players" placeholder="Escribe 3 letras para filtrar" />
+        </div>
         </div>
       </div>
       

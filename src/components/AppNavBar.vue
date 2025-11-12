@@ -133,6 +133,10 @@ export default {
                 this.loadNotifCount()
                 if (this.notifOpen) this.loadNotifMenu()
             })
+            // Also react to updates (e.g., read status) to refresh badge when dropdown is open
+            ch.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `to_user=eq.${this.user.id}` }, () => {
+                if (this.notifOpen) this.loadNotifMenu()
+            })
             ch.subscribe()
             this._notifChannel = ch
 
@@ -148,6 +152,9 @@ export default {
             })
             cch.subscribe()
             this._connChannel = cch
+            // Fallback polling in case realtime is disabled
+            try { clearInterval(this._pollInterval) } catch {}
+            this._pollInterval = setInterval(() => this.loadNotifCount(), 20000)
         },
         async loadNotifMenu() {
             if (!this.user?.id) return
@@ -302,6 +309,8 @@ export default {
         unmounted() {
             document.removeEventListener('click', this._onDocClick)
             try { if (this._notifChannel) this._notifChannel.unsubscribe() } catch {}
+            try { if (this._connChannel) this._connChannel.unsubscribe() } catch {}
+            try { clearInterval(this._pollInterval) } catch {}
     }
 }
 </script>
@@ -319,7 +328,7 @@ export default {
                     <!-- Notifications icon (mobile) -->
                     <button @click="$router.push('/notifications')" class="relative inline-flex items-center justify-center rounded-full border border-white/10 p-2 text-slate-200 hover:border-white/20" aria-label="Notificaciones">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="text-slate-200"><path d="M14 18.5a2 2 0 1 1-4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 9a6 6 0 1 1 12 0c0 2.28.67 3.6 1.2 4.38.4.6.6.9.6 1.12 0 .83-.67 1.5-1.5 1.5H5.7A1.7 1.7 0 0 1 4 14.3c0-.22.2-.52.6-1.12C5.13 12.6 6 11.28 6 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                        <span v-if="notifCount>0" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] grid place-items-center">{{ notifCount }}</span>
+                        <span v-if="notifCount>0" class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-[11px] grid place-items-center">{{ notifCount>9?'9+':notifCount }}</span>
                     </button>
                     <!-- Menu button -->
                     <button @click="toggle" class="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-slate-200 hover:border-white/20 hover:text-white">
@@ -394,59 +403,7 @@ export default {
                             </ul>
                         </div>
                     </li>
-                    <li class="relative">
-                        <button data-notif-button @click.stop="toggleNotif" class="relative inline-flex items-center justify-center rounded-full border border-white/10 px-2 py-1.5 hover:border-white/20">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="text-slate-200"><path d="M14 18.5a2 2 0 1 1-4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 9a6 6 0 1 1 12 0c0 2.28.67 3.6 1.2 4.38.4.6.6.9.6 1.12 0 .83-.67 1.5-1.5 1.5H5.7A1.7 1.7 0 0 1 4 14.3c0-.22.2-.52.6-1.12C5.13 12.6 6 11.28 6 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                            <span v-if="notifCount>0" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] grid place-items-center">{{ notifCount }}</span>
-                        </button>
-                        <div v-if="notifOpen" data-notif-menu class="absolute right-0 mt-2 w-96 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-50">
-                            <div class="p-3">
-                                <h4 class="text-slate-400 text-xs uppercase tracking-wider mb-2">Notificaciones</h4>
-                                <div v-if="notifLoading" class="text-slate-400 text-sm">Cargando…</div>
-                                <div v-else-if="!notifItems.length" class="text-slate-400 text-sm">Sin notificaciones</div>
-                                <ul v-else class="flex flex-col gap-2 max-h-72 overflow-auto pr-1">
-                                    <li v-for="n in notifItems" :key="n.id"
-                                        class="relative rounded-lg border border-white/10 p-2 flex items-center gap-2"
-                                        @mouseenter="markNotif(n)">
-                                        <div class="w-8 h-8 rounded bg-sky-500/20 border border-sky-400/30 grid place-items-center text-sky-200">🤝</div>
-                                        <!-- Requests -->
-                                        <template v-if="n.kind==='request'">
-                                            <div class="min-w-0 flex-1">
-                                                <div class="text-slate-100 text-[12px] leading-snug truncate">
-                                                    <router-link :to="`/u/${n.from}`" class="hover:underline">{{ nameFor(n.from) }}</router-link>
-                                                    <span> quiere conectarse con vos</span>
-                                                </div>
-                                                <div class="text-[11px] text-slate-400">{{ fmtNotifWhen(n.created_at) }}</div>
-                                            </div>
-                                            <div class="flex items-center gap-1">
-                                                <button @click.stop="acceptConn(n.id)" title="Aceptar" class="inline-flex items-center justify-center rounded-full border border-emerald-400/40 text-emerald-300 hover:bg-emerald-400/10 w-7 h-7">
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                                                </button>
-                                                <button @click.stop="rejectConn(n.id)" title="Rechazar" class="inline-flex items-center justify-center rounded-full border border-red-400/40 text-red-300 hover:bg-red-400/10 w-7 h-7">
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                                                </button>
-                                            </div>
-                                        </template>
-                                        <!-- Logs -->
-                                        <template v-else>
-                                            <div class="min-w-0 flex-1">
-                                                <div class="text-slate-100 text-[12px] leading-snug">
-                                                    <router-link :to="`/u/${n.from}`" class="hover:underline">{{ nameFor(n.from) }}</router-link>
-                                                    <span>&nbsp;{{ fmtLogSuffix(n) }}</span>
-                                                </div>
-                                                <div class="text-[11px] text-slate-400">{{ fmtNotifWhen(n.created_at) }}</div>
-                                            </div>
-                                            <!-- Right stripe for unread -->
-                                            <div v-if="!n.read" class="absolute right-0 top-0 h-full w-1 bg-sky-400 rounded-r"></div>
-                                        </template>
-                                    </li>
-                                </ul>
-                                <div class="mt-3 flex justify-end">
-                                    <router-link @click="notifOpen=false" to="/notifications" class="text-slate-300 hover:text-white text-sm">Ver todas</router-link>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
+                    <!-- User dropdown / login button -->
                     <template v-if="user.id === null">
                             <li>
                                 <RouterLink class="rounded-full bg-[oklch(0.62_0.21_270)] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[oklch(0.55_0.21_270)/30] transition hover:bg-[oklch(0.55_0.21_270)]" to="/login">
@@ -455,6 +412,61 @@ export default {
                             </li>
                     </template>
                     <template v-else>
+                        <!-- Notifications dropdown -->
+                        <li class="relative">
+                            <button data-notif-button @click.stop="toggleNotif" class="relative inline-flex items-center justify-center rounded-full border border-white/10 px-2 py-1.5 hover:border-white/20">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="text-slate-200"><path d="M14 18.5a2 2 0 1 1-4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 9a6 6 0 1 1 12 0c0 2.28.67 3.6 1.2 4.38.4.6.6.9.6 1.12 0 .83-.67 1.5-1.5 1.5H5.7A1.7 1.7 0 0 1 4 14.3c0-.22.2-.52.6-1.12C5.13 12.6 6 11.28 6 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                                <span v-if="notifCount>0" class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-[11px] grid place-items-center">{{ notifCount>9?'9+':notifCount }}</span>
+                            </button>
+                            <div v-if="notifOpen" data-notif-menu class="absolute right-0 mt-2 w-96 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-50">
+                                <div class="p-3">
+                                    <h4 class="text-slate-400 text-xs uppercase tracking-wider mb-2">Notificaciones</h4>
+                                    <div v-if="notifLoading" class="text-slate-400 text-sm">Cargando…</div>
+                                    <div v-else-if="!notifItems.length" class="text-slate-400 text-sm">Sin notificaciones</div>
+                                    <ul v-else class="flex flex-col gap-2 max-h-72 overflow-auto pr-1">
+                                        <li v-for="n in notifItems" :key="n.id"
+                                            class="relative rounded-lg border border-white/10 p-2 flex items-center gap-2"
+                                            @mouseenter="markNotif(n)">
+                                            <div class="w-8 h-8 rounded bg-sky-500/20 border border-sky-400/30 grid place-items-center text-sky-200">🤝</div>
+                                            <!-- Requests -->
+                                            <template v-if="n.kind==='request'">
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="text-slate-100 text-[12px] leading-snug truncate">
+                                                        <router-link :to="`/u/${n.from}`" class="hover:underline">{{ nameFor(n.from) }}</router-link>
+                                                        <span> quiere conectarse con vos</span>
+                                                    </div>
+                                                    <div class="text-[11px] text-slate-400">{{ fmtNotifWhen(n.created_at) }}</div>
+                                                </div>
+                                                <div class="flex items-center gap-1">
+                                                    <button @click.stop="acceptConn(n.id)" title="Aceptar" class="inline-flex items-center justify-center rounded-full border border-emerald-400/40 text-emerald-300 hover:bg-emerald-400/10 w-7 h-7">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                                    </button>
+                                                    <button @click.stop="rejectConn(n.id)" title="Rechazar" class="inline-flex items-center justify-center rounded-full border border-red-400/40 text-red-300 hover:bg-red-400/10 w-7 h-7">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                                    </button>
+                                                </div>
+                                            </template>
+                                            <!-- Logs -->
+                                            <template v-else>
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="text-slate-100 text-[12px] leading-snug">
+                                                        <router-link :to="`/u/${n.from}`" class="hover:underline">{{ nameFor(n.from) }}</router-link>
+                                                        <span>&nbsp;{{ fmtLogSuffix(n) }}</span>
+                                                    </div>
+                                                    <div class="text-[11px] text-slate-400">{{ fmtNotifWhen(n.created_at) }}</div>
+                                                </div>
+                                                <!-- Right stripe for unread -->
+                                                <div v-if="!n.read" class="absolute right-0 top-0 h-full w-1 bg-sky-400 rounded-r"></div>
+                                            </template>
+                                        </li>
+                                    </ul>
+                                    <div class="mt-3 flex justify-end">
+                                        <router-link @click="notifOpen=false" to="/notifications" class="text-slate-300 hover:text-white text-sm">Ver todas</router-link>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <!-- User menu -->
                         <li class="relative">
                             <button data-user-button @click="menuOpen = !menuOpen" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-2 py-1.5 text-sm text-slate-200 hover:border-white/20">
                                 <img v-if="user.avatar_url" :src="user.avatar_url" class="w-7 h-7 rounded-full object-cover" alt="avatar" />

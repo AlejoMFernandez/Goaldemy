@@ -71,7 +71,7 @@ export async function fetchRecentConversations(limitPeers = 30) {
     .select('*')
     .or(`sender_id.eq.${uid},recipient_id.eq.${uid}`)
     .order('created_at', { ascending: false })
-    .limit(500)
+    .limit(1000)
   if (error) return { data: [], error }
 
   // 2) Build threads: for each peer id, pick latest message and compute unread counter from a second query
@@ -79,7 +79,7 @@ export async function fetchRecentConversations(limitPeers = 30) {
   for (const m of (msgs || [])) {
     const peer = m.sender_id === uid ? m.recipient_id : m.sender_id
     if (!peer) continue
-    if (!threadsMap[peer]) threadsMap[peer] = { peer_id: peer, last: m }
+    if (!threadsMap[peer]) threadsMap[peer] = { peer_id: peer, last: m, last_from_me: m.sender_id === uid }
   }
   let peers = Object.values(threadsMap)
   // Cap to limitPeers
@@ -106,6 +106,7 @@ export async function fetchRecentConversations(limitPeers = 30) {
   const result = peers.map(p => ({
     peer_id: p.peer_id,
     last: p.last,
+    last_from_me: !!p.last_from_me,
     unread: unreadMap[p.peer_id] || 0,
     profile: profMap[p.peer_id] || { id: p.peer_id }
   }))

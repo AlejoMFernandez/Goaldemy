@@ -29,7 +29,7 @@ const FALLBACK_DESC = {
 
 const KNOWN_GAMES = [
   { slug: 'name-correct', name: FALLBACK_NAMES['name-correct'], description: FALLBACK_DESC['name-correct'], cover_url: null },
-  { slug: 'nationality', name: FALLBACK_NAMES['nationality'], description: FALLBACK_DESC['nationality'], cover_url: '/games/gamenationality.png' },
+  { slug: 'nationality', name: FALLBACK_NAMES['nationality'], description: FALLBACK_DESC['nationality'], cover_url: '/games/nationality.png' },
   { slug: 'player-position', name: FALLBACK_NAMES['player-position'], description: FALLBACK_DESC['player-position'], cover_url: null },
   { slug: 'guess-player', name: FALLBACK_NAMES['guess-player'], description: FALLBACK_DESC['guess-player'], cover_url: null },
   { slug: 'who-is', name: FALLBACK_NAMES['who-is'], description: FALLBACK_DESC['who-is'], cover_url: null },
@@ -38,6 +38,11 @@ const KNOWN_GAMES = [
   { slug: 'height-order', name: FALLBACK_NAMES['height-order'], description: FALLBACK_DESC['height-order'], cover_url: null },
   { slug: 'shirt-number', name: FALLBACK_NAMES['shirt-number'], description: FALLBACK_DESC['shirt-number'], cover_url: null },
 ]
+
+function fallbackCoverForSlug(slug) {
+  const k = KNOWN_GAMES.find(g => g.slug === slug)
+  return k?.cover_url || null
+}
 
 export function friendlyNameForSlug(slug) {
   return FALLBACK_NAMES[slug] || 'Juego'
@@ -69,8 +74,8 @@ export function gameRouteForSlug(slug) {
 }
 
 function normalizeGame(row) {
-  const cover = row?.cover_url ?? row?.image ?? null
   const slug = row?.slug || ''
+  const cover = row?.cover_url ?? row?.image ?? fallbackCoverForSlug(slug) ?? null
   return {
     ...row,
     id: (row && row.id != null) ? row.id : (slug || undefined),

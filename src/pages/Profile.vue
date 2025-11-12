@@ -356,9 +356,9 @@ export default {
       </div>
 
       <!-- Columna derecha: nivel, XP, achievements y progreso -->
-    <div class="flex flex-col gap-4 md:col-span-4">
-  <ProgressCard :level-info="levelInfo" :loading="levelLoading" :xp-now="xpNow" :progress-percent="progressPercent" :achievements-count="achievements.length" />
-  <ConnectionsCard :follower-count="followerCount" :following-count="followingCount" :group-count="groupCount" :connections="connectionsList" :loading="connectionsLoading" />
+      <div class="flex flex-col gap-4 md:col-span-4">
+        <ProgressCard :level-info="levelInfo" :loading="levelLoading" :xp-now="xpNow" :progress-percent="progressPercent" :achievements-count="achievements.length" />
+        <ConnectionsCard :follower-count="followerCount" :following-count="followingCount" :group-count="groupCount" :connections="connectionsList" :loading="connectionsLoading" />
         <CommunityCard :forums-count="forumsCount" :messages-count="messagesCount" :discussions-started-count="discussionsStartedCount" />
       </div>
       

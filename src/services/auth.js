@@ -16,6 +16,8 @@ async function loadUserCurrentAuthState() {
     const { data, error } = await supabase.auth.getUser();
     if (error) {
         console.error('[Auth.vue loadUserCurrentAuthState]:', error);
+        // If refresh token invalid, sign out to clear local state
+        try { if (/Invalid Refresh Token/i.test(error.message || '')) await supabase.auth.signOut() } catch {}
         setAuthUserState({ id: null, email: null }, { replace: true });
         if (!readyResolved && resolveReady) { readyResolved = true; resolveReady(true); }
         return;
@@ -33,7 +35,13 @@ async function loadUserCurrentAuthState() {
 
 async function loadExtendedProfile() {
     if (user.id === null) return;
-    setAuthUserState(await getUserProfileById(user.id));
+    try {
+        const profile = await getUserProfileById(user.id)
+        setAuthUserState(profile)
+    } catch (e) {
+        // Fail-soft: keep minimal auth user
+        console.warn('[auth.js] loadExtendedProfile failed, continuing with base user')
+    }
 }
 
 // Funciones de manejo de usuario

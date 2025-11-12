@@ -24,13 +24,15 @@ function toFree(slug) {
   <p class="text-slate-300 mb-4">Modo Free: jugá <strong class="text-slate-100 font-semibold">TODO LO QUE QUIERAS</strong>.</p>
     <div v-if="state.loading" class="text-slate-400">Cargando…</div>
   <div v-else class="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3">
-      <RouterLink v-for="g in state.games" :key="g.slug" :to="toFree(g.slug)" class="card card-hover p-4">
-        <div class="rounded-lg overflow-hidden mb-2">
-          <img v-if="g.cover_url" :src="g.cover_url" :alt="g.name" class="w-full h-32 object-cover" />
-          <div v-else class="w-full h-32 grid place-items-center bg-white/5 text-slate-400 text-sm">{{ g.name }}</div>
+      <RouterLink v-for="g in state.games" :key="g.slug" :to="toFree(g.slug)" class="rounded-xl overflow-hidden border border-white/10 bg-slate-900/40 hover:bg-white/5 transition shadow">
+        <div class="relative p-2 sm:p-3 bg-slate-900/50">
+          <img v-if="g.cover_url" :src="g.cover_url" :alt="g.name" class="w-full h-48 object-contain" />
+          <div v-else class="w-full h-48 grid place-items-center bg-white/5 text-slate-400 text-sm">{{ g.name }}</div>
         </div>
-        <h3 class="text-white font-medium">{{ g.name }}</h3>
-        <p class="text-slate-400 text-xs mt-2">{{ g.description || 'Modo libre' }}</p>
+        <div class="px-3 py-3 bg-slate-900/70 border-t border-white/10 text-center">
+          <div class="text-white text-lg font-extrabold tracking-wide">JUGAR</div>
+          <div class="text-slate-300 text-xs">{{ g.name }}</div>
+        </div>
       </RouterLink>
     </div>
   </section>

@@ -5,6 +5,7 @@ import { formatDayMonth } from '../services/formatters'
 import { openMiniChat } from '../stores/dms-ui'
 import { listConnections } from '../services/connections'
 import { getPublicProfilesByIds } from '../services/user-profiles'
+import { supabase } from '../services/supabase'
 
 let unsubscribeAuth = () => {}
 
@@ -18,11 +19,15 @@ export default {
       threads: [],
       loading: false,
       activePeerId: null,
+      peerLimit: 30,
       // Search state
       query: '',
       connsProfiles: [],
       connsLoaded: false,
       searching: false,
+      _rtChannelIns: null,
+      _rtChannelUpd: null,
+      _notifInterval: null,
     }
   },
   methods: {
@@ -41,11 +46,18 @@ export default {
     async load() {
       this.loading = true
       try {
-        const { data } = await fetchRecentConversations()
+        const { data } = await fetchRecentConversations(this.peerLimit)
         this.threads = data || []
+        // Also load connections for suggestions if not loaded yet
+        this.ensureConnectionsLoaded()
       } finally { this.loading = false }
     },
-    openChat(peerId) { openMiniChat(peerId) },
+    openChat(peerId) {
+      // Optimistically clear unread for that thread in the dock
+      const t = this.threads.find(x => x.peer_id === peerId)
+      if (t) t.unread = 0
+      openMiniChat(peerId)
+    },
     async ensureConnectionsLoaded() {
       if (this.connsLoaded || !this.user?.id) return
       const { data: rows } = await listConnections()
@@ -67,6 +79,27 @@ export default {
       }
     },
     clearSearch() { this.query = ''; this.searching = false },
+    setupRealtime() {
+      if (!this.user?.id) return
+      // Clean previous
+      try { this._rtChannelIns?.unsubscribe?.() } catch {}
+      try { this._rtChannelUpd?.unsubscribe?.() } catch {}
+      // Inserts (new messages)
+      const chIns = supabase.channel(`dm-ins:${this.user.id}`)
+      chIns.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `recipient_id=eq.${this.user.id}` }, () => this.load())
+      chIns.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `sender_id=eq.${this.user.id}` }, () => this.load())
+      chIns.subscribe()
+      this._rtChannelIns = chIns
+      // Updates (read receipts)
+      const chUpd = supabase.channel(`dm-upd:${this.user.id}`)
+      chUpd.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'direct_messages', filter: `recipient_id=eq.${this.user.id}` }, () => this.load())
+      chUpd.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'direct_messages', filter: `sender_id=eq.${this.user.id}` }, () => this.load())
+      chUpd.subscribe()
+      this._rtChannelUpd = chUpd
+      // Fallback polling in case realtime is disabled
+      try { clearInterval(this._notifInterval) } catch {}
+      this._notifInterval = setInterval(() => { if (this.open) this.load() }, 20000)
+    },
   },
   computed: {
     filteredFriends() {
@@ -76,12 +109,25 @@ export default {
         (p?.display_name || '').toLowerCase().includes(q) ||
         (p?.email || '').toLowerCase().includes(q)
       ).slice(0, 12)
+    },
+    newContactsSuggestions() {
+      const inThreads = new Set((this.threads || []).map(t => t.peer_id))
+      return (this.connsProfiles || []).filter(p => !inThreads.has(p.id)).slice(0, 6)
     }
   },
   async mounted() {
-    unsubscribeAuth = subscribeToAuthStateChanges(async (u) => { this.user = u || {}; if (this.open) await this.load() })
+    unsubscribeAuth = subscribeToAuthStateChanges(async (u) => {
+      this.user = u || {}
+      if (this.open) await this.load()
+      this.setupRealtime()
+    })
   },
-  unmounted() { try { unsubscribeAuth() } catch {} }
+  unmounted() {
+    try { unsubscribeAuth() } catch {}
+    try { this._rtChannelIns?.unsubscribe?.() } catch {}
+    try { this._rtChannelUpd?.unsubscribe?.() } catch {}
+    try { clearInterval(this._notifInterval) } catch {}
+  }
 }
 </script>
 
@@ -175,15 +221,37 @@ export default {
                       </div>
                     </div>
                     <div class="text-[12px] text-slate-300 truncate">
-                      {{ t.last?.content || '' }}
+                      <span v-if="t.last_from_me" class="text-slate-400 mr-1">Vos:</span>{{ t.last?.content || '' }}
                     </div>
                   </div>
-                  <div v-if="t.unread > 0" class="shrink-0 ml-2 rounded-full bg-[oklch(0.62_0.21_270)] text-white text-[10px] px-1.5 py-0.5">
-                    {{ t.unread }}
+                  <div v-if="t.unread > 0" class="shrink-0 ml-2 h-5 w-5 rounded-full bg-[oklch(0.62_0.21_270)] text-white grid place-items-center text-[11px]">
+                    {{ t.unread > 9 ? '9+' : t.unread }}
                   </div>
                 </button>
               </li>
             </ul>
+            <!-- Load more -->
+            <div v-if="!searching && threads.length >= peerLimit" class="p-2 border-t border-white/10">
+              <button @click="peerLimit = Math.min(peerLimit + 50, 500); load()" class="w-full rounded-md border border-white/15 bg-white/5 hover:bg-white/10 text-slate-100 text-sm py-1.5">
+                Cargar más conversaciones
+              </button>
+            </div>
+            <!-- Suggestions: new contacts without chats -->
+            <div v-if="!searching && newContactsSuggestions.length" class="p-2 border-t border-white/10">
+              <div class="text-[12px] text-slate-400 mb-1">Empezá un chat con tus contactos nuevos</div>
+              <div class="grid grid-cols-2 gap-2">
+                <button v-for="p in newContactsSuggestions" :key="p.id" @click="openChat(p.id)" class="flex items-center gap-2 p-2 rounded-md hover:bg-white/5">
+                  <img v-if="p?.avatar_url" :src="p.avatar_url" class="w-7 h-7 rounded-full object-cover" alt="avatar" />
+                  <div v-else class="w-7 h-7 rounded-full bg-slate-700 grid place-items-center text-[11px] text-slate-200">
+                    {{ ((p?.display_name || p?.email || '?').trim()[0] || '?').toUpperCase() }}
+                  </div>
+                  <div class="min-w-0 text-left">
+                    <div class="text-[12px] text-slate-100 truncate">{{ p.display_name || p.email || p.id }}</div>
+                    <div class="text-[11px] text-slate-400 truncate">Conexión</div>
+                  </div>
+                </button>
+              </div>
+            </div>
           </template>
         </div>
 

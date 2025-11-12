@@ -71,7 +71,7 @@ export async function isChallengeAvailable(slug) {
   if (!gameId) return { available: true, reason: null, result: null }
   const { data, error } = await supabase
     .from('game_sessions')
-    .select('id, started_at, ended_at, metadata')
+    .select('id, started_at, ended_at, metadata, score_final')
     .eq('user_id', userId)
     .eq('game_id', gameId)
     .gte('started_at', new Date(new Date().setHours(0,0,0,0)).toISOString())
@@ -81,7 +81,25 @@ export async function isChallengeAvailable(slug) {
   const finished = todaySessions.filter(r => !!r.ended_at)
   const already = finished.length > 0
   const last = finished.sort((a,b)=> new Date(b.started_at) - new Date(a.started_at))[0]
-  const result = last?.metadata?.result || null
+  let result = last?.metadata?.result || null
+  // Robust fallback: infer result if missing, so UI can always show ✓/✕
+  if (!result && last) {
+    const slugLower = (slug || '').toLowerCase()
+    const m = last.metadata || {}
+    const score = Number(last.score_final || 0)
+    const corrects = Number(m.corrects ?? NaN)
+    // Non-timed ordering games: win only if 5/5 (score 50)
+    if (['value-order','age-order','height-order'].includes(slugLower)) {
+      result = score >= 50 ? 'win' : 'loss'
+    } else if (['who-is'].includes(slugLower)) {
+      // WhoIs should set result always; keep as null if truly unknown
+      if (m.result === 'win' || m.result === 'loss') result = m.result
+    } else {
+      // Timed MCQ games: win if corrects >= 10; fallback by score >= 100
+      if (Number.isFinite(corrects)) result = corrects >= 10 ? 'win' : 'loss'
+      else result = score >= 100 ? 'win' : 'loss'
+    }
+  }
   return { available: !already, reason: already ? 'Ya jugaste hoy' : null, result }
 }
 
@@ -179,8 +197,10 @@ export async function fetchLifetimeMaxStreak(slug) {
   return max
 }
 
-// Compute current daily win streak for games that record a result (metadata.result === 'win'|'loss').
-// Streak counts consecutive days up to hoy con 'win'. Si hay un día sin jugar o con 'loss', se corta.
+// Compute current daily win streak per requested rule:
+// - Incrementa sólo cuando jugás y GANÁS ese día
+// - Días sin jugar NO cortan la racha
+// - Se corta únicamente cuando jugás y PERDÉS
 export async function fetchDailyWinStreak(slug) {
   const { id: userId } = getAuthUser() || {}
   const gameId = await getGameId(slug)
@@ -202,27 +222,18 @@ export async function fetchDailyWinStreak(slug) {
       byDay.set(dayKey, (r?.metadata || {}).result || null)
     }
   }
+  // Iterate from most recent played day backwards, counting wins until first loss.
+  const days = Array.from(byDay.entries()).sort((a,b) => (a[0] < b[0] ? 1 : -1))
   let streak = 0
-  const today = new Date()
-  const todayKey = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString().slice(0,10)
-  const playedToday = byDay.has(todayKey)
-  // If today hasn't been played, start counting from yesterday so the chip still shows the running streak.
-  const startOffset = playedToday ? 0 : 1
-  for (let i = startOffset; i < 365; i++) {
-    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i)
-    const key = d.toISOString().slice(0,10)
-    const res = byDay.get(key)
-    if (res === 'win') {
-      streak += 1
-      continue
-    }
-    // If there's a day without play or a loss, streak is cut
-    break
+  for (const [_, res] of days) {
+    if (res === 'win') streak += 1
+    else if (res === 'loss') break
+    // null/unknown shouldn't happen, but don't affect streak
   }
   return streak
 }
 
-// Compute best (max) daily win streak historically for a game
+// Compute best (max) daily win streak historically for a game under same rule (gaps don't cut)
 export async function fetchMaxDailyWinStreak(slug) {
   const { id: userId } = getAuthUser() || {}
   const gameId = await getGameId(slug)
@@ -242,20 +253,13 @@ export async function fetchMaxDailyWinStreak(slug) {
     const key = d.toISOString().slice(0,10)
     if (!byDay.has(key)) byDay.set(key, (r?.metadata || {}).result || null)
   }
-  // Iterate from newest to oldest measuring max consecutive win streaks
-  const days = Array.from(byDay.entries()).sort((a,b) => (a[0] < b[0] ? 1 : -1))
+  // Iterate from oldest to newest measuring max consecutive win streaks; gaps don't cut
+  const days = Array.from(byDay.entries()).sort((a,b) => (a[0] > b[0] ? 1 : -1))
   let maxStreak = 0
   let cur = 0
-  let prevDate = null
-  for (const [key, res] of days) {
-    const d = new Date(key + 'T00:00:00Z')
-    if (prevDate && (prevDate - d) > 86400000) {
-      // gap of more than 1 day cuts streak
-      cur = 0
-    }
-    if (res === 'win') cur += 1; else cur = 0
+  for (const [_, res] of days) {
+    if (res === 'win') cur += 1; else if (res === 'loss') cur = 0
     if (cur > maxStreak) maxStreak = cur
-    prevDate = d
   }
   return maxStreak
 }

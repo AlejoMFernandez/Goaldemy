@@ -26,7 +26,3 @@ export default {
     </div>
   </section>
 </template>
-
-<style scoped>
-/* No aurora-specific styles here; it's global via .aurora-root */
-</style>

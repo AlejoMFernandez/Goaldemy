@@ -32,7 +32,6 @@ export default {
       Jugar
     </button>
   </article>
-  
 </template>
 
 <style scoped>

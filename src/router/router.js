@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { pushInfoToast } from '../stores/notifications';
 import { subscribeToAuthStateChanges, authReady, getAuthUser } from '../services/auth';
 import Home from '../pages/Home.vue';
+import Landing from '../pages/Landing.vue';
 import Login from '../pages/Login.vue';
 import Register from '../pages/Register.vue';
 import Profile from '../pages/Profile.vue';
@@ -26,7 +27,8 @@ import DirectChat from '../pages/DirectChat.vue';
 import DirectMessages from '../pages/DirectMessages.vue';
 
 const routes = [
-    { path: '/', component: Home },
+    { path: '/', component: Landing },
+    { path: '/home', component: Home },
     { path: '/login', component: Login, meta: { layout: 'auth' } },
     { path: '/register', component: Register, meta: { layout: 'auth' } },
     { path: '/profile', component: Profile, meta: { requiresAuth: true } },
