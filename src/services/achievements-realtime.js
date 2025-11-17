@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { pushAchievementToast } from '../stores/notifications'
+import { playAchievementSound } from './sounds'
 
 let channel = null
 let currentUserId = null
@@ -37,6 +38,8 @@ export function initAchievementsRealtime() {
                   earnedAt: row.earned_at || new Date().toISOString(),
                   points: achievement.points || null,
                 })
+                // Solo sonido, sin confetti (puede ser tedioso con muchos logros)
+                playAchievementSound()
               }, delay)
             }
           }

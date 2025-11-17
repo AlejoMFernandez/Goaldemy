@@ -4,11 +4,12 @@ import { subscribeToAuthStateChanges } from '../services/auth';
 import { getUserLevel } from '../services/xp';
 import { getUserAchievements } from '../services/achievements';
 import { getUserXpByGame } from '../services/games';
-import { getPublicProfile } from '../services/user-profiles';
+import { getPublicProfile, updateFeaturedAchievements } from '../services/user-profiles';
 import { getStatusWith, sendRequest, disconnectWith } from '../services/connections';
 import { pushErrorToast } from '../stores/notifications';
 import ProfileHeaderCard from '../components/profile/ProfileHeaderCard.vue';
 import AchievementsCard from '../components/profile/AchievementsCard.vue';
+import FeaturedAchievementsModal from '../components/profile/FeaturedAchievementsModal.vue';
 // XpByGameCard inlined into XpDonutChart list
 import XpDonutChart from '../components/profile/XpDonutChart.vue';
 import ProgressCard from '../components/profile/ProgressCard.vue';
@@ -24,7 +25,7 @@ let unsubscribeAuth = () => {};
 
 export default {
   name: 'Profile',
-  components: { AppH1, ProfileHeaderCard, AchievementsCard, XpDonutChart, ProgressCard, ConnectionsCard, CommunityCard },
+  components: { AppH1, ProfileHeaderCard, AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ProgressCard, ConnectionsCard, CommunityCard },
   data() {
     return {
       // This holds the profile being viewed (own or other user's)
@@ -64,6 +65,14 @@ export default {
       connBusy: false,
       connectionsList: [],
       connectionsLoading: false,
+      topRank: null,
+      // Anti-parpadeo: flag de carga y último userId
+      _loading: false,
+      _lastLoadedUserId: null,
+      _debounceTimer: null,
+      // Featured achievements
+      featuredAchievements: [],
+      showFeaturedModal: false,
     };
   },
   computed: {
@@ -77,10 +86,13 @@ export default {
     },
     progressPercent() {
       if (!this.levelInfo) return 0;
-      if (!this.levelInfo.next_level_xp) return 100;
-      const completed = this.levelInfo.next_level_xp - (this.levelInfo.xp_to_next ?? 0);
-      const denom = this.levelInfo.next_level_xp || 1;
-      const pct = Math.max(0, Math.min(100, Math.round((completed / denom) * 100)));
+      // xp_to_next is remaining XP to next level
+      // next_level_xp is total XP required for the level range
+      const remaining = this.levelInfo.xp_to_next ?? 0;
+      const total = this.levelInfo.next_level_xp;
+      if (!total || total <= 0) return 100;
+      const earned = total - remaining;
+      const pct = Math.max(0, Math.min(100, Math.round((earned / total) * 100)));
       return pct;
     },
     xpNow() {
@@ -117,20 +129,35 @@ export default {
   },
   unmounted() {
     unsubscribeAuth();
+    if (this._debounceTimer) clearTimeout(this._debounceTimer);
   },
   methods: {
     async ensureLoad() {
+      // Debounce para evitar llamadas múltiples inmediatas
+      if (this._debounceTimer) clearTimeout(this._debounceTimer);
+      this._debounceTimer = setTimeout(() => this._doLoad(), 50);
+    },
+    async _doLoad() {
       const paramId = this.$route.params.id
       const targetId = paramId || this.currentAuthId
+      
+      // Si ya estamos cargando o es el mismo usuario, skip
+      if (this._loading || targetId === this._lastLoadedUserId) return;
+      
       if (!targetId) {
         // Anonymous and no target id
         this.user = { id: null, email: null, display_name: null, bio: null, career: null }
         this.levelInfo = null
         this.achievements = []
         this.xpByGame = []
+        this._lastLoadedUserId = null
         return
       }
+      
+      this._loading = true
+      this._lastLoadedUserId = targetId
       await this.loadFor(targetId)
+      this._loading = false
     },
     async loadFor(userId) {
       try {
@@ -139,6 +166,8 @@ export default {
         if (error) console.error('[Profile.vue] getPublicProfile error:', error)
         // Fall back: at least set id when not found
         this.user = profile ? { ...profile, id: userId } : { id: userId }
+        // Load featured achievements
+        this.featuredAchievements = profile?.featured_achievements || []
         // Derive logos from favorites
         try {
           const team = this.user?.favorite_team ? findTeamByName(this.user.favorite_team) : null
@@ -171,6 +200,17 @@ export default {
         this.levelInfo = null
       } finally {
         this.levelLoading = false
+      }
+
+      // Fetch global rank (TOP 1/2/3 badge)
+      try {
+        const { getLeaderboard } = await import('../services/xp')
+        const { data: topData } = await getLeaderboard({ period: 'all_time', gameId: null, limit: 3, offset: 0 })
+        const top = Array.isArray(topData) ? topData : (topData ? [topData] : [])
+        const myRank = top.find(r => r.user_id === userId)
+        this.topRank = myRank ? (myRank.rank ?? null) : null
+      } catch {
+        this.topRank = null
       }
 
       // Achievements
@@ -257,9 +297,14 @@ export default {
         }
       } catch {}
 
-      // Refresh connection state when profile changes
-      try { await this.refreshConn() } catch {}
+      // Refresh connection state and connections list
+      const isSelf = (this.$route.params.id || this.currentAuthId) === this.currentAuthId
+      // Load connections for everyone (own profile also shows connections)
       try { await this.loadConnections(userId) } catch {}
+      // Connection actions only for other users
+      if (!isSelf) {
+        try { await this.refreshConn() } catch {}
+      }
     }
     ,
     async refreshConn() {
@@ -284,11 +329,31 @@ export default {
         const others = (rows||[]).map(r => (r.user_a===userId? r.user_b : r.user_a)).filter(Boolean)
         if (!others.length) { this.connectionsList = []; return }
         const { data: profiles } = await getPublicProfilesByIds(others)
+        console.log('[Profile] Loaded connections:', profiles)
         this.connectionsList = (profiles||[])
       } finally {
         this.connectionsLoading = false
       }
-    }
+    },
+    openFeaturedModal() {
+      this.showFeaturedModal = true
+    },
+    closeFeaturedModal() {
+      this.showFeaturedModal = false
+    },
+    async saveFeaturedAchievements(codes) {
+      try {
+        await updateFeaturedAchievements(this.currentAuthId, codes)
+        this.featuredAchievements = codes
+        this.showFeaturedModal = false
+        const { pushSuccessToast } = await import('../stores/notifications')
+        pushSuccessToast('Logros destacados actualizados')
+      } catch (e) {
+        console.error('save featured achievements error:', e)
+        const { pushErrorToast } = await import('../stores/notifications')
+        pushErrorToast('Error al guardar logros destacados')
+      }
+    },
   }
 };
 </script>
@@ -336,7 +401,12 @@ export default {
         <div v-if="canConnect" class="-mt-2 mb-2">
           <p v-if="conn.state==='pending_in'" class="text-xs text-slate-400">Tenés una solicitud de esta persona. Respondela desde Notificaciones.</p>
         </div>
-  <AchievementsCard :achievements="achievements" :loading="achLoading" />
+  <AchievementsCard 
+    :achievements="achievements" 
+    :loading="achLoading"
+    :featured-codes="featuredAchievements"
+    :is-self="isSelf"
+    @customize="openFeaturedModal" />
   <XpDonutChart
     :items="xpByGame"
     :streaks-by-game="streaksMap"
@@ -357,11 +427,19 @@ export default {
 
       <!-- Columna derecha: nivel, XP, achievements y progreso -->
       <div class="flex flex-col gap-4 md:col-span-4">
-        <ProgressCard :level-info="levelInfo" :loading="levelLoading" :xp-now="xpNow" :progress-percent="progressPercent" :achievements-count="achievements.length" />
+        <ProgressCard :level-info="levelInfo" :loading="levelLoading" :xp-now="xpNow" :progress-percent="progressPercent" :achievements-count="achievements.length" :top-rank="topRank" />
         <ConnectionsCard :follower-count="followerCount" :following-count="followingCount" :group-count="groupCount" :connections="connectionsList" :loading="connectionsLoading" />
         <CommunityCard :forums-count="forumsCount" :messages-count="messagesCount" :discussions-started-count="discussionsStartedCount" />
       </div>
       
     </section>
+
+    <!-- Featured Achievements Modal -->
+    <FeaturedAchievementsModal
+      v-if="showFeaturedModal"
+      :achievements="achievements"
+      :current-featured="featuredAchievements"
+      @save="saveFeaturedAchievements"
+      @cancel="closeFeaturedModal" />
   </div>
 </template>

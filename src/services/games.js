@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { getAuthUser } from './auth';
+import { GAME_TYPES } from './game-celebrations';
 
 const FALLBACK_NAMES = {
   'guess-player': 'Adivina el jugador',
@@ -14,6 +15,7 @@ const FALLBACK_NAMES = {
   'height-order': 'Ordenar por altura',
   'shirt-number': 'Número de camiseta',
 }
+
 const FALLBACK_DESC = {
   'guess-player': 'El clásico: adiviná el jugador',
   'who-is': 'Escribe el nombre a partir de la foto borrosa y pistas',
@@ -27,16 +29,96 @@ const FALLBACK_DESC = {
   'shirt-number': 'Elegí el número de camiseta correcto',
 }
 
+// Metadata extendida: tipo de juego, mecánica, video preview, tips
+const GAME_METADATA = {
+  'nationality': {
+    type: GAME_TYPES.TIMED,
+    mechanic: 'Hacé 10 aciertos en 30 segundos para ganar',
+    videoUrl: '', // Agregar URL cuando grabes el video
+    tips: [
+      'Mirá bien las banderas y pensá rápido',
+      'Los jugadores top suelen ser más conocidos',
+      'Confiá en tu intuición'
+    ]
+  },
+  'player-position': {
+    type: GAME_TYPES.TIMED,
+    mechanic: 'Hacé 10 aciertos en 30 segundos para ganar',
+    videoUrl: '',
+    tips: [
+      'Fijate en la contextura física del jugador',
+      'Los delanteros suelen ser más veloces',
+      'Los defensores son más robustos'
+    ]
+  },
+  'shirt-number': {
+    type: GAME_TYPES.TIMED,
+    mechanic: 'Hacé 10 aciertos en 30 segundos para ganar',
+    videoUrl: '',
+    tips: [
+      'Recordá los números icónicos (10, 7, 9)',
+      'Algunos jugadores son muy conocidos por su número'
+    ]
+  },
+  'value-order': {
+    type: GAME_TYPES.ORDERING,
+    mechanic: 'Ordená los 5 jugadores correctamente para ganar',
+    videoUrl: '',
+    tips: [
+      'Los jugadores más jóvenes y talentosos valen más',
+      'Fijate en los equipos: jugadores de top clubes valen más'
+    ]
+  },
+  'age-order': {
+    type: GAME_TYPES.ORDERING,
+    mechanic: 'Ordená los 5 jugadores correctamente para ganar',
+    videoUrl: '',
+    tips: [
+      'Mirá las fotos: las arrugas y canas son pistas',
+      'Jugadores legendarios suelen ser mayores'
+    ]
+  },
+  'height-order': {
+    type: GAME_TYPES.ORDERING,
+    mechanic: 'Ordená los 5 jugadores correctamente para ganar',
+    videoUrl: '',
+    tips: [
+      'Los arqueros suelen ser los más altos',
+      'Los extremos veloces suelen ser más bajos'
+    ]
+  },
+  'who-is': {
+    type: GAME_TYPES.LIVES,
+    mechanic: 'Adiviná jugadores sin perder todas las vidas',
+    videoUrl: '',
+    tips: [
+      'La imagen se va desblurreando con cada error',
+      'Usá las pistas: posición, nacionalidad, equipo',
+      'El buscador te ayuda con sugerencias'
+    ]
+  },
+  'guess-player': {
+    type: GAME_TYPES.TIMED,
+    mechanic: 'Hacé 10 aciertos en 30 segundos para ganar',
+    videoUrl: '',
+    tips: [
+      'Mirá todas las pistas antes de elegir',
+      'Eliminá opciones imposibles primero',
+      'Confiá en tu intuición y responde rápido'
+    ]
+  }
+}
+
 const KNOWN_GAMES = [
-  { slug: 'name-correct', name: FALLBACK_NAMES['name-correct'], description: FALLBACK_DESC['name-correct'], cover_url: null },
-  { slug: 'nationality', name: FALLBACK_NAMES['nationality'], description: FALLBACK_DESC['nationality'], cover_url: '/games/nationality.png' },
-  { slug: 'player-position', name: FALLBACK_NAMES['player-position'], description: FALLBACK_DESC['player-position'], cover_url: null },
-  { slug: 'guess-player', name: FALLBACK_NAMES['guess-player'], description: FALLBACK_DESC['guess-player'], cover_url: null },
-  { slug: 'who-is', name: FALLBACK_NAMES['who-is'], description: FALLBACK_DESC['who-is'], cover_url: null },
-  { slug: 'value-order', name: FALLBACK_NAMES['value-order'], description: FALLBACK_DESC['value-order'], cover_url: null },
-  { slug: 'age-order', name: FALLBACK_NAMES['age-order'], description: FALLBACK_DESC['age-order'], cover_url: null },
-  { slug: 'height-order', name: FALLBACK_NAMES['height-order'], description: FALLBACK_DESC['height-order'], cover_url: null },
-  { slug: 'shirt-number', name: FALLBACK_NAMES['shirt-number'], description: FALLBACK_DESC['shirt-number'], cover_url: null },
+  { slug: 'name-correct', name: FALLBACK_NAMES['name-correct'], description: FALLBACK_DESC['name-correct'], cover_url: '/games/name-correct.png' ?? null },
+  { slug: 'nationality', name: FALLBACK_NAMES['nationality'], description: FALLBACK_DESC['nationality'], cover_url: '/games/nationality.png' ?? null },
+  { slug: 'player-position', name: FALLBACK_NAMES['player-position'], description: FALLBACK_DESC['player-position'], cover_url: '/games/player-position.png' ?? null },
+  { slug: 'guess-player', name: FALLBACK_NAMES['guess-player'], description: FALLBACK_DESC['guess-player'], cover_url: '/games/guess-player.png' ?? null },
+  { slug: 'who-is', name: FALLBACK_NAMES['who-is'], description: FALLBACK_DESC['who-is'], cover_url: '/games/who-is.png' ?? null },
+  { slug: 'value-order', name: FALLBACK_NAMES['value-order'], description: FALLBACK_DESC['value-order'], cover_url: '/games/value-order.png' ?? null },
+  { slug: 'age-order', name: FALLBACK_NAMES['age-order'], description: FALLBACK_DESC['age-order'], cover_url: '/games/age-order.png' ?? null },
+  { slug: 'height-order', name: FALLBACK_NAMES['height-order'], description: FALLBACK_DESC['height-order'], cover_url: '/games/height-order.png' ?? null },
+  { slug: 'shirt-number', name: FALLBACK_NAMES['shirt-number'], description: FALLBACK_DESC['shirt-number'], cover_url: '/games/shirt-number.png' ?? null },
 ]
 
 function fallbackCoverForSlug(slug) {
@@ -56,6 +138,18 @@ export function gameSummaryBlurb(slug) {
   const base = friendlyDescForSlug(slug)
   // Mensaje genérico de lo que se gana; los juegos puntuales ya muestran métricas en el popup
   return `${base}. Ganás XP por acierto y sumás a tu racha diaria.`
+}
+
+/**
+ * Obtiene metadata extendida del juego (tipo, mecánica, video, tips)
+ */
+export function getGameMetadata(slug) {
+  return GAME_METADATA[slug] || {
+    type: null,
+    mechanic: '',
+    videoUrl: '',
+    tips: []
+  }
 }
 
 // Map slug to in-app route

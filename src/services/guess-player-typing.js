@@ -3,6 +3,7 @@ import { spawnXpBadge } from './ui-effects'
 import { onCorrect } from './scoring'
 import { awardXpForCorrect } from './game-xp'
 import { flagUrl, countryCodeFromName } from './countries'
+import { celebrateCorrect } from './game-celebrations'
 import countryMap from '../codeCOUNTRYS.json'
 
 export function initState() {
@@ -139,6 +140,10 @@ export async function submitGuess(state, confettiHost) {
     onCorrect(state)
     state.streak = nextStreak
     state.maxStreak = Math.max(state.maxStreak || 0, nextStreak)
+    
+    // 🎉 Celebrate correct answer
+    celebrateCorrect()
+    
     if (state.allowXp) { spawnXpBadge(confettiHost, '+50 XP', { position: 'top-right' }) }
     state.feedback = ''
     return true

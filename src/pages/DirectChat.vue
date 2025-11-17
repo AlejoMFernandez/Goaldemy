@@ -19,6 +19,9 @@ export default {
       messages: [],
       newMessage: { content: '' },
       loading: false,
+      _loadingChat: false,
+      _lastPeerId: null,
+      _debounceTimer: null,
     }
   },
   methods: {
@@ -77,6 +80,20 @@ export default {
         this.loading = false
       }
     },
+    async loadChat(peerId) {
+      // Debounce to avoid duplicate loads from mounted + watch
+      if (this._debounceTimer) clearTimeout(this._debounceTimer)
+      this._debounceTimer = setTimeout(() => this._doLoadChat(peerId), 50)
+    },
+    async _doLoadChat(peerId) {
+      if (this._loadingChat || peerId === this._lastPeerId) return
+      this._loadingChat = true
+      this._lastPeerId = peerId
+      await this.loadPeerProfile(peerId)
+      await this.loadConversation(peerId)
+      this.attachRealtime(peerId)
+      this._loadingChat = false
+    },
     attachRealtime(peerId) {
       if (unsubscribeDM) { try { unsubscribeDM() } catch {} }
       unsubscribeDM = subscribeConversation(peerId, {
@@ -120,22 +137,19 @@ export default {
     unsubscribeAuth = subscribeToAuthStateChanges(async (u) => { this.user = u })
     const peerId = this.$route.params.peerId
     if (!peerId) return
-    await this.loadPeerProfile(peerId)
-    await this.loadConversation(peerId)
-    this.attachRealtime(peerId)
+    await this.loadChat(peerId)
   },
   unmounted() {
     try { unsubscribeAuth() } catch {}
     try { unsubscribeDM() } catch {}
+    if (this._debounceTimer) clearTimeout(this._debounceTimer)
   },
   watch: {
     '$route.params.peerId': {
       immediate: false,
       async handler(newId) {
         if (!newId) return
-        await this.loadPeerProfile(newId)
-        await this.loadConversation(newId)
-        this.attachRealtime(newId)
+        await this.loadChat(newId)
       }
     }
   }

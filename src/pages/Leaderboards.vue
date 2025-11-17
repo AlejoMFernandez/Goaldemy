@@ -18,6 +18,7 @@ export default {
       games: [],
       rows: [],
       loading: false,
+      _loadingLeaderboard: false,
     }
   },
   async mounted() {
@@ -47,6 +48,8 @@ export default {
       }
     },
     async load() {
+      if (this._loadingLeaderboard) return; // prevent concurrent loads
+      this._loadingLeaderboard = true;
       this.loading = true
       try {
         const thresholds = await fetchLevelThresholds().catch(() => [])
@@ -61,7 +64,8 @@ export default {
         const mapped = base.map((r, idx) => ({
           rank: r.rank ?? (this.page * this.limit + idx + 1),
           user_id: r.user_id,
-          display_name: r.display_name || r.username || r.user_id?.slice(0,8),
+          // Prioritize display_name over username over email over user_id
+          display_name: r.display_name || r.username || r.email || r.user_id?.slice(0,8) || '—',
           avatar_url: r.avatar_url || null,
           // Prefer server-provided global level. As a fallback, compute from all-time thresholds only if server omitted it.
           level: r.user_level ?? r.level ?? null,
@@ -91,6 +95,7 @@ export default {
         this.rows = []
       } finally {
         this.loading = false
+        this._loadingLeaderboard = false;
       }
     },
     nextPage() {

@@ -2,6 +2,7 @@ import { getAllPlayers } from './players'
 import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
 import { awardXpForCorrect } from './game-xp'
+import { celebrateCorrect } from './game-celebrations'
 
 const POSITIONS = ['GK','DF','MF','FW']
 const POS_LABEL = {
@@ -70,6 +71,7 @@ export async function pickAnswer(state, option, confettiHost) {
   state.selected = option.value
   const correct = option.value === state.current.position
   if (correct) {
+    celebrateCorrect() // Sonido inmediato por acierto
     const nextStreak = state.streak + 1
     const nextCorrects = (state.corrects || 0) + 1
     if (state.allowXp) {

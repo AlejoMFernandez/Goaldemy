@@ -1,5 +1,5 @@
 <template>
-  <section class="container mx-auto px-4 py-16 text-center">
+  <section class="py-16 text-center">
     <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-white">404</h1>
     <p class="mt-3 text-slate-300">La página que buscás no existe o fue movida.</p>
     <div class="mt-6">

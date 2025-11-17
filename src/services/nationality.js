@@ -3,6 +3,7 @@ import { getAllPlayers } from './players'
 import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
 import { awardXpForCorrect } from './game-xp'
+import { celebrateCorrect } from './game-celebrations'
 
 export function initState() {
   return {
@@ -116,6 +117,8 @@ export async function pick(state, option, confettiHost) {
   state.selected = option.value
   const correct = option.value === state.current.cname
   if (correct) {
+    // Play correct sound immediately
+    celebrateCorrect()
     // First award XP with current attempt/streak values (before increment)
   const nextStreak = state.streak + 1
   if (state.allowXp) {

@@ -3,8 +3,17 @@ import { onMounted, reactive, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { fetchGames, gameRouteForSlug } from '../services/games'
 import { isChallengeAvailable, fetchDailyWinStreak } from '../services/game-modes'
+import DailyStreakBanner from '../components/DailyStreakBanner.vue'
+import DailyResetCountdown from '../components/DailyResetCountdown.vue'
+import { supabase } from '../services/supabase'
 
-const state = reactive({ games: [], availability: {}, streaks: {}, loading: true })
+const state = reactive({ 
+  games: [], 
+  availability: {}, 
+  streaks: {}, 
+  loading: true,
+  dailyStreak: { current: 0, best: 0 }
+})
 
 async function load() {
   state.loading = true
@@ -18,6 +27,21 @@ async function load() {
   // Fetch daily win streak per game (only relevant for games with result, but safe for all)
   const entriesSt = await Promise.all(list.map(async g => [g.slug, await fetchDailyWinStreak(g.slug)]))
   state.streaks = Object.fromEntries(entriesSt)
+  
+  // Fetch daily login streak
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('daily_streak, best_daily_streak')
+      .eq('id', user.id)
+      .single()
+    if (data) {
+      state.dailyStreak.current = data.daily_streak || 0
+      state.dailyStreak.best = data.best_daily_streak || 0
+    }
+  }
+  
   state.loading = false
 }
 
@@ -54,14 +78,15 @@ const totals = computed(() => {
 </script>
 
 <template>
-  <section class="container mx-auto px-4 py-4 md:py-8">
+  <section class="py-4 md:py-6 mx-auto max-w-4xl">
     <div class="flex items-start justify-between gap-3 mb-4">
       <div>
         <h1 class="text-2xl md:text-4xl font-bold text-white mb-1">Jugar por <span class="text-emerald-400 uppercase">PUNTOS</span></h1>
         <p class="text-slate-300">Modo por XP: jugá <strong class="text-slate-100 font-semibold">UNA VEZ POR DÍA</strong>.</p>
       </div>
-      <!-- Right-side mini card with totals -->
-      <div class="shrink-0 hidden sm:block">
+      <!-- Right-side mini card with totals and countdown -->
+      <div class="shrink-0 hidden sm:flex sm:flex-col sm:gap-2 sm:items-end">
+        <DailyResetCountdown />
         <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-200">
           <div class="flex items-end gap-3">
             <!-- Wins -->
@@ -83,12 +108,20 @@ const totals = computed(() => {
       </div>
     </div>
 
+    <!-- Daily Streak Banner -->
+    <DailyStreakBanner 
+      v-if="state.dailyStreak.current > 0"
+      :currentStreak="state.dailyStreak.current"
+      :bestStreak="state.dailyStreak.best"
+      class="mb-6"
+    />
+
   <div v-if="state.loading" class="text-slate-400">Cargando…</div>
   <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3">
       <RouterLink v-for="g in state.games" :key="g.slug" :to="toChallenge(g.slug)" class="rounded-xl overflow-hidden border border-white/10 bg-slate-900/40 hover:bg-white/5 transition shadow">
         <!-- Image box -->
-        <div class="relative p-2 sm:p-3 bg-slate-900/50">
-          <img v-if="g.cover_url" :src="g.cover_url" :alt="g.name" class="w-full h-48 object-contain" />
+        <div class="relative p-2 sm:p-3 bg-slate-900/50 grid place-items-center">
+          <img v-if="g.cover_url" :src="g.cover_url" :alt="g.name" class="h-48 object-contain" style="width: 100px;"/>
           <div v-else class="w-full h-48 grid place-items-center bg-white/5 text-slate-400 text-sm">{{ g.name }}</div>
           <!-- Blur/dim mask only over the image when already played -->
           <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="mask-dim"></div>

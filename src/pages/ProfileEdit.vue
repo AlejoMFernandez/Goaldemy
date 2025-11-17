@@ -31,6 +31,7 @@ export default {
       countries: Object.entries(countriesMap).map(([code, name]) => ({ code: code.toLowerCase(), name })).sort((a,b) => a.name.localeCompare(b.name,'es')),
       players: getAllPlayers().map(p => ({ value: p.name, label: p.name })),
       teams: getAllTeams().map(t => ({ value: t.name, label: t.name })),
+      _debounceTimer: null,
     }
   },
   computed: {
@@ -56,23 +57,28 @@ export default {
   },
   mounted() {
     unsubscribeAuth = subscribeToAuthStateChanges(userState => {
-      this.formData = {
-        display_name: userState.display_name ?? '',
-        bio: userState.bio ?? '',
-        career: userState.career ?? '',
-  nationality_code: userState.nationality_code ?? '',
-  favorite_team: userState.favorite_team ?? '',
-  favorite_player: userState.favorite_player ?? '',
-  linkedin_url: userState.linkedin_url ?? '',
-  github_url: userState.github_url ?? '',
-  x_url: userState.x_url ?? '',
-  instagram_url: userState.instagram_url ?? '',
-      }
-      this.user = userState
+      // Debounce form updates to avoid flicker on rapid auth changes
+      if (this._debounceTimer) clearTimeout(this._debounceTimer)
+      this._debounceTimer = setTimeout(() => {
+        this.formData = {
+          display_name: userState.display_name ?? '',
+          bio: userState.bio ?? '',
+          career: userState.career ?? '',
+    nationality_code: userState.nationality_code ?? '',
+    favorite_team: userState.favorite_team ?? '',
+    favorite_player: userState.favorite_player ?? '',
+    linkedin_url: userState.linkedin_url ?? '',
+    github_url: userState.github_url ?? '',
+    x_url: userState.x_url ?? '',
+    instagram_url: userState.instagram_url ?? '',
+        }
+        this.user = userState
+      }, 100)
     });
   },
   unmounted() {
     unsubscribeAuth();
+    if (this._debounceTimer) clearTimeout(this._debounceTimer);
   }
 }
 </script>

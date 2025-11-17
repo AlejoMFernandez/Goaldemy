@@ -4,10 +4,19 @@ import { initState, loadPlayers, nextRound, pickAnswer, optionClass } from '../.
 import { initScoring } from '../../services/scoring'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
 import { getUserLevel } from '../../services/xp'
+import { celebrateCorrect, checkEarlyWin, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
+import { getGameMetadata } from '../../services/games'
+import GamePreviewModal from '../../components/GamePreviewModal.vue'
+import GameSummaryPopup from '../../components/GameSummaryPopup.vue'
 
 export default {
   name: 'GuessPlayer',
-  components: { AppH1 },
+  components: { AppH1, GamePreviewModal, GameSummaryPopup },
+  computed: {
+    gameMetadata() {
+      return getGameMetadata('guess-player')
+    }
+  },
   data() {
     return { 
       ...initState(), 
@@ -18,6 +27,11 @@ export default {
       chosenSeconds: 30,
       timeLeft: 0,
       timer: null,
+      sessionId: null,
+      timeOver: false,
+      availability: { available: true, reason: null },
+      showSummary: false,
+      lifetimeMaxStreak: 0,
       sessionId: null,
       timeOver: false,
       availability: { available: true, reason: null },
@@ -84,6 +98,12 @@ export default {
     async choose(opt) {
       if (this.timeOver) return false
       const ok = await pickAnswer(this, opt, this.$refs.confettiHost)
+      
+      // 🎉 Celebrate correct answer
+      if (ok && this.mode === 'challenge') {
+        celebrateCorrect()
+      }
+      
       setTimeout(() => this.nextRound(), 800)
       return ok
     },
@@ -114,48 +134,85 @@ export default {
             this.timeOver = true
             clearInterval(this.timer)
             const result = (this.corrects || 0) >= 10 ? 'win' : 'loss'
-            completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects }).catch(()=>{})
-            // fetch XP/level after to build friendly summary
-            ;(async () => {
-              try {
-                const { data } = await getUserLevel(null)
-                const info = Array.isArray(data) ? data[0] : data
-                this.levelAfter = info?.level ?? null
-                this.xpAfterTotal = info?.xp_total ?? 0
-                const next = info?.next_level_xp || 0
-                const toNext = info?.xp_to_next ?? 0
-                const completed = next ? (next - toNext) : next
-                this.afterPercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
-                this.xpToNextAfter = toNext ?? null
-              } catch {}
-              try {
-                await completeChallengeSession(this.sessionId, this.score, this.xpEarned, {
-                  xpView: {
-                    levelBefore: this.levelBefore, xpBeforeTotal: this.xpBeforeTotal,
-                    levelAfter: this.levelAfter, xpAfterTotal: this.xpAfterTotal,
-                    beforePercent: this.beforePercent, afterPercent: this.afterPercent,
-                    xpToNextAfter: this.xpToNextAfter, xpEarned: this.xpEarned
-                  }
-                })
-              } catch {}
-              this.progressShown = this.beforePercent
-              this.showSummary = true
-              // trigger animation to after percent
-              requestAnimationFrame(() => setTimeout(() => { this.progressShown = this.afterPercent }, 40))
-            })()
-            fetchLifetimeMaxStreak('guess-player').then(v => this.lifetimeMaxStreak = Math.max(v || 0, this.maxStreak || 0)).catch(()=>{})
-            import('../../services/game-modes').then(mod => mod.checkAndUnlockDailyWins('guess-player')).catch(()=>{})
+            
+            // 🎉 Celebrate based on result
+            if (result === 'win') {
+              setTimeout(() => celebrateGameWin(), 100)
+            } else {
+              setTimeout(() => announceGameLoss(), 100)
+            }
+            
+            this.finishChallenge(result)
           }
         }, 1000)
       } catch (e) {
         console.error('[GuessPlayer challenge start]', e)
       }
+    },
+    async finishChallenge(result) {
+      // Save session first
+      await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects }).catch(()=>{})
+      
+      // Fetch XP/level after to build friendly summary
+      try {
+        const { data } = await getUserLevel(null)
+        const info = Array.isArray(data) ? data[0] : data
+        const newLevel = info?.level ?? null
+        this.levelAfter = newLevel
+        this.xpAfterTotal = info?.xp_total ?? 0
+        const next = info?.next_level_xp || 0
+        const toNext = info?.xp_to_next ?? 0
+        const completed = next ? (next - toNext) : next
+        this.afterPercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
+        this.xpToNextAfter = toNext ?? null
+        
+        // 🎊 Level up celebration!
+        if (newLevel && this.levelBefore && newLevel > this.levelBefore) {
+          setTimeout(() => celebrateGameLevelUp(newLevel), 500)
+        }
+      } catch {}
+      
+      // Save xpView snapshot
+      try {
+        await completeChallengeSession(this.sessionId, this.score, this.xpEarned, {
+          maxStreak: this.maxStreak, result, corrects: this.corrects,
+          xpView: {
+            levelBefore: this.levelBefore, xpBeforeTotal: this.xpBeforeTotal,
+            levelAfter: this.levelAfter, xpAfterTotal: this.xpAfterTotal,
+            beforePercent: this.beforePercent, afterPercent: this.afterPercent,
+            xpToNextAfter: this.xpToNextAfter, xpEarned: this.xpEarned
+          }
+        })
+      } catch {}
+      
+      this.progressShown = this.beforePercent
+      this.showSummary = true
+      
+      // Trigger animation to after percent
+      requestAnimationFrame(() => setTimeout(() => { this.progressShown = this.afterPercent }, 40))
+      
+      // Fetch lifetime max streak
+      fetchLifetimeMaxStreak('guess-player').then(v => this.lifetimeMaxStreak = Math.max(v || 0, this.maxStreak || 0)).catch(()=>{})
+      
+      // Check daily wins achievement
+      import('../../services/game-modes').then(mod => mod.checkAndUnlockDailyWins('guess-player')).catch(()=>{})
     }
   }
 }
 </script>
 
 <template>
+  <GamePreviewModal
+    :open="overlayOpen && mode === 'challenge' && !reviewMode"
+    gameName="Adivina el jugador"
+    gameDescription="Hacé 10 aciertos en 30 segundos para ganar"
+    :mechanic="gameMetadata.mechanic"
+    :videoUrl="gameMetadata.videoUrl"
+    :tips="gameMetadata.tips"
+    @close="overlayOpen = false"
+    @start="startChallenge"
+  />
+
   <section class="grid place-items-center">
   <div class="space-y-3 w-full max-w-4xl">
       <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2 w-full">
@@ -186,22 +243,6 @@ export default {
             </div>
           </div>
         </Transition>
-        <!-- Challenge overlay -->
-        <div v-if="overlayOpen" class="absolute inset-0 z-20 grid place-items-center bg-slate-900/80 backdrop-blur rounded-xl">
-          <div class="w-full max-w-md rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/95 to-slate-900/80 p-5 shadow-2xl">
-            <h3 class="text-white text-xl font-semibold">Desafío diario</h3>
-            <p class="text-slate-300 text-sm mt-1">Tenés 30 segundos para sumar la mayor cantidad de aciertos.</p>
-            <ul class="mt-3 text-xs text-slate-400 space-y-1 list-disc list-inside">
-              <li>Responde lo más rápido posible</li>
-              <li>Ganá XP por cada acierto</li>
-              <li>Mejorá tu racha del día</li>
-            </ul>
-            <div class="mt-4 flex items-center justify-end gap-2">
-              <span class="text-xs text-slate-400" v-if="!availability.available">{{ availability.reason }}</span>
-              <button @click="startChallenge" :disabled="!availability.available" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed">¡Jugar!</button>
-            </div>
-          </div>
-        </div>
         <!-- Timer in top-left inside card (opposite to +10 XP) -->
         <div v-if="mode==='challenge'" class="pointer-events-none absolute left-3 top-3 z-10">
           <div :class="['rounded-full px-3 py-1 text-sm font-bold shadow border',
@@ -211,41 +252,27 @@ export default {
             ⏱ {{ Math.max(0, timeLeft) }}s
           </div>
         </div>
-        <!-- End-of-game summary with XP progress -->
-        <div v-if="showSummary" class="absolute inset-0 z-30 grid place-items-center bg-slate-900/80 backdrop-blur rounded-xl">
-          <div class="w-full max-w-md rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/95 to-slate-900/80 p-5 shadow-2xl text-center">
-            <h3 class="text-white text-xl font-semibold mb-1">¡Buen juego!</h3>
-            <p class="text-slate-300 text-sm mb-3">Así te fue en el desafío de hoy.</p>
-            <div class="grid grid-cols-3 gap-2 mb-4">
-              <div class="rounded-lg bg-white/5 border border-white/10 p-2">
-                <div class="text-[10px] uppercase tracking-wider text-slate-400">Puntaje</div>
-                <div class="text-white font-bold text-lg">{{ score }}</div>
-              </div>
-              <div class="rounded-lg bg-white/5 border border-white/10 p-2">
-                <div class="text-[10px] uppercase tracking-wider text-slate-400">Racha hoy</div>
-                <div class="text-emerald-300 font-bold text-lg">×{{ maxStreak || 0 }}</div>
-              </div>
-              <div class="rounded-lg bg-white/5 border border-white/10 p-2">
-                <div class="text-[10px] uppercase tracking-wider text-slate-400">Histórica</div>
-                <div class="text-indigo-300 font-bold text-lg">×{{ lifetimeMaxStreak || 0 }}</div>
-              </div>
-            </div>
-            <div class="text-left">
-              <div class="flex items-center justify-between text-xs text-slate-400">
-                <span>Progreso de XP</span>
-                <span class="tabular-nums">{{ xpBeforeTotal }} → <span class="text-white font-semibold">{{ xpAfterTotal }}</span> <span class="text-emerald-300">(+{{ Math.max(0, (xpAfterTotal - xpBeforeTotal) || 0) }})</span></span>
-              </div>
-              <div class="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
-                <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (progressShown||0) + '%' }"></div>
-              </div>
-              <div class="mt-1 text-xs text-slate-400">Nivel {{ levelBefore ?? '—' }} → <span :class="(levelAfter||0)>(levelBefore||0)?'text-yellow-300 font-semibold':'text-slate-300'">{{ levelAfter ?? '—' }}</span></div>
-              <div v-if="(xpToNextAfter ?? null) !== null" class="mt-1 text-xs text-slate-400">Te faltan <span class="text-white font-medium">{{ xpToNextAfter }}</span> XP para el próximo nivel.</div>
-            </div>
-            <div class="mt-4 flex justify-center gap-2">
-              <router-link to="/play/points" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 text-white px-4 py-2">Volver a los juegos</router-link>
-            </div>
-          </div>
-        </div>
+        
+        <!-- Summary Popup -->
+        <GameSummaryPopup
+          :show="showSummary"
+          :corrects="corrects"
+          :score="score"
+          :maxStreak="maxStreak"
+          :lifetimeMaxStreak="lifetimeMaxStreak"
+          :levelBefore="levelBefore"
+          :levelAfter="levelAfter"
+          :xpBeforeTotal="xpBeforeTotal"
+          :xpAfterTotal="xpAfterTotal"
+          :beforePercent="beforePercent"
+          :afterPercent="afterPercent"
+          :progressShown="progressShown"
+          :xpToNextAfter="xpToNextAfter"
+          :winThreshold="10"
+          :backPath="backPath()"
+          @close="showSummary = false"
+        />
+        
         <div v-if="timeOver && mode==='challenge'" class="mt-3 text-center text-amber-300 text-sm">Tiempo agotado. ¡Buen intento!</div>
       </div>
     </div>

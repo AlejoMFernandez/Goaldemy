@@ -19,7 +19,7 @@ function toFree(slug) {
 </script>
 
 <template>
-  <section class="container mx-auto px-4 py-4 md:py-8">
+  <section class="py-4 md:py-6 mx-auto max-w-4xl">
   <h1 class="text-2xl md:text-4xl font-bold text-white mb-1">Jugar <span class="text-sky-400 uppercase">LIBRE</span></h1>
   <p class="text-slate-300 mb-4">Modo Free: jugá <strong class="text-slate-100 font-semibold">TODO LO QUE QUIERAS</strong>.</p>
     <div v-if="state.loading" class="text-slate-400">Cargando…</div>

@@ -50,10 +50,10 @@ const props = defineProps({
             <div class="flex items-center gap-2 min-w-0">
               <div class="h-7 w-7 rounded-lg overflow-hidden bg-white/10 grid place-items-center text-[11px] font-bold text-slate-200">
                 <img v-if="r.avatar_url" :src="r.avatar_url" alt="avatar" class="w-full h-full object-cover" />
-                <span v-else>{{ (r.display_name || r.email || r.user_id)?.[0]?.toUpperCase() ?? '?' }}</span>
+                <span v-else>{{ (r.display_name || r.email || '?')?.[0]?.toUpperCase() ?? '?' }}</span>
               </div>
               <RouterLink :to="{ path: '/u/' + r.user_id }" class="hover:underline truncate max-w-[180px] sm:max-w-none">
-                {{ r.display_name || r.email || r.user_id?.slice(0,8) }}
+                {{ r.display_name || r.email || r.user_id?.slice(0,8) || '—' }}
               </RouterLink>
             </div>
           </td>

@@ -99,7 +99,7 @@ export async function getPublicProfilesByIds(ids = []) {
 }
 
 export async function getPublicProfile(id) {
-    const fields = ['id','display_name','email','avatar_url','nationality_code','favorite_team','favorite_player','career','bio','linkedin_url','github_url','x_url','instagram_url']
+    const fields = ['id','display_name','email','avatar_url','nationality_code','favorite_team','favorite_player','career','bio','linkedin_url','github_url','x_url','instagram_url','featured_achievements']
         const { data, error } = await supabase
                 .from('user_profiles')
                 .select(fields.join(', '))
@@ -119,4 +119,20 @@ export async function searchPublicProfiles(q, limit = 10) {
         .or(`display_name.ilike.${like},email.ilike.${like}`)
         .limit(limit)
     return { data, error }
+}
+
+// Update featured achievements for a user (array of achievement codes)
+export async function updateFeaturedAchievements(userId, achievementCodes) {
+    if (!Array.isArray(achievementCodes) || achievementCodes.length > 3) {
+        throw new Error('Featured achievements must be an array of up to 3 codes')
+    }
+    const { error } = await supabase
+        .from('user_profiles')
+        .update({ featured_achievements: achievementCodes })
+        .eq('id', userId)
+    
+    if (error) {
+        console.error('[user-profiles.js updateFeaturedAchievements]:', error)
+        throw new Error(error.message || 'Failed to update featured achievements')
+    }
 }

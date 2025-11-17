@@ -1,5 +1,5 @@
 <template>
-  <section class="container mx-auto px-4 py-4 md:py-8">
+  <section class="py-4 md:py-6">
     <div class="mb-6">
       <h1 class="text-2xl md:text-4xl font-bold text-white flex items-center gap-3">
         <span>¿Quién soy?</span>

@@ -6,11 +6,17 @@ import { initScoring } from '../../services/scoring'
 import { getUserLevel } from '../../services/xp'
 import { awardXpForCorrect } from '../../services/game-xp'
 import { spawnXpBadge } from '../../services/ui-effects'
-import { gameSummaryBlurb } from '../../services/games'
+import { celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
+import { getGameMetadata } from '../../services/games'
+import GamePreviewModal from '../../components/GamePreviewModal.vue'
+import GameSummaryPopup from '../../components/GameSummaryPopup.vue'
 
 export default {
   name: 'HeightOrder',
-  components: { AppH1 },
+  components: { AppH1, GamePreviewModal, GameSummaryPopup },
+  computed: {
+    gameMetadata() { return getGameMetadata('height-order') }
+  },
   data() {
     return {
       mode: 'normal',
@@ -153,8 +159,10 @@ export default {
       const delayMs = 1200
       if (this.mode === 'challenge') {
         const result = correctPositions === 5 ? 'win' : 'loss'
-  try { await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, correctPositions, finalOrder: [...this.slots], correctness: [...this.correctness], items: this.items, corrects: correctPositions }) } catch {}
-  try { const mod = await import('../../services/game-modes'); await mod.checkAndUnlockDailyWins('height-order') } catch {}
+        if (result === 'win') celebrateGameWin()
+        else announceGameLoss()
+        try { await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, correctPositions, finalOrder: [...this.slots], correctness: [...this.correctness], items: this.items, corrects: correctPositions }) } catch {}
+        try { const mod = await import('../../services/game-modes'); await mod.checkAndUnlockDailyWins('height-order') } catch {}
         try {
           const { data } = await getUserLevel(null)
           const info = Array.isArray(data) ? data[0] : data
@@ -165,6 +173,11 @@ export default {
           const completed = next ? (next - toNext) : next
           this.afterPercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
           this.xpToNextAfter = toNext ?? null
+          
+          // Level up celebration
+          if ((this.levelAfter || 0) > (this.levelBefore || 0)) {
+            celebrateGameLevelUp(this.levelAfter, 500)
+          }
         } catch {}
         setTimeout(() => { this.progressShown = this.beforePercent; this.showSummary = true; requestAnimationFrame(()=> setTimeout(()=>{ this.progressShown = this.afterPercent }, 40)) }, delayMs)
         this.locked = true
@@ -196,6 +209,17 @@ export default {
 </script>
 
 <template>
+  <GamePreviewModal
+    :open="overlayOpen && mode === 'challenge' && !reviewMode"
+    gameName="Ordenar por altura"
+    gameDescription="Ordená 5 jugadores del más alto al más bajo"
+    :mechanic="gameMetadata.mechanic"
+    :videoUrl="gameMetadata.videoUrl"
+    :tips="gameMetadata.tips"
+    @close="overlayOpen = false"
+    @start="startChallenge"
+  />
+
   <section class="grid place-items-center">
     <div class="space-y-3 w-full max-w-4xl">
       <div class="flex items-center justify-between">
@@ -210,17 +234,6 @@ export default {
       </div>
 
   <div class="relative card p-4" ref="confettiHost">
-        <div v-if="overlayOpen" class="absolute inset-0 z-20 grid place-items-center bg-slate-900/80 backdrop-blur rounded-xl">
-          <div class="w-full max-w-md rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/95 to-slate-900/80 p-5 shadow-2xl">
-            <h3 class="text-white text-xl font-semibold">Desafío diario</h3>
-            <p class="text-slate-300 text-sm mt-1">Sin tiempo. Ordená de <strong>más alto</strong> a <strong>más bajo</strong>.</p>
-            <div class="mt-4 flex items-center justify-end gap-2">
-              <span class="text-xs text-slate-400" v-if="!availability.available">{{ availability.reason }}</span>
-              <button @click="startChallenge" :disabled="!availability.available" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed">¡Jugar!</button>
-            </div>
-          </div>
-        </div>
-
         <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1 px-1">
           <span>Más alto (+)</span>
           <span>Más bajo (−)</span>
@@ -261,42 +274,26 @@ export default {
         <div class="mt-4 flex items-center justify-center">
           <button @click="check" :disabled="slots.some(x=>x==null) || locked" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 border border-white/10 text-white px-5 py-2 text-sm font-semibold disabled:opacity-50">Comprobar</button>
         </div>
-        <div v-if="showSummary && mode==='challenge'" class="absolute inset-0 z-30 grid place-items-center bg-slate-900/80 backdrop-blur rounded-xl">
-          <div class="w-full max-w-md rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/95 to-slate-900/80 p-5 shadow-2xl text-center">
-            <h3 class="text-white text-xl font-semibold mb-1">¡Buen juego!</h3>
-            <p class="text-slate-300 text-sm mb-1">Tu resultado en el desafío de hoy.</p>
-            <p class="text-slate-400 text-xs mb-3">{{ blurb() }}</p>
-            <div class="grid grid-cols-3 gap-2 mb-4">
-              <div class="rounded-lg bg-white/5 border border-white/10 p-2">
-                <div class="text-[10px] uppercase tracking-wider text-slate-400">Puntaje</div>
-                <div class="text-white font-bold text-lg">{{ score }}</div>
-              </div>
-              <div class="rounded-lg bg-white/5 border border-white/10 p-2">
-                <div class="text-[10px] uppercase tracking-wider text-slate-400">Aciertos</div>
-                <div class="text-emerald-300 font-bold text-lg">{{ corrects }}/5</div>
-              </div>
-              <div class="rounded-lg bg-white/5 border border-white/10 p-2">
-                <div class="text-[10px] uppercase tracking-wider text-slate-400">XP</div>
-                <div class="text-indigo-300 font-bold text-lg">+{{ xpEarned }}</div>
-              </div>
-            </div>
-            <div class="text-left">
-              <div class="flex items-center justify-between text-xs text-slate-400">
-                <span>Progreso de XP</span>
-                <span class="tabular-nums">{{ xpBeforeTotal }} → <span class="text-white font-semibold">{{ xpAfterTotal }}</span> <span class="text-emerald-300">(+{{ Math.max(0, (xpAfterTotal - xpBeforeTotal) || 0) }})</span></span>
-              </div>
-              <div class="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
-                <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (progressShown||0) + '%' }"></div>
-              </div>
-              <div class="mt-1 text-xs text-slate-400">Nivel {{ levelBefore ?? '—' }} → <span :class="(levelAfter||0)>(levelBefore||0)?'text-yellow-300 font-semibold':'text-slate-300'">{{ levelAfter ?? '—' }}</span></div>
-              <div v-if="(xpToNextAfter ?? null) !== null" class="mt-1 text-xs text-slate-400">Te faltan <span class="text-white font-medium">{{ xpToNextAfter }}</span> XP para el próximo nivel.</div>
-            </div>
-            <div class="mt-4 flex justify-center gap-2">
-              <button @click="showSummary=false" class="rounded-full border border-white/20 hover:bg-white/5 text-white px-4 py-2">Cerrar</button>
-              <router-link to="/play/points" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 text-white px-4 py-2">Volver a los juegos</router-link>
-            </div>
-          </div>
-        </div>
+
+        <!-- Summary Popup -->
+        <GameSummaryPopup
+          :show="showSummary && mode==='challenge'"
+          :corrects="corrects"
+          :score="score"
+          :maxStreak="0"
+          :lifetimeMaxStreak="0"
+          :levelBefore="levelBefore"
+          :levelAfter="levelAfter"
+          :xpBeforeTotal="xpBeforeTotal"
+          :xpAfterTotal="xpAfterTotal"
+          :beforePercent="beforePercent"
+          :afterPercent="afterPercent"
+          :progressShown="progressShown"
+          :xpToNextAfter="xpToNextAfter"
+          :winThreshold="5"
+          :backPath="backPath()"
+          @close="showSummary = false"
+        />
       </div>
     </div>
   </section>

@@ -134,10 +134,20 @@ export async function completeChallengeSession(sessionId, score, xp, metadataPat
     existing = cur?.metadata || null
   } catch (_) {}
   const metadata = { ...(existing || {}), ...(metadataPatch || {}) }
-  await supabase
+  
+  // 🔍 DEBUG: Log what we're saving
+  console.log('[completeChallengeSession] Saving:', { sessionId, score, xp, metadata })
+  
+  const { error } = await supabase
     .from('game_sessions')
     .update({ score_final: score ?? 0, xp_earned: xp ?? 0, ended_at: new Date().toISOString(), metadata })
     .eq('id', sessionId)
+  
+  if (error) {
+    console.error('[completeChallengeSession] Error:', error)
+  } else {
+    console.log('[completeChallengeSession] ✅ Saved successfully')
+  }
 }
 
 // Fetch the latest FINISHED session for today for a given game slug (for review mode)

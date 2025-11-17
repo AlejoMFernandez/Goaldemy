@@ -5,14 +5,18 @@ import { initScoring, GAME_SCORING } from '../../services/scoring'
 import { getUserLevel } from '../../services/xp'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
 import { gameSummaryBlurb } from '../../services/games'
+import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
+import { getGameMetadata } from '../../services/games'
+import GamePreviewModal from '../../components/GamePreviewModal.vue'
+import GameSummaryPopup from '../../components/GameSummaryPopup.vue'
 
 export default {
   name: 'WhoIs',
-  components: { AppH1 },
+  components: { AppH1, GamePreviewModal, GameSummaryPopup },
   data() {
     return { 
-  ...initState(), 
-  ...initScoring(GAME_SCORING['who-is']?.pointsPerCorrect || 50),
+      ...initState(), 
+      ...initScoring(GAME_SCORING['who-is']?.pointsPerCorrect || 50),
       mode: 'normal',
       reviewMode: false,
       overlayOpen: false,
@@ -20,24 +24,28 @@ export default {
       availability: { available: true, reason: null },
       showSummary: false,
       lifetimeMaxStreak: 0,
-  // UI extras
-  suggestOpen: false,
+      timeOver: false,
+      // UI extras
+      suggestOpen: false,
       selectedIndex: -1,
       revealImage: false,
       justPicked: false,
-  lastResultOk: false,
-  // XP progress summary
-  levelBefore: null,
-  levelAfter: null,
-  xpBeforeTotal: 0,
-  xpAfterTotal: 0,
-  beforePercent: 0,
-  afterPercent: 0,
-  progressShown: 0,
-  xpToNextAfter: null,
+      lastResultOk: false,
+      // XP progress summary
+      levelBefore: null,
+      levelAfter: null,
+      xpBeforeTotal: 0,
+      xpAfterTotal: 0,
+      beforePercent: 0,
+      afterPercent: 0,
+      progressShown: 0,
+      xpToNextAfter: null,
     }
   },
   computed: {
+    gameMetadata() {
+      return getGameMetadata('who-is')
+    },
     // Suggestions after 3+ chars, up to 12
     suggestions() {
       const q = (this.guess || '').toString().trim()
@@ -127,8 +135,8 @@ export default {
       await this.submit()
     },
     async submit() {
-  const ok = await submitGuess(this, this.$refs.confettiHost)
-  this.lastResultOk = !!ok
+      const ok = await submitGuess(this, this.$refs.confettiHost)
+      this.lastResultOk = !!ok
       if (!ok) {
         // clear input and reopen suggestions for a fresh try
         this.guess = ''
@@ -138,8 +146,16 @@ export default {
       }
       if (ok) this.revealImage = true
       if (this.mode === 'challenge' && (ok || this.lives === 0)) {
+        // Trigger confetti and sound based on result
+        const result = (this.lives > 0) ? 'win' : 'loss'
+        
+        // 🎉 Celebrate based on result
+        if (result === 'win') {
+          setTimeout(() => celebrateGameWin(), 100)
+        } else {
+          setTimeout(() => announceGameLoss(), 100)
+        }
         try {
-          const result = ok ? 'win' : 'loss'
           await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, maxStreak: this.maxStreak, playerId: this.current?.id })
         } catch (e) { console.error('[WhoIs complete]', e) }
         // fetch xp/level after
@@ -153,6 +169,11 @@ export default {
           const completed = next ? (next - toNext) : next
           this.afterPercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
           this.xpToNextAfter = toNext ?? null
+          
+          // 🎊 Level up celebration!
+          if (this.levelAfter && this.levelBefore && this.levelAfter > this.levelBefore) {
+            setTimeout(() => celebrateGameLevelUp(this.levelAfter), 500)
+          }
         } catch {}
         // Delay summary so el acierto no se tapa enseguida
         const delayMs = GAME_SCORING['who-is']?.summaryDelayMs ?? 3000
@@ -216,6 +237,17 @@ export default {
 </script>
 
 <template>
+  <GamePreviewModal
+    :open="overlayOpen && mode === 'challenge' && !reviewMode"
+    gameName="¿Quién es?"
+    gameDescription="Adiviná el jugador con 3 vidas"
+    :mechanic="gameMetadata.mechanic"
+    :videoUrl="gameMetadata.videoUrl"
+    :tips="gameMetadata.tips"
+    @close="overlayOpen = false"
+    @start="startChallenge"
+  />
+
   <section class="grid place-items-center">
     <div class="space-y-3 w-full max-w-4xl">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
@@ -286,60 +318,27 @@ export default {
             <div v-if="answered && lives === 0" class="mt-2 text-slate-300 text-sm">Era <strong class="text-white">{{ current?.name }}</strong></div>
           </div>
         </Transition>
-        <!-- Challenge overlay (no timer for typing game) -->
-        <div v-if="overlayOpen" class="absolute inset-0 z-20 grid place-items-center bg-slate-900/80 backdrop-blur rounded-xl">
-          <div class="w-full max-w-md rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/95 to-slate-900/80 p-5 shadow-2xl">
-            <h3 class="text-white text-xl font-semibold">Desafío diario</h3>
-            <p class="text-slate-300 text-sm mt-1">Acierto único: tenés una sola oportunidad hoy.</p>
-            <ul class="mt-3 text-xs text-slate-400 space-y-1 list-disc list-inside">
-              <li>Escribe el nombre del jugador</li>
-              <li>3 vidas para pedir pistas con menos blur</li>
-              <li>Ganar hoy suma a tu racha diaria</li>
-            </ul>
-            <div class="mt-4 flex items-center justify-end gap-2">
-              <span class="text-xs text-slate-400" v-if="!availability.available">{{ availability.reason }}</span>
-              <button @click="startChallenge" :disabled="!availability.available" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed">¡Jugar!</button>
-            </div>
-          </div>
-        </div>
-        <!-- End-of-game summary with XP progress -->
-        <div v-if="showSummary" class="absolute inset-0 z-30 grid place-items-center bg-slate-900/80 backdrop-blur rounded-xl">
-          <div class="w-full max-w-md rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/95 to-slate-900/80 p-5 shadow-2xl text-center">
-            <h3 class="text-white text-xl font-semibold mb-1">Resultado del desafío</h3>
-            <p class="text-slate-300 text-sm mb-1">Así quedaste hoy.</p>
-            <p class="text-slate-400 text-xs mb-3">{{ blurb() }}</p>
-            <div class="grid grid-cols-3 gap-2 mb-4">
-              <div class="rounded-lg bg-white/5 border border-white/10 p-2">
-                <div class="text-[10px] uppercase tracking-wider text-slate-400">Puntaje</div>
-                <div class="text-white font-bold text-lg">{{ score }}</div>
-              </div>
-              <div class="rounded-lg bg-white/5 border border-white/10 p-2">
-                <div class="text-[10px] uppercase tracking-wider text-slate-400">Racha hoy</div>
-                <div class="text-emerald-300 font-bold text-lg">×{{ maxStreak || 0 }}</div>
-              </div>
-              <div class="rounded-lg bg-white/5 border border-white/10 p-2">
-                <div class="text-[10px] uppercase tracking-wider text-slate-400">Histórica</div>
-                <div class="text-indigo-300 font-bold text-lg">×{{ lifetimeMaxStreak || 0 }}</div>
-              </div>
-            </div>
-            <div class="text-left">
-              <div class="flex items-center justify-between text-xs text-slate-400">
-                <span>Progreso de XP</span>
-                <span class="tabular-nums">{{ xpBeforeTotal }} → <span class="text-white font-semibold">{{ xpAfterTotal }}</span> <span class="text-emerald-300">(+{{ Math.max(0, (xpAfterTotal - xpBeforeTotal) || 0) }})</span></span>
-              </div>
-              <div class="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
-                <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (progressShown||0) + '%' }"></div>
-              </div>
-              <div class="mt-1 text-xs text-slate-400">Nivel {{ levelBefore ?? '—' }} → <span :class="(levelAfter||0)>(levelBefore||0)?'text-yellow-300 font-semibold':'text-slate-300'">{{ levelAfter ?? '—' }}</span>
-                <span v-if="(xpToNextAfter ?? null) !== null" class="ml-2">Te faltan <span class="text-white font-medium">{{ xpToNextAfter }}</span> XP para el próximo nivel.</span>
-              </div>
-            </div>
-            <div class="mt-4 flex justify-center gap-2">
-              <button @click="showSummary=false" class="rounded-full border border-white/20 hover:bg-white/5 text-white px-4 py-2">Cerrar</button>
-              <router-link to="/play/points" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 text-white px-4 py-2">Volver a los juegos</router-link>
-            </div>
-          </div>
-        </div>
+        
+        <!-- Summary Popup -->
+        <GameSummaryPopup
+          :show="showSummary"
+          :corrects="lives > 0 ? 1 : 0"
+          :score="score"
+          :maxStreak="maxStreak"
+          :lifetimeMaxStreak="lifetimeMaxStreak"
+          :levelBefore="levelBefore"
+          :levelAfter="levelAfter"
+          :xpBeforeTotal="xpBeforeTotal"
+          :xpAfterTotal="xpAfterTotal"
+          :beforePercent="beforePercent"
+          :afterPercent="afterPercent"
+          :progressShown="progressShown"
+          :xpToNextAfter="xpToNextAfter"
+          :winThreshold="1"
+          :backPath="backPath()"
+          @close="showSummary = false"
+        />
+        
         <div v-if="timeOver && mode==='challenge'" class="mt-3 text-center text-amber-300 text-sm">Tiempo agotado. ¡Buen intento!</div>
       </div>
     </div>

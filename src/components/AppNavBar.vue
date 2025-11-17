@@ -41,6 +41,8 @@ export default {
             notifItems: [],
             notifLoading: false,
             notifProfiles: {},
+            _notifCountDebounce: null,
+            _notifMenuDebounce: null,
         };
     },
     methods: {
@@ -114,15 +116,18 @@ export default {
             this._playCloseTimer = setTimeout(() => { this.playOpen = false }, 220)
         },
         async loadNotifCount() {
-            try {
-                // Unread notifications (excl. connection_request) + pending connection requests
-                const [{ count }, { data: incoming }] = await Promise.all([
-                    fetchUnreadCount(),
-                    listIncomingRequests(),
-                ])
-                const pending = (incoming || []).length
-                this.notifCount = (count || 0) + pending
-            } catch { this.notifCount = 0 }
+            if (this._notifCountDebounce) clearTimeout(this._notifCountDebounce)
+            this._notifCountDebounce = setTimeout(async () => {
+                try {
+                    // Unread notifications (excl. connection_request) + pending connection requests
+                    const [{ count }, { data: incoming }] = await Promise.all([
+                        fetchUnreadCount(),
+                        listIncomingRequests(),
+                    ])
+                    const pending = (incoming || []).length
+                    this.notifCount = (count || 0) + pending
+                } catch { this.notifCount = 0 }
+            }, 200)
         },
         setupNotifRealtime() {
             if (!this.user?.id) return
@@ -157,40 +162,43 @@ export default {
             this._pollInterval = setInterval(() => this.loadNotifCount(), 20000)
         },
         async loadNotifMenu() {
-            if (!this.user?.id) return
-            this.notifLoading = true
-            try {
-                const [{ data: incoming }, { data: notifs }] = await Promise.all([
-                    listIncomingRequests(),
-                    listNotifications(12),
-                ])
-                // Map to consumable entries (requests)
-                const reqs = (incoming || []).map(r => ({
-                    kind: 'request',
-                    id: r.id,
-                    from: r.user_a,
-                    created_at: r.created_at,
-                }))
-                // Map notification logs we want to show in dropdown
-                const logs = (notifs || [])
-                  .filter(n => n?.type && n.type !== 'connection_request')
-                  .map(n => ({ kind: 'log', id: n.id, type: n.type, from: n.from_user, created_at: n.created_at, read: n.read, payload: n.payload }))
-                // Merge: requests first, then latest logs
-                const items = [...reqs, ...logs].slice(0, 12)
-                this.notifItems = items
-                // Fetch sender profiles for better text
-                const ids = Array.from(new Set(items.map(i => i.from).filter(Boolean)))
-                if (ids.length) {
-                    const { data: profiles } = await getPublicProfilesByIds(ids)
-                    const map = {}
-                    for (const p of profiles || []) map[p.id] = p
-                    this.notifProfiles = map
-                } else {
-                    this.notifProfiles = {}
+            if (this._notifMenuDebounce) clearTimeout(this._notifMenuDebounce)
+            this._notifMenuDebounce = setTimeout(async () => {
+                if (!this.user?.id) return
+                this.notifLoading = true
+                try {
+                    const [{ data: incoming }, { data: notifs }] = await Promise.all([
+                        listIncomingRequests(),
+                        listNotifications(12),
+                    ])
+                    // Map to consumable entries (requests)
+                    const reqs = (incoming || []).map(r => ({
+                        kind: 'request',
+                        id: r.id,
+                        from: r.user_a,
+                        created_at: r.created_at,
+                    }))
+                    // Map notification logs we want to show in dropdown
+                    const logs = (notifs || [])
+                      .filter(n => n?.type && n.type !== 'connection_request')
+                      .map(n => ({ kind: 'log', id: n.id, type: n.type, from: n.from_user, created_at: n.created_at, read: n.read, payload: n.payload }))
+                    // Merge: requests first, then latest logs
+                    const items = [...reqs, ...logs].slice(0, 12)
+                    this.notifItems = items
+                    // Fetch sender profiles for better text
+                    const ids = Array.from(new Set(items.map(i => i.from).filter(Boolean)))
+                    if (ids.length) {
+                        const { data: profiles } = await getPublicProfilesByIds(ids)
+                        const map = {}
+                        for (const p of profiles || []) map[p.id] = p
+                        this.notifProfiles = map
+                    } else {
+                        this.notifProfiles = {}
+                    }
+                } finally {
+                    this.notifLoading = false
                 }
-            } finally {
-                this.notifLoading = false
-            }
+            }, 200)
         },
         toggleNotif() {
             this.notifOpen = !this.notifOpen
@@ -311,6 +319,8 @@ export default {
             try { if (this._notifChannel) this._notifChannel.unsubscribe() } catch {}
             try { if (this._connChannel) this._connChannel.unsubscribe() } catch {}
             try { clearInterval(this._pollInterval) } catch {}
+            if (this._notifCountDebounce) clearTimeout(this._notifCountDebounce)
+            if (this._notifMenuDebounce) clearTimeout(this._notifMenuDebounce)
     }
 }
 </script>
@@ -483,8 +493,8 @@ export default {
                                             <span>Nivel {{ levelInfo?.level ?? '—' }}</span>
                                             <span class="text-slate-200 font-medium">{{ xpNow }} XP</span>
                                         </div>
-                                        <div class="mt-1 h-2 rounded bg-white/10 overflow-hidden">
-                                            <div class="h-full bg-[oklch(0.62_0.21_270)]" :style="{ width: (progressPercent||0) + '%' }"></div>
+                                        <div class="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
+                                            <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (progressPercent||0) + '%' }"></div>
                                         </div>
                                         <div class="mt-1 text-[11px] text-slate-400">
                                             <template v-if="levelInfo?.next_level_xp">
@@ -549,8 +559,8 @@ export default {
                                                         <span>Nivel {{ levelInfo?.level ?? '—' }}</span>
                                                         <span class="text-slate-200 font-medium">{{ xpNow }} XP</span>
                                                     </div>
-                                                    <div class="mt-1 h-2 rounded bg-white/10 overflow-hidden">
-                                                        <div class="h-full bg-[oklch(0.62_0.21_270)]" :style="{ width: (progressPercent||0) + '%' }"></div>
+                                                    <div class="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
+                                                        <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (progressPercent||0) + '%' }"></div>
                                                     </div>
                                                     <div class="mt-1 text-[11px] text-slate-400">
                                                         <template v-if="levelInfo?.next_level_xp">
