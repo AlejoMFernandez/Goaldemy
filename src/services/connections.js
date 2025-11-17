@@ -67,6 +67,13 @@ export async function acceptRequest(connectionId) {
       await supabase.from('notifications').insert([{ type: 'friend_added', to_user: data.user_b, from_user: data.user_a, payload: { connection_id: data.id } }])
     }
   } catch {}
+  
+  // Check social butterfly achievement
+  try {
+    const { checkSocialButterflyAchievement } = await import('./social-achievements')
+    await checkSocialButterflyAchievement()
+  } catch {}
+  
   return data
 }
 

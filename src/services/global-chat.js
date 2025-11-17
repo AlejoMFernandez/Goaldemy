@@ -14,6 +14,12 @@ export async function saveGlobalChatMessage(data) {
         console.error('[globa-chat.js saveGlobalChatMessage] Error:', error);
         throw new Error(error.message);
     }
+    
+    // Check chat master achievement
+    try {
+        const { checkChatMasterAchievement } = await import('./social-achievements')
+        await checkChatMasterAchievement()
+    } catch {}
 }
 
 export async function fetchLastGlobalChatMessages() {

@@ -2,6 +2,7 @@ import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { fetchGameBySlug, friendlyNameForSlug } from './games'
 import { unlockAchievementWithToast } from './xp'
+import { checkAllAchievementsAfterChallenge, checkTimeBasedAchievements } from './achievement-triggers'
 
 // Resolve game id by slug (cached in-memory)
 const _gameIdCache = new Map()
@@ -36,8 +37,14 @@ export async function countTodayDailyWins() {
 }
 
 // Desbloquear logros diarios tras completar un desafío
-export async function checkAndUnlockDailyWins(slugJustPlayed) {
+export async function checkAndUnlockDailyWins(slugJustPlayed, won = true, metadata = {}) {
   try {
+    // Time-based achievements (call at game start ideally, but here works too)
+    await checkTimeBasedAchievements()
+    
+    // Only check win-based achievements if user won
+    if (!won) return
+    
     const wins = await countTodayDailyWins()
     if (wins >= 3) await unlockAchievementWithToast('daily_wins_3')
     if (wins >= 5) await unlockAchievementWithToast('daily_wins_5')
@@ -45,12 +52,13 @@ export async function checkAndUnlockDailyWins(slugJustPlayed) {
     // Pleno: ganaste todos los juegos con desafío
     if (wins >= DAILY_GAMES.length) await unlockAchievementWithToast('daily_wins_all')
 
-    // Racha por día del juego recién jugado
+    // Racha por días consecutivos ganando este juego
     try {
       const streak = await fetchDailyWinStreak(slugJustPlayed)
-      if (streak >= 3) await unlockAchievementWithToast('daily_streak_3', { game: slugJustPlayed })
-      if (streak >= 5) await unlockAchievementWithToast('daily_streak_5', { game: slugJustPlayed })
-      if (streak >= 10) await unlockAchievementWithToast('daily_streak_10', { game: slugJustPlayed })
+      if (streak >= 3) await unlockAchievementWithToast('streak_3', { game: slugJustPlayed })
+      if (streak >= 5) await unlockAchievementWithToast('streak_5', { game: slugJustPlayed })
+      if (streak >= 10) await unlockAchievementWithToast('streak_10', { game: slugJustPlayed })
+      if (streak >= 15) await unlockAchievementWithToast('streak_15', { game: slugJustPlayed })
     } catch {}
 
     // SUPERLOGRO: 5 días seguidos en 3 juegos distintos
@@ -59,6 +67,9 @@ export async function checkAndUnlockDailyWins(slugJustPlayed) {
       const count5 = values.filter(v => (v || 0) >= 5).length
       if (count5 >= 3) await unlockAchievementWithToast('daily_super_5x3')
     } catch {}
+    
+    // Check all other achievements
+    await checkAllAchievementsAfterChallenge(slugJustPlayed, won, metadata)
   } catch {}
 }
 

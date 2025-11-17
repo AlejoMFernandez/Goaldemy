@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { ACHIEVEMENTS } from '../../services/achievements-catalog'
+import { ref, computed, onMounted } from 'vue'
+import { getAchievementsCatalog } from '../../services/achievements'
 
 const props = defineProps({
   achievements: { type: Array, required: true },
@@ -11,10 +11,17 @@ const props = defineProps({
 
 const emit = defineEmits(['customize'])
 
+// Load catalog from DB
+const ACHIEVEMENTS = ref({})
+onMounted(async () => {
+  ACHIEVEMENTS.value = await getAchievementsCatalog()
+})
+
 function difficultyFor(a) {
   const code = a?.achievements?.code
   if (!code) return null
-  return ACHIEVEMENTS[code]?.difficulty || null
+  // No difficulty info in DB yet, could be added later
+  return null
 }
 
 // Fallback de íconos por código (por si en la DB falta o el link externo cayó)
@@ -30,13 +37,23 @@ function iconFor(a) {
 
 const showAll = ref(false)
 const selected = ref('all')
-const order = ['épico','difícil','media','fácil', null]
+
+// Categories based on achievement codes
+const CATEGORIES = [
+  { key: 'inicio', label: '🎯 Logros de inicio', codes: ['first_correct', 'first_win'] },
+  { key: 'rachas', label: '🔥 Rachas de juego', codes: ['streak_3', 'streak_5', 'streak_10', 'streak_15'] },
+  { key: 'daily_wins', label: '📅 Victorias diarias', codes: ['daily_wins_3', 'daily_wins_5', 'daily_wins_all', 'daily_wins_10'] },
+  { key: 'daily_streak', label: '🔁 Constancia diaria', codes: ['daily_streak_3', 'daily_streak_5', 'daily_streak_7', 'daily_streak_14', 'daily_streak_30'] },
+  { key: 'game_specific', label: '⚽ Logros por juego', codes: ['guess_master', 'nationality_expert', 'position_guru'] },
+  { key: 'curious', label: '🎲 Logros curiosos', codes: ['lucky_first', 'comeback_king', 'night_owl', 'early_bird', 'weekend_warrior'] },
+  { key: 'epic', label: '🏆 Logros épicos', codes: ['perfectionist', 'hat_trick', 'grand_slam', 'centurion'] },
+  { key: 'social', label: '🌟 Logros sociales', codes: ['social_butterfly', 'chat_master'] },
+  { key: 'super', label: '💎 Super logros', codes: ['streak_dual_100', 'xp_multi_5k_3', 'daily_super_5x3'] },
+]
+
 const tabs = [
   { key: 'all', label: 'Todos' },
-  { key: 'épico', label: 'Épico' },
-  { key: 'difícil', label: 'Difícil' },
-  { key: 'media', label: 'Media' },
-  { key: 'fácil', label: 'Fácil' },
+  ...CATEGORIES.map(cat => ({ key: cat.key, label: cat.label })),
   { key: 'missing', label: 'Pendientes' },
 ]
 
@@ -48,9 +65,10 @@ const ownedCodes = computed(() => {
 const missingList = computed(() => {
   const have = ownedCodes.value
   const result = []
-  for (const code of Object.keys(ACHIEVEMENTS || {})) {
+  const catalog = ACHIEVEMENTS.value || {}
+  for (const code of Object.keys(catalog)) {
     if (!have.has(code)) {
-      const meta = ACHIEVEMENTS[code]
+      const meta = catalog[code]
       result.push({
         achievements: { ...meta },
         earned_at: null,
@@ -58,13 +76,8 @@ const missingList = computed(() => {
       })
     }
   }
-  // sort same as earned: difficulty then name
+  // Sort by name
   result.sort((a,b) => {
-    const da = a.achievements?.difficulty
-    const db = b.achievements?.difficulty
-    const ia = order.indexOf(da === undefined ? null : da)
-    const ib = order.indexOf(db === undefined ? null : db)
-    if (ia !== ib) return ia - ib
     return (a.achievements?.name || '').localeCompare(b.achievements?.name || '')
   })
   return result
@@ -75,22 +88,22 @@ const filtered = computed(() => {
     return missingList.value
   }
   let arr = Array.isArray(__props.achievements) ? __props.achievements.slice() : []
-  // sort by difficulty (épico primero), luego por fecha
-  arr.sort((a,b) => {
-    const da = difficultyFor(a)
-    const db = difficultyFor(b)
-    const ia = order.indexOf(da === undefined ? null : da)
-    const ib = order.indexOf(db === undefined ? null : db)
-    if (ia !== ib) return ia - ib
-    return new Date(b.earned_at) - new Date(a.earned_at)
-  })
+  
+  // Filter by category if selected
   if (selected.value !== 'all') {
-    arr = arr.filter(a => difficultyFor(a) === selected.value)
+    const category = CATEGORIES.find(c => c.key === selected.value)
+    if (category) {
+      arr = arr.filter(a => category.codes.includes(a?.achievements?.code))
+    }
   }
+  
+  // Sort by earned date (most recent first)
+  arr.sort((a,b) => new Date(b.earned_at) - new Date(a.earned_at))
+  
   return arr
 })
 
-const totalCatalog = computed(() => Object.keys(ACHIEVEMENTS || {}).length)
+const totalCatalog = computed(() => Object.keys(ACHIEVEMENTS.value || {}).length)
 
 // Featured achievements: filter by featuredCodes prop
 const featuredList = computed(() => {
@@ -114,6 +127,29 @@ const featuredList = computed(() => {
 const displayList = computed(() => {
   return showAll.value ? filtered.value : featuredList.value
 })
+
+// Current category label for display
+const currentCategoryLabel = computed(() => {
+  if (!showAll.value) return null
+  if (selected.value === 'all') return 'Todos los logros'
+  if (selected.value === 'missing') return 'Logros pendientes'
+  const category = CATEGORIES.find(c => c.key === selected.value)
+  return category ? category.label : null
+})
+
+// Group achievements by category for "all" view
+const groupedAchievements = computed(() => {
+  if (selected.value !== 'all' || !showAll.value) return null
+  
+  const groups = []
+  for (const category of CATEGORIES) {
+    const items = filtered.value.filter(a => category.codes.includes(a?.achievements?.code))
+    if (items.length > 0) {
+      groups.push({ category, items })
+    }
+  }
+  return groups
+})
 </script>
 
 <template>
@@ -130,10 +166,10 @@ const displayList = computed(() => {
         </button>
       </div>
     </div>
-    <div v-if="showAll" class="mt-2 flex items-center gap-1 text-[11px]">
+    <div v-if="showAll" class="mt-3 flex flex-wrap items-center gap-1.5 text-[11px]">
       <button v-for="t in tabs" :key="t.key" @click="selected=t.key"
-        class="px-2 py-1 rounded border"
-        :class="selected===t.key ? 'border-[oklch(0.62_0.21_270)]/50 bg-[oklch(0.62_0.21_270)]/10 text-[oklch(0.80_0.21_270)]' : 'border-white/10 text-slate-400 hover:bg-white/5'">
+        class="px-2.5 py-1.5 rounded-md border transition-all whitespace-nowrap"
+        :class="selected===t.key ? 'border-[oklch(0.62_0.21_270)]/50 bg-[oklch(0.62_0.21_270)]/10 text-[oklch(0.80_0.21_270)] font-semibold' : 'border-white/10 text-slate-400 hover:bg-white/5 hover:border-white/20'">
         {{ t.label }}
       </button>
     </div>
@@ -145,9 +181,42 @@ const displayList = computed(() => {
         </div>
         <div v-else-if="!displayList.length && showAll" class="text-slate-500">
           <template v-if="selected==='missing'">¡Felicitaciones! No tenés logros pendientes.</template>
-          <template v-else>Aún no hay logros</template>
+          <template v-else>Aún no hay logros en esta categoría</template>
         </div>
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <!-- Grouped view for "all" category -->
+        <template v-else-if="groupedAchievements && selected === 'all'">
+          <div v-for="group in groupedAchievements" :key="group.category.key" class="mb-6 last:mb-0">
+            <h3 class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+              {{ group.category.label }}
+              <span class="text-xs text-slate-500">({{ group.items.length }})</span>
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div
+                v-for="(a, idx) in group.items"
+                :key="idx"
+                class="relative overflow-hidden rounded-xl border bg-gradient-to-br p-3 transition h-28 flex flex-col border-white/10 from-slate-900/70 to-slate-800/40 hover:border-white/20">
+                <div class="flex items-start gap-3 flex-1 min-h-0">
+                  <img v-if="iconFor(a)" :src="iconFor(a)" class="w-10 h-10 rounded flex-none" alt="icon" />
+                  <div v-else class="w-10 h-10 rounded bg-slate-700/60 flex items-center justify-center text-slate-300/80 flex-none">🏆</div>
+                  <div class="min-w-0 flex-1">
+                    <p class="font-semibold leading-tight truncate text-slate-100">{{ a.achievements?.name || 'Logro' }}</p>
+                    <p v-if="a.achievements?.description" class="text-[11px] line-clamp-2 text-slate-400">{{ a.achievements.description }}</p>
+                  </div>
+                </div>
+                <div class="mt-2 flex items-center justify-between text-[11px]">
+                  <span class="font-semibold text-emerald-300">+{{ a.achievements?.points ?? 0 }} XP</span>
+                  <span class="text-slate-400">{{ new Date(a.earned_at).toLocaleDateString() }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+        <!-- Single category or filtered view -->
+        <div v-else>
+          <h3 v-if="currentCategoryLabel && selected !== 'all'" class="text-sm font-semibold text-slate-300 mb-3">
+            {{ currentCategoryLabel }}
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <div
             v-for="(a, idx) in displayList"
             :key="idx"
@@ -180,6 +249,7 @@ const displayList = computed(() => {
               </span>
             </div>
           </div>
+        </div>
         </div>
         <!-- Show All / Show Less button -->
         <div v-if="achievements.length > 3" class="mt-4 text-center">

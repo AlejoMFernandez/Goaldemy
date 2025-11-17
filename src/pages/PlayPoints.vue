@@ -78,7 +78,7 @@ const totals = computed(() => {
 </script>
 
 <template>
-  <section class="py-4 md:py-6 mx-auto max-w-4xl">
+  <section class="mx-auto max-w-4xl">
     <div class="flex items-start justify-between gap-3 mb-4">
       <div>
         <h1 class="text-2xl md:text-4xl font-bold text-white mb-1">Jugar por <span class="text-emerald-400 uppercase">PUNTOS</span></h1>
@@ -117,35 +117,63 @@ const totals = computed(() => {
     />
 
   <div v-if="state.loading" class="text-slate-400">Cargando…</div>
-  <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3">
-      <RouterLink v-for="g in state.games" :key="g.slug" :to="toChallenge(g.slug)" class="rounded-xl overflow-hidden border border-white/10 bg-slate-900/40 hover:bg-white/5 transition shadow">
+  <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-4">
+      <RouterLink 
+        v-for="g in state.games" 
+        :key="g.slug" 
+        :to="toChallenge(g.slug)" 
+        class="group relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 hover:shadow-2xl transition-all duration-300"
+        :class="[
+          state.availability[g.slug]?.available === false && state.availability[g.slug]?.result === 'win' 
+            ? 'border-2 border-emerald-500/60 shadow-lg shadow-emerald-500/20' 
+            : state.availability[g.slug]?.available === false && state.availability[g.slug]?.result === 'loss'
+            ? 'border-2 border-red-500/60 shadow-lg shadow-red-500/20'
+            : 'border border-white/10 hover:border-white/20 shadow-xl'
+        ]"
+      >
+        <!-- Glow effect on hover -->
+        <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/0 to-cyan-500/0 group-hover:from-emerald-500/5 group-hover:to-cyan-500/5 transition-all duration-300 pointer-events-none"></div>
+        
         <!-- Image box -->
-        <div class="relative p-2 sm:p-3 bg-slate-900/50 grid place-items-center">
-          <img v-if="g.cover_url" :src="g.cover_url" :alt="g.name" class="h-48 object-contain" style="width: 100px;"/>
-          <div v-else class="w-full h-48 grid place-items-center bg-white/5 text-slate-400 text-sm">{{ g.name }}</div>
+        <div class="relative p-3 bg-gradient-to-br from-slate-800 to-slate-900 grid place-items-center min-h-[180px]">
+          <img 
+            v-if="g.cover_url" 
+            :src="g.cover_url" 
+            :alt="g.name" 
+            class="h-36 object-contain group-hover:scale-105 transition-transform duration-300" 
+            style="width: 85px;"
+          />
+          <div v-else class="w-full h-36 grid place-items-center bg-white/5 text-slate-400 text-sm">{{ g.name }}</div>
+          
+          <!-- Gradient overlay -->
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-40"></div>
+          
           <!-- Blur/dim mask only over the image when already played -->
           <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="mask-dim"></div>
+          
           <!-- Result icon centered over image -->
           <div v-if="state.availability[g.slug] && state.availability[g.slug].available === false" class="absolute inset-0 z-20 grid place-items-center pointer-events-none">
-            <div v-if="state.availability[g.slug]?.result==='win'" class="h-12 w-12 rounded-full grid place-items-center ring-2 ring-emerald-400/50 bg-emerald-500/20">
+            <div v-if="state.availability[g.slug]?.result==='win'" class="h-14 w-14 rounded-full grid place-items-center ring-2 ring-emerald-400/50 bg-emerald-500/20 backdrop-blur-sm shadow-lg">
               <div class="text-emerald-400 text-3xl font-extrabold">✓</div>
             </div>
-            <div v-else-if="state.availability[g.slug]?.result==='loss'" class="h-12 w-12 rounded-full grid place-items-center ring-2 ring-red-400/50 bg-red-500/20">
+            <div v-else-if="state.availability[g.slug]?.result==='loss'" class="h-14 w-14 rounded-full grid place-items-center ring-2 ring-red-400/50 bg-red-500/20 backdrop-blur-sm shadow-lg">
               <div class="text-red-400 text-3xl font-extrabold">✕</div>
             </div>
           </div>
+          
           <!-- Streak chip on top-right -->
           <div v-if="(state.streaks[g.slug] || 0) > 0" class="absolute top-2 right-2 z-20 pointer-events-none">
-            <div class="inline-flex items-center gap-0.5 rounded-full px-2 py-1 ring-1 bg-orange-500/15 ring-orange-400/40 text-amber-200">
-              <span class="leading-none">🔥</span>
-              <span class="tabular-nums font-semibold text-sm leading-none">{{ state.streaks[g.slug] }}</span>
+            <div class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 ring-1 bg-gradient-to-br from-orange-500/20 to-amber-500/20 ring-orange-400/50 text-amber-200 shadow-lg backdrop-blur-sm">
+              <span class="leading-none text-base">🔥</span>
+              <span class="tabular-nums font-bold text-sm leading-none">{{ state.streaks[g.slug] }}</span>
             </div>
           </div>
         </div>
-        <!-- Bottom bar like Futbol11 -->
-        <div class="px-3 py-3 bg-slate-900/70 border-t border-white/10 text-center">
-          <div class="text-white text-lg font-extrabold tracking-wide">JUGAR</div>
-          <div class="text-slate-300 text-xs">{{ g.name }}</div>
+        
+        <!-- Bottom bar with gradient -->
+        <div class="relative px-3 py-3 bg-gradient-to-br from-slate-900/90 to-slate-800/90 border-t border-white/10 text-center backdrop-blur-sm">
+          <div class="text-white text-base font-extrabold tracking-wide mb-0.5">JUGAR</div>
+          <div class="text-slate-300 text-xs font-medium">{{ g.name }}</div>
         </div>
       </RouterLink>
     </div>
