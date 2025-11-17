@@ -83,10 +83,10 @@ const totals = computed(() => {
       <div>
         <h1 class="text-2xl md:text-4xl font-bold text-white mb-1">Jugar por <span class="text-emerald-400 uppercase">PUNTOS</span></h1>
         <p class="text-slate-300">Modo por XP: jugá <strong class="text-slate-100 font-semibold">UNA VEZ POR DÍA</strong>.</p>
+        <DailyResetCountdown class="my-4"/>
       </div>
       <!-- Right-side mini card with totals and countdown -->
       <div class="shrink-0 hidden sm:flex sm:flex-col sm:gap-2 sm:items-end">
-        <DailyResetCountdown />
         <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-200">
           <div class="flex items-end gap-3">
             <!-- Wins -->
@@ -135,15 +135,14 @@ const totals = computed(() => {
         <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/0 to-cyan-500/0 group-hover:from-emerald-500/5 group-hover:to-cyan-500/5 transition-all duration-300 pointer-events-none"></div>
         
         <!-- Image box -->
-        <div class="relative p-3 bg-gradient-to-br from-slate-800 to-slate-900 grid place-items-center min-h-[180px]">
+        <div class="relative bg-gradient-to-br from-slate-800 to-slate-900 grid place-items-center min-h-[180px]">
           <img 
             v-if="g.cover_url" 
             :src="g.cover_url" 
             :alt="g.name" 
-            class="h-36 object-contain group-hover:scale-105 transition-transform duration-300" 
-            style="width: 85px;"
+            class="h-full object-contain group-hover:scale-105 transition-transform duration-300" 
           />
-          <div v-else class="w-full h-36 grid place-items-center bg-white/5 text-slate-400 text-sm">{{ g.name }}</div>
+          <div v-else class="w-full h-full grid place-items-center bg-white/5 text-slate-400 text-sm">{{ g.name }}</div>
           
           <!-- Gradient overlay -->
           <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-40"></div>

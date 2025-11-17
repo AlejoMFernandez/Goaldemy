@@ -110,7 +110,6 @@ const GAME_METADATA = {
 }
 
 const KNOWN_GAMES = [
-  { slug: 'name-correct', name: FALLBACK_NAMES['name-correct'], description: FALLBACK_DESC['name-correct'], cover_url: '/games/name-correct.png' ?? null },
   { slug: 'nationality', name: FALLBACK_NAMES['nationality'], description: FALLBACK_DESC['nationality'], cover_url: '/games/nationality.png' ?? null },
   { slug: 'player-position', name: FALLBACK_NAMES['player-position'], description: FALLBACK_DESC['player-position'], cover_url: '/games/player-position.png' ?? null },
   { slug: 'guess-player', name: FALLBACK_NAMES['guess-player'], description: FALLBACK_DESC['guess-player'], cover_url: '/games/guess-player.png' ?? null },

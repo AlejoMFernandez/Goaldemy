@@ -34,14 +34,14 @@ function toFree(slug) {
         <div class="absolute inset-0 bg-gradient-to-br from-sky-500/0 to-cyan-500/0 group-hover:from-sky-500/5 group-hover:to-cyan-500/5 transition-all duration-300 pointer-events-none"></div>
         
         <!-- Image box -->
-        <div class="relative p-3 bg-gradient-to-br from-slate-800 to-slate-900 grid place-items-center min-h-[180px]">
+        <div class="relative bg-gradient-to-br from-slate-800 to-slate-900 grid place-items-center min-h-[180px]">
           <img 
             v-if="g.cover_url" 
             :src="g.cover_url" 
             :alt="g.name" 
-            class="w-full h-36 object-contain group-hover:scale-105 transition-transform duration-300" 
+            class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" 
           />
-          <div v-else class="w-full h-36 grid place-items-center bg-white/5 text-slate-400 text-sm">{{ g.name }}</div>
+          <div v-else class="w-full h-full grid place-items-center bg-white/5 text-slate-400 text-sm">{{ g.name }}</div>
           
           <!-- Gradient overlay -->
           <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-40"></div>
