@@ -108,12 +108,10 @@ const totals = computed(() => {
       </div>
     </div>
 
-    <!-- Daily Streak Banner -->
+    <!-- Daily Streak Banner (now floating) -->
     <DailyStreakBanner 
-      v-if="state.dailyStreak.current > 0"
       :currentStreak="state.dailyStreak.current"
       :bestStreak="state.dailyStreak.best"
-      class="mb-6"
     />
 
   <div v-if="state.loading" class="text-slate-400">Cargando…</div>

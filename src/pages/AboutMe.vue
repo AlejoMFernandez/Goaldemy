@@ -1,115 +1,158 @@
 <template>
-  <section class="py-4 md:py-6">
-    <div class="mb-6">
-      <h1 class="text-2xl md:text-4xl font-bold text-white flex items-center gap-3">
-        <span>¿Quién soy?</span>
-        <span class="text-2xl md:text-3xl" aria-hidden>👋</span>
-      </h1>
-      <div class="h-1 mt-3 w-24 rounded-full" style="background: linear-gradient(90deg, #22d3ee, #6366f1);"></div>
+  <section class="relative min-h-screen overflow-hidden">
+    <!-- Aurora background -->
+    <div aria-hidden="true" class="aurora-root">
+      <div class="accent"></div>
     </div>
 
-    <div class="grid gap-6 md:grid-cols-3">
-      <!-- Perfil -->
-      <aside class="card p-5 md:p-6 flex flex-col items-center text-center self-start">
-        <img
-          src="/me.jpeg"
-          alt="Foto del creador de Goaldemy"
-          class="w-40 h-40 md:w-44 md:h-44 rounded-full object-cover ring-2 ring-white/15 mb-3"
-          loading="lazy"
-        />
-        <h2 class="text-white font-bold text-lg tracking-tight">Alejo Fernández</h2>
-        <span class="mt-1 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-semibold text-sky-200 border border-white/10 bg-white/5">
-          Creador de Goaldemy
-        </span>
-        <p class="mt-4 text-slate-200 text-sm leading-relaxed">
-          Soy el creador de Goaldemy. Me encanta combinar fútbol, diseño de producto y desarrollo para crear experiencias que motiven a aprender jugando.
-        </p>
-        <div class="mt-5 flex items-center gap-3">
-          <a
-            class="inline-flex items-center justify-center w-10 h-10 rounded-full hover:scale-105 transition"
-            href="mailto:fernandezmalejo@gmail.com"
-            aria-label="Contactar por email"
-            title="Email"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-slate-200">
-              <path d="M1.5 6.75A2.25 2.25 0 0 1 3.75 4.5h16.5A2.25 2.25 0 0 1 22.5 6.75v10.5A2.25 2.25 0 0 1 20.25 19.5H3.75A2.25 2.25 0 0 1 1.5 17.25V6.75Zm2.784-.75 7.063 5.297a.75.75 0 0 0 .906 0l7.063-5.297H4.284Z"/>
-            </svg>
-          </a>
-          <a
-            class="inline-flex items-center justify-center w-10 h-10 rounded-full hover:scale-105 transition"
-            href="https://www.linkedin.com/"
-            target="_blank" rel="noopener noreferrer"
-            aria-label="LinkedIn"
-            title="LinkedIn"
-          >
-            <img src="/social/linkedinmain.png" alt="LinkedIn" class="w-6 h-6" />
-          </a>
-          <a
-            class="inline-flex items-center justify-center w-10 h-10 rounded-full hover:scale-105 transition"
-            href="https://github.com/"
-            target="_blank" rel="noopener noreferrer"
-            aria-label="GitHub"
-            title="GitHub"
-          >
-            <img src="/social/githubmain.png" alt="GitHub" class="w-6 h-6" />
-          </a>
-          <a
-            class="inline-flex items-center justify-center w-10 h-10 rounded-full hover:scale-105 transition"
-            href="https://www.instagram.com/"
-            target="_blank" rel="noopener noreferrer"
-            aria-label="Instagram"
-            title="Instagram"
-          >
-            <img src="/social/igmain.png" alt="Instagram" class="w-6 h-6" />
-          </a>
-        </div>
-      </aside>
+    <div class="relative z-10 max-w-6xl mx-auto px-6">
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-2xl md:text-3xl font-bold text-white mb-3">
+          ¿Quién soy?
+        </h1>
+        <div class="h-1 w-20 rounded-full bg-gradient-to-r from-cyan-400 to-indigo-400"></div>
+      </div>
 
-      <!-- Bio -->
-      <article class="md:col-span-2">
-        <div class="prose prose-invert max-w-3xl">
-          <p>
-            Creo profundamente en el aprendizaje basado en el juego. Goaldemy nace de esa idea: usar el fútbol como
-            motor para entrenar memoria, atención al detalle y conocimiento del deporte, de una forma amena y
-            progresiva.
-          </p>
-
-          <h3>Lo que me mueve</h3>
-          <ul>
-            <li>⚽️ Fútbol como lenguaje común para aprender jugando.</li>
-            <li>🎨 UX clara y estética: feedback inmediato, transiciones suaves, accesibilidad.</li>
-            <li>💻 Código simple y mantenible: preferir lo legible y consistente.</li>
-            <li>🤝 Comunidad primero: escuchar feedback y mejorar continuamente.</li>
-          </ul>
-
-          <h3>Hoy en Goaldemy</h3>
-          <ul>
-            <li>🧩 Construyendo micro‑juegos nuevos y pulidos.</li>
-            <li>🧠 Ajustando scoring, rachas y logros para progresión justa.</li>
-            <li>📱 Puliendo detalles en mobile: scroll, densidad y performance.</li>
-          </ul>
-
-          <div class="grid gap-4 md:grid-cols-3 mt-4">
-            <div class="card p-4">
-              <div class="text-lg font-semibold">Producto</div>
-              <p class="text-slate-300 text-sm mt-1">Definir reglas claras, flujos y métricas de éxito.</p>
-            </div>
-            <div class="card p-4">
-              <div class="text-lg font-semibold">Diseño</div>
-              <p class="text-slate-300 text-sm mt-1">Simplicidad visual, contraste y micro‑interacciones.</p>
-            </div>
-            <div class="card p-4">
-              <div class="text-lg font-semibold">Código</div>
-              <p class="text-slate-300 text-sm mt-1">Vue + Vite, componentes limpios y servicios claros.</p>
+      <!-- Main Content -->
+      <div class="grid gap-8 lg:grid-cols-3">
+        <!-- Profile Card -->
+        <aside class="lg:col-span-1">
+          <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-sm p-8 text-center sticky top-24">
+            <img
+              src="/me.jpeg"
+              alt="Foto del creador de GOALDEMY"
+              class="w-40 h-40 mx-auto rounded-full object-cover ring-4 ring-white/10 mb-4 shadow-2xl"
+              loading="lazy"
+            />
+            <h2 class="text-white font-bold text-xl tracking-tight mb-2">Alejo Fernández</h2>
+            <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold text-cyan-300 border border-cyan-400/30 bg-cyan-500/10">
+              Creador de GOALDEMY
+            </span>
+            <p class="mt-6 text-slate-300 text-sm leading-relaxed">
+              Desarrollador y fanático del fútbol. Creo productos que combinan aprendizaje, diseño y comunidad.
+            </p>
+            
+            <!-- Social Links -->
+            <div class="mt-6 flex items-center justify-center gap-3">
+              <a
+                class="inline-flex items-center justify-center w-10 h-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition"
+                href="mailto:fernandezmalejo@gmail.com"
+                aria-label="Contactar por email"
+                title="Email"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-slate-200">
+                  <path d="M1.5 6.75A2.25 2.25 0 0 1 3.75 4.5h16.5A2.25 2.25 0 0 1 22.5 6.75v10.5A2.25 2.25 0 0 1 20.25 19.5H3.75A2.25 2.25 0 0 1 1.5 17.25V6.75Zm2.784-.75 7.063 5.297a.75.75 0 0 0 .906 0l7.063-5.297H4.284Z"/>
+                </svg>
+              </a>
+              <a
+                class="inline-flex items-center justify-center w-10 h-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition"
+                href="https://www.linkedin.com/"
+                target="_blank" rel="noopener noreferrer"
+                aria-label="LinkedIn"
+                title="LinkedIn"
+              >
+                <img src="/social/linkedinmain.png" alt="LinkedIn" class="w-5 h-5" />
+              </a>
+              <a
+                class="inline-flex items-center justify-center w-10 h-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition"
+                href="https://github.com/"
+                target="_blank" rel="noopener noreferrer"
+                aria-label="GitHub"
+                title="GitHub"
+              >
+                <img src="/social/githubmain.png" alt="GitHub" class="w-5 h-5" />
+              </a>
+              <a
+                class="inline-flex items-center justify-center w-10 h-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition"
+                href="https://www.instagram.com/"
+                target="_blank" rel="noopener noreferrer"
+                aria-label="Instagram"
+                title="Instagram"
+              >
+                <img src="/social/igmain.png" alt="Instagram" class="w-5 h-5" />
+              </a>
             </div>
           </div>
+        </aside>
 
-          <p class="mt-4 mb-0">
-            ¿Querés proponer ideas o colaborar? Escribime cuando quieras:
-            <a href="mailto:fernandezmalejo@gmail.com" class="text-sky-300 hover:text-sky-200">fernandezmalejo@gmail.com</a>.
-          </p>
-        </div>
-      </article>
+        <!-- Bio Content -->
+        <article class="lg:col-span-2 space-y-8">
+          <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-sm p-8">
+            <p class="text-slate-300 leading-relaxed mb-6">
+              <strong>GOALDEMY</strong> nació como un proyecto personal para aprender mientras jugaba. La idea era simple: usar el fútbol 
+              como excusa para entrenar memoria, estimación y reconocimiento visual.
+            </p>
+
+            <h3 class="text-xl font-bold text-white mb-2">En qué me enfoco</h3>
+            <ul class="space-y-1 mb-6">
+              <li class="flex gap-3 text-slate-300">
+                <span class="text-slate-500 flex-shrink-0">•</span>
+                <span>Juegos cortos con feedback claro.</span>
+              </li>
+              <li class="flex gap-3 text-slate-300">
+                <span class="text-slate-500 flex-shrink-0">•</span>
+                <span>Progresión visible: XP, rachas y logros.</span>
+              </li>
+              <li class="flex gap-3 text-slate-300">
+                <span class="text-slate-500 flex-shrink-0">•</span>
+                <span>Código limpio y mantenible.</span>
+              </li>
+              <li class="flex gap-3 text-slate-300">
+                <span class="text-slate-500 flex-shrink-0">•</span>
+                <span>Escuchar a la comunidad y mejorar.</span>
+              </li>
+            </ul>
+
+            <h3 class="text-xl font-bold text-white mb-2">Qué estoy haciendo</h3>
+            <ul class="space-y-1">
+              <li class="flex gap-3 text-slate-300">
+                <span class="text-slate-500 flex-shrink-0">•</span>
+                <span>Agregando nuevos juegos y puliendo los existentes.</span>
+              </li>
+              <li class="flex gap-3 text-slate-300">
+                <span class="text-slate-500 flex-shrink-0">•</span>
+                <span>Mejorando el sistema de scoring y recompensas.</span>
+              </li>
+              <li class="flex gap-3 text-slate-300">
+                <span class="text-slate-500 flex-shrink-0">•</span>
+                <span>Optimizando la experiencia mobile.</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Skills Cards -->
+          <div class="grid gap-4 md:grid-cols-3">
+            <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 backdrop-blur-sm p-6 hover:border-emerald-400/30 transition">
+              <div class="inline-flex rounded-lg bg-emerald-500/10 p-2 ring-1 ring-emerald-400/20 mb-3">
+                <svg class="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <div class="text-lg font-bold text-white mb-2">Producto</div>
+              <p class="text-slate-300 text-sm">Definir reglas claras, flujos y métricas de éxito.</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur-sm p-6 hover:border-indigo-400/30 transition">
+              <div class="inline-flex rounded-lg bg-indigo-500/10 p-2 ring-1 ring-indigo-400/20 mb-3">
+                <svg class="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+              </div>
+              <div class="text-lg font-bold text-white mb-2">Diseño</div>
+              <p class="text-slate-300 text-sm">Simplicidad visual, contraste y micro‑interacciones.</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 backdrop-blur-sm p-6 hover:border-cyan-400/30 transition">
+              <div class="inline-flex rounded-lg bg-cyan-500/10 p-2 ring-1 ring-cyan-400/20 mb-3">
+                <svg class="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+              </div>
+              <div class="text-lg font-bold text-white mb-2">Desarrollo</div>
+              <p class="text-slate-300 text-sm">Vue 3, Tailwind, Supabase y código mantenible.</p>
+            </div>
+          </div>
+        </article>
+      </div>
     </div>
   </section>
 </template>
