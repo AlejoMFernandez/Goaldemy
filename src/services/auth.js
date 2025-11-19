@@ -5,6 +5,7 @@ import { pushSuccessToast, pushInfoToast, pushErrorToast } from '../stores/notif
 let user = {
     id: null,
     email: null,
+    email_confirmed_at: null,
 }
 let observers = [];
 let readyResolved = false;
@@ -24,11 +25,11 @@ async function loadUserCurrentAuthState() {
     }
     const u = data?.user || null;
     if (!u) {
-        setAuthUserState({ id: null, email: null }, { replace: true });
+        setAuthUserState({ id: null, email: null, email_confirmed_at: null }, { replace: true });
         if (!readyResolved && resolveReady) { readyResolved = true; resolveReady(true); }
         return;
     }
-    setAuthUserState({ id: u.id, email: u.email }, { replace: true });
+    setAuthUserState({ id: u.id, email: u.email, email_confirmed_at: u.email_confirmed_at || u.confirmed_at || null }, { replace: true });
     loadExtendedProfile();
     if (!readyResolved && resolveReady) { readyResolved = true; resolveReady(true); }
 }
@@ -50,18 +51,20 @@ export async function register(email, password, profileData = {}) {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
+            options: {
+                emailRedirectTo: `${window.location.origin}/login`,
+            }
         });
 
         if (error) {
             console.error('[Register.vue register]:', error);
-            pushErrorToast(error.message || 'No se pudo registrar');
             throw new Error(error.message || 'Registration failed');
         }
 
         const u = data?.user || null;
         // If email confirmation is required, user can be null here
         if (u) {
-            setAuthUserState({ id: u.id, email: u.email }, { replace: true });
+            setAuthUserState({ id: u.id, email: u.email, email_confirmed_at: u.email_confirmed_at || u.confirmed_at || null }, { replace: true });
             // Attempt to create extended profile; ignore unknown columns
             const base = { id: u.id, email: u.email }
             const allowed = ['display_name','bio','career','avatar_url','nationality_code','favorite_team','favorite_player']
@@ -71,13 +74,20 @@ export async function register(email, password, profileData = {}) {
                 try { await createUserProfile(base) } catch {}
             }
         } else {
-            setAuthUserState({ id: null, email: email });
+            setAuthUserState({ id: null, email: email, email_confirmed_at: null });
         }
-        pushSuccessToast('Registro exitoso. Revisá tu email si se requiere confirmación.');
+
+        // If email not confirmed, proactively resend verification and sign out to enforce flow
+        const isConfirmed = !!(data?.user?.email_confirmed_at || data?.user?.confirmed_at);
+        if (!isConfirmed) {
+            try { await supabase.auth.resend({ type: 'signup', email }); } catch {}
+            try { await supabase.auth.signOut(); } catch {}
+        }
+
+        return { user: data?.user || null, session: data?.session || null, requiresConfirmation: !isConfirmed };
 
     } catch (error) {
         console.error('[Register.vue register]:', error);
-        try { pushErrorToast(error?.message || 'No se pudo registrar'); } catch {}
         throw new Error(error?.message || 'Registration failed');
     }
 }
@@ -96,11 +106,18 @@ export async function login(email, password) {
 
     const u = data?.user || null;
     if (u) {
-        setAuthUserState({ id: u.id, email: u.email }, { replace: true });
+        const confirmed = !!(u.email_confirmed_at || u.confirmed_at);
+        if (!confirmed) {
+            try { await supabase.auth.signOut(); } catch {}
+            setAuthUserState({ id: null, email: null, email_confirmed_at: null }, { replace: true });
+            try { pushInfoToast('Necesitás confirmar tu email antes de ingresar'); } catch {}
+            throw new Error('Necesitás confirmar tu email antes de ingresar');
+        }
+        setAuthUserState({ id: u.id, email: u.email, email_confirmed_at: u.email_confirmed_at || u.confirmed_at || null }, { replace: true });
         loadExtendedProfile();
         try { pushSuccessToast('Sesión iniciada'); } catch {}
     } else {
-        setAuthUserState({ id: null, email: null }, { replace: true });
+        setAuthUserState({ id: null, email: null, email_confirmed_at: null }, { replace: true });
     }
 }
 
@@ -134,19 +151,34 @@ export async function logout() {
     setAuthUserState({
         id: null,
         email: null,
+        email_confirmed_at: null,
     }, { replace: true });
     try { pushInfoToast('Cerraste sesión'); } catch {}
 }
 
 // Enviar email de reseteo de contraseña
 export async function resetPasswordForEmail(email) {
+    // Hint check in our own table (non-bloqueante)
+    try {
+        await supabase
+            .from('user_profiles')
+            .select('id')
+            .ilike('email', email)
+            .maybeSingle()
+    } catch (e) {
+        console.warn('[auth.js resetPasswordForEmail] profile hint check:', e?.message || e)
+    }
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/login',
+        redirectTo: window.location.origin + '/reset-password',
     })
     if (error) {
         console.error('[auth.js resetPasswordForEmail]:', error)
-        try { pushErrorToast(error.message || 'No se pudo enviar el email de reseteo') } catch {}
-        throw new Error(error.message || 'No se pudo enviar el email de reseteo')
+        const friendly = /invalid/i.test(error.message || '')
+            ? 'No encontramos ninguna cuenta registrada con ese email'
+            : (error.message || 'No se pudo enviar el email de reseteo')
+        try { pushErrorToast(friendly) } catch {}
+        throw new Error(friendly)
     }
     try { pushSuccessToast('Te enviamos un email para recuperar tu contraseña') } catch {}
 }
@@ -174,6 +206,23 @@ export async function updateAuthUserData(data) {
     }
 }
 
+// Reenviar email de verificación de cuenta
+export async function resendVerificationEmail(email) {
+    try {
+        const { data, error } = await supabase.auth.resend({
+            type: 'signup',
+            email,
+        });
+        if (error) throw error;
+        try { pushSuccessToast('Te enviamos nuevamente el correo de verificación'); } catch {}
+        return data;
+    } catch (e) {
+        console.error('[auth.js resendVerificationEmail]:', e);
+        try { pushErrorToast(e?.message || 'No pudimos reenviar el correo'); } catch {}
+        throw e;
+    }
+}
+
 // Funciones de manejo de observers
 export function subscribeToAuthStateChanges(callback) {
     observers.push(callback);
@@ -197,7 +246,7 @@ function setAuthUserState(newState, opts = {}){
     // If replacing or switching to a different user id, reset to a clean base first
     const isIdChange = Object.prototype.hasOwnProperty.call(newState, 'id') && newState.id !== user.id
     if (replace || isIdChange) {
-        user = { id: null, email: null }
+        user = { id: null, email: null, email_confirmed_at: null }
     }
     user = {
         ...user,
@@ -216,10 +265,10 @@ try {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
         const u = session?.user || null;
         if (u) {
-            setAuthUserState({ id: u.id, email: u.email }, { replace: true });
+            setAuthUserState({ id: u.id, email: u.email, email_confirmed_at: u.email_confirmed_at || u.confirmed_at || null }, { replace: true });
             loadExtendedProfile();
         } else {
-            setAuthUserState({ id: null, email: null }, { replace: true });
+            setAuthUserState({ id: null, email: null, email_confirmed_at: null }, { replace: true });
         }
     });
     // Nota: en dev HMR esta suscripción se reemplaza; no requiere limpieza manual aquí

@@ -67,9 +67,9 @@ export default {
           favorite_player: this.user.favorite_player?.trim() || null,
         }
         await register(this.user.email, this.user.password, profile);
-        this.notice = 'Revisá tu correo para confirmar tu cuenta.'
-        try { pushSuccessToast('Registro exitoso') } catch {}
-        this.$router.push('/profile');
+        this.notice = '✅ Te enviamos un correo para confirmar tu cuenta. Verificá tu email para continuar.'
+        try { pushSuccessToast('Cuenta creada! Verificá tu email') } catch {}
+        this.$router.push('/verify-email');
       } catch(error){
         console.error(error);
         this.error = error?.message || 'No se pudo registrar.'

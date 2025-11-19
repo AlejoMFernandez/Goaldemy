@@ -2,6 +2,7 @@
 import AppH1 from '../components/AppH1.vue';
 import AppButton from '../components/AppButton.vue';
 import { login, resetPasswordForEmail } from '../services/auth';
+import { pushErrorToast, pushSuccessToast } from '../stores/notifications';
 
 export default {
   name: 'Login',
@@ -34,17 +35,21 @@ export default {
     },
     async handleResetPassword() {
       if (!this.user.email) {
-        this.error = 'Ingresá tu email para enviar el enlace de reseteo.'
+        const msg = 'Ingresá tu email para enviar el enlace de reseteo.'
+        this.error = msg
+        try { pushErrorToast(msg) } catch {}
         return
       }
       try {
         this.loading = true
         this.error = ''
         await resetPasswordForEmail(this.user.email)
-        this.error = 'Te enviamos un email con el enlace para restablecer tu contraseña.'
+        // Success toast ya se muestra en auth.js
       } catch (e) {
         console.error(e)
-        this.error = e?.message || 'No pudimos enviar el email de reseteo.'
+        const msg = e?.message || 'No pudimos enviar el email de reseteo.'
+        this.error = msg
+        try { pushErrorToast(msg) } catch {}
       } finally {
         this.loading = false
       }
@@ -97,6 +102,7 @@ export default {
           ¿Olvidaste tu contraseña?
         </button>
       </div>
+      
       
       <div class="pt-2 space-y-3">
         <AppButton type="submit" class="w-full">Acceder</AppButton>

@@ -25,12 +25,16 @@ import PlayFree from '../pages/PlayFree.vue';
 import Notifications from '../pages/Notifications.vue';
 import DirectChat from '../pages/DirectChat.vue';
 import DirectMessages from '../pages/DirectMessages.vue';
+import VerifyEmail from '../pages/VerifyEmail.vue';
+import ResetPassword from '../pages/ResetPassword.vue';
 
 const routes = [
     { path: '/', component: Landing },
     { path: '/home', component: Home },
     { path: '/login', component: Login, meta: { layout: 'auth' } },
     { path: '/register', component: Register, meta: { layout: 'auth' } },
+    { path: '/verify-email', component: VerifyEmail, meta: { layout: 'auth' } },
+    { path: '/reset-password', component: ResetPassword, meta: { layout: 'auth' } },
     { path: '/profile', component: Profile, meta: { requiresAuth: true } },
     { path: '/profile-edit', component: ProfileEdit, meta: { requiresAuth: true } },
     { path: '/games/guess-player', component: GuessPlayer, meta: { requiresAuth: true } },
@@ -71,6 +75,11 @@ router.beforeEach(async (to, from) => {
     // Esperar a que la capa de auth inicial termine (getUser) antes de decidir
     await authReady;
     user = getAuthUser();
+    // Si está logueado pero no tiene email confirmado, forzar verificación
+    if (user.id && !user.email_confirmed_at && to.path !== '/verify-email') {
+        try { if (to.path !== '/verify-email') pushInfoToast('Confirmá tu email para continuar'); } catch {}
+        return '/verify-email';
+    }
     if (to.meta.requiresAuth && !user.id) {
         try { if (to.path !== '/login') pushInfoToast('Necesitás iniciar sesión'); } catch {}
         return '/login';

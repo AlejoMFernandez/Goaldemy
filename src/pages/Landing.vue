@@ -55,21 +55,28 @@ function getGameRoute(slug) {
           <span class="font-semibold text-slate-200">rangos</span> y micro‑desafíos diarios que te mantienen avanzando.
         </p>
         <div class="flex flex-wrap gap-4 pt-6 justify-center">
-          <RouterLink v-if="!state.isAuthenticated" to="/register" class="rounded-xl bg-[oklch(0.62_0.21_270)] px-6 py-3 font-semibold text-white transition hover:bg-[oklch(0.55_0.21_270)] hover:scale-105 shadow-lg hover:shadow-[oklch(0.62_0.21_270)]/50">
-            Crear cuenta
-          </RouterLink>
-          <RouterLink v-if="!state.isAuthenticated" to="/login" class="rounded-xl border border-white/10 px-6 py-3 font-semibold text-slate-200 transition hover:border-white/20 hover:text-white hover:bg-white/5 backdrop-blur">
-            Iniciar sesión
-          </RouterLink>
-          <RouterLink to="/play/points" class="rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-3 font-semibold text-white transition hover:scale-105 shadow-lg hover:shadow-emerald-500/50">
-            Ver juegos
-          </RouterLink>
-          <RouterLink to="/leaderboards" class="rounded-xl border border-white/10 px-6 py-3 font-semibold text-slate-200 transition hover:border-white/20 hover:text-white hover:bg-white/5 backdrop-blur">
-            Top global
-          </RouterLink>
-          <RouterLink to="/play/free" class="rounded-xl border border-white/10 px-6 py-3 font-semibold text-slate-200 transition hover:border-white/20 hover:text-white hover:bg-white/5 backdrop-blur">
-            Probar gratis
-          </RouterLink>
+          <!-- Botones si NO está autenticado -->
+          <template v-if="!state.isAuthenticated">
+            <RouterLink to="/login" class="rounded-xl bg-[oklch(0.62_0.21_270)] px-6 py-3 font-semibold text-white transition hover:bg-[oklch(0.55_0.21_270)] hover:scale-105 shadow-lg hover:shadow-[oklch(0.62_0.21_270)]/50">
+              Iniciar sesión
+            </RouterLink>
+            <RouterLink to="/register" class="rounded-xl border border-white/10 px-6 py-3 font-semibold text-slate-200 transition hover:border-white/20 hover:text-white hover:bg-white/5 backdrop-blur">
+              Crear cuenta
+            </RouterLink>
+          </template>
+          
+          <!-- Botones si SÍ está autenticado -->
+          <template v-else>
+            <RouterLink to="/play/points" class="rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-3 font-semibold text-white transition hover:scale-105 shadow-lg hover:shadow-emerald-500/50">
+              Ver juegos
+            </RouterLink>
+            <RouterLink to="/leaderboards" class="rounded-xl border border-white/10 px-6 py-3 font-semibold text-slate-200 transition hover:border-white/20 hover:text-white hover:bg-white/5 backdrop-blur">
+              Top global
+            </RouterLink>
+            <RouterLink to="/profile" class="rounded-xl border border-white/10 px-6 py-3 font-semibold text-slate-200 transition hover:border-white/20 hover:text-white hover:bg-white/5 backdrop-blur">
+              Mi perfil
+            </RouterLink>
+          </template>
         </div>
       </div>
     </div>
