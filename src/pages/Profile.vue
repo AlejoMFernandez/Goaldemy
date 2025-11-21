@@ -359,30 +359,45 @@ export default {
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl pb-8">
-    <div class="mb-4 flex items-center justify-between gap-2">
-      <AppH1>{{ isSelf ? 'Mi Perfil' : 'Perfil' }}</AppH1>
+  <div class="mx-auto max-w-6xl pb-12 px-4">
+    <!-- Header section -->
+    <div class="mb-6 flex items-center justify-between gap-4">
+      <div>
+        <AppH1 class="!mb-1">{{ isSelf ? 'Mi Perfil' : 'Perfil' }}</AppH1>
+        <p class="text-sm text-slate-400">{{ isSelf ? 'Gestiona tu información y logros' : 'Información del usuario' }}</p>
+      </div>
       <div v-if="canConnect" class="flex items-center gap-2">
         <!-- When connected: show Disconnect -->
         <template v-if="conn.state==='connected'">
-          <button @click="$router.push('/messages/' + user.id)" class="rounded-full px-4 py-2 text-sm font-semibold border border-white/10 text-white bg-[oklch(0.62_0.21_270)] hover:brightness-110">Mensaje</button>
-          <button @click="onDisconnect" :disabled="connBusy" class="rounded-full px-4 py-2 text-sm font-semibold border border-red-400/40 text-red-200 bg-red-500/10 hover:brightness-110">Desconectar</button>
+          <button @click="$router.push('/messages/' + user.id)" 
+            class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-emerald-400/30 text-white bg-emerald-500/20 hover:bg-emerald-500/30 transition-all shadow-lg hover:shadow-emerald-500/20">
+            💬 Mensaje
+          </button>
+          <button @click="onDisconnect" :disabled="connBusy" 
+            class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-red-400/30 text-red-200 bg-red-500/10 hover:bg-red-500/20 transition-all">
+            Desconectar
+          </button>
         </template>
         <!-- When pending_out: allow cancel -->
         <template v-else-if="conn.state==='pending_out'">
-          <button @click="onDisconnect" :disabled="connBusy" class="rounded-full px-4 py-2 text-sm font-semibold border border-amber-400/40 text-amber-200 bg-amber-500/10 hover:brightness-110">Cancelar solicitud</button>
+          <button @click="onDisconnect" :disabled="connBusy" 
+            class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-amber-400/30 text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 transition-all">
+            Cancelar solicitud
+          </button>
         </template>
         <!-- Default: connect CTA -->
         <template v-else>
-          <button @click="onConnect" :disabled="connectDisabled" class="rounded-full px-4 py-2 text-sm font-semibold border bg-[oklch(0.62_0.21_270)] border-white/10 text-white hover:brightness-110">Conectar</button>
+          <button @click="onConnect" :disabled="connectDisabled" 
+            class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-emerald-400/30 bg-emerald-500/20 text-white hover:bg-emerald-500/30 transition-all shadow-lg hover:shadow-emerald-500/20">
+            🤝 Conectar
+          </button>
         </template>
       </div>
     </div>
 
-  <section class="grid gap-4 md:grid-cols-12">
-
+    <section class="grid gap-6 lg:grid-cols-12">
       <!-- Columna izquierda: avatar, nombre, carrera, bio -->
-      <div class="flex flex-col gap-4 md:col-span-8">
+      <div class="flex flex-col gap-6 lg:col-span-8">
         <ProfileHeaderCard
           :avatar-initial="avatarInitial"
           :avatar-url="user.avatar_url"
@@ -398,40 +413,51 @@ export default {
           :career="user.career"
           :bio="user.bio"
         />
-        <div v-if="canConnect" class="-mt-2 mb-2">
-          <p v-if="conn.state==='pending_in'" class="text-xs text-slate-400">Tenés una solicitud de esta persona. Respondela desde Notificaciones.</p>
+        
+        <div v-if="canConnect && conn.state==='pending_in'" 
+          class="rounded-xl border border-amber-400/30 bg-amber-500/10 backdrop-blur p-4">
+          <p class="text-sm text-amber-200 flex items-center gap-2">
+            <span class="text-xl">📬</span>
+            Tenés una solicitud de esta persona. Respondela desde Notificaciones.
+          </p>
         </div>
-  <AchievementsCard 
-    :achievements="achievements" 
-    :loading="achLoading"
-    :featured-codes="featuredAchievements"
-    :is-self="isSelf"
-    @customize="openFeaturedModal" />
-  <XpDonutChart
-    :items="xpByGame"
-    :streaks-by-game="streaksMap"
-    :daily-best-by-name="Object.fromEntries((dailyStreaksItems||[]).map(r => [r.name, r.best]))"
-    :loading="xpByGameLoading || maxStreaksLoading || dailyStreaksLoading" />
-        <div class="rounded-lg border border-white/10 p-4">
-          <p class="text-xs uppercase tracking-wide text-slate-400">Detalles del usuario</p>
-          <ul class="mt-1 text-slate-300 text-sm space-y-1 list-disc list-inside">
-            <li>Carrera: {{ user.career || '—' }}</li>
-            <li>Compañía: —</li>
-            <li>Localidad: —</li>
-            <li>Social media: —</li>
-            <li>Teléfono: —</li>
-            <li>Work email: —</li>
-          </ul>
-        </div>
+
+        <AchievementsCard 
+          :achievements="achievements" 
+          :loading="achLoading"
+          :featured-codes="featuredAchievements"
+          :is-self="isSelf"
+          @customize="openFeaturedModal" />
+        
+        <XpDonutChart
+          :items="xpByGame"
+          :streaks-by-game="streaksMap"
+          :daily-best-by-name="Object.fromEntries((dailyStreaksItems||[]).map(r => [r.name, r.best]))"
+          :loading="xpByGameLoading || maxStreaksLoading || dailyStreaksLoading" />
       </div>
 
       <!-- Columna derecha: nivel, XP, achievements y progreso -->
-      <div class="flex flex-col gap-4 md:col-span-4">
-        <ProgressCard :level-info="levelInfo" :loading="levelLoading" :xp-now="xpNow" :progress-percent="progressPercent" :achievements-count="achievements.length" :top-rank="topRank" />
-        <ConnectionsCard :follower-count="followerCount" :following-count="followingCount" :group-count="groupCount" :connections="connectionsList" :loading="connectionsLoading" />
-        <CommunityCard :forums-count="forumsCount" :messages-count="messagesCount" :discussions-started-count="discussionsStartedCount" />
+      <div class="flex flex-col gap-6 lg:col-span-4">
+        <ProgressCard 
+          :level-info="levelInfo" 
+          :loading="levelLoading" 
+          :xp-now="xpNow" 
+          :progress-percent="progressPercent" 
+          :achievements-count="achievements.length" 
+          :top-rank="topRank" />
+        
+        <ConnectionsCard 
+          :follower-count="followerCount" 
+          :following-count="followingCount" 
+          :group-count="groupCount" 
+          :connections="connectionsList" 
+          :loading="connectionsLoading" />
+        
+        <CommunityCard 
+          :forums-count="forumsCount" 
+          :messages-count="messagesCount" 
+          :discussions-started-count="discussionsStartedCount" />
       </div>
-      
     </section>
 
     <!-- Featured Achievements Modal -->

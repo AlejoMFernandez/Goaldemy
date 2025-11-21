@@ -147,10 +147,10 @@ export default {
       const correctPositions = this.correctness.reduce((acc, ok) => acc + (ok ? 1 : 0), 0)
       this.corrects = correctPositions
       this.attempts = 5
-      this.score = correctPositions * 10
+      this.score = correctPositions * 20
       this.answered = true
       // award XP once
-      this.xpEarned = this.allowXp ? (correctPositions * 10) : 0
+      this.xpEarned = this.allowXp ? (correctPositions * 20) : 0
       if (this.allowXp && this.xpEarned > 0) {
         try {
           await awardXpForCorrect({ gameCode: 'age-order', amount: this.xpEarned, attemptIndex: 0, streak: 0, corrects: correctPositions })

@@ -134,8 +134,8 @@ export async function submitGuess(state, confettiHost) {
     state.answered = true
     const nextStreak = state.streak + 1
     if (state.allowXp) {
-      await awardXpForCorrect({ gameCode: 'who-is', amount: 50, attemptIndex: state.attempts, streak: nextStreak, corrects: state.corrects + 1 })
-      state.xpEarned += 50
+      await awardXpForCorrect({ gameCode: 'who-is', amount: 100, attemptIndex: state.attempts, streak: nextStreak, corrects: state.corrects + 1 })
+      state.xpEarned += 100
     }
     onCorrect(state)
     state.streak = nextStreak
@@ -144,7 +144,7 @@ export async function submitGuess(state, confettiHost) {
     // 🎉 Celebrate correct answer
     celebrateCorrect()
     
-    if (state.allowXp) { spawnXpBadge(confettiHost, '+50 XP', { position: 'top-right' }) }
+    if (state.allowXp) { spawnXpBadge(confettiHost, '+100 XP', { position: 'top-right' }) }
     state.feedback = ''
     return true
   } else {

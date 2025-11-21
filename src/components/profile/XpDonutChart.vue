@@ -90,24 +90,38 @@ export default {
 </script>
 
 <template>
-  <div class="rounded-lg border border-white/10 p-4 w-full">
-    <p class="text-xs uppercase tracking-wide text-slate-400">XP por juego</p>
-    <div class="mt-2 min-h-56">
-      <div v-if="loading" class="text-slate-300">Cargando…</div>
-      <div v-else-if="!items.length" class="text-slate-500">Aún no hay XP para graficar</div>
+  <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur p-6 w-full shadow-xl">
+    <p class="text-xs uppercase tracking-wide text-slate-400 mb-4">XP por juego</p>
+    <div class="min-h-56">
+      <div v-if="loading" class="text-center py-12 text-slate-400">
+        <div class="animate-pulse">Cargando estadísticas...</div>
+      </div>
+      <div v-else-if="!items.length" class="text-center py-12 rounded-xl bg-slate-800/30 border border-white/5">
+        <div class="text-3xl mb-2">📊</div>
+        <p class="text-slate-400">Aún no hay XP para graficar</p>
+      </div>
       <div v-else>
-        <div style="height: 240px;">
+        <div style="height: 240px;" class="mb-4">
           <Doughnut ref="chart" :data="chartData" :options="chartOptions" :height="240" :width="240" v-slot="{ chart }" >
           </Doughnut>
         </div>
-        <div class="rounded-lg bg-white/3 border border-white/10 p-3">
-          <p class="text-[10px] uppercase tracking-wider text-slate-400">Detalle</p>
-          <ul class="mt-1 space-y-1">
-            <li v-for="(g,idx) in items" :key="g.id" class="flex items-center gap-2 text-sm text-slate-200 rounded px-2 py-1">
-              <span class="truncate">{{ g.name }}</span>
+        <div class="rounded-xl bg-slate-800/40 border border-white/10 p-4">
+          <p class="text-[10px] uppercase tracking-wider text-slate-400 mb-3">Detalle por juego</p>
+          <ul class="space-y-1">
+            <li v-for="(g,idx) in items" :key="g.id" 
+              class="flex items-center gap-2 text-sm rounded-lg px-2 py-1 hover:bg-white/5 transition-all">
+              <span class="truncate text-slate-200">{{ g.name }}</span>
               <span class="ml-auto flex items-center gap-2">
-                <span v-if="streaksByGame[g.id]" class="inline-flex items-center rounded-full px-2 py-0.5 ring-1 ring-emerald-400/40 bg-emerald-500/10 text-emerald-200 text-xs" title="Mejor racha en juego">×{{ streaksByGame[g.id] }}</span>
-                <span v-if="dailyBestByName[g.name]" class="inline-flex items-center rounded-full px-2 py-0.5 ring-1 ring-orange-400/40 bg-orange-500/10 text-amber-200 text-xs" title="Mejor racha por día">🔥{{ dailyBestByName[g.name] }}</span>
+                <span v-if="streaksByGame[g.id]" 
+                  class="hidden sm:inline-flex items-center rounded-lg px-2 py-0.5 border border-emerald-400/30 bg-emerald-500/10 text-emerald-200 text-xs font-semibold" 
+                  title="Mejor racha en juego">
+                  ×{{ streaksByGame[g.id] }}
+                </span>
+                <span v-if="dailyBestByName[g.name]" 
+                  class="hidden sm:inline-flex items-center rounded-lg px-2 py-0.5 border border-orange-400/30 bg-orange-500/10 text-orange-200 text-xs font-semibold" 
+                  title="Mejor racha diaria">
+                  🔥{{ dailyBestByName[g.name] }}
+                </span>
                 <span class="text-slate-100 font-medium">{{ new Intl.NumberFormat('es-AR').format(g.xp) }} XP</span>
               </span>
             </li>

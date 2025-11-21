@@ -112,19 +112,21 @@ export default {
 </script>
 
 <template>
-  <section class="mx-auto max-w-4xl">
-    <div class="mb-4 flex items-center justify-between gap-2">
+  <section class="mx-auto max-w-4xl px-0 sm:px-4">
+    <div class="mb-4 px-4 sm:px-0">
       <AppH1>Top Global</AppH1>
     </div>
-    <div class="mb-3 flex justify-between items-center gap-3">
+    <div class="mb-3 flex justify-between flex-col sm:flex-row gap-3 px-4 sm:px-0">
       <PeriodTabs v-model="period" @update:modelValue="page=0; load()" />
       <GameFilter v-model="gameId" :games="games" @update:modelValue="page=0; load()" />
     </div>
-    <LeaderboardTable :rows="rows" :loading="loading" />
-    <div class="mt-3 flex items-center justify-between">
-      <div class="flex items-center gap-2 text-sm text-slate-300">
+    <div class="px-4 sm:px-0">
+      <LeaderboardTable :rows="rows" :loading="loading" />
+    </div>
+    <div class="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-0">
+      <div class="flex items-center gap-2 text-xs sm:text-sm text-slate-300 flex-wrap">
         <span>Mostrar</span>
-  <select v-model.number="limit" @change="page = 0; load()" class="rounded-lg bg-white/5 border border-white/10 px-3 py-1.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20 hover:bg-white/10">
+        <select v-model.number="limit" @change="page = 0; load()" class="rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20 hover:bg-white/10 text-xs sm:text-sm">
           <option :value="10">10</option>
           <option :value="25">25</option>
           <option :value="50">50</option>
@@ -132,9 +134,9 @@ export default {
         </select>
         <span>por página</span>
       </div>
-      <div class="flex items-center gap-2">
-        <button class="px-3 py-1 rounded bg-white/5 border border-white/10 disabled:opacity-50" :disabled="page===0 || loading" @click="prevPage">Anterior</button>
-        <button class="px-3 py-1 rounded bg-white/5 border border-white/10 disabled:opacity-50" :disabled="rows.length < limit || loading" @click="nextPage">Siguiente</button>
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <button class="flex-1 sm:flex-initial px-3 py-1.5 text-xs sm:text-sm rounded bg-white/5 border border-white/10 disabled:opacity-50" :disabled="page===0 || loading" @click="prevPage">Anterior</button>
+        <button class="flex-1 sm:flex-initial px-3 py-1.5 text-xs sm:text-sm rounded bg-white/5 border border-white/10 disabled:opacity-50" :disabled="rows.length < limit || loading" @click="nextPage">Siguiente</button>
       </div>
     </div>
   </section>

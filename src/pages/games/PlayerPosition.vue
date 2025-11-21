@@ -206,7 +206,7 @@ export default {
         <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden"></div>
         
         <!-- Timer -->
-        <div v-if="mode==='challenge'" class="pointer-events-none absolute left-3 top-3 z-10">
+        <div v-if="mode==='challenge'" class="pointer-events-none absolute left-3 top-3 z-20">
           <div :class="['rounded-full px-3 py-1 text-sm font-bold shadow border',
             timeLeft>=21 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' :
             timeLeft>=11 ? 'bg-amber-500/15 text-amber-300 border-amber-500/40' :

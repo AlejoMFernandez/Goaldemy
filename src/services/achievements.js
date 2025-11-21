@@ -55,3 +55,52 @@ export async function getAchievementByCode(code) {
   const catalog = await getAchievementsCatalog()
   return catalog[code] || null
 }
+
+/**
+ * Get achievement unlock percentage: (users with achievement / total users) * 100
+ * Returns a map: { achievement_code: percentage }
+ */
+export async function getAchievementUnlockPercentages() {
+  try {
+    // Get total registered users count
+    const { count: totalUsers, error: countError } = await supabase
+      .from('user_profiles')
+      .select('id', { count: 'exact', head: true })
+    
+    if (countError || !totalUsers) {
+      console.error('[achievements.js] Error counting users:', countError)
+      return {}
+    }
+
+    // Get count of users per achievement
+    const { data: achievements, error: achError } = await supabase
+      .from('user_achievements')
+      .select('achievement_id, achievements!inner(code)')
+    
+    if (achError) {
+      console.error('[achievements.js] Error fetching achievement stats:', achError)
+      return {}
+    }
+
+    // Count users per achievement code
+    const counts = {}
+    for (const row of achievements || []) {
+      const code = row?.achievements?.code
+      if (code) {
+        counts[code] = (counts[code] || 0) + 1
+      }
+    }
+
+    // Calculate percentages
+    const percentages = {}
+    for (const code in counts) {
+      percentages[code] = Math.round((counts[code] / totalUsers) * 100 * 10) / 10 // 1 decimal
+    }
+
+    return percentages
+  } catch (e) {
+    console.error('[achievements.js] Exception calculating percentages:', e)
+    return {}
+  }
+}
+

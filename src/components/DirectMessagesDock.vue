@@ -270,7 +270,7 @@ export default {
 <template>
   <div v-if="user?.id" class="fixed bottom-0 right-6 z-40">
     <!-- Floating toggle button (mobile only) -->
-    <button @click="toggle" class="sm:hidden rounded-full h-14 w-14 grid place-items-center bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-2xl shadow-emerald-500/40 border border-white/20 hover:brightness-110 transition-all hover:scale-105 active:scale-95">
+    <button @click="toggle" class="sm:hidden rounded-full h-14 w-14 grid place-items-center bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-2xl shadow-emerald-500/40 border border-white/20 hover:brightness-110 transition-all hover:scale-105 active:scale-95" style="margin-bottom:10px; margin-right:-15px;">
       <svg v-if="!open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg>
       <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M19 13H5v-2h14z"/></svg>
     </button>
