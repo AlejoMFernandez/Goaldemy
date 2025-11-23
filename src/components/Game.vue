@@ -29,8 +29,8 @@ export default {
     <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/0 to-cyan-500/0 group-hover:from-emerald-500/5 group-hover:to-cyan-500/5 transition-all duration-300 pointer-events-none"></div>
     
     <!-- Image container with overlay -->
-    <div class="relative h-44 bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden">
-      <img :src="cover" :alt="game.name" class="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300" />
+    <div class="relative h-44 bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden flex items-center justify-center">
+      <img :src="cover" :alt="game.name" class="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-300" />
       <!-- Subtle gradient overlay -->
       <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60"></div>
     </div>
