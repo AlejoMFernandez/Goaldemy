@@ -306,7 +306,7 @@ export default {
 
         <div class="grid grid-cols-5 gap-2">
           <button v-for="(p,i) in items" :key="p.id" :disabled="isPlaced(i) || locked" @click="selectCard(i)" :draggable="!locked" @dragstart="onDragStartFromList($event, i)" :class="['rounded-lg border p-2 bg-white/5 text-left', selectedIndex===i ? 'ring-2 ring-sky-400 border-white/20' : 'border-white/15', (isPlaced(i) || locked) ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/10']">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-col">
               <img :src="p.image" :alt="p.name" class="h-10 w-10 object-cover rounded" />
               <div class="min-w-0">
                 <div class="text-slate-100 text-sm leading-tight whitespace-normal break-words">{{ p.name }}</div>
