@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { pushInfoToast } from '../stores/notifications';
 import { subscribeToAuthStateChanges, authReady, getAuthUser } from '../services/auth';
+import { isAdmin } from '../services/admin';
 import Home from '../pages/Home.vue';
 import Landing from '../pages/Landing.vue';
 import Login from '../pages/Login.vue';
@@ -27,6 +28,7 @@ import DirectChat from '../pages/DirectChat.vue';
 import DirectMessages from '../pages/DirectMessages.vue';
 import VerifyEmail from '../pages/VerifyEmail.vue';
 import ResetPassword from '../pages/ResetPassword.vue';
+import AdminPanel from '../pages/AdminPanel.vue';
 
 const routes = [
     { path: '/', component: Landing },
@@ -50,6 +52,8 @@ const routes = [
     { path: '/notifications', component: Notifications, meta: { requiresAuth: true } },
     { path: '/messages', component: DirectMessages, meta: { requiresAuth: true } },
     { path: '/messages/:peerId', component: DirectChat, meta: { requiresAuth: true } },
+    // Admin Panel
+    { path: '/admin', component: AdminPanel, meta: { requiresAuth: true, requiresAdmin: true } },
     // About / Info
     { path: '/about/me', component: AboutMe },
     { path: '/about/goaldemy', component: AboutGoaldemy },
@@ -83,6 +87,14 @@ router.beforeEach(async (to, from) => {
     if (to.meta.requiresAuth && !user.id) {
         try { if (to.path !== '/login') pushInfoToast('Necesitás iniciar sesión'); } catch {}
         return '/login';
+    }
+    // Check admin access for admin routes
+    if (to.meta.requiresAdmin) {
+        const adminAccess = await isAdmin();
+        if (!adminAccess) {
+            pushInfoToast('No tenés permisos de administrador');
+            return '/';
+        }
     }
     // If user is logged-in, avoid showing auth pages
     if (user.id && (to.path === '/login' || to.path === '/register')) {

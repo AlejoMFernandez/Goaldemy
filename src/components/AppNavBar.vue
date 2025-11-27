@@ -8,6 +8,7 @@ import { fetchUnreadCount, listNotifications, markAsRead } from '../services/not
 import { supabase } from '../services/supabase';
 import { listIncomingRequests, acceptRequest, blockRequest } from '../services/connections';
 import { getPublicProfilesByIds } from '../services/user-profiles';
+import { isAdmin } from '../services/admin';
 
 export default {
   name: 'AppNavBar',
@@ -43,6 +44,7 @@ export default {
             notifProfiles: {},
             _notifCountDebounce: null,
             _notifMenuDebounce: null,
+            isAdminUser: false,
         };
     },
     methods: {
@@ -247,6 +249,14 @@ export default {
         },
         async markNotif(n) {
             try { if (n?.kind==='log' && n.id && !n.read) { await markAsRead(n.id); n.read = true; await this.loadNotifCount() } } catch {}
+        },
+        async checkAdmin() {
+            try {
+                this.isAdminUser = await isAdmin();
+            } catch (error) {
+                console.error('Error verificando admin:', error);
+                this.isAdminUser = false;
+            }
         }
     },
     computed: {
@@ -291,7 +301,13 @@ export default {
                     // Watch menu open to fetch level lazily
                     this.$watch('menuOpen', (open) => { if (open) this.loadLevelIfNeeded() })
                     // Notifications: load and subscribe when auth ready
-                    this.$watch(() => this.user?.id, async (id) => { if (id) { await this.loadNotifCount(); this.setupNotifRealtime() }})
+                    this.$watch(() => this.user?.id, async (id) => { 
+                        if (id) { 
+                            await this.loadNotifCount(); 
+                            this.setupNotifRealtime();
+                            this.checkAdmin();
+                        }
+                    })
                     // Clear search box when navigating to a user profile
                     this.$watch(() => this.$route.fullPath, (p) => {
                         if (p?.startsWith?.('/u/')) {
@@ -513,6 +529,9 @@ export default {
                                     </div>
                                 </div>
                                 <RouterLink @click="menuOpen=false" to="/profile" class="block px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Ver Perfil</RouterLink>
+                                <RouterLink v-if="isAdminUser" @click="menuOpen=false" to="/admin" class="block px-3 py-2 text-sm hover:bg-amber-500/10 text-amber-400 border-t border-white/10">
+                                    Panel Admin
+                                </RouterLink>
                                 <button @click="handleLogout" class="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Cerrar sesión</button>
                             </div>
                         </li>
@@ -579,6 +598,9 @@ export default {
                                                 </div>
                                             </div>
                                             <RouterLink @click="isOpen=false; menuOpen=false" to="/profile" class="block px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Ver Perfil</RouterLink>
+                                            <RouterLink v-if="isAdminUser" @click="isOpen=false; menuOpen=false" to="/admin" class="block px-3 py-2 text-sm hover:bg-amber-500/10 text-amber-400 border-t border-white/10">
+                                                👑 Panel Admin
+                                            </RouterLink>
                                             <button @click="handleLogout" class="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Cerrar sesión</button>
                                         </div>
                                     </template>

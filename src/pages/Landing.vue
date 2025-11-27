@@ -33,6 +33,10 @@ onMounted(load)
 function getGameRoute(slug) {
   return `${gameRouteForSlug(slug)}?mode=challenge`
 }
+
+function showComingSoon() {
+  alert('Próximamente')
+}
 </script>
 
 <template>
@@ -215,7 +219,6 @@ function getGameRoute(slug) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p class="text-slate-400 text-sm">Colocá aquí imagen de juegos</p>
             </div>
           </div>
         </div>
@@ -230,7 +233,6 @@ function getGameRoute(slug) {
               <svg class="w-32 h-32 mx-auto text-indigo-400/50 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
               </svg>
-              <p class="text-slate-400 text-sm">Colocá aquí imagen de progresión</p>
             </div>
           </div>
         </div>
@@ -291,15 +293,16 @@ function getGameRoute(slug) {
               alguien te sigue, te envía un mensaje, o cuando desbloqueás un nuevo logro.
             </p>
             <div class="flex flex-wrap gap-3">
-              <RouterLink 
-                to="/global-chat" 
+              <button 
+                type="button"
+                @click="showComingSoon"
                 class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-3 font-semibold text-white transition hover:shadow-lg hover:shadow-cyan-500/50 hover:scale-105"
               >
                 Chat global
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-              </RouterLink>
+              </button>
               <RouterLink 
                 v-if="!state.isAuthenticated"
                 to="/register" 
@@ -317,7 +320,6 @@ function getGameRoute(slug) {
               <svg class="w-32 h-32 mx-auto text-cyan-400/50 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
               </svg>
-              <p class="text-slate-400 text-sm">Colocá aquí imagen de comunidad</p>
             </div>
           </div>
         </div>
@@ -327,7 +329,7 @@ function getGameRoute(slug) {
     <!-- Subscription Packages (Monetización) -->
     <div class="relative z-10 max-w-6xl mx-auto px-6 pb-20">
       <div class="text-center max-w-3xl mx-auto mb-12">
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">💎 Elegí tu Ritmo</h2>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Elegí tu Ritmo</h2>
         <p class="text-lg text-slate-300">Tres niveles para avanzar: libre, acelerado o máximo desafío competitivo.</p>
       </div>
       
@@ -340,7 +342,7 @@ function getGameRoute(slug) {
         >
           <!-- Popular Badge -->
           <div v-if="p.popular" class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-purple-500 text-xs font-bold tracking-wide px-4 py-1.5 rounded-full shadow-lg">
-            ⭐ POPULAR
+            POPULAR
           </div>
 
           <!-- Package Header -->
