@@ -1,3 +1,7 @@
+<script setup>
+import GoaldemyLogo from '../components/GoaldemyLogo.vue'
+</script>
+
 <template>
   <section class="relative min-h-screen overflow-hidden">
     <!-- Aurora background -->

@@ -1,3 +1,8 @@
+<script setup>
+import { RouterLink } from 'vue-router'
+import GoaldemyLogo from '../components/GoaldemyLogo.vue'
+</script>
+
 <template>
   <section class="relative min-h-screen overflow-hidden">
     <!-- Aurora background -->
@@ -7,7 +12,8 @@
 
     <div class="relative z-10 max-w-6xl mx-auto px-6">
       <!-- Header -->
-      <div class="mb-8">
+      <div class="mb-8 flex flex-col items-center text-center">
+        <GoaldemyLogo variant="icon" size="lg" class="mb-4" />
         <h1 class="text-2xl md:text-3xl font-bold text-white mb-3">
           ¿Qué es GOALDEMY?
         </h1>

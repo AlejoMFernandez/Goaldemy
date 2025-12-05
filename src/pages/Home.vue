@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { supabase } from '../services/supabase'
 import { fetchGames, gameRouteForSlug } from '../services/games'
 import AppH1 from '../components/AppH1.vue'
+import GoaldemyLogo from '../components/GoaldemyLogo.vue'
 
 const state = reactive({ 
   isAuthenticated: false,

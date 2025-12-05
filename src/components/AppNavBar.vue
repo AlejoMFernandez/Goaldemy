@@ -9,11 +9,13 @@ import { supabase } from '../services/supabase';
 import { listIncomingRequests, acceptRequest, blockRequest } from '../services/connections';
 import { getPublicProfilesByIds } from '../services/user-profiles';
 import { isAdmin } from '../services/admin';
+import GoaldemyLogo from './GoaldemyLogo.vue';
 
 export default {
   name: 'AppNavBar',
   components: {
-    RouterLink
+    RouterLink,
+    GoaldemyLogo
   },
     data() {
         return {
@@ -345,15 +347,8 @@ export default {
     <header class="sticky top-0 z-40">
         <div class="border-b border-white/10 bg-gradient-to-b from-slate-900/70 to-slate-900/30 backdrop-blur supports-[backdrop-filter]:bg-slate-900/40">
             <nav class="container mx-auto flex items-center justify-between px-4 py-4 gap-3">
-                <RouterLink to="/" class="group relative inline-flex items-center gap-2 flex-none">
-                    <img src="/src/assets/iconclaro.png" alt="Goaldemy" class="h-10 w-auto" />
-                    <span 
-                        class="whitespace-nowrap text-white text-base font-bold tracking-tight transition-all duration-300 ease-out max-w-0 opacity-0 overflow-hidden group-hover:max-w-[200px] group-hover:opacity-100" 
-                        style="font-family: 'Montserrat', sans-serif;"
-                    >
-                        GOALDEMY
-                    </span>
-                    <span class="sr-only">Goaldemy</span>
+                <RouterLink to="/" class="flex-none">
+                    <GoaldemyLogo variant="full" size="sm" :animated="true" />
                 </RouterLink>
                 <!-- Mobile controls: notifications + menu button -->
                 <div class="md:hidden flex items-center gap-2 flex-1 justify-end">

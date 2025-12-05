@@ -1,3 +1,8 @@
+<script setup>
+import { RouterLink } from 'vue-router'
+import GoaldemyLogo from '../components/GoaldemyLogo.vue'
+</script>
+
 <template>
   <section class="relative min-h-screen overflow-hidden">
     <!-- Aurora background -->

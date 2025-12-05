@@ -5,6 +5,7 @@ import { supabase } from '../services/supabase'
 import { fetchGames, gameRouteForSlug } from '../services/games'
 import { SUBSCRIPTION_PACKAGES, formatPrice } from '../services/subscriptions'
 import AppH1 from '../components/AppH1.vue'
+import GoaldemyLogo from '../components/GoaldemyLogo.vue'
 
 const state = reactive({ 
   isAuthenticated: false,
@@ -48,7 +49,7 @@ function showComingSoon() {
     
     <!-- Hero section -->
     <div class="relative z-10 max-w-4xl mx-auto px-6 pt-12 md:pt-20 pb-16 md:pb-24">
-      <div class="space-y-6 text-center">
+      <div class="space-y-8 text-center">
         <AppH1>
           <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400">Aprendizaje gamificado</span>
           <span class="block">de Fútbol</span>
