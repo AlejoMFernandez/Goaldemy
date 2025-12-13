@@ -1,8 +1,41 @@
 /**
- * Sound effects system for gamification
- * Uses Web Audio API for low-latency playback
+ * SISTEMA DE SONIDOS
+ * 
+ * Maneja todos los efectos de sonido de la aplicación usando Web Audio API.
+ * 
+ * POR QUÉ WEB AUDIO API:
+ * - Latencia ultra-baja (más rápido que <audio> tags)
+ * - Control preciso de frecuencia, volumen y duración
+ * - Genera tonos sin archivos externos (más liviano)
+ * - Soporta múltiples sonidos simultáneos sin conflictos
+ * 
+ * SONIDOS DISPONIBLES:
+ * - win: Victoria (C5 + E5, tono ascendente alegre)
+ * - lose: Derrota (tono descendente triste)
+ * - levelUp: Subida de nivel (secuencia de 3 tonos ascendentes)
+ * - achievement: Logro desbloqueado (campana/chime)
+ * - click: Click genérico (feedback táctil)
+ * - correct: Respuesta correcta (tono positivo corto)
+ * 
+ * IMPLEMENTACIÓN:
+ * - Usa Oscillator nodes para generar tonos puros
+ * - GainNode para controlar volumen con fade-out
+ * - Se guarda preferencia de usuario en localStorage
+ * 
+ * CONTROL DE USUARIO:
+ * - this.enabled: true/false para activar/desactivar
+ * - this.volume: 0.0-1.0 para controlar volumen global
+ * - Preferencia persiste en localStorage ('goaldemy_sound_enabled')
+ * 
+ * EJEMPLO DE USO:
+ *   import { soundManager } from './sounds'
+ *   soundManager.play('win')
+ *   soundManager.setEnabled(false) // silenciar
  */
 
+/**
+ * Gestor singleton de efectos de sonido
+ */
 class SoundManager {
   constructor() {
     this.enabled = true

@@ -1,6 +1,6 @@
 <script>
-import AppH1 from '../components/AppH1.vue';
-import AppButton from '../components/AppButton.vue';
+import AppH1 from '../components/common/AppH1.vue';
+import AppButton from '../components/common/AppButton.vue';
 import { fetchLastGlobalChatMessages, saveGlobalChatMessage, suscribeToGlobalChatMessages } from '../services/global-chat';
 import { subscribeToAuthStateChanges } from '../services/auth';
 import { formatShortDate } from '../services/formatters';
@@ -119,3 +119,4 @@ export default {
     </section>
   </div>
 </template>
+

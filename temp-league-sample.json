@@ -1,0 +1,82 @@
+﻿{
+    "tabs":  [
+                 "overview",
+                 "table",
+                 "fixtures",
+                 "stats",
+                 "transfers",
+                 "seasons"
+             ],
+    "table":  [
+                  {
+                      "data":  {
+                                   "ccode":  "ENG",
+                                   "leagueId":  47,
+                                   "pageUrl":  "/leagues/47/overview/premier-league",
+                                   "leagueName":  "Premier League",
+                                   "legend":  "  ",
+                                   "ongoing":  "",
+                                   "table":  "@{all=System.Object[]; home=System.Object[]; away=System.Object[]; form=System.Object[]; xg=System.Object[]}",
+                                   "tableFilterTypes":  "all home away form xg",
+                                   "composite":  false,
+                                   "selectedSeason":  "2025/2026",
+                                   "isCurrentSeason":  true
+                               },
+                      "tableFilterTypes":  [
+                                               "all",
+                                               "home",
+                                               "away",
+                                               "form",
+                                               "xg"
+                                           ],
+                      "teamForm":  {
+                                       "8191":  "    ",
+                                       "8455":  "    ",
+                                       "8456":  "    ",
+                                       "8463":  "    ",
+                                       "8472":  "    ",
+                                       "8586":  "    ",
+                                       "8602":  "    ",
+                                       "8650":  "    ",
+                                       "8654":  "    ",
+                                       "8668":  "    ",
+                                       "8678":  "    ",
+                                       "9825":  "    ",
+                                       "9826":  "    ",
+                                       "9879":  "    ",
+                                       "9937":  "    ",
+                                       "10203":  "    ",
+                                       "10204":  "    ",
+                                       "10252":  "    ",
+                                       "10260":  "    ",
+                                       "10261":  "    "
+                                   },
+                      "nextOpponent":  {
+                                           "8191":  "9879 Fulham 4813527   ",
+                                           "8455":  "8668 Everton 4813528   ",
+                                           "8456":  "9826 Crystal Palace 4813529   ",
+                                           "8463":  "9937 Brentford 4813526   ",
+                                           "8472":  "10261 Newcastle United 4813533   ",
+                                           "8586":  "10203 Nottingham Forest 4813532   ",
+                                           "8602":  "9825 Arsenal 4813525   ",
+                                           "8650":  "10204 Brighton \u0026 Hove Albion 4813530   ",
+                                           "8654":  "10252 Aston Villa 4813534   ",
+                                           "8668":  "8455 Chelsea 4813528   ",
+                                           "8678":  "10260 Manchester United 4813531   ",
+                                           "9825":  "8602 Wolverhampton Wanderers 4813525   ",
+                                           "9826":  "8456 Manchester City 4813529   ",
+                                           "9879":  "8191 Burnley 4813527   ",
+                                           "9937":  "8463 Leeds United 4813526   ",
+                                           "10203":  "8586 Tottenham Hotspur 4813532   ",
+                                           "10204":  "8650 Liverpool 4813530   ",
+                                           "10252":  "8654 West Ham United 4813534   ",
+                                           "10260":  "8678 AFC Bournemouth 4813531   ",
+                                           "10261":  "8472 Sunderland 4813533   "
+                                       },
+                      "tableHeader":  {
+                                          "staticTableHeaders":  "# Team PL W D L +/- GD PTS",
+                                          "dynamicTableHeaders":  "Form Next"
+                                      }
+                  }
+              ]
+}

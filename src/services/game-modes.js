@@ -1,11 +1,45 @@
+/**
+ * SERVICIO DE MODOS DE JUEGO
+ * 
+ * Gestiona los diferentes modos de juego de Goaldemy:
+ * - NORMAL: Juego libre, otorga XP
+ * - FREE: Juego de práctica, NO otorga XP
+ * - CHALLENGE: Desafío diario, 1 intento por día por juego
+ * 
+ * DESAFÍOS DIARIOS:
+ * - Cada juego tiene 1 desafío por día (se resetea a las 00:00)
+ * - Se registra en la tabla "game_sessions" con mode: 'challenge'
+ * - Solo las sesiones TERMINADAS (ended_at !== null) cuentan como "jugadas"
+ * - Esto permite salir a mitad de juego sin perder el intento diario
+ * 
+ * RACHAS DIARIAS:
+ * - Se cuentan los días consecutivos ganando un juego específico
+ * - Ejemplo: ganaste "who-is" hoy, ayer y anteayer = racha de 3 días
+ * - Desbloquea logros como streak_3, streak_5, streak_10, streak_15
+ * 
+ * SUPERLOGRO daily_super_5x3:
+ * - Requiere tener racha de 5+ días en 3 juegos diferentes simultáneamente
+ * - Es el logro más difícil de conseguir
+ * 
+ * FLUJO DE UN DESAFÍO:
+ * 1. isChallengeAvailable() - Verifica si puede jugar hoy
+ * 2. startChallengeSession() - Crea registro en game_sessions
+ * 3. Usuario juega...
+ * 4. completeChallengeSession() - Marca ended_at y guarda resultado
+ * 5. checkAndUnlockDailyWins() - Verifica logros desbloqueados
+ */
 import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { fetchGameBySlug, friendlyNameForSlug } from './games'
 import { unlockAchievementWithToast } from './xp'
 import { checkAllAchievementsAfterChallenge, checkTimeBasedAchievements } from './achievement-triggers'
 
-// Resolve game id by slug (cached in-memory)
+// Cache de game_id por slug para evitar consultas repetitivas
 const _gameIdCache = new Map()
+
+/**
+ * Obtiene el UUID de un juego a partir de su slug (con cache)
+ */
 async function getGameId(slug) {
   if (_gameIdCache.has(slug)) return _gameIdCache.get(slug)
   const g = await fetchGameBySlug(slug)
@@ -14,14 +48,21 @@ async function getGameId(slug) {
   return id
 }
 
-// Juegos con modo desafío diario habilitado (mantener actualizado)
+// Lista de juegos con desafío diario habilitado (mantener actualizado)
 export const DAILY_GAMES = ['who-is','guess-player','nationality','value-order','age-order','height-order','player-position','shirt-number']
 
+/**
+ * Retorna el inicio del día actual en formato ISO (00:00:00)
+ * Usado para filtrar sesiones de "hoy"
+ */
 function todayStartIso() {
   return new Date(new Date().setHours(0,0,0,0)).toISOString()
 }
 
-// Contar victorias de hoy en desafíos diarios (todas los juegos)
+/**
+ * Cuenta cuántas victorias de desafíos diarios logró el usuario hoy
+ * @returns {number} Cantidad de desafíos ganados hoy (max: 8, uno por juego)
+ */
 export async function countTodayDailyWins() {
   const { id: userId } = getAuthUser() || {}
   if (!userId) return 0
@@ -36,23 +77,30 @@ export async function countTodayDailyWins() {
   return (data || []).length
 }
 
-// Desbloquear logros diarios tras completar un desafío
+/**
+ * Verifica y desbloquea logros relacionados con victorias diarias
+ * Se ejecuta después de completar un desafío diario
+ * @param {string} slugJustPlayed - Slug del juego recién jugado
+ * @param {boolean} won - Si el usuario ganó o perdió
+ * @param {Object} metadata - Metadata del juego (score, corrects, etc.)
+ */
 export async function checkAndUnlockDailyWins(slugJustPlayed, won = true, metadata = {}) {
   try {
-    // Time-based achievements (call at game start ideally, but here works too)
+    // Verificar logros basados en tiempo (ej: jugar de madrugada)
     await checkTimeBasedAchievements()
     
-    // Only check win-based achievements if user won
+    // Solo verificar logros de victoria si el usuario ganó
     if (!won) return
     
     const wins = await countTodayDailyWins()
-    if (wins >= 3) await unlockAchievementWithToast('daily_wins_3')
-    if (wins >= 5) await unlockAchievementWithToast('daily_wins_5')
-    if (wins >= 10) await unlockAchievementWithToast('daily_wins_10')
-    // Pleno: ganaste todos los juegos con desafío
+    // LOGROS POR VICTORIAS DIARIAS:
+    if (wins >= 3) await unlockAchievementWithToast('daily_wins_3')  // 3 desafíos ganados hoy
+    if (wins >= 5) await unlockAchievementWithToast('daily_wins_5')  // 5 desafíos ganados hoy
+    if (wins >= 10) await unlockAchievementWithToast('daily_wins_10') // 10 desafíos ganados hoy
+    // PLENO: Ganaste todos los juegos con desafío diario (8 juegos)
     if (wins >= DAILY_GAMES.length) await unlockAchievementWithToast('daily_wins_all')
 
-    // Racha por días consecutivos ganando este juego
+    // RACHAS: Días consecutivos ganando este juego específico
     try {
       const streak = await fetchDailyWinStreak(slugJustPlayed)
       if (streak >= 3) await unlockAchievementWithToast('streak_3', { game: slugJustPlayed })
@@ -61,19 +109,26 @@ export async function checkAndUnlockDailyWins(slugJustPlayed, won = true, metada
       if (streak >= 15) await unlockAchievementWithToast('streak_15', { game: slugJustPlayed })
     } catch {}
 
-    // SUPERLOGRO: 5 días seguidos en 3 juegos distintos
+    // SUPERLOGRO: 5 días seguidos en 3 juegos distintos simultáneamente
     try {
       const values = await Promise.all(DAILY_GAMES.map(s => fetchDailyWinStreak(s).catch(()=>0)))
       const count5 = values.filter(v => (v || 0) >= 5).length
       if (count5 >= 3) await unlockAchievementWithToast('daily_super_5x3')
     } catch {}
     
-    // Check all other achievements
+    // Verificar todos los demás logros (puntaje, tiempo, etc.)
     await checkAllAchievementsAfterChallenge(slugJustPlayed, won, metadata)
   } catch {}
 }
 
-// Check if the user can play the daily challenge for given slug today
+/**
+ * Verifica si el usuario puede jugar el desafío diario de un juego hoy
+ * @param {string} slug - Slug del juego (ej: 'who-is', 'nationality')
+ * @returns {Object} { available: boolean, reason: string|null, result: 'win'|'loss'|null }
+ *   - available: true si puede jugar, false si ya lo jugó hoy
+ *   - reason: Mensaje explicativo si no está disponible
+ *   - result: Resultado del último intento ('win', 'loss', o null si no jugó)
+ */
 export async function isChallengeAvailable(slug) {
   const { id: userId } = getAuthUser() || {}
   if (!userId) return { available: false, reason: 'Debes iniciar sesión' }

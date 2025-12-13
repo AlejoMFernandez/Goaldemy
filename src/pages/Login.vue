@@ -1,6 +1,6 @@
 <script>
-import AppH1 from '../components/AppH1.vue';
-import AppButton from '../components/AppButton.vue';
+import AppH1 from '../components/common/AppH1.vue';
+import AppButton from '../components/common/AppButton.vue';
 import { login, resetPasswordForEmail } from '../services/auth';
 import { pushErrorToast, pushSuccessToast } from '../stores/notifications';
 
@@ -121,3 +121,4 @@ export default {
     <p class="mt-4 text-center text-sm text-slate-300">¿No tienes cuenta? <RouterLink to="/register" class="text-sky-300 hover:text-sky-200">Créala</RouterLink></p>
   </div>
 </template>
+

@@ -3,7 +3,7 @@ import { onMounted, reactive, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { supabase } from '../services/supabase'
 import { fetchGames, gameRouteForSlug } from '../services/games'
-import AppH1 from '../components/AppH1.vue'
+import AppH1 from '../components/common/AppH1.vue'
 import GoaldemyLogo from '../components/GoaldemyLogo.vue'
 
 const state = reactive({ 
@@ -379,3 +379,4 @@ function getGameRoute(slug) {
     </div>
   </section>
 </template>
+

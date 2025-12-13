@@ -2,6 +2,115 @@ import { supabase } from './supabase';
 import { getAuthUser } from './auth';
 import { GAME_TYPES } from './game-celebrations';
 
+// ============================================
+// SISTEMA DE DIFICULTAD
+// ============================================
+
+export const DIFFICULTY_LEVELS = {
+  EASY: 'easy',
+  NORMAL: 'normal',
+  HARD: 'hard'
+};
+
+// Configuración de dificultad para juegos TIMED (con tiempo límite)
+export const TIMED_DIFFICULTY_CONFIG = {
+  [DIFFICULTY_LEVELS.EASY]: {
+    label: 'Fácil',
+    icon: '🟢',
+    time: 60, // 60 segundos
+    targetCorrect: 10,
+    xpPerCorrect: 10, // 10 XP por cada respuesta correcta
+    xpCompletion: 50, // 50 XP bonus por completar el juego
+    description: '60 segundos para completar'
+  },
+  [DIFFICULTY_LEVELS.NORMAL]: {
+    label: 'Normal',
+    icon: '🟡',
+    time: 45, // 45 segundos
+    targetCorrect: 10,
+    xpPerCorrect: 20, // 20 XP por cada respuesta correcta
+    xpCompletion: 100, // 100 XP bonus por completar el juego
+    description: '45 segundos para completar'
+  },
+  [DIFFICULTY_LEVELS.HARD]: {
+    label: 'Difícil',
+    icon: '🔴',
+    time: 30, // 30 segundos
+    targetCorrect: 10,
+    xpPerCorrect: 30, // 30 XP por cada respuesta correcta
+    xpCompletion: 200, // 200 XP bonus por completar el juego
+    description: '30 segundos para completar'
+  }
+};
+
+// Configuración de dificultad para juegos ORDERING (ordenar elementos)
+export const ORDERING_DIFFICULTY_CONFIG = {
+  [DIFFICULTY_LEVELS.EASY]: {
+    label: 'Fácil',
+    icon: '🟢',
+    itemCount: 3, // Ordenar solo 3 jugadores
+    xpCompletion: 30,
+    description: 'Ordenar 3 jugadores'
+  },
+  [DIFFICULTY_LEVELS.NORMAL]: {
+    label: 'Normal',
+    icon: '🟡',
+    itemCount: 5, // Ordenar 5 jugadores (default)
+    xpCompletion: 75,
+    description: 'Ordenar 5 jugadores'
+  },
+  [DIFFICULTY_LEVELS.HARD]: {
+    label: 'Difícil',
+    icon: '🔴',
+    itemCount: 7, // Ordenar 7 jugadores
+    xpCompletion: 150,
+    description: 'Ordenar 7 jugadores'
+  }
+};
+
+// Configuración de dificultad para juegos LIVES (con sistema de vidas)
+export const LIVES_DIFFICULTY_CONFIG = {
+  [DIFFICULTY_LEVELS.EASY]: {
+    label: 'Fácil',
+    icon: '🟢',
+    lives: 5, // 5 vidas
+    xpPerCorrect: 10,
+    xpCompletion: 75,
+    description: '5 vidas disponibles'
+  },
+  [DIFFICULTY_LEVELS.NORMAL]: {
+    label: 'Normal',
+    icon: '🟡',
+    lives: 3, // 3 vidas (default)
+    xpPerCorrect: 15,
+    xpCompletion: 125,
+    description: '3 vidas disponibles'
+  },
+  [DIFFICULTY_LEVELS.HARD]: {
+    label: 'Difícil',
+    icon: '🔴',
+    lives: 1, // Solo 1 vida
+    xpPerCorrect: 30,
+    xpCompletion: 250,
+    description: '1 vida (modo extremo)'
+  }
+};
+
+/**
+ * Obtiene la configuración de dificultad según el tipo de juego
+ */
+export function getDifficultyConfig(gameType, difficulty = DIFFICULTY_LEVELS.NORMAL) {
+  if (gameType === GAME_TYPES.TIMED) {
+    return TIMED_DIFFICULTY_CONFIG[difficulty] || TIMED_DIFFICULTY_CONFIG[DIFFICULTY_LEVELS.NORMAL];
+  } else if (gameType === GAME_TYPES.ORDERING) {
+    return ORDERING_DIFFICULTY_CONFIG[difficulty] || ORDERING_DIFFICULTY_CONFIG[DIFFICULTY_LEVELS.NORMAL];
+  } else if (gameType === GAME_TYPES.LIVES) {
+    return LIVES_DIFFICULTY_CONFIG[difficulty] || LIVES_DIFFICULTY_CONFIG[DIFFICULTY_LEVELS.NORMAL];
+  }
+  // Fallback: usar configuración TIMED por defecto
+  return TIMED_DIFFICULTY_CONFIG[difficulty] || TIMED_DIFFICULTY_CONFIG[DIFFICULTY_LEVELS.NORMAL];
+}
+
 const FALLBACK_NAMES = {
   'guess-player': 'Adivina el jugador',
   'who-is': '¿Quién es?',
@@ -33,7 +142,7 @@ const FALLBACK_DESC = {
 const GAME_METADATA = {
   'nationality': {
     type: GAME_TYPES.TIMED,
-    mechanic: 'Hacé 10 aciertos en 30 segundos para ganar',
+    mechanic: 'Hacé 10 aciertos antes de que se acabe el tiempo',
     videoUrl: '', // Agregar URL cuando grabes el video
     tips: [
       'Mirá bien las banderas y pensá rápido',
@@ -43,7 +152,7 @@ const GAME_METADATA = {
   },
   'player-position': {
     type: GAME_TYPES.TIMED,
-    mechanic: 'Hacé 10 aciertos en 30 segundos para ganar',
+    mechanic: 'Hacé 10 aciertos antes de que se acabe el tiempo',
     videoUrl: '',
     tips: [
       'Fijate en la contextura física del jugador',
@@ -53,7 +162,7 @@ const GAME_METADATA = {
   },
   'shirt-number': {
     type: GAME_TYPES.TIMED,
-    mechanic: 'Hacé 10 aciertos en 30 segundos para ganar',
+    mechanic: 'Hacé 10 aciertos antes de que se acabe el tiempo',
     videoUrl: '',
     tips: [
       'Recordá los números icónicos (10, 7, 9)',
@@ -62,7 +171,7 @@ const GAME_METADATA = {
   },
   'value-order': {
     type: GAME_TYPES.ORDERING,
-    mechanic: 'Ordená los 5 jugadores correctamente para ganar',
+    mechanic: 'Ordená correctamente todos los jugadores para ganar',
     videoUrl: '',
     tips: [
       'Los jugadores más jóvenes y talentosos valen más',
@@ -71,7 +180,7 @@ const GAME_METADATA = {
   },
   'age-order': {
     type: GAME_TYPES.ORDERING,
-    mechanic: 'Ordená los 5 jugadores correctamente para ganar',
+    mechanic: 'Ordená correctamente todos los jugadores para ganar',
     videoUrl: '',
     tips: [
       'Mirá las fotos: las arrugas y canas son pistas',
@@ -80,7 +189,7 @@ const GAME_METADATA = {
   },
   'height-order': {
     type: GAME_TYPES.ORDERING,
-    mechanic: 'Ordená los 5 jugadores correctamente para ganar',
+    mechanic: 'Ordená correctamente todos los jugadores para ganar',
     videoUrl: '',
     tips: [
       'Los arqueros suelen ser los más altos',
@@ -99,7 +208,7 @@ const GAME_METADATA = {
   },
   'guess-player': {
     type: GAME_TYPES.TIMED,
-    mechanic: 'Hacé 10 aciertos en 30 segundos para ganar',
+    mechanic: 'Hacé 10 aciertos antes de que se acabe el tiempo',
     videoUrl: '',
     tips: [
       'Mirá todas las pistas antes de elegir',

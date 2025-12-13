@@ -1,8 +1,46 @@
+/**
+ * SERVICIO DE MENSAJES DIRECTOS
+ * 
+ * Sistema de mensajería privada 1-a-1 entre usuarios.
+ * 
+ * CARACTERÍSTICAS:
+ * - Conversaciones privadas entre 2 usuarios
+ * - Realtime: mensajes instantáneos via Supabase
+ * - Marcado de leído/no leído (campo 'read')
+ * - Lista de conversaciones recientes con último mensaje y contador de no leídos
+ * 
+ * TABLA DE BASE DE DATOS:
+ * - direct_messages: { id, sender_id, recipient_id, content, read, created_at }
+ * - RLS: Solo el sender y recipient pueden ver sus mensajes
+ * 
+ * FLUJO DE CONVERSACIÓN:
+ * 1. fetchConversation(peerId) - Carga historial de mensajes con un peer
+ * 2. subscribeConversation(peerId, handlers) - Escucha nuevos mensajes en tiempo real
+ * 3. sendDirectMessage(toUserId, content) - Envía mensaje
+ * 4. markConversationRead(peerId) - Marca todos los mensajes de ese peer como leídos
+ * 
+ * LISTA DE CONVERSACIONES:
+ * - fetchRecentConversations() retorna array de conversaciones ordenadas por última actividad
+ * - Cada entrada incluye: peer_id, último mensaje, contador de no leídos, display_name, avatar
+ * 
+ * REALTIME:
+ * - subscribeConversation() escucha INSERTs y UPDATEs
+ * - Soporta handlers.onInsert y handlers.onUpdate
+ * - Se auto-desuscribe cuando se desmonta el componente
+ */
 import { supabase } from './supabase'
 import { getPublicProfilesByIds } from './user-profiles'
 
+/**
+ * Helper: Obtiene el ID del usuario actual autenticado
+ */
 async function me() { try { return (await supabase.auth.getUser())?.data?.user?.id || null } catch { return null } }
 
+/**
+ * Envía un mensaje directo a otro usuario
+ * @param {string} toUserId - UUID del destinatario
+ * @param {string} content - Contenido del mensaje
+ */
 export async function sendDirectMessage(toUserId, content) {
   const sender = await me()
   if (!sender) throw new Error('Not authenticated')

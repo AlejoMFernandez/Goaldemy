@@ -15,7 +15,7 @@
             <!-- Access Denied -->
             <div v-else-if="!isAdminUser" class="text-center py-20">
                 <div class="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 max-w-md mx-auto">
-                    <h2 class="text-2xl font-bold text-red-400 mb-4">⛔ Acceso Denegado</h2>
+                    <h2 class="text-2xl font-bold text-red-400 mb-4">Acceso Denegado</h2>
                     <p class="text-slate-300 mb-6">No tienes permisos de administrador para acceder a esta sección.</p>
                     <router-link to="/" class="inline-block bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-lg transition-colors">
                         Volver al Inicio
@@ -93,18 +93,18 @@
                                     : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                             ]"
                         >
-                            👥 Gestión de Usuarios
+                            Gestión de Usuarios
                         </button>
                         <button
-                            @click="activeTab = 'stats'"
+                            @click="activeTab = 'teams'"
                             :class="[
                                 'flex-1 px-6 py-3 rounded-lg font-semibold transition-all',
-                                activeTab === 'stats' 
+                                activeTab === 'teams' 
                                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
                                     : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                             ]"
                         >
-                            📊 Estadísticas
+                            Equipos y Jugadores
                         </button>
                     </div>
                 </div>
@@ -114,27 +114,8 @@
                     <!-- User Management Tab -->
                     <AdminUserManagement v-if="activeTab === 'users'" @user-updated="loadStats" />
 
-                    <!-- Stats Tab -->
-                    <div v-else-if="activeTab === 'stats'" class="bg-gradient-to-br from-slate-800/80 to-slate-900/50 backdrop-blur border border-white/10 rounded-2xl p-8 shadow-xl">
-                        <h2 class="text-2xl font-bold text-white mb-6">Top 5 Usuarios por XP</h2>
-                        <div class="space-y-4">
-                            <div
-                                v-for="(user, index) in stats.topUsers"
-                                :key="user.display_name"
-                                class="flex items-center gap-4 p-4 bg-slate-700/30 rounded-lg border border-white/5 hover:border-white/10 transition-colors"
-                            >
-                                <div class="text-2xl font-bold text-slate-500 w-8">
-                                    #{{ index + 1 }}
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-white">{{ user.display_name }}</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-lg font-bold text-amber-400">{{ user.total_xp.toLocaleString() }} XP</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Teams Management Tab -->
+                    <AdminTeamsManagement v-else-if="activeTab === 'teams'" />
                 </div>
             </div>
         </div>
@@ -144,14 +125,16 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { isAdmin, getUserStats } from '../services/admin.js';
-import AppLoader from '../components/AppLoader.vue';
+import AppLoader from '../components/common/AppLoader.vue';
 import AdminUserManagement from '../components/admin/AdminUserManagement.vue';
+import AdminTeamsManagement from '../components/admin/AdminTeamsManagement.vue';
 
 export default {
     name: 'AdminPanel',
     components: {
         AppLoader,
-        AdminUserManagement
+        AdminUserManagement,
+        AdminTeamsManagement
     },
     setup() {
         const loading = ref(true);
@@ -199,3 +182,5 @@ export default {
     }
 };
 </script>
+
+

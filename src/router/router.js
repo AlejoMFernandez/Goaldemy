@@ -29,16 +29,30 @@ import DirectMessages from '../pages/DirectMessages.vue';
 import VerifyEmail from '../pages/VerifyEmail.vue';
 import ResetPassword from '../pages/ResetPassword.vue';
 import AdminPanel from '../pages/AdminPanel.vue';
+import Teams from '../pages/Teams.vue';
+import PremierLeague from '../pages/PremierLeague.vue'
+import LaLiga from '../pages/LaLiga.vue'
+import SerieA from '../pages/SerieA.vue'
+import Bundesliga from '../pages/Bundesliga.vue'
+import Ligue1 from '../pages/Ligue1.vue'
+import LigaArgentina from '../pages/LigaArgentina.vue';
 
 const routes = [
     { path: '/', component: Landing },
     { path: '/home', component: Home },
+    { path: '/leagues/premier-league', component: PremierLeague },
+    { path: '/leagues/la-liga', component: LaLiga },
+    { path: '/leagues/serie-a', component: SerieA },
+    { path: '/leagues/bundesliga', component: Bundesliga },
+    { path: '/leagues/ligue-1', component: Ligue1 },
+    { path: '/leagues/liga-argentina', component: LigaArgentina },
     { path: '/login', component: Login, meta: { layout: 'auth' } },
     { path: '/register', component: Register, meta: { layout: 'auth' } },
     { path: '/verify-email', component: VerifyEmail, meta: { layout: 'auth' } },
     { path: '/reset-password', component: ResetPassword, meta: { layout: 'auth' } },
     { path: '/profile', component: Profile, meta: { requiresAuth: true } },
     { path: '/profile-edit', component: ProfileEdit, meta: { requiresAuth: true } },
+    { path: '/teams', component: Teams },
     { path: '/games/guess-player', component: GuessPlayer, meta: { requiresAuth: true } },
     { path: '/games/nationality', component: NationalityGame, meta: { requiresAuth: true } },
     { path: '/games/player-position', component: PlayerPosition, meta: { requiresAuth: true } },

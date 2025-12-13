@@ -86,3 +86,4 @@ const props = defineProps({
   touch-action: pan-x; /* allow horizontal gestures */
 }
 </style>
+

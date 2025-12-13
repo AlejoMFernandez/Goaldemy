@@ -1,11 +1,44 @@
+/**
+ * SERVICIO DE JUGADORES
+ * 
+ * Maneja toda la lógica relacionada con los datos de jugadores y equipos.
+ * Los datos se cargan desde dataGAMES.json (archivo estático con 500+ jugadores).
+ * 
+ * ESTRUCTURA DE DATOS:
+ * - dataGAMES.json contiene un array de equipos
+ * - Cada equipo tiene: id, name, logo, squad[]
+ * - squad[] se divide en secciones (GK, DF, MF, FW)
+ * - Cada member tiene: id, name, ccode, cname, positionId, height, age, etc.
+ * 
+ * POSICIONES:
+ * - positionId (numérico): 0=GK, 1=DF, 2=MF, 3=FW
+ * - position (string): Ej: "CB", "LB,LWB", "ST" (descripción detallada)
+ * 
+ * IMÁGENES:
+ * - Las fotos de jugadores vienen de FotMob CDN
+ * - URL pattern: https://images.fotmob.com/image_resources/playerimages/{id}.png
+ * 
+ * UTILIDADES:
+ * - getAllPlayers(): Retorna array flat de todos los jugadores
+ * - sampleDistinct(): Selecciona N jugadores aleatorios sin repetir
+ * - buildOptions(): Crea opciones múltiple choice con la correcta incluida
+ */
 import teams from '../dataGAMES.json';
 
-// Build image URL given a player id per FotMob pattern
+/**
+ * Construye la URL de la imagen de un jugador según FotMob
+ * @param {number} playerId - ID del jugador en FotMob
+ * @returns {string} URL de la imagen
+ */
 export function playerImageUrl(playerId) {
   return `https://images.fotmob.com/image_resources/playerimages/${playerId}.png`;
 }
 
-// Flatten all players across teams with useful fields
+/**
+ * Obtiene un array flat con todos los jugadores de todos los equipos
+ * Cada jugador incluye datos de su equipo, posición, altura, edad, valor, etc.
+ * @returns {Array} Array de objetos jugador con todas sus propiedades
+ */
 export function getAllPlayers() {
   const players = [];
   for (const team of teams) {
@@ -63,7 +96,14 @@ export function findPlayerByName(name) {
   return all.find(p => _normalizeName(p.name) === target) || null
 }
 
-// Utility: pick n distinct random items from an array
+/**
+ * Selecciona N elementos aleatorios distintos de un array
+ * Útil para generar opciones múltiple choice sin repetir jugadores
+ * @param {Array} arr - Array de items
+ * @param {number} n - Cantidad de items a seleccionar
+ * @param {Set} excludeIds - Set de IDs a excluir (opcional)
+ * @returns {Array} Array de items seleccionados aleatoriamente
+ */
 export function sampleDistinct(arr, n, excludeIds = new Set()) {
   const pool = arr.filter(x => !excludeIds.has(x.id));
   const result = [];

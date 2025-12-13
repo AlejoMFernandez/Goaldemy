@@ -90,3 +90,4 @@ const items = computed(() => notificationsState.items)
   transform: translateY(8px) scale(0.98);
 }
 </style>
+

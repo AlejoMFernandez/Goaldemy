@@ -1,11 +1,46 @@
+/**
+ * SERVICIO DE TRIGGERS DE LOGROS
+ * 
+ * Contiene toda la lógica para detectar cuándo desbloquear logros automáticamente.
+ * Este archivo es el "cerebro" que analiza las acciones del usuario y decide qué logros otorgar.
+ * 
+ * TIPOS DE LOGROS:
+ * 
+ * 1. BASADOS EN TIEMPO:
+ *    - night_owl: Jugar entre 00:00-05:00
+ *    - early_bird: Jugar antes de las 07:00
+ *    - weekend_warrior: 10+ victorias en fin de semana
+ * 
+ * 2. BASADOS EN RENDIMIENTO:
+ *    - perfect_10: 10/10 respuestas correctas
+ *    - speed_demon: Completar en menos de X segundos
+ *    - lucky_first: 10+ veces acertar al primer intento
+ * 
+ * 3. BASADOS EN RACHAS:
+ *    - streak_3, streak_5, streak_10, streak_15: Días consecutivos ganando
+ *    - daily_super_5x3: 5+ días en 3 juegos simultáneamente
+ * 
+ * 4. BASADOS EN CANTIDAD:
+ *    - games_played_10, games_played_50, games_played_100: Juegos jugados
+ *    - total_wins_10, total_wins_50, total_wins_100: Victorias totales
+ * 
+ * 5. ESPECIALES:
+ *    - comeback_king: Ganar después de perder 3 veces seguidas
+ *    - perfectionist: Ganar todos los juegos de ordenamiento con 5/5
+ * 
+ * LLAMADAS:
+ * - checkTimeBasedAchievements(): Al iniciar un juego
+ * - checkAllAchievementsAfterChallenge(): Al finalizar un desafío diario
+ * - checkLuckyFirstAchievement(): Cuando se acierta al primer intento
+ */
 import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { unlockAchievementWithToast } from './xp'
 import { DAILY_GAMES } from './game-modes'
 
 /**
- * Check and unlock achievements based on time of day
- * Call this when a game session starts
+ * Verifica y desbloquea logros basados en la hora del día
+ * Se debe llamar al iniciar una sesión de juego
  */
 export async function checkTimeBasedAchievements() {
   try {

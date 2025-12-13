@@ -1,8 +1,8 @@
-import { getAllPlayers } from './players'
 import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
 import { awardXpForCorrect } from './game-xp'
 import { celebrateCorrect } from './game-celebrations'
+import { loadAndClassifyPlayers, shuffleArray, getOptionClasses } from './game-common'
 
 const POSITIONS = ['GK','DF','MF','FW']
 const POS_LABEL = {
@@ -33,25 +33,26 @@ export function initState() {
   }
 }
 
+/**
+ * Carga jugadores filtrados por posiciones válidas (GK, DF, MF, FW)
+ */
 export function loadPlayers(state) {
-  const all = getAllPlayers().filter(p => POSITIONS.includes(p.position))
-  state.allPlayers = all
+  const all = loadAndClassifyPlayers(state)
+  state.allPlayers = all.filter(p => POSITIONS.includes(p.position))
   state.loading = false
 }
 
+/**
+ * Genera 4 opciones de posición con la correcta incluida
+ */
 function buildOptionsForPosition(correctPos) {
   const opts = new Set([correctPos])
   while (opts.size < 4) {
     const rnd = POSITIONS[Math.floor(Math.random() * POSITIONS.length)]
     opts.add(rnd)
   }
-  // shuffle
-  const arr = Array.from(opts)
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[arr[i], arr[j]] = [arr[j], arr[i]]
-  }
-  return arr.map(code => ({ label: POS_LABEL[code] || code, value: code }))
+  const shuffled = shuffleArray(Array.from(opts))
+  return shuffled.map(code => ({ label: POS_LABEL[code] || code, value: code }))
 }
 
 export function nextRound(state) {
@@ -65,40 +66,63 @@ export function nextRound(state) {
   state.roundKey += 1
 }
 
+/**
+ * Maneja la selección de una respuesta
+ * Valida posición, otorga XP y actualiza puntaje
+ */
 export async function pickAnswer(state, option, confettiHost) {
   if (state.answered) return false
+  
   state.answered = true
   state.selected = option.value
   const correct = option.value === state.current.position
+  
   if (correct) {
-    celebrateCorrect() // Sonido inmediato por acierto
+    celebrateCorrect() // Celebración inmediata por acierto
+    
     const nextStreak = state.streak + 1
     const nextCorrects = (state.corrects || 0) + 1
+    
+    // Otorga XP por respuesta correcta (usa difficultyConfig si existe)
+    const xpAmount = state.difficultyConfig?.xpPerCorrect || 10
     if (state.allowXp) {
-      await awardXpForCorrect({ gameCode: 'player-position', amount: 10, attemptIndex: state.attempts, streak: nextStreak, corrects: nextCorrects })
-      state.xpEarned += 10
+      await awardXpForCorrect({ 
+        gameCode: 'player-position', 
+        amount: xpAmount, 
+        attemptIndex: state.attempts, 
+        streak: nextStreak, 
+        corrects: nextCorrects 
+      })
+      state.xpEarned += xpAmount
     }
+    
     onCorrect(state)
     state.streak = nextStreak
     state.corrects = nextCorrects
     state.maxStreak = Math.max(state.maxStreak || 0, nextStreak)
+    
+    // Muestra badge de XP ganado
     if (state.allowXp) {
       spawnXpBadge(confettiHost, '+10 XP', { position: 'top-right' })
     }
   } else {
     onIncorrect(state)
-    state.streak = 0
+    state.streak = 0 // Resetea racha en error
   }
+  
   state.feedback = ''
   return correct
 }
 
+/**
+ * Retorna clases CSS para opciones según estado
+ * Verde si correcta, roja si seleccionada incorrecta, gris si no seleccionada
+ */
 export function optionClass(state, opt) {
-  const base = 'rounded-lg border px-4 py-2 text-slate-200 transition text-left'
-  if (!state.answered) return base + ' border-white/10 hover:border-white/25 hover:bg-white/5'
-  const isCorrect = opt.value === state.current.position
-  const isSelected = opt.value === state.selected
-  if (isCorrect) return base + ' border-green-500 bg-green-500/10 text-green-300'
-  if (isSelected) return base + ' border-red-500 bg-red-500/10 text-red-300'
-  return base + ' border-white/10 opacity-70'
+  return getOptionClasses({
+    answered: state.answered,
+    isCorrect: opt.value === state.current.position,
+    isSelected: opt.value === state.selected,
+    baseClasses: 'rounded-lg border px-4 py-2 text-slate-200 transition text-left'
+  })
 }

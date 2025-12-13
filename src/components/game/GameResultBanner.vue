@@ -84,3 +84,4 @@ export default {
   transform: translate(-50%, -20px) scale(0.9);
 }
 </style>
+

@@ -1,16 +1,41 @@
-// Simple wrappers for XP-related RPCs
+/**
+ * SISTEMA DE EXPERIENCIA (XP) Y NIVELES
+ * 
+ * Este servicio gestiona toda la lógica de XP y niveles del usuario:
+ * 
+ * CONCEPTO:
+ * - Los usuarios ganan XP por respuestas correctas, rachas, logros, etc.
+ * - El XP acumulado determina el nivel del usuario (1-30)
+ * - Los niveles tienen umbrales definidos en la tabla "level_thresholds"
+ * 
+ * AWARD_XP RPC:
+ * - Es un Remote Procedure Call (función PostgreSQL) ejecutada en el servidor
+ * - SECURITY DEFINER: Se ejecuta con permisos de la base de datos (no del usuario)
+ * - Garantiza que el XP se otorgue de forma segura sin que el cliente pueda hacer trampa
+ * - Actualiza automáticamente el campo "xp" en la tabla "users"
+ * 
+ * DETECCIÓN DE LEVEL UP:
+ * - Después de otorgar XP, verifica si el nivel aumentó
+ * - Compara el nivel actual con el anterior guardado en localStorage
+ * - Si hay incremento, muestra un toast de "¡Subiste de nivel!"
+ * - Esto es un fallback por si el sistema Realtime no detectó el cambio
+ * 
+ * CACHE:
+ * - Los umbrales de nivel se cachean en memoria durante 60 segundos
+ * - Evita consultas repetitivas a la base de datos
+ */
 import { supabase } from './supabase'
 import { pushAchievementToast, pushLevelUpToast } from '../stores/notifications'
 import { setKnownLevel as _setKnownLevelRealtime } from './levelup-realtime'
 
 /**
- * Award XP to the current authenticated user.
+ * Otorga XP al usuario autenticado actual
  * @param {Object} params
- * @param {number} params.amount - XP to award (>=0)
- * @param {string} [params.reason='correct_answer'] - Reason label
- * @param {string|null} [params.gameId=null] - UUID of the game
- * @param {string|null} [params.sessionId=null] - UUID of the session
- * @param {Object|null} [params.meta=null] - Extra metadata (will be sent as JSON)
+ * @param {number} params.amount - Cantidad de XP a otorgar (>=0)
+ * @param {string} [params.reason='correct_answer'] - Razón por la que se otorga (para logs/auditoría)
+ * @param {string|null} [params.gameId=null] - UUID del juego (si aplica)
+ * @param {string|null} [params.sessionId=null] - UUID de la sesión de juego (si aplica)
+ * @param {Object|null} [params.meta=null] - Metadata adicional (se guarda como JSON)
  */
 export async function awardXp({ amount, reason = 'correct_answer', gameId = null, sessionId = null, meta = null }) {
   const { data, error } = await supabase.rpc('award_xp', {
@@ -47,8 +72,9 @@ export async function awardXp({ amount, reason = 'correct_answer', gameId = null
 }
 
 /**
- * Get level info for a user (defaults to current user if userId is null).
- * @param {string|null} userId - UUID of the user or null for current
+ * Obtiene información del nivel de un usuario
+ * @param {string|null} userId - UUID del usuario o null para el usuario actual
+ * @returns {Object} { data: { level, xp, xp_to_next_level }, error }
  */
 export async function getUserLevel(userId = null) {
   const { data, error } = await supabase.rpc('get_user_level', { p_user_id: userId })
@@ -56,12 +82,13 @@ export async function getUserLevel(userId = null) {
 }
 
 /**
- * Get leaderboard with optional period and game filter.
- * @param {Object} opts
- * @param {'all_time'|'weekly'|'monthly'} [opts.period='all_time']
- * @param {string|null} [opts.gameId=null]
- * @param {number} [opts.limit=50]
- * @param {number} [opts.offset=0]
+ * Obtiene la tabla de clasificación (leaderboard) con filtros opcionales
+ * @param {Object} opts - Opciones de filtrado
+ * @param {'all_time'|'weekly'|'monthly'} [opts.period='all_time'] - Período de tiempo
+ * @param {string|null} [opts.gameId=null] - Filtrar por juego específico
+ * @param {number} [opts.limit=100] - Máximo de resultados
+ * @param {number} [opts.offset=0] - Offset para paginación
+ * @returns {Object} { data: [{ user_id, display_name, xp, level, rank }], error }
  */
 export async function getLeaderboard({ period = 'all_time', gameId = null, limit = 100, offset = 0 } = {}) {
   const { data, error } = await supabase.rpc('get_leaderboard', {
@@ -73,10 +100,18 @@ export async function getLeaderboard({ period = 'all_time', gameId = null, limit
   return { data, error }
 }
 
-// Cache level thresholds to compute level client-side when needed
+/**
+ * CACHE DE UMBRALES DE NIVEL
+ * Almacena los umbrales en memoria durante 60 segundos para evitar consultas repetitivas
+ */
 let _levelThresholdsCache = null
 let _levelThresholdsAt = 0
 
+/**
+ * Obtiene los umbrales de nivel desde la base de datos (con cache)
+ * @param {boolean} force - Si es true, fuerza la recarga desde la BD ignorando cache
+ * @returns {Array} [{ level: 1, xp_required: 0 }, { level: 2, xp_required: 100 }, ...]
+ */
 export async function fetchLevelThresholds(force = false) {
   const now = Date.now()
   if (!force && _levelThresholdsCache && (now - _levelThresholdsAt < 60_000)) {
@@ -89,6 +124,12 @@ export async function fetchLevelThresholds(force = false) {
   return _levelThresholdsCache
 }
 
+/**
+ * Calcula el nivel correspondiente a una cantidad de XP
+ * @param {number} xp - Cantidad de XP
+ * @param {Array} thresholds - Array de umbrales [{ level, xp_required }, ...]
+ * @returns {number} Nivel calculado (1-30)
+ */
 export function computeLevelFromXp(xp, thresholds) {
   if (!Array.isArray(thresholds) || thresholds.length === 0) return 1
   const x = typeof xp === 'number' ? xp : Number(xp || 0)
@@ -111,8 +152,10 @@ export async function getMyXpByGameEvents() {
 }
 
 /**
- * Unlock an achievement by code for the current user.
- * Returns { data: boolean, error }
+ * Desbloquea un logro para el usuario actual
+ * @param {string} code - Código del logro (ej: 'first_win', 'streak_5')
+ * @param {Object|null} meta - Metadata adicional (ej: { streak: 10 })
+ * @returns {Object} { data: boolean (true si se desbloquó ahora, false si ya estaba), error }
  */
 export async function unlockAchievement(code, meta = null) {
   const { data, error } = await supabase.rpc('unlock_achievement', {

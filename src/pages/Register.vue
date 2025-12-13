@@ -1,10 +1,10 @@
 <script>
-import AppH1 from '../components/AppH1.vue';
-import AppButton from '../components/AppButton.vue';
+import AppH1 from '../components/common/AppH1.vue';
+import AppButton from '../components/common/AppButton.vue';
 import { register } from '../services/auth';
 import { flagUrl } from '../services/countries';
 import countriesMap from '../codeCOUNTRYS.json';
-import SearchSelect from '../components/SearchSelect.vue';
+import SearchSelect from '../components/common/SearchSelect.vue';
 import { getAllPlayers, getAllTeams } from '../services/players';
 import { pushErrorToast, pushSuccessToast } from '../stores/notifications';
 
@@ -186,3 +186,4 @@ export default {
     <p class="mt-4 text-center text-sm text-slate-300">¿Ya tenés cuenta? <RouterLink class="text-sky-300 hover:text-sky-200" to="/login">Acceder</RouterLink></p>
   </div>
 </template>
+

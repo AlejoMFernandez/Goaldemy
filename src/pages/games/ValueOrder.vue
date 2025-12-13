@@ -1,5 +1,5 @@
 <script>
-import AppH1 from '../../components/AppH1.vue'
+import AppH1 from '../../components/common/AppH1.vue'
 import { getAllPlayers, sampleDistinct } from '../../services/players'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
 import { initScoring } from '../../services/scoring'
@@ -8,8 +8,8 @@ import { awardXpForCorrect } from '../../services/game-xp'
 import { spawnXpBadge } from '../../services/ui-effects'
 import { celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { getGameMetadata } from '../../services/games'
-import GamePreviewModal from '../../components/GamePreviewModal.vue'
-import GameSummaryPopup from '../../components/GameSummaryPopup.vue'
+import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
+import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 
 export default {
   name: 'ValueOrder',
@@ -49,6 +49,9 @@ export default {
       afterPercent: 0,
       progressShown: 0,
       xpToNextAfter: null,
+      // difficulty
+      selectedDifficulty: 'normal',
+      difficultyConfig: null,
     }
   },
   mounted() {
@@ -178,11 +181,12 @@ export default {
       this.correctness = this.slots.map((idx, pos) => Boolean(allowedByPos[pos] && allowedByPos[pos].has(idx)))
       const correctPositions = this.correctness.reduce((acc, ok) => acc + (ok ? 1 : 0), 0)
       this.corrects = correctPositions
-      this.attempts = 5
+      this.attempts = this.slots.length
       this.score = correctPositions * 20
       this.answered = true
-      // Award XP once (20 por acierto)
-      this.xpEarned = this.allowXp ? (correctPositions * 20) : 0
+      // Award XP based on difficulty (xpPerCorrect por acierto)
+      const xpPerCorrect = this.difficultyConfig?.xpPerCorrect || 20
+      this.xpEarned = this.allowXp ? (correctPositions * xpPerCorrect) : 0
       if (this.allowXp && this.xpEarned > 0) {
         try {
           await awardXpForCorrect({ gameCode: 'value-order', amount: this.xpEarned, attemptIndex: 0, streak: 0, corrects: correctPositions })
@@ -191,7 +195,8 @@ export default {
       }
       const delayMs = 1200
       if (this.mode === 'challenge') {
-        const result = correctPositions === 5 ? 'win' : 'loss'
+        const winThreshold = this.slots.length
+        const result = correctPositions === winThreshold ? 'win' : 'loss'
         if (result === 'win') celebrateGameWin()
         else announceGameLoss()
         try { await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, correctPositions, finalOrder: [...this.slots], correctness: [...this.correctness], items: this.items, corrects: correctPositions }) } catch {}
@@ -222,8 +227,14 @@ export default {
       }
     },
     async checkAvailability() { this.availability = await isChallengeAvailable('value-order') },
-    async startChallenge() {
+    async startChallenge({ difficulty, config }) {
       if (!this.availability.available) return
+      
+      // Guardar configuración de dificultad
+      this.selectedDifficulty = difficulty
+      this.difficultyConfig = config
+      const itemCount = config.itemCount
+      
       try {
         // capture XP/level before
         try {
@@ -238,6 +249,9 @@ export default {
         } catch {}
         this.sessionId = await startChallengeSession('value-order', null)
         this.overlayOpen = false
+        // Ajustar el número de slots según la dificultad
+        this.slots = new Array(itemCount).fill(null)
+        this.setup()
       } catch {}
     },
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
@@ -257,20 +271,20 @@ export default {
     @start="startChallenge"
   />
 
-  <section class="grid place-items-center">
-    <div class="space-y-3 w-full max-w-4xl">
-      <div class="flex items-center justify-between">
-        <AppH1>Valor de mercado</AppH1>
-        <div class="flex items-center gap-2">
-          <div class="rounded-xl bg-slate-900/60 border border-white/15 px-2.5 py-1.5 flex items-center gap-2">
-            <span class="text-slate-300 text-[10px] uppercase tracking-wider">Puntaje</span>
-            <span class="text-white font-extrabold text-base leading-none">{{ score }}/50</span>
+  <section class="grid place-items-center min-h-[600px]">
+    <div class="space-y-4 w-full max-w-4xl">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 w-full">
+        <AppH1 class="text-3xl md:text-4xl flex-none">Valor de mercado</AppH1>
+        <div class="flex items-center gap-2 self-stretch sm:self-auto flex-none">
+          <router-link :to="backPath()" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">← Volver</router-link>
+          <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-2 flex items-center gap-2">
+            <span class="text-slate-300 text-xs uppercase tracking-wider">Puntaje</span>
+            <span class="text-white font-extrabold text-lg leading-none">{{ score }}/100</span>
           </div>
-          <router-link :to="backPath()" class="rounded-full border border-white/15 px-2 py-1 text-xs sm:text-sm text-slate-200 hover:bg-white/5">← Volver</router-link>
         </div>
       </div>
 
-  <div class="relative card p-4" ref="confettiHost">
+  <div class="relative card p-6">
         <!-- Direction hint: + (izquierda) a - (derecha) -->
         <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1 px-1">
           <span>Más caro (+)</span>
@@ -334,7 +348,9 @@ export default {
           :afterPercent="afterPercent"
           :progressShown="progressShown"
           :xpToNextAfter="xpToNextAfter"
-          :winThreshold="5"
+          :xpEarned="xpEarned"
+          :difficulty="selectedDifficulty"
+          :winThreshold="slots.length"
           :backPath="backPath()"
           @close="showSummary = false"
         />
@@ -342,3 +358,5 @@ export default {
     </div>
   </section>
 </template>
+
+

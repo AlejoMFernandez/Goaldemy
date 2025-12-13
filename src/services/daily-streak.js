@@ -1,15 +1,41 @@
+/**
+ * SERVICIO DE RACHA DIARIA DE LOGIN
+ * 
+ * Rastrea cuántos días consecutivos el usuario ha jugado al menos un juego.
+ * 
+ * CÓMO FUNCIONA:
+ * - Cada vez que el usuario juega su PRIMER juego del día, se llama updateDailyLoginStreak()
+ * - Compara last_activity_date con la fecha actual
+ * - Si fue ayer: incrementa daily_streak
+ * - Si es hoy: no hace nada (ya contó)
+ * - Si fue hace más de 1 día: resetea a 1 (perdió la racha)
+ * 
+ * CAMPOS EN user_profiles:
+ * - daily_streak: Racha actual (días consecutivos)
+ * - best_daily_streak: Máxima racha histórica
+ * - last_activity_date: Última fecha de actividad (YYYY-MM-DD)
+ * 
+ * LOGROS RELACIONADOS:
+ * - streak_rookie: 3 días consecutivos
+ * - streak_veteran: 7 días consecutivos
+ * - streak_legend: 30 días consecutivos
+ * 
+ * LLAMADA AUTOMÁTICA:
+ * - Se llama desde awardXpForCorrect() (game-xp.js)
+ * - Solo se ejecuta una vez por día (verifica last_activity_date)
+ * 
+ * IMPORTANTE:
+ * - Usa fechas UTC en formato YYYY-MM-DD para evitar problemas de zona horaria
+ * - La racha se pierde si pasan más de 24 horas sin jugar
+ */
 import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { unlockAchievementWithToast } from './xp'
 
 /**
- * Update the user's daily login streak.
- * Call this when the user plays their first game of the day.
- * Logic:
- * - If last_activity_date is yesterday: increment daily_streak
- * - If last_activity_date is today: do nothing (already counted)
- * - If last_activity_date is older: reset to 1
- * - Update best_daily_streak if current is higher
+ * Actualiza la racha diaria de login del usuario
+ * Debe llamarse al jugar el primer juego del día
+ * @returns {Object} { updated: boolean, streak: number, reason?: string }
  */
 export async function updateDailyLoginStreak() {
   const { id: userId } = getAuthUser() || {}

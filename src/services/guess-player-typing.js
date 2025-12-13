@@ -1,9 +1,9 @@
-import { getAllPlayers } from './players'
 import { spawnXpBadge } from './ui-effects'
 import { onCorrect } from './scoring'
 import { awardXpForCorrect } from './game-xp'
 import { flagUrl, countryCodeFromName } from './countries'
 import { celebrateCorrect } from './game-celebrations'
+import { loadAndClassifyPlayers, getBroadPosition, selectRandomPlayerFromBucket } from './game-common'
 import countryMap from '../codeCOUNTRYS.json'
 
 export function initState() {
@@ -31,30 +31,13 @@ export function initState() {
   }
 }
 
+/**
+ * Carga jugadores y los clasifica por posición amplia
+ */
 export function loadPlayers(state) {
-  state.allPlayers = getAllPlayers()
-  const by = { GK: [], DF: [], MF: [], FW: [] }
-  for (const p of state.allPlayers) {
-    if (typeof p.positionId === 'number') {
-      if (p.positionId === 0) by.GK.push(p)
-      else if (p.positionId === 1) by.DF.push(p)
-      else if (p.positionId === 2) by.MF.push(p)
-      else if (p.positionId === 3) by.FW.push(p)
-      else by.MF.push(p)
-      continue
-    }
-    const pos = (p.position || '').toUpperCase()
-    const tokens = pos.split(',').map(t => t.trim())
-    const isDF = tokens.some(t => ['CB','LB','RB','LWB','RWB','WB','DEF','DF'].includes(t))
-    const isMF = tokens.some(t => ['CM','CDM','CAM','RM','LM','MID','MF'].includes(t))
-    const isFW = tokens.some(t => ['ST','CF','LW','RW','FW','ATT','FWD'].includes(t))
-    if (pos.includes('GK')) by.GK.push(p)
-    else if (isFW) by.FW.push(p)
-    else if (isMF) by.MF.push(p)
-    else if (isDF) by.DF.push(p)
-    else by.MF.push(p)
-  }
-  state.byPos = by
+  const { allPlayers, byPos } = loadAndClassifyPlayers(state)
+  state.allPlayers = allPlayers
+  state.byPos = byPos
   state.loading = false
 }
 
@@ -67,17 +50,11 @@ function normalize(s) {
     .trim()
 }
 
+/**
+ * Retorna posición amplia del jugador (GK, DF, MF, FW)
+ */
 export function broadPos(p) {
-  if (typeof p?.positionId === 'number') {
-    return p.positionId === 0 ? 'GK' : p.positionId === 1 ? 'DF' : p.positionId === 2 ? 'MF' : 'FW'
-  }
-  const pos = (p?.position || '').toUpperCase()
-  if (pos.includes('GK')) return 'GK'
-  const tokens = pos.split(',').map(t => t.trim())
-  if (tokens.some(t => ['ST','CF','LW','RW','FW','ATT','FWD'].includes(t))) return 'FW'
-  if (tokens.some(t => ['CM','CDM','CAM','RM','LM','MID','MF'].includes(t))) return 'MF'
-  if (tokens.some(t => ['CB','LB','RB','LWB','RWB','WB','DEF','DF'].includes(t))) return 'DF'
-  return 'MF'
+  return getBroadPosition(p)
 }
 
 export function posLabel(p) { return broadPos(p) }
@@ -92,31 +69,21 @@ export function teamLogo(p) { return p?.teamLogo || null }
 // Slightly stronger blur so it's noticeable on mobile devices too
 export function blurForLives(lives) { return lives >= 3 ? 14 : lives === 2 ? 9 : lives === 1 ? 5 : 0 }
 
+/**
+ * Selecciona siguiente jugador rotando entre posiciones
+ */
 export function nextRound(state) {
   if (!state.allPlayers.length) return
-  const order = state.posOrder
-  state.current = null
-  for (let k = 0; k < order.length; k++) {
-    const bucket = order[state.posIndex % order.length]
-    const arr = state.byPos[bucket] || []
-    state.posIndex = (state.posIndex + 1) % order.length
-    if (arr.length) {
-      for (let tries = 0; tries < 5; tries++) {
-        const idx = Math.floor(Math.random() * arr.length)
-        const candidate = arr[idx]
-        if (broadPos(candidate) === bucket) { state.current = candidate; break }
-      }
-      if (!state.current) {
-        const idx = Math.floor(Math.random() * arr.length)
-        state.current = arr[idx]
-      }
-      break
-    }
-  }
+  
+  state.current = selectRandomPlayerFromBucket(state.byPos, state.posOrder, state.posIndex)
+  state.posIndex = (state.posIndex + 1) % state.posOrder.length
+  
+  // Si no hay jugador en buckets, tomar aleatorio
   if (!state.current) {
     const idx = Math.floor(Math.random() * state.allPlayers.length)
     state.current = state.allPlayers[idx]
   }
+  
   state.lives = 3
   state.guess = ''
   state.answered = false
@@ -134,8 +101,9 @@ export async function submitGuess(state, confettiHost) {
     state.answered = true
     const nextStreak = state.streak + 1
     if (state.allowXp) {
-      await awardXpForCorrect({ gameCode: 'who-is', amount: 100, attemptIndex: state.attempts, streak: nextStreak, corrects: state.corrects + 1 })
-      state.xpEarned += 100
+      const xpAmount = state.difficultyConfig?.xpPerCorrect || 100
+      await awardXpForCorrect({ gameCode: 'who-is', amount: xpAmount, attemptIndex: state.attempts, streak: nextStreak, corrects: state.corrects + 1 })
+      state.xpEarned += xpAmount
     }
     onCorrect(state)
     state.streak = nextStreak
@@ -144,7 +112,10 @@ export async function submitGuess(state, confettiHost) {
     // 🎉 Celebrate correct answer
     celebrateCorrect()
     
-    if (state.allowXp) { spawnXpBadge(confettiHost, '+100 XP', { position: 'top-right' }) }
+    if (state.allowXp) { 
+      const xpAmount = state.difficultyConfig?.xpPerCorrect || 100
+      spawnXpBadge(confettiHost, `+${xpAmount} XP`, { position: 'top-right' }) 
+    }
     state.feedback = ''
     return true
   } else {

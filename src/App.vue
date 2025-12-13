@@ -4,7 +4,7 @@ import AppFooter from './components/AppFooter.vue';
 import DirectMessagesDock from './components/DirectMessagesDock.vue';
 import Home from './pages/Home.vue';
 import AppToast from './components/AppToast.vue';
-import AppLoader from './components/AppLoader.vue';
+import AppLoader from './components/common/AppLoader.vue';
 import BrandedBackground from './components/BrandedBackground.vue';
 import { authReady } from './services/auth';
 

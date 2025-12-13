@@ -155,3 +155,5 @@ import GoaldemyLogo from '../components/GoaldemyLogo.vue'
     </div>
   </section>
 </template>
+
+

@@ -1,6 +1,35 @@
+/**
+ * SERVICIO DE LOGROS (ACHIEVEMENTS)
+ * 
+ * Gestiona el catálogo de logros y la consulta de logros desbloqueados por usuarios.
+ * 
+ * SISTEMA DE LOGROS:
+ * - 34 logros totales en la aplicación
+ * - Cada logro tiene: code (identificador único), name, description, icon_url, points
+ * - Los logros se almacenan en la tabla "achievements" (catálogo)
+ * - Los logros desbloqueados se guardan en "user_achievements" (relación usuario-logro)
+ * 
+ * DESBLOQUEO:
+ * - Se usa el RPC unlock_achievement(p_code, p_meta) desde xp.js
+ * - Es SECURITY DEFINER: se ejecuta con permisos del servidor (anti-trampa)
+ * - Retorna true si se desbloqueó ahora, false si ya estaba desbloqueado
+ * 
+ * CACHE:
+ * - El catálogo de logros se cachea 5 minutos en memoria
+ * - Evita consultas repetitivas a la BD
+ * - Se puede forzar la recarga con force=true
+ * 
+ * PORCENTAJES DE DESBLOQUEO:
+ * - Calcula qué % de usuarios tiene cada logro
+ * - Útil para mostrar rareza de logros (ej: "Solo el 3.5% lo tiene")
+ */
 import { supabase } from './supabase'
 
-// Get achievements for a user, joined with achievements table
+/**
+ * Obtiene todos los logros desbloqueados de un usuario
+ * @param {string} userId - UUID del usuario
+ * @returns {Object} { data: [{ earned_at, achievements: {...} }], error }
+ */
 export async function getUserAchievements(userId) {
   const { data, error } = await supabase
     .from('user_achievements')

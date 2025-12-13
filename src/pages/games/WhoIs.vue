@@ -1,5 +1,5 @@
 <script>
-import AppH1 from '../../components/AppH1.vue'
+import AppH1 from '../../components/common/AppH1.vue'
 import { initState, loadPlayers, nextRound, submitGuess, blurForLives, posLabel, countryFlag, teamLogo } from '../../services/guess-player-typing'
 import { initScoring, GAME_SCORING } from '../../services/scoring'
 import { getUserLevel } from '../../services/xp'
@@ -7,8 +7,8 @@ import { isChallengeAvailable, startChallengeSession, completeChallengeSession }
 import { gameSummaryBlurb } from '../../services/games'
 import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { getGameMetadata } from '../../services/games'
-import GamePreviewModal from '../../components/GamePreviewModal.vue'
-import GameSummaryPopup from '../../components/GameSummaryPopup.vue'
+import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
+import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 
 export default {
   name: 'WhoIs',
@@ -40,6 +40,9 @@ export default {
       afterPercent: 0,
       progressShown: 0,
       xpToNextAfter: null,
+      // difficulty
+      selectedDifficulty: 'normal',
+      difficultyConfig: null,
     }
   },
   computed: {
@@ -212,8 +215,14 @@ export default {
     flagSrc() { return this.current ? countryFlag(this.current, 40) : '' },
     teamLogo() { return this.current ? teamLogo(this.current) : '' },
     async checkAvailability() { this.availability = await isChallengeAvailable('who-is') },
-    async startChallenge() {
+    async startChallenge({ difficulty, config }) {
       if (!this.availability.available) return
+      
+      // Guardar configuración de dificultad
+      this.selectedDifficulty = difficulty
+      this.difficultyConfig = config
+      this.lives = config.lives
+      
       try {
         // capture level/xp before
         try {
@@ -248,25 +257,28 @@ export default {
     @start="startChallenge"
   />
 
-  <section class="grid place-items-center">
-    <div class="space-y-3 w-full max-w-4xl">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-        <AppH1 class="text-2xl md:text-4xl mb-1 sm:mb-0">¿Quién es?</AppH1>
-        <div class="flex items-center gap-2 self-stretch sm:self-auto">
-          <router-link :to="backPath()" class="rounded-full border border-white/15 px-2 py-1 text-xs sm:text-sm text-slate-200 hover:bg-white/5">← Volver</router-link>
-          <div class="rounded-xl bg-slate-900/60 border border-white/15 px-2.5 py-1.5 flex items-center gap-2">
-            <span class="text-slate-300 text-[10px] uppercase tracking-wider">Puntaje</span>
-            <span class="text-white font-extrabold text-base sm:text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * (pointsPerCorrect || 10) }}</span>
+  <section class="grid place-items-center min-h-[600px]">
+    <div class="space-y-4 w-full max-w-4xl">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <AppH1 class="text-3xl md:text-4xl flex-none">¿Quién es?</AppH1>
+        <div class="flex items-center gap-2 self-stretch sm:self-auto flex-none">
+          <router-link :to="backPath()" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">← Volver</router-link>
+          <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-2 flex items-center gap-2">
+            <span class="text-slate-300 text-xs uppercase tracking-wider">Puntaje</span>
+            <span class="text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * (pointsPerCorrect || 10) }}</span>
           </div>
-          <div v-if="streak > 0" class="rounded-full border border-green-500/60 bg-green-500/10 text-green-300 text-[11px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-1 font-semibold">
+          <div v-if="streak > 0" class="rounded-full border border-emerald-500/60 bg-emerald-500/10 text-emerald-300 text-xs px-2.5 py-1 font-semibold">
             ×{{ streak }}
           </div>
         </div>
       </div>
 
-      <div v-if="loading" class="text-slate-300">Cargando…</div>
-      <div v-else class="relative card p-4">
-        <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden"></div>
+      <div v-if="loading" class="text-center text-slate-300 py-12">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+        <p class="mt-3">Cargando...</p>
+      </div>
+      <div v-else class="relative card p-6">
+        <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"></div>
         <!-- Lives top-left with animated loss -->
         <div class="absolute top-2 left-2 z-10 select-none">
           <div class="relative inline-block rounded-full px-2.5 py-1.5 bg-white/5 ring-1 ring-white/10">
@@ -334,6 +346,8 @@ export default {
           :afterPercent="afterPercent"
           :progressShown="progressShown"
           :xpToNextAfter="xpToNextAfter"
+          :xpEarned="xpEarned"
+          :difficulty="selectedDifficulty"
           :winThreshold="1"
           :backPath="backPath()"
           @close="showSummary = false"
@@ -364,3 +378,5 @@ export default {
 .life-enter-active { transition: transform 160ms ease, opacity 160ms ease; }
 .life-enter-from { transform: scale(0.8); opacity: 0.6; }
 </style>
+
+

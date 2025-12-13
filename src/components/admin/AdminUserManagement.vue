@@ -169,7 +169,7 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { getAllUsers, changeUserRole, deleteUser, searchUsers } from '../../services/admin.js';
-import AppLoader from '../AppLoader.vue';
+import AppLoader from '../common/AppLoader.vue';
 import { pushErrorToast, pushSuccessToast } from '../../stores/notifications.js';
 
 export default {
@@ -302,3 +302,4 @@ export default {
     }
 };
 </script>
+

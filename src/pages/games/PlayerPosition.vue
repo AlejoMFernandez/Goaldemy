@@ -1,11 +1,11 @@
 <script>
-import AppH1 from '../../components/AppH1.vue';
+import AppH1 from '../../components/common/AppH1.vue';
 import { initState, loadPlayers, nextRound, pickAnswer, optionClass } from '../../services/player-position';
 import { initScoring } from '../../services/scoring'
 import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { getGameMetadata } from '../../services/games'
-import GamePreviewModal from '../../components/GamePreviewModal.vue'
-import GameSummaryPopup from '../../components/GameSummaryPopup.vue'
+import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
+import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
 import { getUserLevel } from '../../services/xp'
 
@@ -27,6 +27,10 @@ export default {
       availability: { available: true, reason: null },
       showSummary: false,
       lifetimeMaxStreak: 0,
+      // Difficulty system
+      selectedDifficulty: 'normal',
+      difficultyConfig: null,
+      xpEarned: 0,
       // XP summary fields
       levelBefore: null,
       levelAfter: null,
@@ -93,8 +97,14 @@ export default {
     },
     optionClass(opt) { return optionClass(this, opt); },
     async checkAvailability() { this.availability = await isChallengeAvailable('player-position') },
-    async startChallenge() {
+    async startChallenge({ difficulty, config }) {
       if (!this.availability.available) return
+      
+      // Guardar configuración de dificultad
+      this.selectedDifficulty = difficulty
+      this.difficultyConfig = config
+      const timeLimit = config.time
+      
       try {
         // capture XP before
         try {
@@ -107,9 +117,9 @@ export default {
           const completed = next ? (next - toNext) : next
           this.beforePercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
         } catch {}
-        this.sessionId = await startChallengeSession('player-position', 30)
+        this.sessionId = await startChallengeSession('player-position', timeLimit)
         this.overlayOpen = false
-        this.timeLeft = 30
+        this.timeLeft = timeLimit
         this.timeOver = false
         clearInterval(this.timer)
         this.timer = setInterval(() => {
@@ -185,32 +195,37 @@ export default {
     @start="startChallenge"
   />
 
-  <section class="grid place-items-center h-full">
-    <div class="space-y-3 w-full max-w-4xl">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2 w-full">
-        <AppH1 class="text-2xl md:text-4xl mb-1 sm:mb-0 flex-none">Posición del jugador</AppH1>
+  <section class="grid place-items-center min-h-[600px]">
+    <div class="space-y-4 w-full max-w-4xl">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 w-full">
+        <AppH1 class="text-3xl md:text-4xl flex-none">Posición del jugador</AppH1>
         <div class="flex items-center gap-2 self-stretch sm:self-auto flex-none">
-          <router-link :to="backPath()" class="rounded-full border border-white/15 px-2 py-1 text-xs sm:text-sm text-slate-200 hover:bg-white/5">← Volver</router-link>
-          <div class="rounded-xl bg-slate-900/60 border border-white/15 px-2.5 py-1.5 flex items-center gap-2">
-            <span class="text-slate-300 text-[10px] uppercase tracking-wider">Puntaje</span>
-            <span class="text-white font-extrabold text-base sm:text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
-            <div v-if="streak > 0" class="rounded-full border border-green-500/60 bg-green-500/10 text-green-300 text-[11px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-1 font-semibold">
+          <router-link :to="backPath()" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">← Volver</router-link>
+          <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-2 flex items-center gap-2">
+            <span class="text-slate-300 text-xs uppercase tracking-wider">Puntaje</span>
+            <span class="text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
+            <div v-if="streak > 0" class="rounded-full border border-emerald-500/60 bg-emerald-500/10 text-emerald-300 text-xs px-2.5 py-1 font-semibold">
               ×{{ streak }}
             </div>
           </div>
         </div>
       </div>
 
-      <div v-if="loading" class="text-slate-300">Cargando…</div>
-      <div v-else class="relative card p-4">
-        <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden"></div>
+      <div v-if="loading" class="text-center text-slate-300 py-12">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+        <p class="mt-3">Cargando...</p>
+      </div>
+      <div v-else class="relative card p-6">
+        <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"></div>
         
         <!-- Timer -->
-        <div v-if="mode==='challenge'" class="pointer-events-none absolute left-3 top-3 z-20">
-          <div :class="['rounded-full px-3 py-1 text-sm font-bold shadow border',
-            timeLeft>=21 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' :
-            timeLeft>=11 ? 'bg-amber-500/15 text-amber-300 border-amber-500/40' :
-                           'bg-red-500/15 text-red-300 border-red-500/40']">
+        <div v-if="mode==='challenge'" class="absolute left-4 top-4 z-20 pointer-events-none">
+          <div :class="[
+            'rounded-full px-3 py-1.5 text-sm font-bold shadow border',
+            timeLeft >= 21 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' :
+            timeLeft >= 11 ? 'bg-amber-500/15 text-amber-300 border-amber-500/40' :
+                             'bg-red-500/15 text-red-300 border-red-500/40'
+          ]">
             ⏱ {{ Math.max(0, timeLeft) }}s
           </div>
         </div>
@@ -248,6 +263,8 @@ export default {
           :xpToNextAfter="xpToNextAfter"
           :winThreshold="10"
           :backPath="backPath()"
+          :xpEarned="xpEarned"
+          :difficulty="selectedDifficulty"
           @close="showSummary = false"
         />
       </div>
@@ -257,10 +274,12 @@ export default {
 
 <style scoped>
 .round-fade-enter-active, .round-fade-leave-active {
-  transition: opacity 180ms ease, transform 180ms ease;
+  transition: opacity 200ms ease, transform 200ms ease;
 }
 .round-fade-enter-from, .round-fade-leave-to {
   opacity: 0;
-  transform: translateY(6px) scale(0.99);
+  transform: translateY(8px) scale(0.98);
 }
 </style>
+
+

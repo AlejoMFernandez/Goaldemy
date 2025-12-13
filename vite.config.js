@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
+import path from 'path'
 
 // Optional PWA plugin; loaded dynamically so build doesn't fail if not installed yet
 export default defineConfig(async ({ mode }) => {
@@ -49,5 +50,10 @@ export default defineConfig(async ({ mode }) => {
 
   return {
     plugins: [vue(), tailwindcss(), pwa].filter(Boolean),
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src')
+      }
+    }
   }
 })

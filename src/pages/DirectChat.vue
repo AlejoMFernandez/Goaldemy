@@ -1,5 +1,5 @@
 <script>
-import AppH1 from '../components/AppH1.vue'
+import AppH1 from '../components/common/AppH1.vue'
 import { subscribeToAuthStateChanges } from '../services/auth'
 import { formatShortDate } from '../services/formatters'
 import { getPublicProfile } from '../services/user-profiles'
@@ -217,3 +217,5 @@ export default {
     </section>
   </div>
 </template>
+
+

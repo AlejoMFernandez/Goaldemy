@@ -64,3 +64,4 @@ const textClass = computed(() => sizeConfig[props.size].text)
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.3));
 }
 </style>
+

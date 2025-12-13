@@ -1,5 +1,5 @@
 <script>
-import AppH1 from '../../components/AppH1.vue'
+import AppH1 from '../../components/common/AppH1.vue'
 import { getAllPlayers, sampleDistinct } from '../../services/players'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
 import { initScoring } from '../../services/scoring'
@@ -8,8 +8,8 @@ import { awardXpForCorrect } from '../../services/game-xp'
 import { spawnXpBadge } from '../../services/ui-effects'
 import { celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { getGameMetadata } from '../../services/games'
-import GamePreviewModal from '../../components/GamePreviewModal.vue'
-import GameSummaryPopup from '../../components/GameSummaryPopup.vue'
+import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
+import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 
 export default {
   name: 'HeightOrder',
@@ -46,6 +46,9 @@ export default {
       xpToNextAfter: null,
       selectedFromSlot: null,
       hoveredSlot: null,
+      // difficulty
+      selectedDifficulty: 'normal',
+      difficultyConfig: null,
     }
   },
   mounted() {
@@ -145,11 +148,12 @@ export default {
       this.correctness = this.slots.map((idx, pos) => Boolean(allowedByPos[pos] && allowedByPos[pos].has(idx)))
       const correctPositions = this.correctness.reduce((acc, ok) => acc + (ok ? 1 : 0), 0)
       this.corrects = correctPositions
-      this.attempts = 5
+      this.attempts = this.slots.length
       this.score = correctPositions * 20
       this.answered = true
-      // award XP once
-      this.xpEarned = this.allowXp ? (correctPositions * 20) : 0
+      // award XP based on difficulty
+      const xpPerCorrect = this.difficultyConfig?.xpPerCorrect || 20
+      this.xpEarned = this.allowXp ? (correctPositions * xpPerCorrect) : 0
       if (this.allowXp && this.xpEarned > 0) {
         try {
           await awardXpForCorrect({ gameCode: 'height-order', amount: this.xpEarned, attemptIndex: 0, streak: 0, corrects: correctPositions })
@@ -158,7 +162,8 @@ export default {
       }
       const delayMs = 1200
       if (this.mode === 'challenge') {
-        const result = correctPositions === 5 ? 'win' : 'loss'
+        const winThreshold = this.slots.length
+        const result = correctPositions === winThreshold ? 'win' : 'loss'
         if (result === 'win') celebrateGameWin()
         else announceGameLoss()
         try { await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, correctPositions, finalOrder: [...this.slots], correctness: [...this.correctness], items: this.items, corrects: correctPositions }) } catch {}
@@ -186,8 +191,14 @@ export default {
       }
     },
     async checkAvailability() { this.availability = await isChallengeAvailable('height-order') },
-    async startChallenge() {
+    async startChallenge({ difficulty, config }) {
       if (!this.availability.available) return
+      
+      // Guardar configuración de dificultad
+      this.selectedDifficulty = difficulty
+      this.difficultyConfig = config
+      const itemCount = config.itemCount
+      
       try {
         try {
           const { data } = await getUserLevel(null)
@@ -201,6 +212,9 @@ export default {
         } catch {}
         this.sessionId = await startChallengeSession('height-order', null)
         this.overlayOpen = false
+        // Ajustar el número de slots según la dificultad
+        this.slots = new Array(itemCount).fill(null)
+        this.setup()
       } catch {}
     },
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
@@ -290,7 +304,9 @@ export default {
           :afterPercent="afterPercent"
           :progressShown="progressShown"
           :xpToNextAfter="xpToNextAfter"
-          :winThreshold="5"
+          :xpEarned="xpEarned"
+          :difficulty="selectedDifficulty"
+          :winThreshold="slots.length"
           :backPath="backPath()"
           @close="showSummary = false"
         />
@@ -298,3 +314,5 @@ export default {
     </div>
   </section>
 </template>
+
+

@@ -1,6 +1,6 @@
 <script>
-import AppH1 from '../components/AppH1.vue'
-import AppButton from '../components/AppButton.vue'
+import AppH1 from '../components/common/AppH1.vue'
+import AppButton from '../components/common/AppButton.vue'
 import { updatePassword } from '../services/auth'
 
 export default {
@@ -70,3 +70,5 @@ export default {
     </form>
   </div>
 </template>
+
+

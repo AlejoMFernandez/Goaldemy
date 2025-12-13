@@ -187,3 +187,5 @@ const totals = computed(() => {
   backdrop-filter: saturate(0) brightness(0.82) blur(1px);
 }
 </style>
+
+

@@ -135,3 +135,4 @@ export default {
 <style scoped>
 canvas { cursor: pointer; }
 </style>
+

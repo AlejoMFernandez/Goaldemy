@@ -1,6 +1,36 @@
+/**
+ * SERVICIO DE CHAT GLOBAL
+ * 
+ * Gestiona el chat público visible para todos los usuarios autenticados.
+ * 
+ * CARACTERÍSTICAS:
+ * - Mensajes visibles para TODOS los usuarios conectados
+ * - Realtime: nuevos mensajes aparecen instantáneamente via Supabase Realtime
+ * - Enriquecimiento automático con display_name y avatar_url del remitente
+ * - Desbloquea logro "chat_master" después de enviar varios mensajes
+ * 
+ * TABLA DE BASE DE DATOS:
+ * - global_chat_messages: { id, sender_id, email, content, created_at }
+ * - RLS (Row Level Security): Usuarios autenticados pueden leer y escribir
+ * 
+ * SUPABASE REALTIME:
+ * - Usa Postgres Changes para escuchar INSERTs en tiempo real
+ * - Canal: 'global_chat_messages'
+ * - Cada INSERT dispara el callback con el nuevo mensaje
+ * 
+ * FLUJO:
+ * 1. saveGlobalChatMessage() - Guarda mensaje en BD
+ * 2. Supabase Realtime notifica a todos los suscriptores
+ * 3. suscribeToGlobalChatMessages() dispara callback con mensaje enriquecido
+ * 4. UI actualiza automáticamente mostrando el nuevo mensaje
+ */
 import { supabase } from "./supabase";
 import { getPublicProfilesByIds } from './user-profiles'
 
+/**
+ * Guarda un nuevo mensaje en el chat global
+ * @param {Object} data - { sender_id, email, content }
+ */
 export async function saveGlobalChatMessage(data) {
     const { error } = await supabase
         .from('global_chat_messages')

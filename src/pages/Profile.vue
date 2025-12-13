@@ -1,5 +1,5 @@
 <script>
-import AppH1 from '../components/AppH1.vue';
+import AppH1 from '../components/common/AppH1.vue';
 import { subscribeToAuthStateChanges } from '../services/auth';
 import { getUserLevel } from '../services/xp';
 import { getUserAchievements } from '../services/achievements';
@@ -469,3 +469,4 @@ export default {
       @cancel="closeFeaturedModal" />
   </div>
 </template>
+

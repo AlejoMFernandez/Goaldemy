@@ -42,3 +42,4 @@ export default {
     <div class="font-mono text-sm font-bold text-emerald-400 tabular-nums">{{ timeLeft }}</div>
   </div>
 </template>
+

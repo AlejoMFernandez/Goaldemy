@@ -1,11 +1,11 @@
 <script>
-import AppH1 from '../components/AppH1.vue';
-import AppButton from '../components/AppButton.vue';
+import AppH1 from '../components/common/AppH1.vue';
+import AppButton from '../components/common/AppButton.vue';
 import { subscribeToAuthStateChanges, updateAuthUserData } from '../services/auth';
 import { supabase } from '../services/supabase';
 import countriesMap from '../codeCOUNTRYS.json';
 import { flagUrl } from '../services/countries';
-import SearchSelect from '../components/SearchSelect.vue';
+import SearchSelect from '../components/common/SearchSelect.vue';
 import { getAllPlayers, getAllTeams } from '../services/players';
 
 let unsubscribeAuth = () => {};
@@ -186,3 +186,4 @@ export default {
     </form>
   </div>
 </template>
+

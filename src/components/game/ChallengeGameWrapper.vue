@@ -1,10 +1,10 @@
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getUserLevel } from '../services/xp'
-import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../services/game-modes'
-import { getGameMetadata } from '../services/games'
-import { GAME_TYPES, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../services/game-celebrations'
+import { getUserLevel } from '../../services/xp'
+import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
+import { getGameMetadata } from '../../services/games'
+import { GAME_TYPES, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import GamePreviewModal from './GamePreviewModal.vue'
 
 /**
@@ -306,3 +306,4 @@ export default {
     />
   </div>
 </template>
+

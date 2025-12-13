@@ -1,8 +1,39 @@
 /**
- * Simple confetti celebration effect
- * Creates colorful confetti particles that fall from top
+ * SISTEMA DE CONFETTI
+ * 
+ * Efecto de celebración con confetti animado para momentos especiales:
+ * - Victoria en desafíos diarios
+ * - Subida de nivel
+ * - Desbloqueo de logros importantes
+ * 
+ * CARACTERÍSTICAS:
+ * - Partículas de colores aleatorios que caen desde arriba
+ * - Rotación y drift lateral para efecto realista
+ * - Configurable: cantidad, duración, colores
+ * - Se auto-limpia después de la duración especificada
+ * 
+ * IMPLEMENTACIÓN:
+ * - Crea un contenedor fixed que cubre toda la pantalla
+ * - Cada partícula es un div con animación CSS única
+ * - pointer-events: none para no interferir con la UI
+ * - z-index: 9999 para estar siempre visible
+ * 
+ * OPCIONES:
+ * - duration: Duración total del efecto (default: 4000ms)
+ * - particleCount: Cantidad de partículas (default: 80)
+ * - colors: Array de colores hex (default: verde, azul, morado, amarillo, rosa, cyan)
+ * 
+ * EJEMPLO DE USO:
+ *   triggerConfetti({ duration: 5000, particleCount: 100 })
  */
 
+/**
+ * Dispara el efecto de confetti
+ * @param {Object} options - Opciones de configuración
+ * @param {number} options.duration - Duración en ms (default: 4000)
+ * @param {number} options.particleCount - Cantidad de partículas (default: 80)
+ * @param {string[]} options.colors - Array de colores hex
+ */
 export function triggerConfetti(options = {}) {
   console.log('🎉 Confetti triggered!', options)
   const {

@@ -16,12 +16,26 @@ export default {
     progressShown: { type: Number, default: 0 },
     xpToNextAfter: { type: Number, default: null },
     winThreshold: { type: Number, default: 10 },
-    backPath: { type: String, default: '/play/points' }
+    backPath: { type: String, default: '/play/points' },
+    // Nuevos props para dificultad
+    xpEarned: { type: Number, default: 0 },
+    difficulty: { type: String, default: 'normal' }
   },
   emits: ['close'],
   computed: {
     won() {
       return this.corrects >= this.winThreshold
+    },
+    difficultyMultiplier() {
+      // Multiplicador basado en la dificultad
+      if (this.difficulty === 'easy') return '×1'
+      if (this.difficulty === 'hard') return '×3'
+      return '×2' // normal
+    },
+    difficultyColor() {
+      if (this.difficulty === 'easy') return 'text-green-400'
+      if (this.difficulty === 'hard') return 'text-red-400'
+      return 'text-yellow-400' // normal
     }
   }
 }
@@ -58,8 +72,11 @@ export default {
             <div class="text-xl font-bold text-white">{{ corrects }}<span class="text-slate-400 text-base">/{{ winThreshold }}</span></div>
           </div>
           <div class="rounded-xl bg-black/20 backdrop-blur px-3 py-1.5 border border-white/10">
-            <div class="text-[10px] uppercase tracking-wider text-slate-300">Puntaje</div>
-            <div class="text-xl font-bold text-white">{{ score }}</div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-300">XP Ganado</div>
+            <div class="flex items-baseline gap-1">
+              <span class="text-lg font-semibold text-white">{{ xpEarned || score }}</span>
+              <span :class="['text-xl font-bold', difficultyColor]">{{ difficultyMultiplier }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -127,3 +144,4 @@ export default {
     </div>
   </div>
 </template>
+

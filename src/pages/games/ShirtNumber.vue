@@ -1,22 +1,15 @@
 <script>
-import AppH1 from '../../components/AppH1.vue'
+import AppH1 from '../../components/common/AppH1.vue'
 import { getAllPlayers } from '../../services/players'
 import { initScoring, onCorrect, onIncorrect } from '../../services/scoring'
 import { awardXpForCorrect } from '../../services/game-xp'
 import { celebrateCorrect, checkEarlyWin, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { getGameMetadata } from '../../services/games'
-import GamePreviewModal from '../../components/GamePreviewModal.vue'
-import GameSummaryPopup from '../../components/GameSummaryPopup.vue'
+import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
+import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
 import { getUserLevel } from '../../services/xp'
-
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[arr[i], arr[j]] = [arr[j], arr[i]]
-  }
-  return arr
-}
+import { shuffleArray } from '../../services/game-common'
 
 export default {
   name: 'ShirtNumber',
@@ -63,6 +56,9 @@ export default {
       afterPercent: 0,
       progressShown: 0,
       xpToNextAfter: null,
+      // difficulty
+      selectedDifficulty: 'normal',
+      difficultyConfig: null,
     }
   },
   mounted() {
@@ -132,7 +128,7 @@ export default {
         distractors.push(nums.splice(i, 1)[0])
       }
       const opts = [Number(correct.shirtNumber), ...distractors].slice(0,4).map(n => ({ label: String(n), value: n }))
-      return shuffle(opts)
+      return shuffleArray(opts)
     },
     nextRound() {
       if (!this.allPlayers.length) return
@@ -165,7 +161,9 @@ export default {
         const nextStreak = (this.streak || 0) + 1
         const nextCorrects = (this.corrects || 0) + 1
         if (this.allowXp) {
-          try { await awardXpForCorrect({ gameCode: 'shirt-number', amount: 10, attemptIndex: this.attempts, streak: nextStreak, corrects: nextCorrects }) } catch {}
+          const xpAmount = this.difficultyConfig?.xpPerCorrect || 10
+          try { await awardXpForCorrect({ gameCode: 'shirt-number', amount: xpAmount, attemptIndex: this.attempts, streak: nextStreak, corrects: nextCorrects }) } catch {}
+          this.xpEarned += xpAmount
         }
         onCorrect(this)
         this.streak = nextStreak
@@ -180,8 +178,14 @@ export default {
       return correct
     },
     async checkAvailability() { this.availability = await isChallengeAvailable('shirt-number') },
-    async startChallenge() {
+    async startChallenge({ difficulty, config }) {
       if (!this.availability.available) return
+      
+      // Guardar configuración de dificultad
+      this.selectedDifficulty = difficulty
+      this.difficultyConfig = config
+      const timeLimit = config.time
+      
       try {
         // capture XP/level before starting
         try {
@@ -194,9 +198,9 @@ export default {
           const completed = next ? (next - toNext) : next
           this.beforePercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
         } catch {}
-        this.sessionId = await startChallengeSession('shirt-number', 30)
+        this.sessionId = await startChallengeSession('shirt-number', timeLimit)
         this.overlayOpen = false
-        this.timeLeft = 30
+        this.timeLeft = timeLimit
         this.timeOver = false
         clearInterval(this.timer)
         this.timer = setInterval(() => {
@@ -267,42 +271,53 @@ export default {
     @start="startChallenge"
   />
 
-  <section class="grid place-items-center">
-    <div class="space-y-3 w-full max-w-4xl">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2 w-full">
-        <AppH1 class="text-2xl md:text-4xl mb-1 sm:mb-0 flex-none">Número de camiseta</AppH1>
+  <section class="grid place-items-center min-h-[600px]">
+    <div class="space-y-4 w-full max-w-4xl">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 w-full">
+        <AppH1 class="text-3xl md:text-4xl flex-none">Número de camiseta</AppH1>
         <div class="flex items-center gap-2 self-stretch sm:self-auto flex-none">
-          <router-link :to="backPath()" class="rounded-full border border-white/15 px-2 py-1 text-xs sm:text-sm text-slate-200 hover:bg-white/5">← Volver</router-link>
-          <div class="rounded-xl bg-slate-900/60 border border-white/15 px-2.5 py-1.5 flex items-center gap-2">
-            <span class="text-slate-300 text-[10px] uppercase tracking-wider">Puntaje</span>
-            <span class="text-white font-extrabold text-base sm:text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
-            <div v-if="streak > 0" class="rounded-full border border-green-500/60 bg-green-500/10 text-green-300 text-[11px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-1 font-semibold">
+          <router-link :to="backPath()" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">← Volver</router-link>
+          <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-2 flex items-center gap-2">
+            <span class="text-slate-300 text-xs uppercase tracking-wider">Puntaje</span>
+            <span class="text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
+            <div v-if="streak > 0" class="rounded-full border border-emerald-500/60 bg-emerald-500/10 text-emerald-300 text-xs px-2.5 py-1 font-semibold">
               ×{{ streak }}
             </div>
           </div>
         </div>
       </div>
 
-      <div v-if="loading" class="text-slate-300">Cargando…</div>
-      <div v-else class="relative card p-4">
-        <div class="flex flex-col items-center gap-2">
-          <p class="text-slate-200 text-center text-base">Elegí el número de camiseta correcto</p>
-          <img v-if="current" :src="current.image" :alt="current.name" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg" />
-          <div class="text-slate-300 text-sm">{{ current?.name }}</div>
-        </div>
-        <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <button v-for="opt in options" :key="opt.value" :class="optionClass(opt)" :disabled="timeOver" @click="choose(opt)">#{{ opt.label }}</button>
-        </div>
-
-        <!-- Timer in top-left inside card -->
-        <div v-if="mode==='challenge'" class="pointer-events-none absolute left-3 top-3 z-20">
-          <div :class="['rounded-full px-3 py-1 text-sm font-bold shadow border',
-            timeLeft>=21 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' :
-            timeLeft>=11 ? 'bg-amber-500/15 text-amber-300 border-amber-500/40' :
-                           'bg-red-500/15 text-red-300 border-red-500/40']">
+      <div v-if="loading" class="text-center text-slate-300 py-12">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+        <p class="mt-3">Cargando...</p>
+      </div>
+      <div v-else class="relative card p-6">
+        <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"></div>
+        
+        <!-- Timer -->
+        <div v-if="mode==='challenge'" class="absolute left-4 top-4 z-20 pointer-events-none">
+          <div :class="[
+            'rounded-full px-3 py-1.5 text-sm font-bold shadow border',
+            timeLeft >= 21 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' :
+            timeLeft >= 11 ? 'bg-amber-500/15 text-amber-300 border-amber-500/40' :
+                             'bg-red-500/15 text-red-300 border-red-500/40'
+          ]">
             ⏱ {{ Math.max(0, timeLeft) }}s
           </div>
         </div>
+        
+        <Transition name="round-fade" mode="out-in">
+          <div :key="roundKey">
+            <div class="flex flex-col items-center gap-2">
+              <p class="text-slate-200 text-center text-base">Elegí el número de camiseta correcto</p>
+              <img v-if="current" :src="current.image" :alt="current.name" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg" />
+              <div class="text-slate-300 text-sm">{{ current?.name }}</div>
+            </div>
+            <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button v-for="opt in options" :key="opt.value" :class="optionClass(opt)" :disabled="timeOver" @click="choose(opt)">#{{ opt.label }}</button>
+            </div>
+          </div>
+        </Transition>
 
         <!-- Summary Popup -->
         <GameSummaryPopup
@@ -319,13 +334,27 @@ export default {
           :afterPercent="afterPercent"
           :progressShown="progressShown"
           :xpToNextAfter="xpToNextAfter"
+          :xpEarned="xpEarned"
+          :difficulty="selectedDifficulty"
           :winThreshold="10"
           :backPath="backPath()"
           @close="showSummary = false"
         />
 
-        <div v-if="timeOver && mode==='challenge'" class="mt-3 text-center text-amber-300 text-sm">Tiempo agotado. ¡Buen intento!</div>
+        <div v-if="timeOver && mode==='challenge'" class="mt-4 text-center text-amber-300 text-sm font-medium">⏱ Tiempo agotado. ¡Buen intento!</div>
       </div>
     </div>
   </section>
 </template>
+
+<style scoped>
+.round-fade-enter-active, .round-fade-leave-active {
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+.round-fade-enter-from, .round-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+}
+</style>
+
+

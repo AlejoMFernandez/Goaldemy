@@ -1,5 +1,5 @@
 <script>
-import AppH1 from '../components/AppH1.vue'
+import AppH1 from '../components/common/AppH1.vue'
 import LeaderboardTable from '../components/leaderboard/LeaderboardTable.vue'
 import PeriodTabs from '../components/leaderboard/PeriodTabs.vue'
 import GameFilter from '../components/leaderboard/GameFilter.vue'
@@ -141,3 +141,5 @@ export default {
     </div>
   </section>
 </template>
+
+

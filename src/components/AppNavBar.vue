@@ -27,8 +27,10 @@ export default {
             isOpen: false,
             infoOpen: false,
             playOpen: false,
+            leaguesOpen: false,
             _infoCloseTimer: null,
             _playCloseTimer: null,
+            _leaguesCloseTimer: null,
             q: '',
             searchOpen: false,
             searching: false,
@@ -105,6 +107,7 @@ export default {
             if (this._infoCloseTimer) { clearTimeout(this._infoCloseTimer); this._infoCloseTimer = null }
             this.infoOpen = true
             this.playOpen = false
+            this.leaguesOpen = false
         },
         onInfoLeave() {
             if (this._infoCloseTimer) clearTimeout(this._infoCloseTimer)
@@ -114,10 +117,21 @@ export default {
             if (this._playCloseTimer) { clearTimeout(this._playCloseTimer); this._playCloseTimer = null }
             this.playOpen = true
             this.infoOpen = false
+            this.leaguesOpen = false
         },
         onPlayLeave() {
             if (this._playCloseTimer) clearTimeout(this._playCloseTimer)
             this._playCloseTimer = setTimeout(() => { this.playOpen = false }, 220)
+        },
+        onLeaguesEnter() {
+            if (this._leaguesCloseTimer) { clearTimeout(this._leaguesCloseTimer); this._leaguesCloseTimer = null }
+            this.leaguesOpen = true
+            this.infoOpen = false
+            this.playOpen = false
+        },
+        onLeaguesLeave() {
+            if (this._leaguesCloseTimer) clearTimeout(this._leaguesCloseTimer)
+            this._leaguesCloseTimer = setTimeout(() => { this.leaguesOpen = false }, 220)
         },
         async loadNotifCount() {
             if (this._notifCountDebounce) clearTimeout(this._notifCountDebounce)
@@ -298,6 +312,11 @@ export default {
                         if (this.playOpen && playMenu && !playMenu.contains(e.target) && playBtn && !playBtn.contains(e.target)) {
                             this.playOpen = false
                         }
+                        const leaguesMenu = this.$el.querySelector('[data-leagues-menu]')
+                        const leaguesBtn = this.$el.querySelector('[data-leagues-button]')
+                        if (this.leaguesOpen && leaguesMenu && !leaguesMenu.contains(e.target) && leaguesBtn && !leaguesBtn.contains(e.target)) {
+                            this.leaguesOpen = false
+                        }
                     }
                     document.addEventListener('click', this._onDocClick)
                     // Watch menu open to fetch level lazily
@@ -319,6 +338,7 @@ export default {
                         }
                         this.infoOpen = false
                         this.playOpen = false
+                        this.leaguesOpen = false
                         this.notifOpen = false
                     })
                     // Extend outside-click close for notifications
@@ -371,6 +391,42 @@ export default {
                     
                     
                     <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Leaderboards</RouterLink></li>
+                    <!-- Ligas dropdown (hover) -->
+                    <li class="relative"
+                        @mouseenter="onLeaguesEnter"
+                        @mouseleave="onLeaguesLeave">
+                        <button data-leagues-button class="inline-flex items-center gap-1 px-0 py-1.5 text-slate-200 hover:text-white">
+                            Ligas
+                            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                        </button>
+                        <div v-if="leaguesOpen" data-leagues-menu class="absolute left-0 mt-2 w-56 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl overflow-hidden z-30"
+                             @mouseenter="onLeaguesEnter" @mouseleave="onLeaguesLeave">
+                            <RouterLink @click="leaguesOpen=false" to="/leagues/premier-league" class="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200 border-b border-white/5">
+                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/47.png" alt="Premier League" class="w-5 h-5 object-contain" />
+                                Premier League
+                            </RouterLink>
+                            <RouterLink @click="leaguesOpen=false" to="/leagues/la-liga" class="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200 border-b border-white/5">
+                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/87.png" alt="La Liga" class="w-5 h-5 object-contain" />
+                                La Liga
+                            </RouterLink>
+                            <RouterLink @click="leaguesOpen=false" to="/leagues/serie-a" class="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200 border-b border-white/5">
+                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/55.png" alt="Serie A" class="w-5 h-5 object-contain" />
+                                Serie A
+                            </RouterLink>
+                            <RouterLink @click="leaguesOpen=false" to="/leagues/bundesliga" class="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200 border-b border-white/5">
+                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/54.png" alt="Bundesliga" class="w-5 h-5 object-contain" />
+                                Bundesliga
+                            </RouterLink>
+                            <RouterLink @click="leaguesOpen=false" to="/leagues/ligue-1" class="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200 border-b border-white/5">
+                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/53.png" alt="Ligue 1" class="w-5 h-5 object-contain" />
+                                Ligue 1
+                            </RouterLink>
+                            <RouterLink @click="leaguesOpen=false" to="/leagues/liga-argentina" class="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">
+                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/112.png" alt="Liga Profesional" class="w-5 h-5 object-contain" />
+                                Liga Profesional
+                            </RouterLink>
+                        </div>
+                    </li>
                     <!-- Info dropdown (hover) -->
                     <li class="relative"
                         @mouseenter="onInfoEnter"
@@ -381,6 +437,7 @@ export default {
                         </button>
                         <div v-if="infoOpen" data-info-menu class="absolute left-0 mt-2 w-56 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl overflow-hidden z-30"
                              @mouseenter="onInfoEnter" @mouseleave="onInfoLeave">
+                            <RouterLink @click="infoOpen=false" to="/teams" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">Equipos y Jugadores</RouterLink>
                             <RouterLink @click="infoOpen=false" to="/about/me" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">¿Quién soy?</RouterLink>
                             <RouterLink @click="infoOpen=false" to="/about/goaldemy" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">¿Qué es Goaldemy?</RouterLink>
                             <RouterLink @click="infoOpen=false" to="/about/objetivo" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">Objetivo</RouterLink>
@@ -594,7 +651,7 @@ export default {
                                             </div>
                                             <RouterLink @click="isOpen=false; menuOpen=false" to="/profile" class="block px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Ver Perfil</RouterLink>
                                             <RouterLink v-if="isAdminUser" @click="isOpen=false; menuOpen=false" to="/admin" class="block px-3 py-2 text-sm hover:bg-amber-500/10 text-amber-400 border-t border-white/10">
-                                                👑 Panel Admin
+                                                Panel Admin
                                             </RouterLink>
                                             <button @click="handleLogout" class="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Cerrar sesión</button>
                                         </div>
@@ -612,6 +669,7 @@ export default {
                                                     <details class="group">
                                                         <summary class="cursor-pointer hover:text-white">Info</summary>
                                                         <ul class="mt-1 pl-3 flex flex-col gap-1 text-slate-300">
+                                                            <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/teams">Equipos y Jugadores</RouterLink></li>
                                                             <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/about/me">¿Quién soy?</RouterLink></li>
                                                             <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/about/goaldemy">¿Qué es Goaldemy?</RouterLink></li>
                                                             <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/about/objetivo">Objetivo</RouterLink></li>
