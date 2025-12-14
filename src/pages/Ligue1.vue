@@ -77,7 +77,7 @@
                     </td>
                     <td class="text-center py-4 px-2 text-slate-300 font-semibold">{{ team.idx }}</td>
                     <td class="py-4 px-4">
-                      <div class="flex items-center gap-3">
+                      <router-link :to="`/team/${team.id}`" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <img 
                           :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${team.id}.png`"
                           :alt="team.name"
@@ -85,7 +85,7 @@
                           @error="handleImageError"
                         />
                         <span class="font-medium text-white group-hover:text-purple-300 transition-colors">{{ team.name }}</span>
-                      </div>
+                      </router-link>
                     </td>
                     <td class="text-center py-4 px-2 text-slate-400 text-sm">{{ team.played }}</td>
                     <td class="text-center py-4 px-2 text-slate-300 text-sm">{{ team.wins }}</td>
@@ -197,7 +197,7 @@
                     class="border-b border-white/5 hover:bg-white/5 transition-colors py-3.5"
                   >
                   <div class="px-5 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-2.5 flex-1 justify-end">
+                    <router-link :to="`/team/${match.homeTeamId}`" class="flex items-center gap-2.5 flex-1 justify-end hover:opacity-80 transition-opacity">
                       <span class="font-medium text-white text-sm text-right">{{ match.homeTeam }}</span>
                       <img 
                         :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.homeTeamId}.png`"
@@ -205,16 +205,20 @@
                         class="w-7 h-7 object-contain flex-shrink-0"
                         @error="handleImageError"
                       />
-                    </div>
+                    </router-link>
                     <div class="flex-shrink-0 text-center min-w-[60px]">
                       <div v-if="match.status.finished" class="text-xs font-bold text-white">
                         {{ match.status.score }}
+                      </div>
+                      <div v-else-if="match.status.started" class="flex flex-col items-center gap-0.5">
+                        <span class="text-[9px] font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded animate-pulse">LIVE</span>
+                        <span class="text-xs font-bold text-white">{{ match.status.score }}</span>
                       </div>
                       <div v-else class="text-xs text-slate-400 font-semibold">
                         {{ formatMatchTime(match.time) }}
                       </div>
                     </div>
-                    <div class="flex items-center gap-2.5 flex-1">
+                    <router-link :to="`/team/${match.awayTeamId}`" class="flex items-center gap-2.5 flex-1 hover:opacity-80 transition-opacity">
                       <img 
                         :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.awayTeamId}.png`"
                         :alt="match.awayTeam"
@@ -222,7 +226,7 @@
                         @error="handleImageError"
                       />
                       <span class="font-medium text-white text-sm">{{ match.awayTeam }}</span>
-                    </div>
+                    </router-link>
                   </div>
                   </div>
                 </div>
@@ -496,15 +500,28 @@ export default {
       }
     };
 
+    // Auto-refresh cada 30 segundos
+    let refreshInterval = null;
+
     onMounted(() => {
       loadLeagueData();
       document.addEventListener('click', handleClickOutside);
       document.addEventListener('keydown', handleEscape);
+      
+      // Configurar auto-refresh
+      refreshInterval = setInterval(() => {
+        loadLeagueData();
+      }, 30000); // 30 segundos
     });
 
     onBeforeUnmount(() => {
       document.removeEventListener('click', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
+      
+      // Limpiar interval
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
     });
 
     return {

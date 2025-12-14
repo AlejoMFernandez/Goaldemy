@@ -36,6 +36,7 @@ import SerieA from '../pages/SerieA.vue'
 import Bundesliga from '../pages/Bundesliga.vue'
 import Ligue1 from '../pages/Ligue1.vue'
 import LigaArgentina from '../pages/LigaArgentina.vue';
+import TeamPage from '../pages/TeamPage.vue';
 
 const routes = [
     { path: '/', component: Landing },
@@ -46,6 +47,7 @@ const routes = [
     { path: '/leagues/bundesliga', component: Bundesliga },
     { path: '/leagues/ligue-1', component: Ligue1 },
     { path: '/leagues/liga-argentina', component: LigaArgentina },
+    { path: '/team/:teamId', component: TeamPage },
     { path: '/login', component: Login, meta: { layout: 'auth' } },
     { path: '/register', component: Register, meta: { layout: 'auth' } },
     { path: '/verify-email', component: VerifyEmail, meta: { layout: 'auth' } },

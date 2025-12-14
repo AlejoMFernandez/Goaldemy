@@ -340,6 +340,58 @@ export async function getLeagueOverview(leagueId) {
   }
 }
 
+/**
+ * Obtener información completa de un equipo
+ */
+export async function getTeamDetails(teamId) {
+  try {
+    const data = await fetchFotMob(`/teams?id=${teamId}`);
+    
+    if (!data) return null;
+    
+    // Extraer información relevante
+    return {
+      id: teamId,
+      name: data.details?.name || '',
+      shortName: data.details?.shortName || '',
+      logo: `https://images.fotmob.com/image_resources/logo/teamlogo/${teamId}.png`,
+      country: data.details?.country || '',
+      
+      // Información del estadio
+      stadium: {
+        name: data.overview?.venue?.widget?.name || '',
+        city: data.overview?.venue?.widget?.city || '',
+        capacity: data.overview?.venue?.statPairs?.find(p => p[0] === 'Capacity')?.[1] || null,
+        opened: data.overview?.venue?.statPairs?.find(p => p[0] === 'Opened')?.[1] || null
+      },
+      
+      // Overview tab
+      overview: data.overview || null,
+      
+      // Tabla/posición
+      table: data.table || null,
+      
+      // Fixtures/partidos
+      fixtures: data.fixtures || null,
+      
+      // Plantilla
+      squad: data.squad || null,
+      
+      // Estadísticas
+      stats: data.stats || null,
+      
+      // Historia
+      history: data.history || null,
+      
+      // Tabs disponibles
+      tabs: data.tabs || []
+    };
+  } catch (error) {
+    console.error(`Error fetching team details for ${teamId}:`, error);
+    return null;
+  }
+}
+
 export { LEAGUES };
 export default {
   getLeagueTable,
@@ -349,5 +401,6 @@ export default {
   getTodayMatches,
   getAllMatches,
   getLeagueOverview,
+  getTeamDetails,
   LEAGUES
 };
