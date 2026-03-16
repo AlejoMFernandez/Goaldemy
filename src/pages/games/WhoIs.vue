@@ -43,6 +43,8 @@ export default {
       // difficulty
       selectedDifficulty: 'normal',
       difficultyConfig: null,
+      // explicit win tracking (avoids lives-timing edge cases)
+      gameWon: false,
     }
   },
   computed: {
@@ -69,7 +71,7 @@ export default {
     }
   },
   watch: {},
-  mounted() {
+  async mounted() {
     const mode = (this.$route.query.mode || '').toString().toLowerCase()
     if (mode === 'free') this.mode = 'free'
     else if (mode === 'challenge') this.mode = 'challenge'
@@ -78,7 +80,7 @@ export default {
 
     if (this.mode === 'free') this.allowXp = false
 
-    loadPlayers(this)
+    await loadPlayers(this)
     nextRound(this)
 
     if (this.reviewMode) {
@@ -97,7 +99,7 @@ export default {
           try { this.lifetimeMaxStreak = Math.max(await mod.fetchLifetimeMaxStreak('who-is') || 0, this.maxStreak || 0) } catch {}
           // Show the exact player that was played today
           try {
-            if (!this.allPlayers || !this.allPlayers.length) { loadPlayers(this) }
+            if (!this.allPlayers || !this.allPlayers.length) { await loadPlayers(this) }
             const p = (this.allPlayers || []).find(pl => pl.id === m.playerId)
             if (p) { this.current = p; this.revealImage = true; this.answered = true }
           } catch {}
@@ -112,6 +114,7 @@ export default {
     nextRound() {
       // Ensure the new round starts blurred again
       this.revealImage = false
+      this.gameWon = false
       nextRound(this)
     },
     blurb() { return gameSummaryBlurb('who-is') },
@@ -148,6 +151,7 @@ export default {
         this.justPicked = false
       }
       if (ok) this.revealImage = true
+      if (ok) this.gameWon = true
       if (this.mode === 'challenge' && (ok || this.lives === 0)) {
         // Trigger confetti and sound based on result
         const result = (this.lives > 0) ? 'win' : 'loss'
@@ -301,7 +305,12 @@ export default {
                 <img v-if="flagSrc()" :src="flagSrc()" alt="flag" width="36" height="26" class="object-cover" style="aspect-ratio: 20/14;" />
                 <img v-if="teamLogo()" :src="teamLogo()" alt="team" width="32" height="32" class="object-cover" />
               </div>
-              <img v-if="current" :src="current.image" :alt="current.name" :style="{ filter: `blur(${blurPx()}px)` }" class="mb-2 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg blur-img" />
+              <div v-if="current" class="mb-2 overflow-hidden rounded-xl shadow-lg">
+                <img :src="current.image" :alt="current.name"
+                     :style="{ filter: `blur(${blurPx()}px)` }"
+                     class="w-32 h-32 sm:w-40 sm:h-40 object-cover blur-img"
+                     @error="e => e.target.style.display='none'" />
+              </div>
               <div v-if="answered && lastResultOk" class="text-emerald-300 text-sm">¡Correcto! El jugador era: <span class="text-white font-medium">{{ current?.name }}</span></div>
             </div>
 
@@ -334,7 +343,7 @@ export default {
         <!-- Summary Popup -->
         <GameSummaryPopup
           :show="showSummary"
-          :corrects="lives > 0 ? 1 : 0"
+          :corrects="gameWon ? 1 : 0"
           :score="score"
           :maxStreak="maxStreak"
           :lifetimeMaxStreak="lifetimeMaxStreak"

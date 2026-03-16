@@ -10,7 +10,7 @@ export default {
 
 <template>
   <footer class="relative border-t border-white/10 bg-gradient-to-t from-slate-900/90 to-slate-900/40 backdrop-blur">
-    <div class="container mx-auto px-6 py-10">
+    <div class="container mx-auto px-6 pt-10 pb-24">
       <!-- Main footer content -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
         
@@ -59,8 +59,17 @@ export default {
       </div>
 
       <!-- Bottom bar -->
-      <div class="border-t border-white/10 pt-6 text-left text-sm text-slate-400">
-        <p>© 2025 <span class="text-cyan-400 font-semibold">GOALDEMY</span>. Todos los derechos reservados.</p>
+      <div class="border-t border-white/10 pt-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between text-sm text-slate-400">
+        <p>© 2026 <span class="text-cyan-400 font-semibold">GOALDEMY</span>. Todos los derechos reservados.</p>
+        <p class="text-slate-400">
+          Desarrollado por 
+          <a
+            href="https://alejomfernandez.com.ar"
+            target="_blank"
+            rel="noopener"
+            class="font-semibold text-cyan-400 underline underline-offset-2 hover:text-cyan-300 transition"
+          >Alejo Martin Fernandez</a>
+        </p>
       </div>
     </div>
   </footer>

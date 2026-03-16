@@ -327,9 +327,9 @@ export default {
     const currentRoundIndex = ref(0);
     const showRoundDropdown = ref(false);
 
-    const loadLeagueData = async () => {
+    const loadLeagueData = async ({ silent = false } = {}) => {
       try {
-        loading.value = true;
+        if (!silent || !leagueData.value) loading.value = true;
         error.value = null;
         
         const data = await getLeagueOverview(LEAGUES.LA_LIGA.id);
@@ -510,7 +510,7 @@ export default {
       
       // Configurar auto-refresh
       refreshInterval = setInterval(() => {
-        loadLeagueData();
+        loadLeagueData({ silent: true });
       }, 30000); // 30 segundos
     });
 

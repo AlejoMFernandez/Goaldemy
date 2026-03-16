@@ -45,7 +45,7 @@ export default {
       return getGameMetadata('nationality')
     }
   },
-  mounted() {
+  async mounted() {
     // Detect mode from query
     const mode = (this.$route.query.mode || '').toString().toLowerCase()
     if (mode === 'free') this.mode = 'free'
@@ -56,7 +56,7 @@ export default {
     // Free mode => no XP
     if (this.mode === 'free') this.allowXp = false
 
-    loadPlayers(this);
+    await loadPlayers(this);
     nextRound(this);
 
     // Challenge: show overlay and check availability or load review

@@ -1,6 +1,6 @@
 <script>
 import AppH1 from '../../components/common/AppH1.vue'
-import { getAllPlayers, sampleDistinct } from '../../services/players'
+import { getAllPlayersAsync, sampleDistinct } from '../../services/players'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
 import { initScoring } from '../../services/scoring'
 import { getUserLevel } from '../../services/xp'
@@ -60,7 +60,7 @@ export default {
     else if (mode === 'challenge') this.mode = 'challenge'
     else if (mode === 'review') { this.mode = 'challenge'; this.reviewMode = true }
     if (this.mode === 'free') this.allowXp = false
-    this.setup()
+    this.setup().catch(() => {})
     if (this.reviewMode) {
       // Load latest finished session and reconstruct board to show how user finished
       import('../../services/game-modes').then(async (mod) => {
@@ -83,9 +83,9 @@ export default {
   },
   methods: {
     blurb() { return gameSummaryBlurb('value-order') },
-    setup() {
+    async setup() {
       this.locked = false
-      const all = getAllPlayers().filter(p => Number.isFinite(p?.transferValue))
+      const all = (await getAllPlayersAsync()).filter(p => Number.isFinite(p?.transferValue))
       const picks = sampleDistinct(all, 5)
       this.items = picks
       this.slots = [null, null, null, null, null]

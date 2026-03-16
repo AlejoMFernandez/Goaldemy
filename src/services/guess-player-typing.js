@@ -3,7 +3,7 @@ import { onCorrect } from './scoring'
 import { awardXpForCorrect } from './game-xp'
 import { flagUrl, countryCodeFromName } from './countries'
 import { celebrateCorrect } from './game-celebrations'
-import { loadAndClassifyPlayers, getBroadPosition, selectRandomPlayerFromBucket } from './game-common'
+import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, getBroadPosition, selectRandomPlayerFromBucket } from './game-common'
 import countryMap from '../codeCOUNTRYS.json'
 
 export function initState() {
@@ -34,11 +34,8 @@ export function initState() {
 /**
  * Carga jugadores y los clasifica por posición amplia
  */
-export function loadPlayers(state) {
-  const { allPlayers, byPos } = loadAndClassifyPlayers(state)
-  state.allPlayers = allPlayers
-  state.byPos = byPos
-  state.loading = false
+export async function loadPlayers(state) {
+  await loadAndClassifyPlayersAsync(state)
 }
 
 function normalize(s) {
@@ -66,7 +63,7 @@ export function countryFlag(p, width = 32) {
   return flagUrl(code, width)
 }
 export function teamLogo(p) { return p?.teamLogo || null }
-// Slightly stronger blur so it's noticeable on mobile devices too
+// Progressive reveal: strong blur until hints reduce it
 export function blurForLives(lives) { return lives >= 3 ? 14 : lives === 2 ? 9 : lives === 1 ? 5 : 0 }
 
 /**
@@ -75,8 +72,7 @@ export function blurForLives(lives) { return lives >= 3 ? 14 : lives === 2 ? 9 :
 export function nextRound(state) {
   if (!state.allPlayers.length) return
   
-  state.current = selectRandomPlayerFromBucket(state.byPos, state.posOrder, state.posIndex)
-  state.posIndex = (state.posIndex + 1) % state.posOrder.length
+  state.current = selectRandomPlayerFromBucket(state)
   
   // Si no hay jugador en buckets, tomar aleatorio
   if (!state.current) {

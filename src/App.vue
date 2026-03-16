@@ -2,7 +2,6 @@
 import AppNavBar from './components/AppNavBar.vue';
 import AppFooter from './components/AppFooter.vue';
 import DirectMessagesDock from './components/DirectMessagesDock.vue';
-import Home from './pages/Home.vue';
 import AppToast from './components/AppToast.vue';
 import AppLoader from './components/common/AppLoader.vue';
 import BrandedBackground from './components/BrandedBackground.vue';
@@ -11,7 +10,6 @@ import { authReady } from './services/auth';
 export default {
   name: 'App',
   components: {
-    Home,
     AppNavBar,
     AppFooter,
     AppToast,
@@ -31,6 +29,8 @@ export default {
   },
   async mounted() {
     try { await authReady; } finally { this.authBooting = false }
+    // Pre-warm FotMob player cache in background
+    import('./services/players').then(m => m.initializePlayers?.()).catch(() => {})
   }
 }
 </script>

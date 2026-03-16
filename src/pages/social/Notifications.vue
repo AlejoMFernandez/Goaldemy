@@ -1,9 +1,9 @@
 <script>
-import { listNotifications, markAsRead } from '../services/notifications'
-import { listIncomingRequests, acceptRequest, blockRequest } from '../services/connections'
-import { getPublicProfilesByIds } from '../services/user-profiles'
-import AppH1 from '../components/common/AppH1.vue'
-import { supabase } from '../services/supabase'
+import { listNotifications, markAsRead } from '../../services/notifications'
+import { listIncomingRequests, acceptRequest, blockRequest } from '../../services/connections'
+import { getPublicProfilesByIds } from '../../services/user-profiles'
+import AppH1 from '../../components/common/AppH1.vue'
+import { supabase } from '../../services/supabase'
 
 export default {
   name: 'Notifications',

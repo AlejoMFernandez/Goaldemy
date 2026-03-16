@@ -1,7 +1,7 @@
 <script>
-import AppH1 from '../components/common/AppH1.vue'
-import AppButton from '../components/common/AppButton.vue'
-import { updatePassword } from '../services/auth'
+import AppH1 from '../../components/common/AppH1.vue'
+import AppButton from '../../components/common/AppButton.vue'
+import { updatePassword } from '../../services/auth'
 
 export default {
   name: 'ResetPassword',

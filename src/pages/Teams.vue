@@ -9,7 +9,7 @@
 
             <!-- Search and Filters -->
             <div class="bg-slate-800/50 border border-white/10 rounded-2xl p-6 mb-8">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <!-- Search -->
                     <div class="md:col-span-2">
                         <div class="relative">
@@ -23,6 +23,17 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </div>
+                    </div>
+
+                    <!-- League Filter -->
+                    <div>
+                        <select
+                            v-model="selectedLeague"
+                            class="w-full bg-slate-700/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        >
+                            <option value="all">Todas las ligas</option>
+                            <option v-for="league in availableLeagues" :key="league.id" :value="league.id">{{ league.name }}</option>
+                        </select>
                     </div>
 
                     <!-- View Mode Toggle -->
@@ -81,6 +92,7 @@
                         <div class="flex-1">
                             <h3 class="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{{ team.name }}</h3>
                             <p class="text-sm text-slate-400">{{ team.players?.length || 0 }} jugadores</p>
+                            <p class="text-xs text-cyan-300 mt-1">{{ getTeamLeagueName(team.id) || 'Liga sin asignar' }}</p>
                         </div>
                     </div>
 
@@ -123,6 +135,7 @@
                             <div>
                                 <h3 class="text-lg font-semibold text-white">{{ team.name }}</h3>
                                 <p class="text-sm text-slate-400">{{ team.players?.length || 0 }} jugadores</p>
+                                <p class="text-xs text-cyan-300 mt-1">{{ getTeamLeagueName(team.id) || 'Liga sin asignar' }}</p>
                             </div>
                         </div>
                         <svg 
@@ -201,6 +214,7 @@
 <script>
 import { ref, computed, onMounted } from 'vue';
 import AppLoader from '../components/common/AppLoader.vue';
+import { getLeagueOverview, LEAGUES } from '../services/fotmob';
 
 export default {
     name: 'Teams',
@@ -211,16 +225,29 @@ export default {
         const teams = ref([]);
         const loading = ref(true);
         const searchQuery = ref('');
+        const selectedLeague = ref('all');
         const viewMode = ref('grid');
+        const previousViewMode = ref('grid');
         const expandedTeams = ref(new Set());
         const selectedTeam = ref(null);
+        const teamLeagueMap = ref({});
+
+        const availableLeagues = Object.values(LEAGUES).map(l => ({ id: String(l.id), name: l.name }));
+
+        function getTeamLeagueName(teamId) {
+            return teamLeagueMap.value[String(teamId)]?.name || '';
+        }
 
         const filteredTeams = computed(() => {
             if (!searchQuery.value.trim()) {
-                return teams.value;
+                if (selectedLeague.value === 'all') return teams.value;
+                return teams.value.filter(team => String(teamLeagueMap.value[String(team.id)]?.id || '') === selectedLeague.value);
             }
             const query = searchQuery.value.toLowerCase();
             return teams.value.filter(team => {
+                const matchesLeague = selectedLeague.value === 'all'
+                    || String(teamLeagueMap.value[String(team.id)]?.id || '') === selectedLeague.value;
+                if (!matchesLeague) return false;
                 const teamMatch = team.name.toLowerCase().includes(query);
                 const playerMatch = team.players?.some(player => 
                     player.name.toLowerCase().includes(query)
@@ -228,6 +255,25 @@ export default {
                 return teamMatch || playerMatch;
             });
         });
+
+        async function loadLeagueMap() {
+            const map = {};
+            const leagues = Object.values(LEAGUES);
+
+            await Promise.all(leagues.map(async (league) => {
+                try {
+                    const data = await getLeagueOverview(league.id);
+                    const tableTeams = data?.table?.table || [];
+                    tableTeams.forEach(team => {
+                        map[String(team.id)] = { id: String(league.id), name: league.name };
+                    });
+                } catch (error) {
+                    console.warn('No se pudo cargar liga', league.name, error);
+                }
+            }));
+
+            teamLeagueMap.value = map;
+        }
 
         async function loadTeams() {
             loading.value = true;
@@ -280,6 +326,9 @@ export default {
         function toggleTeam(teamId) {
             if (expandedTeams.value.has(teamId)) {
                 expandedTeams.value.delete(teamId);
+                if (expandedTeams.value.size === 0) {
+                    viewMode.value = previousViewMode.value;
+                }
             } else {
                 expandedTeams.value.add(teamId);
             }
@@ -288,6 +337,7 @@ export default {
 
         function selectTeam(team) {
             selectedTeam.value = team;
+            previousViewMode.value = viewMode.value;
             expandedTeams.value = new Set([team.id]);
             viewMode.value = 'list';
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -321,18 +371,22 @@ export default {
             return `€${value}`;
         }
 
-        onMounted(() => {
-            loadTeams();
+        onMounted(async () => {
+            await loadTeams();
+            await loadLeagueMap();
         });
 
         return {
             teams,
             loading,
             searchQuery,
+            selectedLeague,
             viewMode,
             expandedTeams,
             selectedTeam,
+            availableLeagues,
             filteredTeams,
+            getTeamLeagueName,
             toggleTeam,
             selectTeam,
             countPosition,

@@ -1,17 +1,17 @@
 <template>
-  <div class="liga-argentina-page py-8 px-4">
+  <div class="serie-a-page py-8 px-4">
     <div class="container mx-auto max-w-7xl">
       <!-- Header -->
       <div class="league-header mb-6">
         <div class="flex items-center gap-3">
           <img 
-            src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/112.png" 
-            alt="Liga Profesional"
+            src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/55.png" 
+            alt="Serie A"
             class="league-logo"
           />
           <div>
-            <h1 class="text-3xl font-bold text-white mb-0">Liga Profesional</h1>
-            <p class="text-slate-400 text-sm mb-0">Argentina</p>
+            <h1 class="text-3xl font-bold text-white mb-0">Serie A</h1>
+            <p class="text-slate-400 text-sm mb-0">Italia</p>
           </div>
         </div>
       </div>
@@ -19,7 +19,7 @@
       <!-- Loading -->
       <div v-if="loading" class="text-center py-20">
         <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-        <p class="mt-4 text-slate-300">Cargando datos de la Liga Profesional...</p>
+        <p class="mt-4 text-slate-300">Cargando datos de la Serie A...</p>
       </div>
 
       <!-- Error -->
@@ -30,14 +30,21 @@
 
       <!-- Content -->
       <div v-else class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <!-- Tablas de Posiciones (Zona A y Zona B) -->
-        <div class="xl:col-span-2 space-y-6">
-          <div v-for="(zoneTable, zoneIdx) in leagueData?.table?.tables || []" :key="zoneIdx" class="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur shadow-2xl overflow-hidden">
+        <!-- Tabla de Posiciones -->
+        <div class="xl:col-span-2">
+          <div class="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur shadow-2xl overflow-hidden">
             <div class="bg-slate-800/50 border-b border-white/10 px-6 py-4">
-              <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                <i class="bi bi-trophy-fill text-slate-400"></i>
-                {{ zoneTable.name }}
-              </h2>
+              <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                  <i class="bi bi-trophy-fill text-slate-400"></i>
+                  Tabla de Posiciones
+                </h2>
+                <div class="flex gap-2">
+                  <button class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors">
+                    Overview
+                  </button>
+                </div>
+              </div>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full">
@@ -58,46 +65,46 @@
                 </thead>
                 <tbody>
                   <tr 
-                    v-for="team in zoneTable.teams" 
+                    v-for="team in leagueData?.table?.table || []" 
                     :key="team.id"
                     class="border-b border-white/5 hover:bg-white/5 transition-colors group"
                   >
-                    <td class="py-2.5 px-4">
-                      <div 
-                        class="w-1 h-6 rounded-full" 
-                        :style="{ backgroundColor: team.idx <= 8 ? '#2AD572' : 'transparent' }"
-                      ></div>
-                    </td>
-                    <td class="text-center py-2.5 px-2 text-slate-300 font-semibold text-sm">{{ team.idx }}</td>
-                    <td class="py-2.5 px-4">
-                      <router-link :to="`/team/${team.id}`" class="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-                        <img 
-                          :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${team.id}.png`"
-                          :alt="team.name"
-                          class="w-6 h-6 object-contain flex-shrink-0"
-                          @error="handleImageError"
-                        />
-                        <span class="font-medium text-white text-sm truncate max-w-[180px] group-hover:text-purple-300 transition-colors">{{ team.name }}</span>
-                      </router-link>
-                    </td>
-                    <td class="text-center py-2.5 px-2 text-slate-400 text-xs">{{ team.played }}</td>
-                    <td class="text-center py-2.5 px-2 text-slate-300 text-xs">{{ team.wins }}</td>
-                    <td class="text-center py-2.5 px-2 text-slate-300 text-xs">{{ team.draws }}</td>
-                    <td class="text-center py-2.5 px-2 text-slate-300 text-xs">{{ team.losses }}</td>
-                    <td class="text-center py-2.5 px-3 text-slate-300 text-xs">{{ team.scoresStr }}</td>
-                    <td class="text-center py-2.5 px-2 text-xs font-semibold">
+                  <td class="py-2.5 px-4">
+                    <div 
+                      class="w-1 h-6 rounded-full" 
+                      :style="{ backgroundColor: team.qualColor || 'transparent' }"
+                    ></div>
+                  </td>
+                  <td class="text-center py-2.5 px-2 text-slate-300 font-semibold text-sm">{{ team.idx }}</td>
+                  <td class="py-2.5 px-4">
+                    <router-link :to="`/team/${team.id}`" class="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+                      <img 
+                        :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${team.id}.png`"
+                        :alt="team.name"
+                        class="w-6 h-6 object-contain flex-shrink-0"
+                        @error="handleImageError"
+                      />
+                      <span class="font-medium text-white text-sm truncate max-w-[180px] group-hover:text-purple-300 transition-colors">{{ team.name }}</span>
+                    </router-link>
+                  </td>
+                    <td class="text-center py-4 px-2 text-slate-400 text-sm">{{ team.played }}</td>
+                    <td class="text-center py-4 px-2 text-slate-300 text-sm">{{ team.wins }}</td>
+                    <td class="text-center py-4 px-2 text-slate-300 text-sm">{{ team.draws }}</td>
+                    <td class="text-center py-4 px-2 text-slate-300 text-sm">{{ team.losses }}</td>
+                    <td class="text-center py-4 px-3 text-slate-300 text-sm">{{ team.scoresStr }}</td>
+                    <td class="text-center py-4 px-2 text-sm font-semibold">
                       <span :class="team.goalConDiff > 0 ? 'text-green-400' : team.goalConDiff < 0 ? 'text-red-400' : 'text-slate-400'">
                         {{ team.goalConDiff > 0 ? '+' : '' }}{{ team.goalConDiff }}
                       </span>
                     </td>
-                    <td class="text-center py-2.5 px-2 text-white font-bold text-sm">{{ team.pts }}</td>
-                    <td class="text-center py-2.5 px-4">
-                      <div class="flex gap-0.5 justify-center">
+                    <td class="text-center py-4 px-2 text-white font-bold text-base">{{ team.pts }}</td>
+                    <td class="text-center py-4 px-4">
+                      <div class="flex gap-1 justify-center">
                         <span 
                           v-for="(form, idx) in (team.form || []).slice(0, 5)" 
                           :key="idx"
                           :class="getFormClass(form)"
-                          class="w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold text-white"
+                          class="w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold text-white"
                         >
                           {{ form }}
                         </span>
@@ -110,9 +117,19 @@
             
             <!-- Legend -->
             <div class="bg-slate-800/50 border-t border-white/10 px-6 py-4">
-              <div class="flex items-center gap-2 text-xs">
-                <div class="w-3 h-3 rounded-full" style="background: #2AD572"></div>
-                <span class="text-slate-400">Clasificados a la siguiente etapa</span>
+              <div class="flex flex-wrap gap-4 text-xs">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full" style="background: #2AD572"></div>
+                  <span class="text-slate-400">Champions League</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full" style="background: #0050CC"></div>
+                  <span class="text-slate-400">Europa League</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full" style="background: #FF3B69"></div>
+                  <span class="text-slate-400">Descenso</span>
+                </div>
               </div>
             </div>
           </div>
@@ -123,7 +140,7 @@
           <!-- Próximos Partidos -->
           <div class="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur shadow-2xl overflow-hidden">
             <div class="bg-slate-800/60 border-b border-white/10 px-5 py-3">
-              <div class="flex items-center justify-center gap-2 relative">
+              <div class="flex items-center justify-center gap-2">
                 <button 
                   @click="previousRound" 
                   :disabled="currentRoundIndex <= 0"
@@ -135,7 +152,7 @@
                 </button>
                 <div class="relative">
                   <button 
-                    @click="toggleRoundDropdown"
+                    @click.stop="toggleRoundDropdown"
                     class="text-sm font-bold text-white min-w-[90px] text-center hover:text-purple-300 transition-colors flex items-center justify-center gap-1"
                   >
                     {{ currentRoundName }}
@@ -143,7 +160,8 @@
                   </button>
                   <div 
                     v-if="showRoundDropdown"
-                    class="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-slate-800 border border-white/10 rounded-lg shadow-2xl overflow-hidden z-50 min-w-[120px] max-h-[300px] overflow-y-auto"
+                    class="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-slate-800 border border-white/10 rounded-lg shadow-2xl overflow-hidden z-[9999] min-w-[120px] max-h-[400px] overflow-y-auto"
+                    @click.stop
                   >
                     <button
                       v-for="(round, index) in availableRounds"
@@ -170,46 +188,46 @@
             <div class="p-0">
               <div v-if="groupedMatchesByDate && Object.keys(groupedMatchesByDate).length">
                 <div v-for="(matches, date) in groupedMatchesByDate" :key="date">
-                  <div class="px-4 py-1.5 bg-slate-800/50 border-b border-white/5">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{{ date }}</span>
+                  <div class="px-5 py-2.5 bg-slate-800/50 border-b border-white/5">
+                    <span class="text-xs font-bold text-slate-300 uppercase tracking-wide">{{ date }}</span>
                   </div>
                   <div 
                     v-for="(match, idx) in matches" 
                     :key="idx"
-                    class="border-b border-white/5 hover:bg-white/5 transition-colors py-2"
+                    class="border-b border-white/5 hover:bg-white/5 transition-colors py-3.5"
                   >
-                    <div class="px-4 flex items-center justify-between gap-2">
-                      <router-link :to="`/team/${match.homeTeamId}`" class="flex items-center gap-2 flex-1 justify-end min-w-0 hover:opacity-80 transition-opacity">
-                        <span class="font-medium text-white text-xs text-right truncate">{{ match.homeTeam }}</span>
-                        <img 
-                          :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.homeTeamId}.png`"
-                          :alt="match.homeTeam"
-                          class="w-5 h-5 object-contain flex-shrink-0"
-                          @error="handleImageError"
-                        />
-                      </router-link>
-                      <div class="flex-shrink-0 text-center min-w-[50px]">
-                        <div v-if="match.status.finished" class="text-[10px] font-bold text-white">
-                          {{ match.status.score }}
-                        </div>
-                        <div v-else-if="match.status.started" class="flex flex-col items-center gap-0.5">
-                          <span class="text-[9px] font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded animate-pulse">LIVE</span>
-                          <span class="text-[10px] font-bold text-white">{{ match.status.score }}</span>
-                        </div>
-                        <div v-else class="text-[10px] text-slate-400 font-semibold">
-                          {{ formatMatchTime(match.time) }}
-                        </div>
+                  <div class="px-5 flex items-center justify-between gap-3">
+                    <router-link :to="`/team/${match.homeTeamId}`" class="flex items-center gap-2.5 flex-1 justify-end hover:opacity-80 transition-opacity">
+                      <span class="font-medium text-white text-sm text-right">{{ match.homeTeam }}</span>
+                      <img 
+                        :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.homeTeamId}.png`"
+                        :alt="match.homeTeam"
+                        class="w-7 h-7 object-contain flex-shrink-0"
+                        @error="handleImageError"
+                      />
+                    </router-link>
+                    <div class="flex-shrink-0 text-center min-w-[60px]">
+                      <div v-if="match.status.finished" class="text-xs font-bold text-white">
+                        {{ match.status.score }}
                       </div>
-                      <router-link :to="`/team/${match.awayTeamId}`" class="flex items-center gap-2 flex-1 min-w-0 hover:opacity-80 transition-opacity">
+                      <div v-else-if="match.status.started" class="flex flex-col items-center gap-0.5">
+                        <span class="text-[9px] font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded animate-pulse">LIVE</span>
+                        <span class="text-xs font-bold text-white">{{ match.status.score }}</span>
+                      </div>
+                      <div v-else class="text-xs text-slate-400 font-semibold">
+                        {{ formatMatchTime(match.time) }}
+                      </div>
+                    </div>
+                    <router-link :to="`/team/${match.awayTeamId}`" class="flex items-center gap-2.5 flex-1 hover:opacity-80 transition-opacity">
                       <img 
                         :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.awayTeamId}.png`"
                         :alt="match.awayTeam"
-                        class="w-5 h-5 object-contain flex-shrink-0"
+                        class="w-7 h-7 object-contain flex-shrink-0"
                         @error="handleImageError"
                       />
-                      <span class="font-medium text-white text-xs truncate">{{ match.awayTeam }}</span>
-                      </router-link>
-                    </div>
+                      <span class="font-medium text-white text-sm">{{ match.awayTeam }}</span>
+                    </router-link>
+                  </div>
                   </div>
                 </div>
               </div>
@@ -301,7 +319,7 @@ import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { getLeagueOverview, LEAGUES } from '@/services/fotmob.js';
 
 export default {
-  name: 'LigaArgentina',
+  name: 'SerieA',
   setup() {
     const leagueData = ref(null);
     const loading = ref(true);
@@ -309,44 +327,45 @@ export default {
     const currentRoundIndex = ref(0);
     const showRoundDropdown = ref(false);
 
-    const loadLeagueData = async () => {
+    const loadLeagueData = async ({ silent = false } = {}) => {
       try {
-        loading.value = true;
+        if (!silent || !leagueData.value) loading.value = true;
         error.value = null;
         
-        const data = await getLeagueOverview(LEAGUES.LIGA_ARGENTINA.id);
+        const data = await getLeagueOverview(LEAGUES.SERIE_A.id);
         leagueData.value = data;
-        
-        // Encontrar la jornada actual (primera no jugada o última)
-        if (data.allMatches && data.allMatches.length > 0) {
-          const rounds = availableRounds.value;
-          const currentRound = rounds.findIndex(round => {
+
+        // Auto-detectar jornada actual
+        if (data.allMatches) {
+          const rounds = [...new Set(data.allMatches.map(m => m.round))].sort((a, b) => a - b);
+          const currentRoundIdx = rounds.findIndex(round => {
             const roundMatches = data.allMatches.filter(m => m.round === round);
             return roundMatches.some(m => !m.status.finished);
           });
-          currentRoundIndex.value = currentRound >= 0 ? currentRound : rounds.length - 1;
+          if (currentRoundIdx !== -1) {
+            currentRoundIndex.value = currentRoundIdx;
+          }
         }
       } catch (err) {
-        console.error('Error loading Liga Argentina data:', err);
-        error.value = 'Error al cargar los datos de la Liga Profesional. Intentá de nuevo más tarde.';
+        console.error('Error loading Serie A data:', err);
+        error.value = 'Error al cargar los datos de la Serie A. Intentá de nuevo más tarde.';
       } finally {
         loading.value = false;
       }
     };
 
-    // Obtener todas las jornadas disponibles
+    // Jornadas disponibles
     const availableRounds = computed(() => {
       if (!leagueData.value?.allMatches) return [];
-      const rounds = [...new Set(leagueData.value.allMatches.map(m => m.round))].sort((a, b) => a - b);
-      return rounds;
+      const rounds = [...new Set(leagueData.value.allMatches.map(m => m.round))];
+      return rounds.sort((a, b) => a - b);
     });
 
     // Nombre de la jornada actual
     const currentRoundName = computed(() => {
       const rounds = availableRounds.value;
       if (rounds.length === 0) return '';
-      const roundNum = rounds[currentRoundIndex.value];
-      return `Jornada ${roundNum}`;
+      return `Jornada ${rounds[currentRoundIndex.value]}`;
     });
 
     // Partidos de la jornada actual
@@ -421,20 +440,32 @@ export default {
       showRoundDropdown.value = false;
     };
 
-    const closeDropdown = () => {
-      showRoundDropdown.value = false;
+    const getPositionClass = (qualColor) => {
+      if (!qualColor) return '';
+      // Champions League zone
+      if (qualColor === '#2AD572') return 'table-success';
+      // Europa League zone
+      if (qualColor === '#0046A7') return 'table-primary';
+      // Relegation zone
+      if (qualColor === '#FF0000' || qualColor === '#E71D20') return 'table-danger';
+      return '';
     };
 
-    const handleClickOutside = (event) => {
-      if (showRoundDropdown.value && !event.target.closest('.relative')) {
-        showRoundDropdown.value = false;
-      }
-    };
-
-    const handleEscape = (event) => {
-      if (event.key === 'Escape' && showRoundDropdown.value) {
-        closeDropdown();
-      }
+    const formatMatchDate = (dateStr) => {
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diff = date - now;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      
+      if (days === 0) return 'Hoy ' + date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+      if (days === 1) return 'Mañana ' + date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+      
+      return date.toLocaleDateString('es-AR', { 
+        day: 'numeric', 
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     };
 
     const formatMatchTime = (dateStr) => {
@@ -453,6 +484,22 @@ export default {
       e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%23ddd"/></svg>';
     };
 
+    const closeDropdown = () => {
+      showRoundDropdown.value = false;
+    };
+
+    const handleClickOutside = (event) => {
+      if (showRoundDropdown.value && !event.target.closest('.relative')) {
+        showRoundDropdown.value = false;
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape' && showRoundDropdown.value) {
+        closeDropdown();
+      }
+    };
+
     // Auto-refresh cada 30 segundos
     let refreshInterval = null;
 
@@ -463,7 +510,7 @@ export default {
       
       // Configurar auto-refresh
       refreshInterval = setInterval(() => {
-        loadLeagueData();
+        loadLeagueData({ silent: true });
       }, 30000); // 30 segundos
     });
 
@@ -486,11 +533,13 @@ export default {
       currentRoundName,
       currentRoundMatches,
       groupedMatchesByDate,
-      showRoundDropdown,
       previousRound,
       nextRound,
+      showRoundDropdown,
       toggleRoundDropdown,
       selectRound,
+      getPositionClass,
+      formatMatchDate,
       formatMatchTime,
       getFormClass,
       handleImageError
@@ -500,7 +549,7 @@ export default {
 </script>
 
 <style scoped>
-.liga-argentina-page {
+.serie-a-page {
   min-height: 100vh;
 }
 
@@ -551,7 +600,7 @@ export default {
   }
 }
 
-.liga-argentina-page > div > div {
+.serie-a-page > div > div {
   animation: fadeIn 0.5s ease-out;
 }
 
@@ -563,7 +612,7 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .liga-argentina-page {
+  .serie-a-page {
     padding: 1rem 0.75rem;
   }
   

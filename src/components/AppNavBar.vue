@@ -388,9 +388,29 @@ export default {
 
                 <ul class="hidden md:flex items-center gap-4 text-slate-200">
                     <li><RouterLink class="hover:text-white transition-colors" to="/">Home</RouterLink></li>
-                    
-                    
-                    <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Leaderboards</RouterLink></li>
+                    <!-- Play dropdown (hover) with descriptions -->
+                    <li class="relative"
+                        @mouseenter="onPlayEnter"
+                        @mouseleave="onPlayLeave">
+                        <button data-play-button class="inline-flex items-center gap-1 px-0 py-1.5 text-slate-200 hover:text-white">
+                            Jugar
+                            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                        </button>
+                        <div v-if="playOpen" data-play-menu class="absolute left-0 mt-2 w-56 rounded-2xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-30"
+                             @mouseenter="onPlayEnter" @mouseleave="onPlayLeave">
+                            <div class="p-3">
+                                <h4 class="text-slate-400 text-xs uppercase tracking-wider mb-2">Modos de juego</h4>
+                                <RouterLink @click="playOpen=false" to="/play/points" class="block rounded-lg p-2 hover:bg-white/5">
+                                    <div class="text-sm text-slate-100 font-medium">Jugar por puntos</div>
+                                    <p class="text-slate-400 text-xs">Desafío diario con cronómetro. 1 intento por día. Sumá XP.</p>
+                                </RouterLink>
+                                <RouterLink @click="playOpen=false" to="/play/free" class="mt-1 block rounded-lg p-2 hover:bg-white/5">
+                                    <div class="text-sm text-slate-100 font-medium">Jugar libre</div>
+                                    <p class="text-slate-400 text-xs">Practicá sin límite de partidas. No suma XP.</p>
+                                </RouterLink>
+                            </div>
+                        </div>
+                    </li>
                     <!-- Ligas dropdown (hover) -->
                     <li class="relative"
                         @mouseenter="onLeaguesEnter"
@@ -427,6 +447,7 @@ export default {
                             </RouterLink>
                         </div>
                     </li>
+                    <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Leaderboards</RouterLink></li>
                     <!-- Info dropdown (hover) -->
                     <li class="relative"
                         @mouseenter="onInfoEnter"
@@ -441,29 +462,6 @@ export default {
                             <RouterLink @click="infoOpen=false" to="/about/me" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">¿Quién soy?</RouterLink>
                             <RouterLink @click="infoOpen=false" to="/about/goaldemy" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">¿Qué es Goaldemy?</RouterLink>
                             <RouterLink @click="infoOpen=false" to="/about/objetivo" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">Objetivo</RouterLink>
-                        </div>
-                    </li>
-                    <!-- Play dropdown (hover) with descriptions -->
-                    <li class="relative"
-                        @mouseenter="onPlayEnter"
-                        @mouseleave="onPlayLeave">
-                        <button data-play-button class="inline-flex items-center gap-1 px-0 py-1.5 text-slate-200 hover:text-white">
-                            Jugar
-                            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
-                        </button>
-                        <div v-if="playOpen" data-play-menu class="absolute left-0 mt-2 w-56 rounded-2xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-30"
-                             @mouseenter="onPlayEnter" @mouseleave="onPlayLeave">
-                            <div class="p-3">
-                                <h4 class="text-slate-400 text-xs uppercase tracking-wider mb-2">Modos de juego</h4>
-                                <RouterLink @click="playOpen=false" to="/play/points" class="block rounded-lg p-2 hover:bg-white/5">
-                                    <div class="text-sm text-slate-100 font-medium">Jugar por puntos</div>
-                                    <p class="text-slate-400 text-xs">Desafío diario con cronómetro. 1 intento por día. Sumá XP.</p>
-                                </RouterLink>
-                                <RouterLink @click="playOpen=false" to="/play/free" class="mt-1 block rounded-lg p-2 hover:bg-white/5">
-                                    <div class="text-sm text-slate-100 font-medium">Jugar libre</div>
-                                    <p class="text-slate-400 text-xs">Practicá sin límite de partidas. No suma XP.</p>
-                                </RouterLink>
-                            </div>
                         </div>
                     </li>
                     <!-- Search -->
@@ -662,7 +660,28 @@ export default {
 
                         <!-- Nav items -->
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/">Home</RouterLink></li>
-                        
+                        <li>
+                            <details class="group">
+                                <summary class="cursor-pointer hover:text-white">Jugar</summary>
+                                <ul class="mt-1 pl-3 flex flex-col gap-1 text-slate-300">
+                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/play/points">Jugar por puntos</RouterLink></li>
+                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/play/free">Jugar libre</RouterLink></li>
+                                </ul>
+                            </details>
+                        </li>
+                        <li>
+                            <details class="group">
+                                <summary class="cursor-pointer hover:text-white">Ligas</summary>
+                                <ul class="mt-1 pl-3 flex flex-col gap-1 text-slate-300">
+                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leagues/premier-league">Premier League</RouterLink></li>
+                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leagues/la-liga">La Liga</RouterLink></li>
+                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leagues/serie-a">Serie A</RouterLink></li>
+                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leagues/bundesliga">Bundesliga</RouterLink></li>
+                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leagues/ligue-1">Ligue 1</RouterLink></li>
+                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leagues/liga-argentina">Liga Profesional</RouterLink></li>
+                                </ul>
+                            </details>
+                        </li>
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leaderboards">Leaderboards</RouterLink></li>
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/notifications">Notificaciones</RouterLink></li>
                                                 <li>
@@ -673,15 +692,6 @@ export default {
                                                             <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/about/me">¿Quién soy?</RouterLink></li>
                                                             <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/about/goaldemy">¿Qué es Goaldemy?</RouterLink></li>
                                                             <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/about/objetivo">Objetivo</RouterLink></li>
-                                                        </ul>
-                                                    </details>
-                                                </li>
-                                                <li>
-                                                    <details class="group">
-                                                        <summary class="cursor-pointer hover:text-white">Jugar</summary>
-                                                        <ul class="mt-1 pl-3 flex flex-col gap-1 text-slate-300">
-                                                            <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/play/points">Jugar por puntos</RouterLink></li>
-                                                            <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/play/free">Jugar libre</RouterLink></li>
                                                         </ul>
                                                     </details>
                                                 </li>

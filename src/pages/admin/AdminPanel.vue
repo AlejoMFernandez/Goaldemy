@@ -124,10 +124,10 @@
 
 <script>
 import { ref, onMounted } from 'vue';
-import { isAdmin, getUserStats } from '../services/admin.js';
-import AppLoader from '../components/common/AppLoader.vue';
-import AdminUserManagement from '../components/admin/AdminUserManagement.vue';
-import AdminTeamsManagement from '../components/admin/AdminTeamsManagement.vue';
+import { isAdmin, getUserStats } from '../../services/admin.js';
+import AppLoader from '../../components/common/AppLoader.vue';
+import AdminUserManagement from '../../components/admin/AdminUserManagement.vue';
+import AdminTeamsManagement from '../../components/admin/AdminTeamsManagement.vue';
 
 export default {
     name: 'AdminPanel',

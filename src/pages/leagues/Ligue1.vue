@@ -1,17 +1,17 @@
 <template>
-  <div class="bundesliga-page py-8 px-4">
+  <div class="ligue1-page py-8 px-4">
     <div class="container mx-auto max-w-7xl">
       <!-- Header -->
       <div class="league-header mb-6">
         <div class="flex items-center gap-3">
           <img 
-            src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/54.png" 
-            alt="Bundesliga"
+            src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/53.png" 
+            alt="Ligue 1"
             class="league-logo"
           />
           <div>
-            <h1 class="text-3xl font-bold text-white mb-0">Bundesliga</h1>
-            <p class="text-slate-400 text-sm mb-0">Alemania</p>
+            <h1 class="text-3xl font-bold text-white mb-0">Ligue 1</h1>
+            <p class="text-slate-400 text-sm mb-0">Francia</p>
           </div>
         </div>
       </div>
@@ -19,7 +19,7 @@
       <!-- Loading -->
       <div v-if="loading" class="text-center py-20">
         <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-        <p class="mt-4 text-slate-300">Cargando datos de la Bundesliga...</p>
+        <p class="mt-4 text-slate-300">Cargando datos de la Ligue 1...</p>
       </div>
 
       <!-- Error -->
@@ -319,7 +319,7 @@ import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { getLeagueOverview, LEAGUES } from '@/services/fotmob.js';
 
 export default {
-  name: 'Bundesliga',
+  name: 'Ligue1',
   setup() {
     const leagueData = ref(null);
     const loading = ref(true);
@@ -327,12 +327,12 @@ export default {
     const currentRoundIndex = ref(0);
     const showRoundDropdown = ref(false);
 
-    const loadLeagueData = async () => {
+    const loadLeagueData = async ({ silent = false } = {}) => {
       try {
-        loading.value = true;
+        if (!silent || !leagueData.value) loading.value = true;
         error.value = null;
         
-        const data = await getLeagueOverview(LEAGUES.BUNDESLIGA.id);
+        const data = await getLeagueOverview(LEAGUES.LIGUE_1.id);
         leagueData.value = data;
 
         // Auto-detectar jornada actual
@@ -347,8 +347,8 @@ export default {
           }
         }
       } catch (err) {
-        console.error('Error loading Bundesliga data:', err);
-        error.value = 'Error al cargar los datos de la Bundesliga. Intentá de nuevo más tarde.';
+        console.error('Error loading Ligue 1 data:', err);
+        error.value = 'Error al cargar los datos de la Ligue 1. Intentá de nuevo más tarde.';
       } finally {
         loading.value = false;
       }
@@ -510,7 +510,7 @@ export default {
       
       // Configurar auto-refresh
       refreshInterval = setInterval(() => {
-        loadLeagueData();
+        loadLeagueData({ silent: true });
       }, 30000); // 30 segundos
     });
 
@@ -549,7 +549,7 @@ export default {
 </script>
 
 <style scoped>
-.bundesliga-page {
+.ligue1-page {
   min-height: 100vh;
 }
 
@@ -600,7 +600,7 @@ export default {
   }
 }
 
-.bundesliga-page > div > div {
+.ligue1-page > div > div {
   animation: fadeIn 0.5s ease-out;
 }
 
@@ -612,7 +612,7 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .bundesliga-page {
+  .ligue1-page {
     padding: 1rem 0.75rem;
   }
   

@@ -1,8 +1,8 @@
 <script>
-import AppH1 from '../components/common/AppH1.vue'
-import { subscribeToAuthStateChanges } from '../services/auth'
-import { fetchRecentConversations } from '../services/direct-messages'
-import { formatShortDate } from '../services/formatters'
+import AppH1 from '../../components/common/AppH1.vue'
+import { subscribeToAuthStateChanges } from '../../services/auth'
+import { fetchRecentConversations } from '../../services/direct-messages'
+import { formatShortDate } from '../../services/formatters'
 
 let unsubscribeAuth = () => {}
 

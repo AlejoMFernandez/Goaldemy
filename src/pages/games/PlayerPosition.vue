@@ -45,7 +45,7 @@ export default {
   computed: {
     gameMetadata() { return getGameMetadata('player-position') }
   },
-  mounted() {
+  async mounted() {
     const mode = (this.$route.query.mode || '').toString().toLowerCase()
     if (mode === 'free') this.mode = 'free'
     else if (mode === 'challenge') this.mode = 'challenge'
@@ -54,7 +54,7 @@ export default {
 
     if (this.mode === 'free') this.allowXp = false
 
-    loadPlayers(this);
+    await loadPlayers(this);
     nextRound(this);
 
     if (this.reviewMode) {

@@ -2,12 +2,14 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { pushInfoToast } from '../stores/notifications';
 import { subscribeToAuthStateChanges, authReady, getAuthUser } from '../services/auth';
 import { isAdmin } from '../services/admin';
-import Home from '../pages/Home.vue';
 import Landing from '../pages/Landing.vue';
-import Login from '../pages/Login.vue';
-import Register from '../pages/Register.vue';
-import Profile from '../pages/Profile.vue';
-import ProfileEdit from '../pages/ProfileEdit.vue';
+import Login from '../pages/auth/Login.vue';
+import Register from '../pages/auth/Register.vue';
+import VerifyEmail from '../pages/auth/VerifyEmail.vue';
+import ResetPassword from '../pages/auth/ResetPassword.vue';
+import Profile from '../pages/profile/Profile.vue';
+import ProfileEdit from '../pages/profile/ProfileEdit.vue';
+import UserPublic from '../pages/profile/UserPublic.vue';
 import GuessPlayer from '../pages/games/GuessPlayer.vue';
 import NationalityGame from '../pages/games/NationalityGame.vue';
 import PlayerPosition from '../pages/games/PlayerPosition.vue';
@@ -16,31 +18,29 @@ import ValueOrder from '../pages/games/ValueOrder.vue';
 import AgeOrder from '../pages/games/AgeOrder.vue';
 import HeightOrder from '../pages/games/HeightOrder.vue';
 import ShirtNumber from '../pages/games/ShirtNumber.vue';
+import OnceIdeal from '../pages/games/OnceIdeal.vue';
 import Leaderboards from '../pages/Leaderboards.vue';
-import AboutMe from '../pages/AboutMe.vue';
-import AboutGoaldemy from '../pages/AboutGoaldemy.vue';
-import AboutObjective from '../pages/AboutObjective.vue';
+import AboutMe from '../pages/info/AboutMe.vue';
+import AboutGoaldemy from '../pages/info/AboutGoaldemy.vue';
+import AboutObjective from '../pages/info/AboutObjective.vue';
 import NotFound from '../pages/NotFound.vue';
 import PlayPoints from '../pages/PlayPoints.vue';
 import PlayFree from '../pages/PlayFree.vue';
-import Notifications from '../pages/Notifications.vue';
-import DirectChat from '../pages/DirectChat.vue';
-import DirectMessages from '../pages/DirectMessages.vue';
-import VerifyEmail from '../pages/VerifyEmail.vue';
-import ResetPassword from '../pages/ResetPassword.vue';
-import AdminPanel from '../pages/AdminPanel.vue';
+import Notifications from '../pages/social/Notifications.vue';
+import DirectChat from '../pages/social/DirectChat.vue';
+import DirectMessages from '../pages/social/DirectMessages.vue';
+import AdminPanel from '../pages/admin/AdminPanel.vue';
 import Teams from '../pages/Teams.vue';
-import PremierLeague from '../pages/PremierLeague.vue'
-import LaLiga from '../pages/LaLiga.vue'
-import SerieA from '../pages/SerieA.vue'
-import Bundesliga from '../pages/Bundesliga.vue'
-import Ligue1 from '../pages/Ligue1.vue'
-import LigaArgentina from '../pages/LigaArgentina.vue';
+import PremierLeague from '../pages/leagues/PremierLeague.vue';
+import LaLiga from '../pages/leagues/LaLiga.vue';
+import SerieA from '../pages/leagues/SerieA.vue';
+import Bundesliga from '../pages/leagues/Bundesliga.vue';
+import Ligue1 from '../pages/leagues/Ligue1.vue';
+import LigaArgentina from '../pages/leagues/LigaArgentina.vue';
 import TeamPage from '../pages/TeamPage.vue';
 
 const routes = [
     { path: '/', component: Landing },
-    { path: '/home', component: Home },
     { path: '/leagues/premier-league', component: PremierLeague },
     { path: '/leagues/la-liga', component: LaLiga },
     { path: '/leagues/serie-a', component: SerieA },
@@ -63,6 +63,7 @@ const routes = [
     { path: '/games/age-order', component: AgeOrder, meta: { requiresAuth: true } },
     { path: '/games/height-order', component: HeightOrder, meta: { requiresAuth: true } },
     { path: '/games/shirt-number', component: ShirtNumber, meta: { requiresAuth: true } },
+    { path: '/games/once-ideal', component: OnceIdeal, meta: { requiresAuth: true } },
     { path: '/leaderboards', component: Leaderboards },
     { path: '/u/:id', component: Profile, meta: { requiresAuth: true } },
     { path: '/notifications', component: Notifications, meta: { requiresAuth: true } },

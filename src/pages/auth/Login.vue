@@ -1,8 +1,8 @@
 <script>
-import AppH1 from '../components/common/AppH1.vue';
-import AppButton from '../components/common/AppButton.vue';
-import { login, resetPasswordForEmail } from '../services/auth';
-import { pushErrorToast, pushSuccessToast } from '../stores/notifications';
+import AppH1 from '../../components/common/AppH1.vue';
+import AppButton from '../../components/common/AppButton.vue';
+import { login, resetPasswordForEmail } from '../../services/auth';
+import { pushErrorToast, pushSuccessToast } from '../../stores/notifications';
 
 export default {
   name: 'Login',

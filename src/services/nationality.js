@@ -3,7 +3,7 @@ import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
 import { awardXpForCorrect } from './game-xp'
 import { celebrateCorrect } from './game-celebrations'
-import { loadAndClassifyPlayers, shuffleArray, getOptionClasses, selectRandomPlayerFromBucket } from './game-common'
+import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, shuffleArray, getOptionClasses, selectRandomPlayerFromBucket } from './game-common'
 
 export function initState() {
   return {
@@ -33,11 +33,8 @@ export function initState() {
 /**
  * Carga jugadores y los clasifica por posición amplia
  */
-export function loadPlayers(state) {
-  const { allPlayers, byPos } = loadAndClassifyPlayers(state)
-  state.allPlayers = allPlayers
-  state.byPos = byPos
-  state.loading = false
+export async function loadPlayers(state) {
+  await loadAndClassifyPlayersAsync(state)
 }
 
 /**

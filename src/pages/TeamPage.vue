@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white">
+  <div class="min-h-screen bg-transparent text-white">
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center min-h-screen">
       <div class="text-center">
@@ -81,7 +81,7 @@
             @click="activeTab = tab.id"
             class="px-6 py-4 text-sm font-semibold transition-all flex-shrink-0"
             :class="activeTab === tab.id 
-              ? 'bg-blue-600 text-white' 
+              ? 'bg-cyan-600/90 text-white' 
               : 'text-slate-400 hover:text-white hover:bg-slate-700/50'"
           >
             <i :class="tab.icon" class="mr-2"></i>
@@ -130,7 +130,7 @@
               Últimos 5 Partidos
             </h2>
             <div v-if="recentMatches.length > 0" class="space-y-3">
-              <div 
+              <div
                 v-for="match in recentMatches" 
                 :key="match.id"
                 class="bg-slate-700/50 rounded-xl p-4 hover:bg-slate-700 transition-colors"
@@ -139,13 +139,15 @@
                   <div class="flex items-center gap-3 flex-1">
                     <div class="text-xs text-slate-400 w-20">{{ match.date }}</div>
                     <div class="flex items-center gap-2 flex-1">
-                      <span class="font-semibold">{{ match.home }}</span>
+                      <img :src="match.homeLogo" :alt="match.home" class="w-5 h-5 object-contain" />
+                      <span class="font-semibold truncate">{{ match.home }}</span>
                       <span class="text-slate-400">vs</span>
-                      <span class="font-semibold">{{ match.away }}</span>
+                      <span class="font-semibold truncate">{{ match.away }}</span>
+                      <img :src="match.awayLogo" :alt="match.away" class="w-5 h-5 object-contain" />
                     </div>
                   </div>
                   <div class="flex items-center gap-3">
-                    <div class="text-xs text-slate-500 w-20 text-right truncate">{{ match.competition }}</div>
+                    <div class="text-xs text-slate-500 w-40 text-right">{{ match.competition }}</div>
                     <span class="font-bold text-sm min-w-[35px] text-center">{{ match.score }}</span>
                     <span 
                       class="px-2 py-1 rounded text-xs font-bold min-w-[28px] text-center"
@@ -175,7 +177,7 @@
                 Posición en la Liga
               </h3>
               <div v-if="tablePosition" class="text-center py-6">
-                <div class="text-5xl font-bold text-blue-500 mb-2">{{ tablePosition.idx }}</div>
+                <div class="text-5xl font-bold text-cyan-400 mb-2">{{ tablePosition.idx }}</div>
                 <div class="text-slate-400 mb-4">{{ tablePosition.pts }} puntos</div>
                 <div class="flex justify-center gap-6 text-sm">
                   <div>
@@ -200,7 +202,7 @@
             <!-- Stadium Info -->
             <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
               <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                <i class="bi bi-building text-purple-500"></i>
+                <i class="bi bi-building text-cyan-400"></i>
                 Estadio
               </h3>
               <div class="py-4">
@@ -225,62 +227,62 @@
         </div>
 
         <!-- Lineup Tab -->
-        <div v-if="activeTab === 'lineup'" class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-          <div v-if="lastLineup" class="space-y-6">
-            <div class="text-center mb-4">
-              <h2 class="text-2xl font-bold mb-2">Último 11 Titular</h2>
-              <p class="text-slate-400">Formación: <span class="text-blue-400 font-bold">{{ lastLineup.formation }}</span></p>
+        <div v-if="activeTab === 'lineup'" class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-4 md:p-6">
+          <div v-if="lastLineup">
+            <!-- Header -->
+            <div class="text-center mb-5">
+              <h2 class="text-xl font-bold text-white">Último 11 Titular</h2>
+              <span class="text-sm text-slate-400">Formación: <span class="text-cyan-400 font-bold">{{ lastLineup.formation }}</span></span>
             </div>
-            
-            <!-- Soccer Field -->
-            <div class="relative w-full aspect-[3/4] max-w-[600px] mx-auto bg-gradient-to-b from-green-700 to-green-600 rounded-2xl overflow-hidden shadow-2xl" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.03) 50px, rgba(255,255,255,0.03) 100px);">
-              <!-- Field lines -->
-              <div class="absolute inset-0 border-2 border-white/20 m-4"></div>
-              <div class="absolute top-1/2 left-4 right-4 h-0 border-t-2 border-white/20"></div>
-              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-2 border-white/20 rounded-full"></div>
-              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white/40 rounded-full"></div>
-              
-              <!-- Players -->
-              <div v-for="player in lastLineup.starters" :key="player.id" 
-                   class="absolute player-card"
-                   :style="{
-                     left: `${player.verticalLayout.x * 100}%`,
-                     top: `${player.verticalLayout.y * 100}%`,
-                     transform: 'translate(-50%, -50%)'
-                   }">
-                <div class="flex flex-col items-center gap-1">
-                  <div class="relative group cursor-pointer">
-                    <img 
-                      :src="getPlayerImage(player.id)"
-                      @error="handlePlayerImageError"
-                      :alt="player.name"
-                      class="w-16 h-16 rounded-full border-2 border-white shadow-lg object-cover bg-slate-700 group-hover:scale-110 transition-transform"
-                    />
-                    <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white shadow">
-                      {{ player.shirtNumber }}
-                    </div>
-                    <div v-if="player.performance?.rating" class="absolute -top-1 -left-1 w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white shadow">
-                      {{ player.performance.rating.toFixed(1) }}
-                    </div>
-                    <img v-if="player.countryCode" :src="`https://flagcdn.com/w20/${getFlagCode(player.countryCode)}.png`" class="absolute top-0 right-0 w-5 h-4 rounded-sm shadow border border-white" :alt="player.countryName" />
+
+            <!-- Tactical Pitch (no photos, clean position circles) -->
+            <div class="relative w-full max-w-[340px] mx-auto aspect-[3/4] rounded-xl overflow-hidden shadow-2xl border border-white/10" style="background:oklch(0.27 0.07 155)">
+              <!-- Field markings -->
+              <div class="absolute inset-2 border border-white/12 rounded"></div>
+              <div class="absolute top-1/2 left-2 right-2 h-px bg-white/12"></div>
+              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 border border-white/12 rounded-full"></div>
+              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white/25 rounded-full"></div>
+              <div class="absolute top-2 left-[22%] right-[22%] h-[18%] border border-white/12"></div>
+              <div class="absolute bottom-2 left-[22%] right-[22%] h-[18%] border border-white/12"></div>
+
+              <!-- Player circles -->
+              <div
+                v-for="player in lastLineup.starters"
+                :key="player.id"
+                class="absolute"
+                :style="{
+                  left: `${player.verticalLayout.x * 100}%`,
+                  top: `${player.verticalLayout.y * 100}%`,
+                  transform: 'translate(-50%, -50%)'
+                }"
+              >
+                <div class="flex flex-col items-center gap-0.5">
+                  <!-- Position-colored circle with shirt number -->
+                  <div
+                    class="relative w-9 h-9 rounded-full flex items-center justify-center border-2 border-white/25 shadow-lg"
+                    :class="playerPosColor(player)"
+                  >
+                    <span class="text-xs font-black text-white leading-none">{{ player.shirtNumber }}</span>
+                    <!-- Rating badge -->
+                    <div
+                      v-if="player.performance?.rating"
+                      class="absolute -top-1.5 -right-1.5 min-w-[20px] bg-slate-950 rounded px-0.5 text-[8px] font-bold text-amber-400 text-center border border-amber-400/20 shadow leading-tight"
+                    >{{ player.performance.rating.toFixed(1) }}</div>
                   </div>
-                  <div class="bg-slate-900/90 px-2 py-1 rounded-md shadow-lg backdrop-blur-sm">
-                    <div class="text-white text-xs font-bold text-center whitespace-nowrap">{{ player.lastName || player.name }}</div>
+                  <!-- Last name chip -->
+                  <div class="bg-slate-950/80 px-1 py-px rounded text-white text-[8px] font-bold max-w-[54px] text-center truncate shadow leading-tight">
+                    {{ player.lastName || (player.name || '').split(' ').slice(-1)[0] }}
                   </div>
                 </div>
               </div>
             </div>
-            
-            <!-- Formation Legend -->
-            <div class="flex justify-center gap-4 text-sm text-slate-400">
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                <span>Rating</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-3 bg-blue-600 rounded-full"></div>
-                <span>Número</span>
-              </div>
+
+            <!-- Legend -->
+            <div class="flex justify-center flex-wrap gap-3 mt-4 text-[10px] text-slate-400">
+              <div class="flex items-center gap-1"><div class="w-3 h-3 rounded-full bg-amber-500/80"></div>GK</div>
+              <div class="flex items-center gap-1"><div class="w-3 h-3 rounded-full bg-blue-500/80"></div>DEF</div>
+              <div class="flex items-center gap-1"><div class="w-3 h-3 rounded-full bg-violet-500/80"></div>MED</div>
+              <div class="flex items-center gap-1"><div class="w-3 h-3 rounded-full bg-rose-500/80"></div>DEL</div>
             </div>
           </div>
           <div v-else class="text-center text-slate-400 py-12">
@@ -290,50 +292,50 @@
         </div>
 
         <!-- Squad Tab -->
-        <div v-if="activeTab === 'squad'" class="space-y-6">
-          <div v-if="teamData?.squad?.squad" v-for="group in teamData.squad.squad" :key="group.title" class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-            <h3 class="text-lg font-bold mb-4 text-purple-300 capitalize flex items-center gap-2">
-              <i class="bi" :class="{
-                'bi-person-badge': group.title === 'coach',
-                'bi-shield': group.title === 'keepers',
-                'bi-shield-check': group.title === 'defenders',
-                'bi-lightning': group.title === 'midfielders',
-                'bi-star': group.title === 'attackers'
-              }"></i>
-              {{ group.title === 'coach' ? 'Cuerpo Técnico' : 
-                 group.title === 'keepers' ? 'Arqueros' :
-                 group.title === 'defenders' ? 'Defensores' :
-                 group.title === 'midfielders' ? 'Mediocampistas' :
-                 group.title === 'attackers' ? 'Delanteros' : group.title }}
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              <div v-for="player in group.members" :key="player.id" class="bg-slate-700/50 rounded-lg p-4 hover:bg-slate-700 transition-colors">
-                <div class="flex items-center gap-3">
-                  <div class="relative">
-                    <img 
-                      :src="getPlayerImage(player.id)"
-                      @error="handlePlayerImageError"
-                      :alt="player.name"
-                      class="w-12 h-12 rounded-full object-cover bg-slate-600"
-                    />
-                    <div v-if="player.shirtNumber" class="absolute -bottom-1 -right-1 w-5 h-5 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-[10px] shadow-lg border border-white">
-                      {{ player.shirtNumber }}
-                    </div>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="font-semibold text-sm truncate text-white">{{ player.name }}</div>
-                    <div class="flex items-center gap-2 mt-1">
-                      <img v-if="player.ccode" :src="`https://flagcdn.com/w20/${getFlagCode(player.ccode)}.png`" class="w-5 h-4 rounded-sm" :alt="player.cname" />
-                      <span class="text-xs text-slate-400">{{ player.age }} años</span>
-                      <span v-if="player.rating" class="text-xs text-yellow-500 font-bold">★ {{ player.rating.toFixed(1) }}</span>
-                    </div>
-                  </div>
-                  <div v-if="group.title !== 'coach'" class="text-right">
-                    <div v-if="player.goals > 0" class="text-xs text-green-400">⚽ {{ player.goals }}</div>
-                    <div v-if="player.assists > 0" class="text-xs text-blue-400">🎯 {{ player.assists }}</div>
+        <div v-if="activeTab === 'squad'">
+          <div v-if="teamData?.squad?.squad">
+            <!-- Compact squad table like Transfermarkt -->
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
+              <template v-for="group in teamData.squad.squad" :key="group.title">
+                <!-- Position group header -->
+                <div class="px-4 py-2.5 bg-white/5 border-b border-white/10 flex items-center gap-2">
+                  <span class="w-0.5 h-4 rounded-full bg-[oklch(0.62_0.21_270)] flex-shrink-0"></span>
+                  <h3 class="text-xs font-bold uppercase tracking-widest text-slate-200">
+                    {{ group.title === 'coach' ? 'CUERPO TÉCNICO' :
+                       group.title === 'keepers' ? 'ARQUEROS' :
+                       group.title === 'defenders' ? 'DEFENSORES' :
+                       group.title === 'midfielders' ? 'MEDIOCAMPISTAS' :
+                       group.title === 'attackers' ? 'DELANTEROS' : group.title.toUpperCase() }}
+                  </h3>
+                </div>
+                <!-- Player rows -->
+                <div v-for="player in group.members" :key="player.id"
+                     class="flex items-center gap-3 px-4 py-2 border-b border-white/5 hover:bg-white/5 transition-colors last:border-b-0">
+                  <!-- Shirt # -->
+                  <span class="text-xs font-bold text-slate-500 w-5 text-center flex-shrink-0">{{ player.shirtNumber || '—' }}</span>
+                  <!-- Photo -->
+                  <img
+                    :src="getPlayerImage(player.id)"
+                    @error="handlePlayerImageError"
+                    :alt="player.name"
+                    class="w-8 h-8 rounded-full object-cover bg-slate-700 flex-shrink-0 ring-1 ring-white/10"
+                  />
+                  <!-- Name -->
+                  <span class="flex-1 text-sm font-medium text-white truncate">{{ player.name }}</span>
+                  <!-- Flag -->
+                  <img v-if="player.ccode"
+                       :src="`https://flagcdn.com/w20/${getFlagCode(player.ccode)}.png`"
+                       class="w-5 h-3.5 rounded-sm object-cover flex-shrink-0"
+                       :alt="player.cname" />
+                  <!-- Age -->
+                  <span class="text-xs text-slate-500 w-8 text-right flex-shrink-0">{{ player.age }}a</span>
+                  <!-- Stats -->
+                  <div class="flex items-center gap-1.5 w-14 justify-end flex-shrink-0">
+                    <span v-if="player.goals > 0" class="text-[11px] text-emerald-400 font-semibold">⚽{{ player.goals }}</span>
+                    <span v-if="player.assists > 0" class="text-[11px] text-blue-400 font-semibold">🅰️{{ player.assists }}</span>
                   </div>
                 </div>
-              </div>
+              </template>
             </div>
           </div>
           <div v-else class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
@@ -345,87 +347,69 @@
         </div>
 
         <!-- Stats Tab -->
-        <div v-if="activeTab === 'stats'" class="space-y-6">
+        <div v-if="activeTab === 'stats'" class="space-y-3">
           <!-- Top Scorers -->
-          <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-              <i class="bi bi-award text-yellow-500"></i>
-              Goleadores del Equipo
-            </h3>
-            <div v-if="topScorers.length > 0" class="space-y-2">
-              <div v-for="(player, idx) in topScorers" :key="player.id" class="flex items-center gap-4 bg-slate-700/50 rounded-xl p-4 hover:bg-slate-700 transition-colors">
-                <div class="text-2xl font-bold text-slate-500 w-8">{{ idx + 1 }}</div>
-                <img v-if="player.ccode" :src="`https://flagcdn.com/w20/${getFlagCode(player.ccode)}.png`" class="w-6 h-4 rounded-sm" :alt="player.ccode" />
-                <div class="flex-1 min-w-0">
-                  <div class="font-semibold text-white truncate">{{ player.name }}</div>
-                  <div class="text-xs text-slate-400">{{ player.teamName }}</div>
-                </div>
-                <div class="text-center">
-                  <div class="text-2xl font-bold text-yellow-500">{{ player.value }}</div>
-                  <div class="text-xs text-slate-500">goles</div>
-                </div>
+          <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
+            <div class="px-4 py-2.5 bg-white/5 border-b border-white/10 flex items-center gap-2">
+              <span class="w-0.5 h-4 rounded-full bg-yellow-400 flex-shrink-0"></span>
+              <h3 class="text-xs font-bold uppercase tracking-widest text-slate-200">Goleadores del Equipo</h3>
+            </div>
+            <template v-if="topScorers.length > 0">
+              <div v-for="(player, idx) in topScorers" :key="player.id"
+                   class="flex items-center gap-3 px-4 py-2.5 border-b border-white/5 hover:bg-white/5 transition-colors last:border-b-0">
+                <span class="text-xs font-bold text-slate-500 w-5 text-center flex-shrink-0">{{ idx + 1 }}</span>
+                <img v-if="player.ccode" :src="`https://flagcdn.com/w20/${getFlagCode(player.ccode)}.png`" class="w-5 h-3.5 rounded-sm object-cover flex-shrink-0" :alt="player.ccode" />
+                <span class="flex-1 text-sm font-medium text-white truncate">{{ player.name }}</span>
+                <span class="text-sm font-bold text-yellow-400 tabular-nums">{{ player.value }}</span>
+                <span class="text-xs text-slate-500 w-8">goles</span>
               </div>
-            </div>
-            <div v-else class="text-center text-slate-400 py-8">
-              No hay datos disponibles
-            </div>
+            </template>
+            <div v-else class="px-4 py-8 text-center text-slate-400 text-sm">No hay datos disponibles</div>
           </div>
 
           <!-- Top Assists -->
-          <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-              <i class="bi bi-share text-blue-500"></i>
-              Máximos Asistidores
-            </h3>
-            <div v-if="topAssists.length > 0" class="space-y-2">
-              <div v-for="(player, idx) in topAssists" :key="player.id" class="flex items-center gap-4 bg-slate-700/50 rounded-xl p-4 hover:bg-slate-700 transition-colors">
-                <div class="text-2xl font-bold text-slate-500 w-8">{{ idx + 1 }}</div>
-                <img v-if="player.ccode" :src="`https://flagcdn.com/w20/${getFlagCode(player.ccode)}.png`" class="w-6 h-4 rounded-sm" :alt="player.ccode" />
-                <div class="flex-1 min-w-0">
-                  <div class="font-semibold text-white truncate">{{ player.name }}</div>
-                  <div class="text-xs text-slate-400">{{ player.teamName }}</div>
-                </div>
-                <div class="text-center">
-                  <div class="text-2xl font-bold text-blue-500">{{ player.value }}</div>
-                  <div class="text-xs text-slate-500">asistencias</div>
-                </div>
+          <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
+            <div class="px-4 py-2.5 bg-white/5 border-b border-white/10 flex items-center gap-2">
+              <span class="w-0.5 h-4 rounded-full bg-blue-400 flex-shrink-0"></span>
+              <h3 class="text-xs font-bold uppercase tracking-widest text-slate-200">Máximos Asistidores</h3>
+            </div>
+            <template v-if="topAssists.length > 0">
+              <div v-for="(player, idx) in topAssists" :key="player.id"
+                   class="flex items-center gap-3 px-4 py-2.5 border-b border-white/5 hover:bg-white/5 transition-colors last:border-b-0">
+                <span class="text-xs font-bold text-slate-500 w-5 text-center flex-shrink-0">{{ idx + 1 }}</span>
+                <img v-if="player.ccode" :src="`https://flagcdn.com/w20/${getFlagCode(player.ccode)}.png`" class="w-5 h-3.5 rounded-sm object-cover flex-shrink-0" :alt="player.ccode" />
+                <span class="flex-1 text-sm font-medium text-white truncate">{{ player.name }}</span>
+                <span class="text-sm font-bold text-blue-400 tabular-nums">{{ player.value }}</span>
+                <span class="text-xs text-slate-500 w-8">asis.</span>
               </div>
-            </div>
-            <div v-else class="text-center text-slate-400 py-8">
-              No hay datos disponibles
-            </div>
+            </template>
+            <div v-else class="px-4 py-8 text-center text-slate-400 text-sm">No hay datos disponibles</div>
           </div>
 
           <!-- Top Rated -->
-          <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-              <i class="bi bi-star text-orange-500"></i>
-              Mejor Valorados
-            </h3>
-            <div v-if="topRated.length > 0" class="space-y-2">
-              <div v-for="(player, idx) in topRated" :key="player.id" class="flex items-center gap-4 bg-slate-700/50 rounded-xl p-4 hover:bg-slate-700 transition-colors">
-                <div class="text-2xl font-bold text-slate-500 w-8">{{ idx + 1 }}</div>
-                <img v-if="player.ccode" :src="`https://flagcdn.com/w20/${getFlagCode(player.ccode)}.png`" class="w-6 h-4 rounded-sm" :alt="player.ccode" />
-                <div class="flex-1 min-w-0">
-                  <div class="font-semibold text-white truncate">{{ player.name }}</div>
-                  <div class="text-xs text-slate-400">{{ player.teamName }}</div>
-                </div>
-                <div class="text-center">
-                  <div class="text-2xl font-bold text-orange-500">{{ player.value.toFixed(2) }}</div>
-                  <div class="text-xs text-slate-500">rating</div>
-                </div>
+          <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
+            <div class="px-4 py-2.5 bg-white/5 border-b border-white/10 flex items-center gap-2">
+              <span class="w-0.5 h-4 rounded-full bg-orange-400 flex-shrink-0"></span>
+              <h3 class="text-xs font-bold uppercase tracking-widest text-slate-200">Mejor Valorados</h3>
+            </div>
+            <template v-if="topRated.length > 0">
+              <div v-for="(player, idx) in topRated" :key="player.id"
+                   class="flex items-center gap-3 px-4 py-2.5 border-b border-white/5 hover:bg-white/5 transition-colors last:border-b-0">
+                <span class="text-xs font-bold text-slate-500 w-5 text-center flex-shrink-0">{{ idx + 1 }}</span>
+                <img v-if="player.ccode" :src="`https://flagcdn.com/w20/${getFlagCode(player.ccode)}.png`" class="w-5 h-3.5 rounded-sm object-cover flex-shrink-0" :alt="player.ccode" />
+                <span class="flex-1 text-sm font-medium text-white truncate">{{ player.name }}</span>
+                <span class="text-sm font-bold text-orange-400 tabular-nums">{{ player.value.toFixed(2) }}</span>
+                <span class="text-xs text-slate-500 w-10">rating</span>
               </div>
-            </div>
-            <div v-else class="text-center text-slate-400 py-8">
-              No hay datos disponibles
-            </div>
+            </template>
+            <div v-else class="px-4 py-8 text-center text-slate-400 text-sm">No hay datos disponibles</div>
           </div>
         </div>
 
         <!-- Fixtures Tab -->
         <div v-if="activeTab === 'fixtures'" class="space-y-6">
           <!-- Partidos en Vivo -->
-          <div v-if="fixturesGrouped.live.length > 0" class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-red-500/30 p-6">
+          <div v-if="visibleFixtures.live.length > 0" class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-red-500/30 p-4 md:p-6">
             <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
               <span class="flex items-center gap-2">
                 <span class="animate-pulse w-3 h-3 bg-red-500 rounded-full"></span>
@@ -433,7 +417,7 @@
               </span>
             </h2>
             <div class="space-y-2">
-              <div v-for="match in fixturesGrouped.live" :key="match.id" class="bg-slate-700/50 rounded-xl p-4 hover:bg-slate-700 transition-colors">
+              <div v-for="match in visibleFixtures.live" :key="match.id" class="bg-slate-700/50 rounded-xl p-3 hover:bg-slate-700 transition-colors">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3 flex-1">
                     <router-link :to="`/team/${match.home.id}`" class="flex items-center gap-2 hover:opacity-80">
@@ -450,34 +434,45 @@
                 </div>
               </div>
             </div>
+            <div v-if="hasMoreLive" class="mt-3 text-center">
+              <button @click="fixturesLimit.live += 5" class="rounded-lg border border-white/15 px-5 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5 uppercase tracking-wider">
+                CARGAR MÁS
+              </button>
+            </div>
           </div>
 
           <!-- Próximos Partidos -->
-          <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+          <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-4 md:p-6">
             <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
               <i class="bi bi-calendar-event text-blue-500"></i>
               Próximos Partidos
             </h2>
-            <div v-if="fixturesGrouped.upcoming.length > 0" class="space-y-2">
-              <div v-for="match in fixturesGrouped.upcoming" :key="match.id" class="bg-slate-700/50 rounded-xl p-4 hover:bg-slate-700 transition-colors">
-                <div class="flex items-center justify-between">
-                  <div class="text-xs text-slate-400 min-w-[140px]">
-                    {{ formatFixtureDate(match.status.utcTime) }} - {{ formatFixtureTime(match.status.utcTime) }}
+            <div v-if="visibleFixtures.upcoming.length > 0" class="space-y-2">
+            <div v-for="match in visibleFixtures.upcoming" :key="match.id" class="bg-slate-700/50 rounded-xl p-3 hover:bg-slate-700 transition-colors min-h-[60px] flex items-center">
+                <div class="flex items-center gap-2 w-full">
+                  <div class="text-xs text-slate-400 w-28 flex-shrink-0 leading-tight">
+                    <div>{{ formatFixtureDate(match.status.utcTime) }}</div>
+                    <div class="text-slate-500">{{ formatFixtureTime(match.status.utcTime) }}</div>
                   </div>
-                  <div class="flex items-center gap-3 flex-1 justify-center">
-                    <router-link :to="`/team/${match.home.id}`" class="flex items-center gap-2 hover:opacity-80">
-                      <span class="font-semibold text-sm">{{ match.home.name }}</span>
-                      <img :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.home.id}.png`" class="w-6 h-6" />
+                  <div class="flex-1 grid grid-cols-[1fr_48px_1fr] items-center gap-1">
+                    <router-link :to="`/team/${match.home.id}`" class="flex items-center justify-end gap-1.5 hover:opacity-80 min-w-0">
+                      <span class="font-semibold text-sm text-right truncate">{{ match.home.name }}</span>
+                      <img :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.home.id}.png`" class="w-6 h-6 flex-shrink-0" />
                     </router-link>
-                    <span class="text-slate-400 font-bold">VS</span>
-                    <router-link :to="`/team/${match.away.id}`" class="flex items-center gap-2 hover:opacity-80">
-                      <img :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.away.id}.png`" class="w-6 h-6" />
-                      <span class="font-semibold text-sm">{{ match.away.name }}</span>
+                    <div class="text-center text-slate-200 font-bold text-sm">VS</div>
+                    <router-link :to="`/team/${match.away.id}`" class="flex items-center justify-start gap-1.5 hover:opacity-80 min-w-0">
+                      <img :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.away.id}.png`" class="w-6 h-6 flex-shrink-0" />
+                      <span class="font-semibold text-sm truncate">{{ match.away.name }}</span>
                     </router-link>
                   </div>
-                  <div class="text-xs text-slate-500 min-w-[120px] text-right">{{ match.tournament?.name }}</div>
+                  <div class="text-xs text-slate-500 w-36 text-right flex-shrink-0 hidden md:block truncate">{{ match.tournament?.name }}</div>
                 </div>
               </div>
+            </div>
+            <div v-if="hasMoreUpcoming" class="mt-3 text-center">
+              <button @click="fixturesLimit.upcoming += 5" class="rounded-lg border border-white/15 px-5 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5 uppercase tracking-wider">
+                CARGAR MÁS
+              </button>
             </div>
             <div v-else class="text-center text-slate-400 py-8">
               No hay próximos partidos
@@ -485,31 +480,34 @@
           </div>
 
           <!-- Partidos Finalizados -->
-          <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+          <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-4 md:p-6">
             <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
               <i class="bi bi-check-circle text-green-500"></i>
               Partidos Finalizados
             </h2>
-            <div v-if="fixturesGrouped.finished.length > 0" class="space-y-2 max-h-[600px] overflow-y-auto">
-              <div v-for="match in fixturesGrouped.finished" :key="match.id" class="bg-slate-700/50 rounded-xl p-4 hover:bg-slate-700 transition-colors">
-                <div class="flex items-center justify-between">
-                  <div class="text-xs text-slate-400 min-w-[100px]">
-                    {{ formatFixtureDate(match.status.utcTime) }}
-                  </div>
-                  <div class="flex items-center gap-3 flex-1 justify-center">
-                    <router-link :to="`/team/${match.home.id}`" class="flex items-center gap-2 hover:opacity-80">
-                      <span class="font-semibold text-sm">{{ match.home.name }}</span>
-                      <img :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.home.id}.png`" class="w-6 h-6" />
+            <div v-if="visibleFixtures.finished.length > 0" class="space-y-2">
+            <div v-for="match in visibleFixtures.finished" :key="match.id" class="bg-slate-700/50 rounded-xl p-3 hover:bg-slate-700 transition-colors min-h-[60px] flex items-center">
+                <div class="flex items-center gap-2 w-full">
+                  <div class="text-xs text-slate-400 w-24 flex-shrink-0">{{ formatFixtureDate(match.status.utcTime) }}</div>
+                  <div class="flex-1 grid grid-cols-[1fr_64px_1fr] items-center gap-1">
+                    <router-link :to="`/team/${match.home.id}`" class="flex items-center justify-end gap-1.5 hover:opacity-80 min-w-0">
+                      <span class="font-semibold text-sm text-right truncate">{{ match.home.name }}</span>
+                      <img :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.home.id}.png`" class="w-6 h-6 flex-shrink-0" />
                     </router-link>
-                    <span class="font-bold text-lg min-w-[60px] text-center">{{ match.status.scoreStr }}</span>
-                    <router-link :to="`/team/${match.away.id}`" class="flex items-center gap-2 hover:opacity-80">
-                      <img :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.away.id}.png`" class="w-6 h-6" />
-                      <span class="font-semibold text-sm">{{ match.away.name }}</span>
+                    <div class="text-center font-bold text-base text-white">{{ match.status.scoreStr }}</div>
+                    <router-link :to="`/team/${match.away.id}`" class="flex items-center justify-start gap-1.5 hover:opacity-80 min-w-0">
+                      <img :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.away.id}.png`" class="w-6 h-6 flex-shrink-0" />
+                      <span class="font-semibold text-sm truncate">{{ match.away.name }}</span>
                     </router-link>
                   </div>
-                  <div class="text-xs text-slate-500 min-w-[120px] text-right">{{ match.tournament?.name }}</div>
+                  <div class="text-xs text-slate-500 w-36 text-right flex-shrink-0 hidden md:block truncate">{{ match.tournament?.name }}</div>
                 </div>
               </div>
+            </div>
+            <div v-if="hasMoreFinished" class="mt-3 text-center">
+              <button @click="fixturesLimit.finished += 5" class="rounded-lg border border-white/15 px-5 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5 uppercase tracking-wider">
+                CARGAR MÁS
+              </button>
             </div>
             <div v-else class="text-center text-slate-400 py-8">
               No hay partidos finalizados
@@ -616,6 +614,7 @@ const loading = ref(true);
 const error = ref(null);
 const teamData = ref(null);
 const activeTab = ref('overview');
+const fixturesLimit = ref({ live: 5, upcoming: 5, finished: 5 });
 
 // Tabs configuration
 const tabs = [
@@ -688,8 +687,12 @@ const recentMatches = computed(() => {
           day: 'numeric', 
           month: 'short' 
         }),
+        homeId: match.home?.id,
         home: match.home?.name,
+        homeLogo: `https://images.fotmob.com/image_resources/logo/teamlogo/${match.home?.id}.png`,
+        awayId: match.away?.id,
         away: match.away?.name,
+        awayLogo: `https://images.fotmob.com/image_resources/logo/teamlogo/${match.away?.id}.png`,
         score: `${match.home?.score}-${match.away?.score}`,
         result: result,
         competition: match.tournament?.name || ''
@@ -712,13 +715,19 @@ const teamStats = computed(() => {
 
 // Posición en la tabla
 const tablePosition = computed(() => {
-  if (!teamData.value?.table?.data?.tables) return null;
-  
-  const mainTable = teamData.value.table.data.tables[0];
-  if (!mainTable?.table?.all) return null;
-  
-  const teamEntry = mainTable.table.all.find(t => t.id === parseInt(route.params.teamId));
-  return teamEntry;
+  const teamId = parseInt(route.params.teamId);
+  const tables = teamData.value?.table?.data?.tables
+    || teamData.value?.table?.[0]?.data?.tables
+    || [];
+
+  for (const table of tables) {
+    const allTeams = table?.table?.all;
+    if (!Array.isArray(allTeams)) continue;
+    const found = allTeams.find(t => t.id === teamId);
+    if (found) return found;
+  }
+
+  return null;
 });
 
 // Todos los partidos (fixtures)
@@ -735,6 +744,16 @@ const fixturesGrouped = computed(() => {
   
   return { upcoming, finished, live };
 });
+
+const visibleFixtures = computed(() => ({
+  live: fixturesGrouped.value.live.slice(0, fixturesLimit.value.live),
+  upcoming: fixturesGrouped.value.upcoming.slice(0, fixturesLimit.value.upcoming),
+  finished: fixturesGrouped.value.finished.slice(0, fixturesLimit.value.finished)
+}));
+
+const hasMoreLive = computed(() => fixturesGrouped.value.live.length > visibleFixtures.value.live.length);
+const hasMoreUpcoming = computed(() => fixturesGrouped.value.upcoming.length > visibleFixtures.value.upcoming.length);
+const hasMoreFinished = computed(() => fixturesGrouped.value.finished.length > visibleFixtures.value.finished.length);
 
 // Top players del equipo
 const topScorers = computed(() => {
@@ -775,6 +794,15 @@ const getPlayerImage = (playerId) => {
   return `https://images.fotmob.com/image_resources/playerimages/${playerId}.png`;
 };
 
+// Color de círculo según posición (inferida por coordenada Y del campo)
+const playerPosColor = (player) => {
+  const y = player?.verticalLayout?.y ?? 0.5
+  if (y > 0.82) return 'bg-amber-500/80'  // GK
+  if (y > 0.57) return 'bg-blue-500/80'   // DEF
+  if (y > 0.33) return 'bg-violet-500/80' // MF
+  return 'bg-rose-500/80'                 // FW
+};
+
 const handlePlayerImageError = (event) => {
   event.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"%3E%3Crect fill="%23334155" width="80" height="80"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="24" font-family="Arial"%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E';
 };
@@ -787,8 +815,8 @@ const getFlagCode = (fotmobCode) => {
 };
 
 // Cargar datos del equipo
-const loadTeamData = async () => {
-  loading.value = true;
+const loadTeamData = async ({ silent = false } = {}) => {
+  if (!silent || !teamData.value) loading.value = true;
   error.value = null;
   
   try {
@@ -823,7 +851,7 @@ onMounted(() => {
   
   // Configurar auto-refresh
   refreshInterval = setInterval(() => {
-    loadTeamData();
+    loadTeamData({ silent: true });
   }, 30000); // 30 segundos
 });
 

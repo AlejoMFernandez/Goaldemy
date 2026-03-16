@@ -1,6 +1,6 @@
 <script>
 import AppH1 from '../../components/common/AppH1.vue'
-import { getAllPlayers } from '../../services/players'
+import { getAllPlayers, getAllPlayersAsync } from '../../services/players'
 import { initScoring, onCorrect, onIncorrect } from '../../services/scoring'
 import { awardXpForCorrect } from '../../services/game-xp'
 import { celebrateCorrect, checkEarlyWin, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
@@ -69,8 +69,7 @@ export default {
     else this.mode = 'normal'
     if (this.mode === 'free') this.allowXp = false
 
-    this.load()
-    this.nextRound()
+    this.load().then(() => this.nextRound())
 
     if (this.reviewMode) {
       import('../../services/game-modes').then(async (mod) => {
@@ -105,9 +104,9 @@ export default {
   },
   methods: {
     blurb() { return gameSummaryBlurb('shirt-number') },
-    load() {
+    async load() {
       // Only players with a valid shirt number
-      const all = getAllPlayers().filter(p => Number.isFinite(p?.shirtNumber))
+      const all = (await getAllPlayersAsync()).filter(p => Number.isFinite(p?.shirtNumber))
       this.allPlayers = all
       this.loading = false
     },

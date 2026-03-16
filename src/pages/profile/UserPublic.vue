@@ -1,9 +1,9 @@
 <script>
-import ProfileHeaderCard from '../components/profile/ProfileHeaderCard.vue'
-import { getPublicProfile } from '../services/user-profiles'
-import { subscribeToAuthStateChanges } from '../services/auth'
-import { getStatusWith, sendRequest } from '../services/connections'
-import { pushErrorToast } from '../stores/notifications'
+import ProfileHeaderCard from '../../components/profile/ProfileHeaderCard.vue'
+import { getPublicProfile } from '../../services/user-profiles'
+import { subscribeToAuthStateChanges } from '../../services/auth'
+import { getStatusWith, sendRequest } from '../../services/connections'
+import { pushErrorToast } from '../../stores/notifications'
 
 export default {
   name: 'UserPublic',

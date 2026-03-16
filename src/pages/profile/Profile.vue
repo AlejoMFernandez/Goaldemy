@@ -1,25 +1,25 @@
 <script>
-import AppH1 from '../components/common/AppH1.vue';
-import { subscribeToAuthStateChanges } from '../services/auth';
-import { getUserLevel } from '../services/xp';
-import { getUserAchievements } from '../services/achievements';
-import { getUserXpByGame } from '../services/games';
-import { getPublicProfile, updateFeaturedAchievements } from '../services/user-profiles';
-import { getStatusWith, sendRequest, disconnectWith } from '../services/connections';
-import { pushErrorToast } from '../stores/notifications';
-import ProfileHeaderCard from '../components/profile/ProfileHeaderCard.vue';
-import AchievementsCard from '../components/profile/AchievementsCard.vue';
-import FeaturedAchievementsModal from '../components/profile/FeaturedAchievementsModal.vue';
+import AppH1 from '../../components/common/AppH1.vue';
+import { subscribeToAuthStateChanges } from '../../services/auth';
+import { getUserLevel } from '../../services/xp';
+import { getUserAchievements } from '../../services/achievements';
+import { getUserXpByGame } from '../../services/games';
+import { getPublicProfile, updateFeaturedAchievements } from '../../services/user-profiles';
+import { getStatusWith, sendRequest, disconnectWith } from '../../services/connections';
+import { pushErrorToast } from '../../stores/notifications';
+import ProfileHeaderCard from '../../components/profile/ProfileHeaderCard.vue';
+import AchievementsCard from '../../components/profile/AchievementsCard.vue';
+import FeaturedAchievementsModal from '../../components/profile/FeaturedAchievementsModal.vue';
 // XpByGameCard inlined into XpDonutChart list
-import XpDonutChart from '../components/profile/XpDonutChart.vue';
-import ProgressCard from '../components/profile/ProgressCard.vue';
-import { getUserMaxStreakByGame } from '../services/xp';
-import { checkAndUnlockSpecials } from '../services/special-badges';
-import ConnectionsCard from '../components/profile/ConnectionsCard.vue';
-import CommunityCard from '../components/profile/CommunityCard.vue';
-import { findTeamByName, findPlayerByName } from '../services/players';
-import { listConnections } from '../services/connections';
-import { getPublicProfilesByIds } from '../services/user-profiles';
+import XpDonutChart from '../../components/profile/XpDonutChart.vue';
+import ProgressCard from '../../components/profile/ProgressCard.vue';
+import { getUserMaxStreakByGame } from '../../services/xp';
+import { checkAndUnlockSpecials } from '../../services/special-badges';
+import ConnectionsCard from '../../components/profile/ConnectionsCard.vue';
+import CommunityCard from '../../components/profile/CommunityCard.vue';
+import { findTeamByName, findPlayerByName } from '../../services/players';
+import { listConnections } from '../../services/connections';
+import { getPublicProfilesByIds } from '../../services/user-profiles';
 
 let unsubscribeAuth = () => {};
 
@@ -204,7 +204,7 @@ export default {
 
       // Fetch global rank (TOP 1/2/3 badge)
       try {
-        const { getLeaderboard } = await import('../services/xp')
+        const { getLeaderboard } = await import('../../services/xp')
         const { data: topData } = await getLeaderboard({ period: 'all_time', gameId: null, limit: 3, offset: 0 })
         const top = Array.isArray(topData) ? topData : (topData ? [topData] : [])
         const myRank = top.find(r => r.user_id === userId)
@@ -267,7 +267,7 @@ export default {
         if (!isSelf) {
           this.dailyStreaksItems = []
         } else {
-          const mod = await import('../services/game-modes')
+          const mod = await import('../../services/game-modes')
           const games = mod.getDailyGamesList()
           const rows = await Promise.all(games.map(async g => {
             const [cur, best] = await Promise.all([
@@ -346,11 +346,11 @@ export default {
         await updateFeaturedAchievements(this.currentAuthId, codes)
         this.featuredAchievements = codes
         this.showFeaturedModal = false
-        const { pushSuccessToast } = await import('../stores/notifications')
+        const { pushSuccessToast } = await import('../../stores/notifications')
         pushSuccessToast('Logros destacados actualizados')
       } catch (e) {
         console.error('save featured achievements error:', e)
-        const { pushErrorToast } = await import('../stores/notifications')
+        const { pushErrorToast } = await import('../../stores/notifications')
         pushErrorToast('Error al guardar logros destacados')
       }
     },

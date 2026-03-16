@@ -1,12 +1,12 @@
 <script>
-import AppH1 from '../components/common/AppH1.vue';
-import AppButton from '../components/common/AppButton.vue';
-import { register } from '../services/auth';
-import { flagUrl } from '../services/countries';
-import countriesMap from '../codeCOUNTRYS.json';
-import SearchSelect from '../components/common/SearchSelect.vue';
-import { getAllPlayers, getAllTeams } from '../services/players';
-import { pushErrorToast, pushSuccessToast } from '../stores/notifications';
+import AppH1 from '../../components/common/AppH1.vue';
+import AppButton from '../../components/common/AppButton.vue';
+import { register } from '../../services/auth';
+import { flagUrl } from '../../services/countries';
+import countriesMap from '../../codeCOUNTRYS.json';
+import SearchSelect from '../../components/common/SearchSelect.vue';
+import { getAllPlayers, getAllTeams } from '../../services/players';
+import { pushErrorToast, pushSuccessToast } from '../../stores/notifications';
 
 export default {
   name: 'Register',

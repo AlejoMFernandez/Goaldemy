@@ -2,7 +2,7 @@ import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
 import { awardXpForCorrect } from './game-xp'
 import { celebrateCorrect } from './game-celebrations'
-import { loadAndClassifyPlayers, shuffleArray, getOptionClasses } from './game-common'
+import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, shuffleArray, getOptionClasses } from './game-common'
 
 const POSITIONS = ['GK','DF','MF','FW']
 const POS_LABEL = {
@@ -36,10 +36,8 @@ export function initState() {
 /**
  * Carga jugadores filtrados por posiciones válidas (GK, DF, MF, FW)
  */
-export function loadPlayers(state) {
-  const all = loadAndClassifyPlayers(state)
-  state.allPlayers = all.filter(p => POSITIONS.includes(p.position))
-  state.loading = false
+export async function loadPlayers(state) {
+  await loadAndClassifyPlayersAsync(state)
 }
 
 /**

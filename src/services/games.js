@@ -123,6 +123,7 @@ const FALLBACK_NAMES = {
   'age-order': 'Ordenar por edad',
   'height-order': 'Ordenar por altura',
   'shirt-number': 'Número de camiseta',
+  'once-ideal': 'Once Ideal',
 }
 
 const FALLBACK_DESC = {
@@ -136,6 +137,7 @@ const FALLBACK_DESC = {
   'age-order': 'Ordená 5 jugadores del más viejo al más joven',
   'height-order': 'Ordená 5 jugadores del más alto al más bajo',
   'shirt-number': 'Elegí el número de camiseta correcto',
+  'once-ideal': 'Armá tu once ideal con una restricción de equipo o nacionalidad',
 }
 
 // Metadata extendida: tipo de juego, mecánica, video preview, tips
@@ -227,6 +229,7 @@ const KNOWN_GAMES = [
   { slug: 'age-order', name: FALLBACK_NAMES['age-order'], description: FALLBACK_DESC['age-order'], cover_url: '/games/age-order.png' },
   { slug: 'height-order', name: FALLBACK_NAMES['height-order'], description: FALLBACK_DESC['height-order'], cover_url: '/games/height-order.png' },
   { slug: 'shirt-number', name: FALLBACK_NAMES['shirt-number'], description: FALLBACK_DESC['shirt-number'], cover_url: '/games/shirt-number.png' },
+  { slug: 'once-ideal', name: FALLBACK_NAMES['once-ideal'], description: FALLBACK_DESC['once-ideal'], cover_url: null },
 ]
 
 function fallbackCoverForSlug(slug) {
@@ -271,6 +274,7 @@ export function gameRouteForSlug(slug) {
     case 'age-order': return '/games/age-order'
     case 'height-order': return '/games/height-order'
     case 'shirt-number': return '/games/shirt-number'
+    case 'once-ideal': return '/games/once-ideal'
     default: return '/games'
   }
 }

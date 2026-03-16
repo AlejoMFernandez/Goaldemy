@@ -5,6 +5,7 @@ import { awardXpForCorrect } from './game-xp'
 import { 
   createMCQGameState, 
   loadAndClassifyPlayers, 
+  loadAndClassifyPlayersAsync,
   getBroadPosition, 
   shuffleArray,
   selectRandomPlayerFromBucket 
@@ -16,8 +17,8 @@ export function initState() {
 }
 
 // Reutiliza carga y clasificación de jugadores
-export function loadPlayers(state) {
-  loadAndClassifyPlayers(state)
+export async function loadPlayers(state) {
+  await loadAndClassifyPlayersAsync(state)
 }
 
 // Re-exporta función común para retrocompatibilidad

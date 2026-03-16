@@ -1,10 +1,10 @@
 <script>
-import AppH1 from '../components/common/AppH1.vue'
-import { subscribeToAuthStateChanges } from '../services/auth'
-import { formatShortDate } from '../services/formatters'
-import { getPublicProfile } from '../services/user-profiles'
-import { fetchConversation, sendDirectMessage, subscribeConversation, markConversationRead } from '../services/direct-messages'
-import { pushErrorToast } from '../stores/notifications'
+import AppH1 from '../../components/common/AppH1.vue'
+import { subscribeToAuthStateChanges } from '../../services/auth'
+import { formatShortDate } from '../../services/formatters'
+import { getPublicProfile } from '../../services/user-profiles'
+import { fetchConversation, sendDirectMessage, subscribeConversation, markConversationRead } from '../../services/direct-messages'
+import { pushErrorToast } from '../../stores/notifications'
 
 let unsubscribeAuth = () => {}
 let unsubscribeDM = () => {}

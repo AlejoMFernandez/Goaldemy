@@ -1,7 +1,7 @@
 // Servicio compartido para lógica común de juegos
 // Centraliza funcionalidad repetida en múltiples juegos
 
-import { getAllPlayers } from './players'
+import { getAllPlayers, getAllPlayersAsync } from './players'
 
 /**
  * Clasifica a un jugador según su posición amplia
@@ -57,6 +57,39 @@ export function loadAndClassifyPlayers(state) {
   state.byPos = by
   state.loading = false
   
+  return { allPlayers: state.allPlayers, byPos: by }
+}
+
+/**
+ * Versión asíncrona: usa getAllPlayersAsync() para datos frescos de FotMob.
+ */
+export async function loadAndClassifyPlayersAsync(state) {
+  state.allPlayers = await getAllPlayersAsync()
+  const by = { GK: [], DF: [], MF: [], FW: [] }
+  
+  for (const p of state.allPlayers) {
+    if (typeof p.positionId === 'number') {
+      if (p.positionId === 0) by.GK.push(p)
+      else if (p.positionId === 1) by.DF.push(p)
+      else if (p.positionId === 2) by.MF.push(p)
+      else if (p.positionId === 3) by.FW.push(p)
+      else by.MF.push(p)
+      continue
+    }
+    const pos = (p.position || '').toUpperCase()
+    const tokens = pos.split(',').map(t => t.trim())
+    const isDF = tokens.some(t => ['CB','LB','RB','LWB','RWB','WB','DEF','DF'].includes(t))
+    const isMF = tokens.some(t => ['CM','CDM','CAM','RM','LM','MID','MF'].includes(t))
+    const isFW = tokens.some(t => ['ST','CF','LW','RW','FW','ATT','FWD'].includes(t))
+    if (pos.includes('GK')) by.GK.push(p)
+    else if (isFW) by.FW.push(p)
+    else if (isMF) by.MF.push(p)
+    else if (isDF) by.DF.push(p)
+    else by.MF.push(p)
+  }
+  
+  state.byPos = by
+  state.loading = false
   return { allPlayers: state.allPlayers, byPos: by }
 }
 

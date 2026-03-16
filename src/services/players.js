@@ -23,7 +23,28 @@
  * - sampleDistinct(): Selecciona N jugadores aleatorios sin repetir
  * - buildOptions(): Crea opciones múltiple choice con la correcta incluida
  */
-import teams from '../dataGAMES.json';
+import teams from '../dataGAMES.json'
+import { getDifficulty, filterPlayersByDifficulty } from './difficulty';
+
+// Módulo-level cache: se llena con datos de FotMob cuando initializePlayers() completa
+let _fotmobCache = null
+
+/**
+ * Inicializa el cache de jugadores desde FotMob API + localStorage.
+ * Llamar una vez desde App.vue en background (no bloquea la UI).
+ */
+export async function initializePlayers() {
+  try {
+    const { loadPlayersFromFotMob } = await import('./fotmob-players')
+    const data = await loadPlayersFromFotMob()
+    if (data && data.length > 0) {
+      _fotmobCache = data
+      console.debug(`[players] FotMob cache: ${data.length} jugadores`)
+    }
+  } catch (e) {
+    console.warn('[players] No se pudo cargar desde FotMob, usando JSON estático', e)
+  }
+}
 
 /**
  * Construye la URL de la imagen de un jugador según FotMob
@@ -40,6 +61,9 @@ export function playerImageUrl(playerId) {
  * @returns {Array} Array de objetos jugador con todas sus propiedades
  */
 export function getAllPlayers() {
+  // Usa el cache de FotMob si ya está listo, si no usa el JSON estático
+  if (_fotmobCache && _fotmobCache.length > 0) return _fotmobCache
+
   const players = [];
   for (const team of teams) {
     for (const section of team.squad) {
@@ -71,6 +95,15 @@ export function getAllPlayers() {
 
 export function getAllTeams() {
   return teams.map(t => ({ id: t.id, name: t.name, logo: t.logo }));
+}
+
+/**
+ * Versión asíncrona: si el cache FotMob no está listo, lo espera.
+ * Ideal para usar en mounted() de los juegos para datos siempre frescos.
+ */
+export async function getAllPlayersAsync() {
+  if (!(_fotmobCache && _fotmobCache.length > 0)) await initializePlayers()
+  return filterPlayersByDifficulty(getAllPlayers(), getDifficulty())
 }
 
 function _normalizeName(s) {
