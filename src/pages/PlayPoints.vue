@@ -119,17 +119,17 @@ const GAME_META = {
     <div v-if="state.loading" class="text-slate-400">Cargando…</div>
     <div v-else>
       <!-- Game cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 stagger-grid">
         <RouterLink
           v-for="g in state.games"
           :key="g.slug"
           :to="toChallenge(g.slug)"
-          class="group relative flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-slate-900 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
+          class="group relative flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-slate-900 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]"
           :class="[
             state.availability[g.slug]?.result === 'win'
-              ? 'border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
+              ? 'border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
               : state.availability[g.slug]?.result === 'loss'
-              ? 'border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.15)]'
+              ? 'border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
               : 'hover:border-white/20'
           ]"
         >

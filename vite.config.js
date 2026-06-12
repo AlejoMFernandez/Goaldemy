@@ -54,6 +54,18 @@ export default defineConfig(async ({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, './src')
       }
-    }
+    },
+    server: {
+      proxy: {
+        '/fotmob': {
+          target: 'https://www.fotmob.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/fotmob/, ''),
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          },
+        },
+      },
+    },
   }
 })

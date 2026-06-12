@@ -29,7 +29,6 @@ export default {
   },
   async mounted() {
     try { await authReady; } finally { this.authBooting = false }
-    // Pre-warm FotMob player cache in background
     import('./services/players').then(m => m.initializePlayers?.()).catch(() => {})
   }
 }
@@ -41,7 +40,11 @@ export default {
     <AppNavBar v-if="!isAuthLayout" />
     <main :class="isAuthLayout ? 'relative z-10 min-h-screen grid place-items-center px-4 py-8' : 'relative z-10 w-full max-w-[1600px] mx-auto px-6 py-10 lg:py-12'">
       <AppLoader v-if="authBooting" />
-      <RouterView v-else />
+      <RouterView v-else v-slot="{ Component }">
+        <Transition name="fade-slide" mode="out-in">
+          <component :is="Component" />
+        </Transition>
+      </RouterView>
     </main>
     <AppFooter v-if="!isAuthLayout" />
     <AppToast />

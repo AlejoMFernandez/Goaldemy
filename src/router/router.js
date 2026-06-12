@@ -37,10 +37,12 @@ import SerieA from '../pages/leagues/SerieA.vue';
 import Bundesliga from '../pages/leagues/Bundesliga.vue';
 import Ligue1 from '../pages/leagues/Ligue1.vue';
 import LigaArgentina from '../pages/leagues/LigaArgentina.vue';
+import WorldCup from '../pages/leagues/WorldCup.vue';
 import TeamPage from '../pages/TeamPage.vue';
 
 const routes = [
     { path: '/', component: Landing },
+    { path: '/leagues/world-cup', component: WorldCup },
     { path: '/leagues/premier-league', component: PremierLeague },
     { path: '/leagues/la-liga', component: LaLiga },
     { path: '/leagues/serie-a', component: SerieA },

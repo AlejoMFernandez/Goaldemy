@@ -419,32 +419,45 @@ export default {
                             Ligas
                             <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
                         </button>
-                        <div v-if="leaguesOpen" data-leagues-menu class="absolute left-0 mt-2 w-56 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl overflow-hidden z-30"
+                        <div v-if="leaguesOpen" data-leagues-menu class="absolute left-0 mt-2 w-64 rounded-2xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-30"
                              @mouseenter="onLeaguesEnter" @mouseleave="onLeaguesLeave">
-                            <RouterLink @click="leaguesOpen=false" to="/leagues/premier-league" class="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200 border-b border-white/5">
-                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/47.png" alt="Premier League" class="w-5 h-5 object-contain" />
+                            <!-- World Cup - Featured -->
+                            <RouterLink @click="leaguesOpen=false" to="/leagues/world-cup" class="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold hover:bg-amber-500/10 text-amber-300 border-b border-white/10 bg-amber-500/5 transition-colors">
+                                <span class="text-lg">🏆</span>
+                                <div class="flex-1">
+                                    <div>Copa del Mundo 2026</div>
+                                    <div class="text-[10px] font-normal text-amber-400/70 uppercase tracking-wider">EN VIVO</div>
+                                </div>
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            </RouterLink>
+                            <!-- Paused domestic leagues -->
+                            <div class="px-3 pt-3 pb-1">
+                                <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Ligas domésticas — Próximamente</span>
+                            </div>
+                            <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 cursor-default border-b border-white/5 opacity-50">
+                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/47.png" alt="Premier League" class="w-4 h-4 object-contain grayscale" />
                                 Premier League
-                            </RouterLink>
-                            <RouterLink @click="leaguesOpen=false" to="/leagues/la-liga" class="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200 border-b border-white/5">
-                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/87.png" alt="La Liga" class="w-5 h-5 object-contain" />
+                            </div>
+                            <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 cursor-default border-b border-white/5 opacity-50">
+                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/87.png" alt="La Liga" class="w-4 h-4 object-contain grayscale" />
                                 La Liga
-                            </RouterLink>
-                            <RouterLink @click="leaguesOpen=false" to="/leagues/serie-a" class="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200 border-b border-white/5">
-                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/55.png" alt="Serie A" class="w-5 h-5 object-contain" />
+                            </div>
+                            <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 cursor-default border-b border-white/5 opacity-50">
+                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/55.png" alt="Serie A" class="w-4 h-4 object-contain grayscale" />
                                 Serie A
-                            </RouterLink>
-                            <RouterLink @click="leaguesOpen=false" to="/leagues/bundesliga" class="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200 border-b border-white/5">
-                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/54.png" alt="Bundesliga" class="w-5 h-5 object-contain" />
+                            </div>
+                            <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 cursor-default border-b border-white/5 opacity-50">
+                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/54.png" alt="Bundesliga" class="w-4 h-4 object-contain grayscale" />
                                 Bundesliga
-                            </RouterLink>
-                            <RouterLink @click="leaguesOpen=false" to="/leagues/ligue-1" class="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200 border-b border-white/5">
-                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/53.png" alt="Ligue 1" class="w-5 h-5 object-contain" />
+                            </div>
+                            <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 cursor-default border-b border-white/5 opacity-50">
+                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/53.png" alt="Ligue 1" class="w-4 h-4 object-contain grayscale" />
                                 Ligue 1
-                            </RouterLink>
-                            <RouterLink @click="leaguesOpen=false" to="/leagues/liga-argentina" class="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">
-                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/112.png" alt="Liga Profesional" class="w-5 h-5 object-contain" />
+                            </div>
+                            <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 cursor-default opacity-50">
+                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/112.png" alt="Liga Profesional" class="w-4 h-4 object-contain grayscale" />
                                 Liga Profesional
-                            </RouterLink>
+                            </div>
                         </div>
                     </li>
                     <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Leaderboards</RouterLink></li>
@@ -673,12 +686,14 @@ export default {
                             <details class="group">
                                 <summary class="cursor-pointer hover:text-white">Ligas</summary>
                                 <ul class="mt-1 pl-3 flex flex-col gap-1 text-slate-300">
-                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leagues/premier-league">Premier League</RouterLink></li>
-                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leagues/la-liga">La Liga</RouterLink></li>
-                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leagues/serie-a">Serie A</RouterLink></li>
-                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leagues/bundesliga">Bundesliga</RouterLink></li>
-                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leagues/ligue-1">Ligue 1</RouterLink></li>
-                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leagues/liga-argentina">Liga Profesional</RouterLink></li>
+                                    <li><RouterLink @click="isOpen=false" class="block text-amber-300 font-semibold hover:text-amber-200" to="/leagues/world-cup">🏆 Copa del Mundo 2026</RouterLink></li>
+                                    <li class="mt-1 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Próximamente</li>
+                                    <li class="text-slate-500 cursor-default opacity-50">Premier League</li>
+                                    <li class="text-slate-500 cursor-default opacity-50">La Liga</li>
+                                    <li class="text-slate-500 cursor-default opacity-50">Serie A</li>
+                                    <li class="text-slate-500 cursor-default opacity-50">Bundesliga</li>
+                                    <li class="text-slate-500 cursor-default opacity-50">Ligue 1</li>
+                                    <li class="text-slate-500 cursor-default opacity-50">Liga Profesional</li>
                                 </ul>
                             </details>
                         </li>

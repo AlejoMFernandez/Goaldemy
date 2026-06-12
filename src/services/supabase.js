@@ -15,8 +15,8 @@ import { createClient } from '@supabase/supabase-js';
 
 // Obtiene variables de entorno con fallback a valores de desarrollo
 const env = (k, fallback = '') => (import.meta?.env?.[k] ?? fallback);
-const SUPABASE_URL = env('VITE_SUPABASE_URL', 'https://wwdxywghdouurdavbmyp.supabase.co');
-const SUPABASE_KEY = env('VITE_SUPABASE_ANON_KEY', 'sb_publishable_892Ds3x_rSHnDdw0Fb1fjQ_LPzG5FkJ');
+const SUPABASE_URL = env('VITE_SUPABASE_URL', 'https://pihoijedkkapkilylavn.supabase.co');
+const SUPABASE_KEY = env('VITE_SUPABASE_ANON_KEY', 'sb_publishable_cUwYdSgZsU_R3wHzHQi7mA_-pDF8iOt');
 
 // Cliente único de Supabase exportado para toda la app
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
