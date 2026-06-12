@@ -2,7 +2,7 @@ import { countryCodeFromName, flagUrl } from './countries'
 import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
 import { awardXpForCorrect } from './game-xp'
-import { celebrateCorrect } from './game-celebrations'
+import { celebrateCorrect, celebrateIncorrect } from './game-celebrations'
 import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, shuffleArray, getOptionClasses, selectRandomPlayerFromBucket } from './game-common'
 
 export function initState() {
@@ -127,6 +127,7 @@ export async function pick(state, option, confettiHost) {
       spawnXpBadge(confettiHost, `+${xpAmount} XP`, { position: 'top-right' })
     }
   } else {
+    celebrateIncorrect()
     onIncorrect(state)
     state.streak = 0
   }

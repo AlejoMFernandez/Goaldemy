@@ -3,7 +3,8 @@ import AppH1 from '../../components/common/AppH1.vue'
 import { getAllPlayers, getAllPlayersAsync } from '../../services/players'
 import { initScoring, onCorrect, onIncorrect } from '../../services/scoring'
 import { awardXpForCorrect } from '../../services/game-xp'
-import { celebrateCorrect, checkEarlyWin, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
+import { celebrateCorrect, celebrateIncorrect, checkEarlyWin, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
+import { playTickSound } from '../../services/sounds'
 import { getGameMetadata } from '../../services/games'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
@@ -142,12 +143,12 @@ export default {
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
     optionClass(opt) {
       const base = 'rounded-lg border px-4 py-2 text-slate-200 transition text-left'
-      if (!this.answered) return base + ' border-white/10 hover:border-white/25 hover:bg-white/5'
+      if (!this.answered) return base + ' border-white/10 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]'
       const isCorrect = Number(opt.value) === Number(this.current.shirtNumber)
       const isSelected = Number(opt.value) === Number(this.selected)
-      if (isCorrect) return base + ' border-green-500 bg-green-500/10 text-green-300'
-      if (isSelected) return base + ' border-red-500 bg-red-500/10 text-red-300'
-      return base + ' border-white/10 opacity-70'
+      if (isCorrect) return base + ' border-green-500 bg-green-500/10 text-green-300 option-correct'
+      if (isSelected) return base + ' border-red-500 bg-red-500/10 text-red-300 shake'
+      return base + ' border-white/10 opacity-50'
     },
     async choose(opt) {
       if (this.timeOver || this.earlyWin) return false
@@ -169,6 +170,7 @@ export default {
         this.corrects = nextCorrects
         this.maxStreak = Math.max(this.maxStreak || 0, nextStreak)
       } else {
+        celebrateIncorrect()
         onIncorrect(this)
         this.streak = 0
       }
@@ -204,6 +206,7 @@ export default {
         clearInterval(this.timer)
         this.timer = setInterval(() => {
           if (this.timeLeft > 0) this.timeLeft -= 1
+          if (this.timeLeft > 0 && this.timeLeft <= 5) playTickSound()
           if (this.timeLeft <= 0) {
             this.timeOver = true
             clearInterval(this.timer)
@@ -279,9 +282,11 @@ export default {
           <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-2 flex items-center gap-2">
             <span class="text-slate-300 text-xs uppercase tracking-wider">Puntaje</span>
             <span class="text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
-            <div v-if="streak > 0" class="rounded-full border border-emerald-500/60 bg-emerald-500/10 text-emerald-300 text-xs px-2.5 py-1 font-semibold">
-              ×{{ streak }}
-            </div>
+            <Transition name="streak-enter">
+              <div v-if="streak > 0" :key="streak" class="rounded-full border border-emerald-500/60 bg-emerald-500/10 text-emerald-300 text-xs px-2.5 py-1 font-semibold streak-bump">
+                ×{{ streak }}
+              </div>
+            </Transition>
           </div>
         </div>
       </div>
@@ -296,10 +301,11 @@ export default {
         <!-- Timer -->
         <div v-if="mode==='challenge'" class="absolute left-4 top-4 z-20 pointer-events-none">
           <div :class="[
-            'rounded-full px-3 py-1.5 text-sm font-bold shadow border',
+            'rounded-full px-3 py-1.5 text-sm font-bold shadow border transition-all',
             timeLeft >= 21 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' :
             timeLeft >= 11 ? 'bg-amber-500/15 text-amber-300 border-amber-500/40' :
-                             'bg-red-500/15 text-red-300 border-red-500/40'
+                             'bg-red-500/15 text-red-300 border-red-500/40',
+            timeLeft <= 10 && timeLeft > 0 ? 'timer-urgent' : ''
           ]">
             ⏱ {{ Math.max(0, timeLeft) }}s
           </div>
@@ -354,6 +360,10 @@ export default {
   opacity: 0;
   transform: translateY(8px) scale(0.98);
 }
+.streak-enter-enter-active { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.streak-enter-leave-active { transition: all 0.15s ease; }
+.streak-enter-enter-from { opacity: 0; transform: scale(0.5); }
+.streak-enter-leave-to { opacity: 0; transform: scale(0.8); }
 </style>
 
 

@@ -130,18 +130,18 @@ export function createMCQGameState() {
 export function getOptionClasses(config) {
   const { answered, isCorrect, isSelected, baseClasses } = config
   const base = baseClasses || 'rounded-lg border px-4 py-2 text-slate-200 transition text-left'
-  
+
   if (!answered) {
-    return base + ' border-white/10 hover:border-white/25 hover:bg-white/5'
+    return base + ' border-white/10 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]'
   }
-  
+
   if (isCorrect) {
-    return base + ' border-green-500 bg-green-500/10 text-green-300'
+    return base + ' border-green-500 bg-green-500/10 text-green-300 option-correct'
   }
   if (isSelected) {
-    return base + ' border-red-500 bg-red-500/10 text-red-300'
+    return base + ' border-red-500 bg-red-500/10 text-red-300 shake'
   }
-  return base + ' border-white/10 opacity-70'
+  return base + ' border-white/10 opacity-50'
 }
 
 /**

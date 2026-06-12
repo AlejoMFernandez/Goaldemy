@@ -165,9 +165,9 @@ export default {
           >
             Cancelar
           </button>
-          <button 
-            @click="startGame" 
-            class="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 text-white py-3 font-bold transition shadow-lg shadow-emerald-500/25"
+          <button
+            @click="startGame"
+            class="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-[0.97] text-white py-3 font-bold transition-all shadow-lg shadow-emerald-500/25 glow-border"
           >
             ¡Jugar ahora!
           </button>

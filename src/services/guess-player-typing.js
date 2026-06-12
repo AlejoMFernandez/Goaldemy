@@ -2,7 +2,7 @@ import { spawnXpBadge } from './ui-effects'
 import { onCorrect } from './scoring'
 import { awardXpForCorrect } from './game-xp'
 import { flagUrl, countryCodeFromName } from './countries'
-import { celebrateCorrect } from './game-celebrations'
+import { celebrateCorrect, celebrateIncorrect } from './game-celebrations'
 import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, getBroadPosition, selectRandomPlayerFromBucket } from './game-common'
 import countryMap from '../codeCOUNTRYS.json'
 
@@ -115,6 +115,7 @@ export async function submitGuess(state, confettiHost) {
     state.feedback = ''
     return true
   } else {
+    celebrateIncorrect()
     state.lives = Math.max(0, state.lives - 1)
     if (state.lives === 0) {
       state.answered = true

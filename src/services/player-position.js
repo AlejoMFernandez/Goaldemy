@@ -1,7 +1,7 @@
 import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
 import { awardXpForCorrect } from './game-xp'
-import { celebrateCorrect } from './game-celebrations'
+import { celebrateCorrect, celebrateIncorrect } from './game-celebrations'
 import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, shuffleArray, getOptionClasses } from './game-common'
 
 const POSITIONS = ['GK','DF','MF','FW']
@@ -104,8 +104,9 @@ export async function pickAnswer(state, option, confettiHost) {
       spawnXpBadge(confettiHost, '+10 XP', { position: 'top-right' })
     }
   } else {
+    celebrateIncorrect()
     onIncorrect(state)
-    state.streak = 0 // Resetea racha en error
+    state.streak = 0
   }
   
   state.feedback = ''

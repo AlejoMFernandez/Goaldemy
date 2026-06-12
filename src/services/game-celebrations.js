@@ -4,7 +4,7 @@
  */
 
 import { celebrateWin, celebrateLevelUp } from './confetti'
-import { playWinSound, playLoseSound, playLevelUpSound, playCorrectSound } from './sounds'
+import { playWinSound, playLoseSound, playLevelUpSound, playCorrectSound, playIncorrectSound } from './sounds'
 
 /**
  * Tipos de juegos soportados
@@ -41,6 +41,10 @@ const WIN_CONDITIONS = {
  */
 export function celebrateCorrect() {
   playCorrectSound()
+}
+
+export function celebrateIncorrect() {
+  playIncorrectSound()
 }
 
 /**

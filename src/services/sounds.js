@@ -140,7 +140,25 @@ class SoundManager {
           oscillator.start(audioContext.currentTime)
           oscillator.stop(audioContext.currentTime + 0.15)
           break
-          
+
+        case 'incorrect':
+          oscillator.frequency.value = 311.13 // Eb4
+          oscillator.type = 'sawtooth'
+          gainNode.gain.setValueAtTime(this.volume * 0.25, audioContext.currentTime)
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.25)
+          oscillator.start(audioContext.currentTime)
+          oscillator.stop(audioContext.currentTime + 0.25)
+          break
+
+        case 'tick':
+          oscillator.frequency.value = 1200
+          oscillator.type = 'sine'
+          gainNode.gain.setValueAtTime(this.volume * 0.15, audioContext.currentTime)
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.06)
+          oscillator.start(audioContext.currentTime)
+          oscillator.stop(audioContext.currentTime + 0.06)
+          break
+
         case 'click':
           oscillator.frequency.value = 1000
           oscillator.type = 'square'
@@ -175,5 +193,7 @@ export const playLoseSound = () => soundManager.play('lose')
 export const playLevelUpSound = () => soundManager.play('levelUp')
 export const playAchievementSound = () => soundManager.play('achievement')
 export const playCorrectSound = () => soundManager.play('correct')
+export const playIncorrectSound = () => soundManager.play('incorrect')
+export const playTickSound = () => soundManager.play('tick')
 export const playClickSound = () => soundManager.play('click')
 export const toggleSound = () => soundManager.toggle()

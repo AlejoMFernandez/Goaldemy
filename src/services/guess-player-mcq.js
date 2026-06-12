@@ -2,13 +2,14 @@
 import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
 import { awardXpForCorrect } from './game-xp'
-import { 
-  createMCQGameState, 
-  loadAndClassifyPlayers, 
+import { celebrateIncorrect } from './game-celebrations'
+import {
+  createMCQGameState,
+  loadAndClassifyPlayers,
   loadAndClassifyPlayersAsync,
-  getBroadPosition, 
+  getBroadPosition,
   shuffleArray,
-  selectRandomPlayerFromBucket 
+  selectRandomPlayerFromBucket
 } from './game-common'
 
 // Reutiliza estado inicial común
@@ -103,8 +104,9 @@ export async function pickAnswer(state, option, confettiHost) {
       spawnXpBadge(confettiHost, `+${xpAmount} XP`, { position: 'top-right' })
     }
   } else {
+    celebrateIncorrect()
     onIncorrect(state)
-    state.streak = 0 // Resetea racha en error
+    state.streak = 0
   }
   
   state.feedback = ''
@@ -117,16 +119,16 @@ export async function pickAnswer(state, option, confettiHost) {
  */
 export function optionClass(state, opt) {
   const base = 'rounded-lg border px-4 py-2 text-slate-200 transition text-left'
-  
+
   if (!state.answered) {
-    return base + ' border-white/10 hover:border-white/25 hover:bg-white/5'
+    return base + ' border-white/10 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]'
   }
-  
+
   const isCorrect = opt.value === state.current.name
   const isSelected = opt.value === state.selected
-  
-  if (isCorrect) return base + ' border-green-500 bg-green-500/10 text-green-300'
-  if (isSelected) return base + ' border-red-500 bg-red-500/10 text-red-300'
-  return base + ' border-white/10 opacity-70'
+
+  if (isCorrect) return base + ' border-green-500 bg-green-500/10 text-green-300 option-correct'
+  if (isSelected) return base + ' border-red-500 bg-red-500/10 text-red-300 shake'
+  return base + ' border-white/10 opacity-50'
 }
 

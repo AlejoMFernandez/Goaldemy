@@ -298,7 +298,7 @@ export default {
                   @mouseenter="hoveredSlot=i" @mouseleave="hoveredSlot=null"
                   class="h-40 rounded-lg border bg-white/5 transition ring-offset-1"
                   :class="[
-                    answered ? (correctness[i] ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10') : 'border-white/15 text-slate-400',
+                    answered ? (correctness[i] ? 'border-green-500 bg-green-500/10 option-correct' : 'border-red-500 bg-red-500/10 shake') : 'border-white/15 text-slate-400',
                     (selectedFromSlot===i) ? 'ring-2 ring-sky-400' : '',
                     (hoveredSlot===i && (selectedIndex!=null || selectedFromSlot!=null)) ? 'ring-2 ring-amber-400' : '',
                     locked ? 'cursor-not-allowed' : ''

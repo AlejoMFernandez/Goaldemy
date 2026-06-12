@@ -42,17 +42,18 @@ export default {
 </script>
 
 <template>
-  <div v-if="show" class="absolute inset-0 z-30 grid place-items-center bg-slate-900/80 backdrop-blur rounded-xl p-4">
-    <div class="w-full max-w-lg rounded-2xl border border-white/20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden shadow-2xl">
-      
+  <Transition name="summary-overlay">
+    <div v-if="show" class="absolute inset-0 z-30 grid place-items-center bg-slate-900/80 backdrop-blur rounded-xl p-4">
+      <div class="summary-card w-full max-w-lg rounded-2xl border border-white/20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden shadow-2xl">
+
       <!-- RESULTADO DESTACADO -->
       <div :class="[
         'p-5 text-center border-b',
-        won 
-          ? 'bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border-emerald-500/30' 
+        won
+          ? 'bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border-emerald-500/30'
           : 'bg-gradient-to-br from-red-500/20 to-orange-500/20 border-red-500/30'
       ]">
-        <div class="text-4xl mb-2">{{ won ? '🎉' : '💪' }}</div>
+        <div class="text-5xl mb-2 result-icon">{{ won ? '🎉' : '💪' }}</div>
         <h2 :class="[
           'text-3xl font-extrabold mb-1',
           won ? 'text-emerald-400' : 'text-red-400'
@@ -141,7 +142,28 @@ export default {
         </div>
       </div>
 
+      </div>
     </div>
-  </div>
+  </Transition>
 </template>
+
+<style scoped>
+.summary-overlay-enter-active { transition: opacity 0.3s ease; }
+.summary-overlay-leave-active { transition: opacity 0.2s ease; }
+.summary-overlay-enter-from, .summary-overlay-leave-to { opacity: 0; }
+.summary-card {
+  animation: summary-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes summary-pop {
+  from { opacity: 0; transform: scale(0.9) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.result-icon {
+  animation: result-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+}
+@keyframes result-bounce {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+</style>
 

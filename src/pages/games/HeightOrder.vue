@@ -254,7 +254,7 @@ export default {
         </div>
         <div class="grid grid-cols-5 gap-2 mb-3">
           <button v-for="(slot, i) in slots" :key="'slot'+i" @click="clickSlot(i)" @dragover="onDragOverSlot" @drop="onDropOnSlot($event, i)" @mouseenter="hoveredSlot=i" @mouseleave="hoveredSlot=null" class="h-40 rounded-lg border bg-white/5 transition ring-offset-1" :class="[
-            answered ? (correctness[i] ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10') : 'border-white/15 text-slate-400',
+            answered ? (correctness[i] ? 'border-green-500 bg-green-500/10 option-correct' : 'border-red-500 bg-red-500/10 shake') : 'border-white/15 text-slate-400',
             (selectedFromSlot===i) ? 'ring-2 ring-sky-400' : '',
             (hoveredSlot===i && (selectedIndex!=null || selectedFromSlot!=null)) ? 'ring-2 ring-amber-400' : '',
             locked ? 'cursor-not-allowed' : ''
