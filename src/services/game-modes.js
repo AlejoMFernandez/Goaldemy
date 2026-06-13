@@ -171,6 +171,7 @@ export async function isChallengeAvailable(slug) {
 
 // Start a challenge session and return session id
 export async function startChallengeSession(slug, seconds) {
+  import('../stores/notifications').then(m => m.setSuppressOverlays(true)).catch(() => {})
   const { id: userId } = getAuthUser() || {}
   const gameId = await getGameId(slug)
   // If no DB game exists, start a non-persisted session by returning null

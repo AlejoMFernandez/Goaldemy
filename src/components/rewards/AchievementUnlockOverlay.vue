@@ -20,6 +20,7 @@ export default {
 
     function showNext() {
       clearTimers()
+      if (notificationsState.suppressOverlays) return
       const item = shiftAchievementQueue()
       if (!item) { current.value = null; phase.value = 0; return }
 
@@ -71,6 +72,12 @@ export default {
 
     watch(() => notificationsState.achievementQueue.length, (len) => {
       if (len > 0 && !current.value) showNext()
+    })
+
+    watch(() => notificationsState.suppressOverlays, (suppressed) => {
+      if (!suppressed && notificationsState.achievementQueue.length > 0 && !current.value) {
+        setTimeout(showNext, 600)
+      }
     })
 
     return { current, phase, claimed, particles, claim, rarityLabel }

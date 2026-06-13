@@ -5,6 +5,7 @@ const state = reactive({
   achievementQueue: [],
   levelUpQueue: [],
   pendingRewards: [],
+  suppressOverlays: false,
 })
 
 const _lastLevelToastAt = new Map()
@@ -113,6 +114,8 @@ export function pushLevelUpToast({ level }) {
   const currentLevel = parseInt(localStorage.getItem('gl:last_known_level') || '1')
   return queueLevelUpOverlay({ oldLevel: currentLevel, newLevel: level })
 }
+
+export function setSuppressOverlays(val) { state.suppressOverlays = !!val }
 
 export { state as notificationsState, remove as removeNotification }
 

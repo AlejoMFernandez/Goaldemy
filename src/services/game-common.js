@@ -132,16 +132,16 @@ export function getOptionClasses(config) {
   const base = baseClasses || 'rounded-lg border px-4 py-2 text-slate-200 transition text-left'
 
   if (!answered) {
-    return base + ' border-white/10 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]'
+    return base + ' border-white/10 hover:border-white/25 hover:bg-white/5 hover:shadow-lg hover:shadow-white/5 active:scale-[0.97]'
   }
 
   if (isCorrect) {
-    return base + ' border-green-500 bg-green-500/10 text-green-300 option-correct'
+    return base + ' border-emerald-400 bg-emerald-500/15 text-emerald-300 shadow-lg shadow-emerald-500/20 option-correct scale-[1.02]'
   }
   if (isSelected) {
-    return base + ' border-red-500 bg-red-500/10 text-red-300 shake'
+    return base + ' border-red-400 bg-red-500/15 text-red-300 shadow-lg shadow-red-500/20 shake'
   }
-  return base + ' border-white/10 opacity-50'
+  return base + ' border-white/10 opacity-40'
 }
 
 /**

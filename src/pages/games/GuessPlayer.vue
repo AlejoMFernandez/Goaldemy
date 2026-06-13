@@ -227,9 +227,9 @@ export default {
         <AppH1 class="text-3xl md:text-4xl flex-none">Adivina el jugador</AppH1>
         <div class="flex items-center gap-2 self-stretch sm:self-auto flex-none">
           <router-link :to="backPath()" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">← Volver</router-link>
-          <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-2 flex items-center gap-2">
-            <span class="text-slate-300 text-xs uppercase tracking-wider">Puntaje</span>
-            <span class="text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
+          <div class="rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-white/15 px-3 py-2 flex items-center gap-2 shadow-lg shadow-black/20">
+            <span class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Puntaje</span>
+            <span class="font-display text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
             <StreakBadge :streak="streak" />
           </div>
         </div>

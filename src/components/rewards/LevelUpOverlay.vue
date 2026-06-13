@@ -26,7 +26,7 @@ export default {
 
     function showNext() {
       clearTimers()
-      // Wait for achievement queue to drain first
+      if (notificationsState.suppressOverlays) return
       if (notificationsState.achievementQueue.length > 0) {
         timers.push(setTimeout(showNext, 800))
         return
@@ -60,6 +60,12 @@ export default {
 
     watch(() => notificationsState.levelUpQueue.length, (len) => {
       if (len > 0 && !current.value) showNext()
+    })
+
+    watch(() => notificationsState.suppressOverlays, (suppressed) => {
+      if (!suppressed && notificationsState.levelUpQueue.length > 0 && !current.value) {
+        setTimeout(showNext, 600)
+      }
     })
 
     return { current, phase, oldTier, newTier, tierChanged, dismiss }

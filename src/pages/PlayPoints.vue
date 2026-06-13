@@ -87,7 +87,7 @@ const GAME_META = {
   <section class="mx-auto max-w-4xl">
     <div class="flex items-start justify-between gap-3 mb-4">
       <div>
-        <h1 class="text-2xl md:text-4xl font-bold text-white mb-1">Jugar por <span class="text-emerald-400 uppercase">PUNTOS</span></h1>
+        <h1 class="font-display text-2xl md:text-4xl font-extrabold text-white mb-1">Jugar por <span class="text-emerald-400 uppercase">PUNTOS</span></h1>
         <p class="text-slate-300">Modo por XP: jugá <strong class="text-slate-100 font-semibold">UNA VEZ POR DÍA</strong>.</p>
         <DailyResetCountdown class="my-4"/>
       </div>
@@ -126,7 +126,7 @@ const GAME_META = {
           v-for="g in state.games"
           :key="g.slug"
           :to="toChallenge(g.slug)"
-          class="group relative flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-slate-900 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]"
+          class="group relative flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-slate-800/80 to-slate-900 transition-all duration-300 hover:shadow-xl hover:shadow-white/5 hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]"
           :class="[
             state.availability[g.slug]?.result === 'win'
               ? 'border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
@@ -171,7 +171,7 @@ const GAME_META = {
           </div>
           <!-- Footer -->
           <div class="bg-slate-900/90 px-3 py-3 border-t border-white/5 text-center">
-            <div class="font-bold text-white text-xs tracking-widest uppercase">JUGAR</div>
+            <div class="font-display font-bold text-white text-xs tracking-widest uppercase">JUGAR</div>
             <div class="text-slate-400 text-xs mt-0.5 truncate">{{ g.name }}</div>
           </div>
         </RouterLink>

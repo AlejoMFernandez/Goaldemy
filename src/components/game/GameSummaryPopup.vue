@@ -1,6 +1,7 @@
 <script>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { soundManager } from '@/services/sounds'
+import { setSuppressOverlays } from '@/stores/notifications'
 
 export default {
   name: 'GameSummaryPopup',
@@ -130,7 +131,10 @@ export default {
 
     watch(() => props.show, (val) => {
       if (val) runSequence()
-      else clearAll()
+      else {
+        clearAll()
+        setSuppressOverlays(false)
+      }
     })
 
     onMounted(() => { if (props.show) runSequence() })
@@ -146,9 +150,10 @@ export default {
 </script>
 
 <template>
-  <Transition name="summary-overlay">
-    <div v-if="show" class="absolute inset-0 z-30 grid place-items-center bg-slate-900/80 backdrop-blur rounded-xl p-4 overflow-y-auto">
-      <div class="summary-card w-full max-w-lg rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden shadow-2xl">
+  <Teleport to="body">
+    <Transition name="summary-overlay">
+      <div v-if="show" class="fixed inset-0 z-[55] grid place-items-center bg-black/80 backdrop-blur-lg p-4 overflow-y-auto">
+        <div class="summary-card w-full max-w-lg rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden shadow-2xl shadow-black/50">
 
         <!-- Phase 1: Result header -->
         <div
@@ -305,7 +310,8 @@ export default {
         </div>
       </div>
     </div>
-  </Transition>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>
