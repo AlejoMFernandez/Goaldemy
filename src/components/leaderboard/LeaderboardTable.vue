@@ -42,10 +42,10 @@ const props = defineProps({
               (r.rank ?? (i+1)) === 3 ? 'bg-orange-500/10 text-orange-100' : ''
             ]">
             <td class="px-2 sm:px-3 py-2 whitespace-nowrap">
-              <span v-if="(r.rank ?? (i+1)) === 1">🥇</span>
-              <span v-else-if="(r.rank ?? (i+1)) === 2">🥈</span>
-              <span v-else-if="(r.rank ?? (i+1)) === 3">🥉</span>
-              <span v-else class="text-xs">{{ r.rank ?? (i+1) }}</span>
+              <div v-if="(r.rank ?? (i+1)) === 1" class="w-6 h-6 rounded-full bg-amber-500/20 border border-amber-400/40 grid place-items-center"><svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3z"/></svg></div>
+              <div v-else-if="(r.rank ?? (i+1)) === 2" class="w-6 h-6 rounded-full bg-slate-400/15 border border-slate-400/30 grid place-items-center"><svg class="w-3.5 h-3.5 text-slate-300" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3z"/></svg></div>
+              <div v-else-if="(r.rank ?? (i+1)) === 3" class="w-6 h-6 rounded-full bg-orange-500/15 border border-orange-400/30 grid place-items-center"><svg class="w-3.5 h-3.5 text-orange-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3z"/></svg></div>
+              <span v-else class="text-xs text-slate-400">{{ r.rank ?? (i+1) }}</span>
             </td>
             <td class="px-2 sm:px-3 py-2" style="max-width: 140px;">
               <div class="flex items-center gap-1.5 min-w-0">

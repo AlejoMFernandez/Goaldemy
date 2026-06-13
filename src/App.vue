@@ -5,6 +5,8 @@ import DirectMessagesDock from './components/DirectMessagesDock.vue';
 import AppToast from './components/AppToast.vue';
 import AppLoader from './components/common/AppLoader.vue';
 import BrandedBackground from './components/BrandedBackground.vue';
+import AchievementUnlockOverlay from './components/rewards/AchievementUnlockOverlay.vue';
+import LevelUpOverlay from './components/rewards/LevelUpOverlay.vue';
 import { authReady } from './services/auth';
 
 export default {
@@ -16,6 +18,8 @@ export default {
     AppLoader,
     DirectMessagesDock,
     BrandedBackground,
+    AchievementUnlockOverlay,
+    LevelUpOverlay,
   },
   data() {
     return {
@@ -48,6 +52,8 @@ export default {
     </main>
     <AppFooter v-if="!isAuthLayout" />
     <AppToast />
+    <AchievementUnlockOverlay />
+    <LevelUpOverlay />
     <DirectMessagesDock v-if="!isAuthLayout" />
   </div>
 </template>

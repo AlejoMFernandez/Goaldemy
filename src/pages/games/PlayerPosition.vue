@@ -3,16 +3,17 @@ import AppH1 from '../../components/common/AppH1.vue';
 import { initState, loadPlayers, nextRound, pickAnswer, optionClass } from '../../services/player-position';
 import { initScoring } from '../../services/scoring'
 import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
-import { playTickSound } from '../../services/sounds'
 import { getGameMetadata } from '../../services/games'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
+import CircularTimer from '../../components/game/CircularTimer.vue'
+import StreakBadge from '../../components/game/StreakBadge.vue'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
 import { getUserLevel } from '../../services/xp'
 
 export default {
   name: 'PlayerPosition',
-  components: { AppH1, GamePreviewModal, GameSummaryPopup },
+  components: { AppH1, GamePreviewModal, GameSummaryPopup, CircularTimer, StreakBadge },
   data() {
     return { 
       ...initState(), 
@@ -125,7 +126,6 @@ export default {
         clearInterval(this.timer)
         this.timer = setInterval(() => {
           if (this.timeLeft > 0) this.timeLeft -= 1
-          if (this.timeLeft > 0 && this.timeLeft <= 5) playTickSound()
           if (this.timeLeft <= 0) {
             this.timeOver = true
             clearInterval(this.timer)
@@ -206,11 +206,7 @@ export default {
           <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-2 flex items-center gap-2">
             <span class="text-slate-300 text-xs uppercase tracking-wider">Puntaje</span>
             <span class="text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
-            <Transition name="streak-enter">
-              <div v-if="streak > 0" :key="streak" class="rounded-full border border-emerald-500/60 bg-emerald-500/10 text-emerald-300 text-xs px-2.5 py-1 font-semibold streak-bump">
-                ×{{ streak }}
-              </div>
-            </Transition>
+            <StreakBadge :streak="streak" />
           </div>
         </div>
       </div>
@@ -224,15 +220,7 @@ export default {
         
         <!-- Timer -->
         <div v-if="mode==='challenge'" class="absolute left-4 top-4 z-20 pointer-events-none">
-          <div :class="[
-            'rounded-full px-3 py-1.5 text-sm font-bold shadow border transition-all',
-            timeLeft >= 21 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' :
-            timeLeft >= 11 ? 'bg-amber-500/15 text-amber-300 border-amber-500/40' :
-                             'bg-red-500/15 text-red-300 border-red-500/40',
-            timeLeft <= 10 && timeLeft > 0 ? 'timer-urgent' : ''
-          ]">
-            ⏱ {{ Math.max(0, timeLeft) }}s
-          </div>
+          <CircularTimer :seconds="Math.max(0, timeLeft)" :total="chosenSeconds" />
         </div>
 
         <Transition name="round-fade" mode="out-in">
@@ -285,10 +273,6 @@ export default {
   opacity: 0;
   transform: translateY(8px) scale(0.98);
 }
-.streak-enter-enter-active { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.streak-enter-leave-active { transition: all 0.15s ease; }
-.streak-enter-enter-from { opacity: 0; transform: scale(0.5); }
-.streak-enter-leave-to { opacity: 0; transform: scale(0.8); }
 </style>
 
 

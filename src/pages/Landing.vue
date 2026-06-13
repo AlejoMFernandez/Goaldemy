@@ -1,9 +1,10 @@
 <script setup>
-import { onMounted, reactive, computed } from 'vue'
+import { onMounted, reactive, computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { supabase } from '../services/supabase'
 import { fetchGames, gameRouteForSlug } from '../services/games'
 import { ACTIVE_LEAGUES, getTodayMatches, getUpcomingMatches } from '../services/fotmob'
+import MatchDetailModal from '../components/match/MatchDetailModal.vue'
 
 const state = reactive({
   isAuthenticated: false,
@@ -13,6 +14,14 @@ const state = reactive({
   todayByLeague: [],
   upcomingMatches: [],
 })
+
+const selectedMatch = ref(null)
+const matchModalOpen = ref(false)
+
+function openMatch(match) {
+  selectedMatch.value = match
+  matchModalOpen.value = true
+}
 
 const hasTodayMatches = computed(() => state.todayByLeague.some(l => l.matches.length > 0))
 
@@ -84,9 +93,9 @@ function getGameRoute(slug) {
     </div>
 
     <!-- Hero -->
-    <div class="relative z-10 max-w-5xl mx-auto px-6 pt-10 pb-6">
+    <div class="relative z-10 max-w-5xl mx-auto px-6 pt-12 pb-8">
       <template v-if="!state.isAuthenticated">
-        <div class="text-center space-y-5">
+        <div class="text-center space-y-6">
           <div class="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-1.5 text-sm text-amber-300 font-medium slide-up">
             <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
             Copa del Mundo 2026 — EN VIVO
@@ -131,11 +140,10 @@ function getGameRoute(slug) {
     </div>
 
     <!-- World Cup Matches -->
-    <div class="relative z-10 max-w-5xl mx-auto px-6 mb-10">
-      <!-- Title -->
-      <div class="flex items-center gap-3 mb-4">
-        <div class="flex items-center gap-2">
-          <span class="text-2xl">🏆</span>
+    <div class="relative z-10 max-w-5xl mx-auto px-6 mb-16">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="flex items-center gap-2.5">
+          <svg class="w-6 h-6 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3zm2.36 0l1.14 5h7l1.14-5H7.36zM4 9v1a4 4 0 003.5 3.97V15h9v-1.03A4 4 0 0020 10V9H4z"/></svg>
           <h2 class="text-2xl font-bold text-white tracking-tight">Copa del Mundo 2026</h2>
         </div>
         <div class="flex-1 h-px bg-gradient-to-r from-amber-400/30 to-transparent"></div>
@@ -149,10 +157,10 @@ function getGameRoute(slug) {
         <div v-for="i in 4" :key="i" class="h-14 rounded-xl bg-white/5 animate-pulse" :style="{ animationDelay: i * 0.1 + 's' }"></div>
       </div>
 
-      <!-- Today's Matches -->
-      <div v-else-if="hasTodayMatches" class="space-y-5">
+      <!-- Today's Matches — centered score layout -->
+      <div v-else-if="hasTodayMatches" class="space-y-6">
         <div v-for="item in state.todayByLeague" :key="item.league.id">
-          <div class="flex items-center gap-3 mb-2">
+          <div class="flex items-center gap-3 mb-2.5">
             <img
               :src="`https://images.fotmob.com/image_resources/logo/leaguelogo/${item.league.id}_xsmall.png`"
               class="w-5 h-5 object-contain flex-shrink-0"
@@ -163,15 +171,18 @@ function getGameRoute(slug) {
             <div class="flex-1 h-px bg-white/8"></div>
           </div>
           <div class="space-y-1.5">
-            <div
+            <button
               v-for="match in item.matches"
               :key="match.id"
-              class="grid grid-cols-[1fr_80px_1fr_52px] items-center rounded-xl border px-4 py-3.5 transition-all duration-300"
+              @click="openMatch(match)"
+              class="w-full grid items-center rounded-xl border px-4 py-3.5 transition-all duration-300 cursor-pointer text-left"
               :class="isLive(match)
-                ? 'border-emerald-500/30 bg-emerald-950/40 pulse-glow'
+                ? 'border-emerald-500/30 bg-emerald-950/40 pulse-glow hover:bg-emerald-950/60'
                 : 'border-white/5 bg-slate-900/50 hover:bg-slate-800/60 hover:border-white/10'"
+              style="grid-template-columns: 1fr auto 1fr;"
             >
-              <div class="flex items-center justify-end gap-2.5 min-w-0">
+              <!-- Home team: name then flag, right-aligned -->
+              <div class="flex items-center justify-end gap-2.5 min-w-0 pr-3">
                 <span class="font-semibold text-sm text-white truncate text-right">{{ match.home?.name }}</span>
                 <img
                   :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.home?.id}_xsmall.png`"
@@ -179,19 +190,27 @@ function getGameRoute(slug) {
                   :alt="match.home?.name"
                 />
               </div>
-              <div class="flex items-center justify-center">
+
+              <!-- Score — always dead center -->
+              <div class="flex flex-col items-center justify-center gap-0.5 min-w-[80px]">
                 <span
-                  class="font-bold tabular-nums px-2 py-0.5 rounded-lg"
+                  class="font-bold tabular-nums px-3 py-1 rounded-lg"
                   :class="[
-                    match.status?.finished ? 'text-sm text-slate-400 bg-slate-800/50' :
-                    isLive(match) ? 'text-sm text-emerald-400 bg-emerald-500/15' :
-                    'text-xs text-slate-400'
+                    match.status?.finished ? 'text-base text-slate-300 bg-slate-800/60' :
+                    isLive(match) ? 'text-base text-emerald-400 bg-emerald-500/15' :
+                    'text-xs text-slate-400 bg-slate-800/40'
                   ]"
                 >
                   {{ match.status?.scoreStr || matchStatusText(match) }}
                 </span>
+                <span v-if="isLive(match)" class="inline-flex items-center gap-1 text-[9px] font-bold tracking-widest text-emerald-400 uppercase">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  VIVO
+                </span>
               </div>
-              <div class="flex items-center gap-2.5 min-w-0">
+
+              <!-- Away team: flag then name, left-aligned -->
+              <div class="flex items-center gap-2.5 min-w-0 pl-3">
                 <img
                   :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.away?.id}_xsmall.png`"
                   class="w-7 h-7 object-contain flex-shrink-0"
@@ -199,13 +218,7 @@ function getGameRoute(slug) {
                 />
                 <span class="font-semibold text-sm text-white truncate">{{ match.away?.name }}</span>
               </div>
-              <div class="flex items-center justify-end">
-                <span v-if="isLive(match)" class="inline-flex items-center gap-1.5 text-[9px] font-bold tracking-widest text-emerald-400 uppercase">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  VIVO
-                </span>
-              </div>
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -216,23 +229,55 @@ function getGameRoute(slug) {
         <div
           v-for="match in state.upcomingMatches"
           :key="match.id"
-          class="grid grid-cols-[1fr_auto_1fr] items-center rounded-xl border border-white/5 bg-slate-900/50 hover:bg-slate-800/60 px-4 py-3 transition-all"
+          class="grid items-center rounded-xl border border-white/5 bg-slate-900/50 hover:bg-slate-800/60 px-4 py-3 transition-all"
+          style="grid-template-columns: 1fr auto 1fr;"
         >
-          <div class="text-right text-sm font-semibold text-white truncate">{{ match.homeTeam }}</div>
-          <div class="px-4 text-xs text-slate-400 tabular-nums whitespace-nowrap">
+          <div class="text-right text-sm font-semibold text-white truncate pr-3">{{ match.homeTeam }}</div>
+          <div class="px-3 text-xs text-slate-400 tabular-nums whitespace-nowrap bg-slate-800/40 rounded-lg py-1">
             {{ new Date(match.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) }}
           </div>
-          <div class="text-left text-sm font-semibold text-white truncate">{{ match.awayTeam }}</div>
+          <div class="text-left text-sm font-semibold text-white truncate pl-3">{{ match.awayTeam }}</div>
         </div>
       </div>
 
       <!-- No matches -->
-      <div v-else-if="!state.loadingToday" class="rounded-2xl border border-white/10 bg-slate-900/40 p-8 text-center">
-        <span class="text-4xl mb-3 block">⚽</span>
+      <div v-else-if="!state.loadingToday" class="rounded-2xl border border-white/10 bg-slate-900/40 p-10 text-center">
+        <svg class="w-12 h-12 mx-auto text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="1.5"/><path stroke-linecap="round" stroke-width="1.5" d="M12 2a15 15 0 010 20M12 2a15 15 0 000 20M2 12h20"/></svg>
         <p class="text-slate-300 font-medium">No hay partidos programados para hoy</p>
         <RouterLink to="/leagues/world-cup" class="inline-block mt-3 text-sm text-amber-400 hover:text-amber-300 transition-colors">
           Ver calendario completo →
         </RouterLink>
+      </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="relative z-10 max-w-5xl mx-auto px-6 mb-20">
+      <div class="text-center mb-10">
+        <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3">¿Cómo funciona?</h2>
+        <p class="text-slate-400 text-sm max-w-md mx-auto">Tres pasos simples para empezar a competir</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="rounded-2xl border border-white/10 bg-slate-900/40 p-6 text-center">
+          <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 grid place-items-center">
+            <svg class="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          </div>
+          <h3 class="text-white font-semibold mb-1.5">Creá tu cuenta</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">Registrate gratis y personalizá tu perfil con tu equipo y jugador favorito.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-slate-900/40 p-6 text-center">
+          <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-cyan-500/15 border border-cyan-500/30 grid place-items-center">
+            <svg class="w-6 h-6 text-cyan-400" fill="currentColor" viewBox="0 0 24 24"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+          </div>
+          <h3 class="text-white font-semibold mb-1.5">Jugá desafíos diarios</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">9 modos de juego únicos. Adivinar jugadores, ordenar por valor, armar formaciones y más.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-slate-900/40 p-6 text-center">
+          <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-amber-500/15 border border-amber-500/30 grid place-items-center">
+            <svg class="w-6 h-6 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3zm2.36 0l1.14 5h7l1.14-5H7.36zM4 9v1a4 4 0 003.5 3.97V15h9v-1.03A4 4 0 0020 10V9H4z"/></svg>
+          </div>
+          <h3 class="text-white font-semibold mb-1.5">Subí de nivel</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">Ganá XP, desbloqueá logros y competí en el ranking global contra otros fanáticos.</p>
+        </div>
       </div>
     </div>
 
@@ -242,7 +287,7 @@ function getGameRoute(slug) {
         <div class="absolute -top-4 left-1/2 -translate-x-1/2">
           <div class="px-6 py-1.5 rounded-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-white/20 shadow-xl backdrop-blur-sm">
             <h2 class="text-lg font-bold text-white whitespace-nowrap flex items-center gap-2">
-              <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <svg class="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 24 24"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
               Jugá
             </h2>
           </div>
@@ -272,9 +317,8 @@ function getGameRoute(slug) {
               <div class="relative h-32 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 flex items-center justify-center overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-cyan-500/5 group-hover:scale-110 transition-transform duration-500"></div>
                 <img v-if="game.icon" :src="game.icon" :alt="game.name" class="relative z-10 w-16 h-16 object-contain group-hover:scale-110 transition-transform duration-300" />
-                <svg v-else class="relative z-10 w-16 h-16 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg v-else class="relative z-10 w-16 h-16 text-emerald-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
                 </svg>
               </div>
               <div class="p-4">
@@ -312,5 +356,85 @@ function getGameRoute(slug) {
         </div>
       </div>
     </div>
+
+    <!-- Pricing Plans -->
+    <div class="relative z-10 max-w-5xl mx-auto px-6 mb-24">
+      <div class="text-center mb-10">
+        <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3">Elegí tu plan</h2>
+        <p class="text-slate-400 text-sm max-w-md mx-auto">Empezá gratis y mejorá tu experiencia cuando quieras</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Free -->
+        <div class="rounded-2xl border border-white/10 bg-slate-900/50 p-6 flex flex-col">
+          <div class="mb-5">
+            <div class="inline-flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 px-3 py-1 text-xs font-semibold text-slate-300 mb-3">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              Gratis
+            </div>
+            <div class="text-3xl font-extrabold text-white">$0 <span class="text-sm font-normal text-slate-500">/mes</span></div>
+          </div>
+          <ul class="space-y-2.5 text-sm text-slate-300 mb-6 flex-1">
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>9 modos de juego</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>1 desafío por día por juego</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Sistema de XP y niveles</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Ranking global</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Seguimiento de ligas en vivo</li>
+          </ul>
+          <RouterLink to="/register" class="block text-center rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/5 transition">
+            Empezar gratis
+          </RouterLink>
+        </div>
+
+        <!-- Pro (highlighted) -->
+        <div class="relative rounded-2xl border-2 border-emerald-500/50 bg-gradient-to-b from-emerald-500/10 to-slate-900/80 p-6 flex flex-col shadow-lg shadow-emerald-500/10">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+            <span class="rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-1 text-xs font-bold text-white shadow-lg">Popular</span>
+          </div>
+          <div class="mb-5">
+            <div class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 text-xs font-semibold text-emerald-300 mb-3">
+              <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              Pro
+            </div>
+            <div class="text-3xl font-extrabold text-white">$2.99 <span class="text-sm font-normal text-slate-500">/mes</span></div>
+          </div>
+          <ul class="space-y-2.5 text-sm text-slate-300 mb-6 flex-1">
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Todo del plan Gratis</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Desafíos ilimitados por día</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Estadísticas avanzadas por juego</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Multiplicador de XP ×1.5</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Badge Pro en perfil</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Sin publicidad</li>
+          </ul>
+          <button disabled class="block w-full text-center rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2.5 text-sm font-bold text-white opacity-60 cursor-not-allowed">
+            Próximamente
+          </button>
+        </div>
+
+        <!-- Premium -->
+        <div class="rounded-2xl border border-white/10 bg-slate-900/50 p-6 flex flex-col">
+          <div class="mb-5">
+            <div class="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-3 py-1 text-xs font-semibold text-amber-300 mb-3">
+              <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              Premium
+            </div>
+            <div class="text-3xl font-extrabold text-white">$5.99 <span class="text-sm font-normal text-slate-500">/mes</span></div>
+          </div>
+          <ul class="space-y-2.5 text-sm text-slate-300 mb-6 flex-1">
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Todo del plan Pro</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Estadísticas detalladas de partidos</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Multiplicador de XP ×2</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Modos de juego exclusivos</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Acceso anticipado a nuevas funciones</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Badge Premium dorado en perfil</li>
+          </ul>
+          <button disabled class="block w-full text-center rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-300 opacity-60 cursor-not-allowed">
+            Próximamente
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Match Detail Modal -->
+    <MatchDetailModal :match="selectedMatch" :open="matchModalOpen" @close="matchModalOpen = false" />
   </section>
 </template>

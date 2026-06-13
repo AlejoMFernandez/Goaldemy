@@ -82,9 +82,15 @@ async function loadExtendedProfile() {
     if (user.id === null) return;
     try {
         const profile = await getUserProfileById(user.id)
-        setAuthUserState(profile)
+        if (!profile || !profile.email) {
+            try {
+                await createUserProfile({ id: user.id, email: user.email, display_name: user.email?.split('@')[0] || 'Usuario' })
+                const retry = await getUserProfileById(user.id)
+                if (retry) { setAuthUserState(retry); return }
+            } catch {}
+        }
+        if (profile) setAuthUserState(profile)
     } catch (e) {
-        // Fail-soft: mantener usuario base si falla la carga del perfil
         console.warn('[auth.js] loadExtendedProfile failed, continuing with base user')
     }
 }

@@ -3,91 +3,59 @@ import { computed } from 'vue'
 import { notificationsState, removeNotification } from '../stores/notifications'
 
 const items = computed(() => notificationsState.items)
+
+const iconFor = (type) => {
+  if (type === 'error') return { emoji: '⚠️', border: 'border-red-500/40', bg: 'bg-red-500/10', text: 'text-red-200' }
+  if (type === 'success') return { emoji: '✅', border: 'border-emerald-500/40', bg: 'bg-emerald-500/10', text: 'text-emerald-200' }
+  return { emoji: 'ℹ️', border: 'border-cyan-500/40', bg: 'bg-cyan-500/10', text: 'text-cyan-200' }
+}
+
+const labelFor = (type) => {
+  if (type === 'error') return 'Error'
+  if (type === 'success') return 'Listo'
+  return 'Info'
+}
 </script>
 
 <template>
   <div class="fixed bottom-3 right-5 z-50 w-80 max-w-[90vw]">
-    <div class="flex flex-col gap-3">
-    <transition-group name="toast" tag="div">
-      <div
-        v-for="n in items"
-        :key="n.id"
-        class="rounded-lg backdrop-blur p-3 shadow-lg flex items-start gap-3 mb-2"
-        :class="[
-          n.type === 'error' ? 'bg-red-900/30 border border-red-600/40' :
-          n.type === 'success' ? 'bg-emerald-900/20 border border-emerald-600/40' :
-          n.type === 'level' ? 'bg-indigo-900/20 border border-indigo-600/40' :
-          n.type === 'achievement' ? 'bg-slate-800/95 border border-slate-700' :
-          'bg-slate-800/95 border border-slate-700'
-        ]"
-      >
-        <div class="shrink-0">
-          <template v-if="n.type === 'achievement'">
-            <img v-if="n.iconUrl" :src="n.iconUrl" alt="icon" class="w-10 h-10 rounded" />
-            <div v-else class="w-10 h-10 rounded bg-slate-700 flex items-center justify-center text-slate-300">
-              <span class="text-xl">🏆</span>
-            </div>
-          </template>
-          <template v-else-if="n.type === 'level'">
-            <div class="w-10 h-10 rounded bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-300">
-              <span class="text-xl">⬆️</span>
-            </div>
-          </template>
-          <template v-else-if="n.type === 'error'">
-            <div class="w-10 h-10 rounded bg-red-700/40 border border-red-500/40 flex items-center justify-center text-red-200">
-              <span class="text-xl">⚠️</span>
-            </div>
-          </template>
-          <template v-else-if="n.type === 'success'">
-            <div class="w-10 h-10 rounded bg-emerald-700/40 border border-emerald-500/40 flex items-center justify-center text-emerald-200">
-              <span class="text-xl">✅</span>
-            </div>
-          </template>
-          <template v-else>
-            <div class="w-10 h-10 rounded bg-slate-700 flex items-center justify-center text-slate-300">
-              <span class="text-xl">ℹ️</span>
-            </div>
-          </template>
+    <div class="flex flex-col gap-2">
+      <transition-group name="toast" tag="div">
+        <div
+          v-for="n in items"
+          :key="n.id"
+          class="rounded-2xl backdrop-blur-xl p-3 shadow-2xl flex items-start gap-3 border bg-slate-900/80"
+          :class="iconFor(n.type).border"
+        >
+          <div class="shrink-0 w-9 h-9 rounded-xl grid place-items-center text-lg"
+            :class="iconFor(n.type).bg"
+          >
+            {{ iconFor(n.type).emoji }}
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-semibold" :class="iconFor(n.type).text">{{ labelFor(n.type) }}</p>
+            <p class="text-[13px] text-slate-200 whitespace-normal break-words leading-snug mt-0.5">{{ n.title }}</p>
+          </div>
+          <button @click="removeNotification(n.id)" class="shrink-0 text-slate-500 hover:text-slate-200 transition text-sm mt-0.5">✕</button>
         </div>
-        <div class="min-w-0 flex-1">
-          <template v-if="n.type === 'achievement'">
-            <p class="text-sm font-semibold text-slate-100">¡Logro desbloqueado!</p>
-            <p class="text-xs text-slate-200 whitespace-normal break-words leading-snug">{{ n.title }}</p>
-            <p v-if="n.points" class="text-[11px] text-emerald-300 mt-0.5">+{{ n.points }} XP</p>
-          </template>
-          <template v-else-if="n.type === 'level'">
-            <p class="text-sm font-semibold text-slate-100">¡Subiste de nivel!</p>
-            <p class="text-xs text-slate-200 whitespace-normal break-words leading-snug">{{ n.title }}</p>
-          </template>
-          <template v-else-if="n.type === 'error'">
-            <p class="text-sm font-semibold text-red-200">Ocurrió un error</p>
-            <p class="text-xs text-red-100/90 whitespace-normal break-words leading-snug">{{ n.title }}</p>
-          </template>
-          <template v-else-if="n.type === 'success'">
-            <p class="text-sm font-semibold text-emerald-200">Listo</p>
-            <p class="text-xs text-emerald-100/90 whitespace-normal break-words leading-snug">{{ n.title }}</p>
-          </template>
-          <template v-else>
-            <p class="text-sm font-semibold text-slate-100">Notificación</p>
-            <p class="text-xs text-slate-200 whitespace-normal break-words leading-snug">{{ n.title }}</p>
-          </template>
-        </div>
-        <button @click="removeNotification(n.id)" class="text-slate-400 hover:text-slate-200">✕</button>
-      </div>
-    </transition-group>
+      </transition-group>
     </div>
   </div>
 </template>
 
 <style scoped>
-.toast-enter-active,
-.toast-leave-active {
-  transition: all 0.18s ease;
+.toast-enter-active {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.toast-enter-from,
+.toast-leave-active {
+  transition: all 0.2s ease;
+}
+.toast-enter-from {
+  opacity: 0;
+  transform: translateY(12px) scale(0.95);
+}
 .toast-leave-to {
   opacity: 0;
-  transform: translateY(8px) scale(0.98);
+  transform: translateX(20px) scale(0.95);
 }
 </style>
-

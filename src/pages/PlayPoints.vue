@@ -3,7 +3,7 @@ import { onMounted, reactive, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { fetchGames, gameRouteForSlug } from '../services/games'
 import { isChallengeAvailable, fetchDailyWinStreak } from '../services/game-modes'
-import DailyStreakBanner from '../components/DailyStreakBanner.vue'
+import DailyStreakCalendar from '../components/rewards/DailyStreakCalendar.vue'
 import DailyResetCountdown from '../components/DailyResetCountdown.vue'
 import { supabase } from '../services/supabase'
 
@@ -111,9 +111,11 @@ const GAME_META = {
       </div>
     </div>
 
-    <DailyStreakBanner 
+    <DailyStreakCalendar
       :currentStreak="state.dailyStreak.current"
       :bestStreak="state.dailyStreak.best"
+      :playedToday="Object.values(state.availability).some(a => a?.available === false)"
+      class="mb-4"
     />
 
     <div v-if="state.loading" class="text-slate-400">Cargando…</div>

@@ -158,7 +158,7 @@ export async function getTodayMatches(leagueId) {
         return matchDate >= today && matchDate < tomorrow;
       })
       .map(match => ({
-        id: match.id, date: match.status.utcTime, home: match.home, away: match.away, status: match.status
+        id: match.id, date: match.status.utcTime, home: match.home, away: match.away, status: match.status, pageUrl: match.pageUrl
       }));
   } catch (error) {
     console.error('Error getting today matches:', error);
@@ -225,9 +225,73 @@ export async function getTeamDetails(teamId) {
   }
 }
 
+export async function getMatchDetails(pageUrl) {
+  if (!pageUrl) return null;
+  try {
+    const cleanUrl = pageUrl.split('#')[0];
+    const resp = await fetch(`${PROXY_BASE}${cleanUrl}`);
+    if (!resp.ok) return null;
+    const html = await resp.text();
+    const m = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+    if (!m) return null;
+    const data = JSON.parse(m[1]).props?.pageProps;
+    if (!data?.general) return null;
+    return parseMatchDetails(data);
+  } catch (e) {
+    console.warn('getMatchDetails error:', e);
+    return null;
+  }
+}
+
+function parseMatchDetails(data) {
+  const general = data.general || {};
+  const header = data.header || {};
+  const content = data.content || {};
+  const matchFacts = content.matchFacts || {};
+  const events = matchFacts.events?.events || [];
+  const allStats = content.stats?.Periods?.All?.stats || [];
+  const topStats = allStats.find(g => g.title === 'Top stats')?.stats || [];
+
+  const goals = events.filter(e => e.type === 'Goal' || e.type === 'OwnGoal').map(e => ({
+    type: e.type === 'OwnGoal' ? 'og' : 'goal',
+    player: e.nameStr || e.player?.name || '',
+    minute: e.time ?? e.timeStr ?? '',
+    assist: (e.assistStr || '').replace(/^assist by\s*/i, ''),
+    isHome: e.isHome,
+    isPenalty: !!e.isPenalty,
+  }));
+
+  const cards = events.filter(e => e.type === 'Card').map(e => ({
+    color: e.card === 'Yellow' ? 'yellow' : 'red',
+    player: e.nameStr || e.player?.name || '',
+    minute: e.time ?? e.timeStr ?? '',
+    isHome: e.isHome,
+  }));
+
+  const statsFormatted = topStats
+    .filter(s => s.type !== 'title' && s.stats?.[0] != null)
+    .map(s => ({
+      title: s.title || '',
+      home: s.stats?.[0] ?? '',
+      away: s.stats?.[1] ?? '',
+    }));
+
+  return {
+    matchId: general.matchId || null,
+    homeTeam: { id: header.teams?.[0]?.id, name: header.teams?.[0]?.name, score: header.teams?.[0]?.score },
+    awayTeam: { id: header.teams?.[1]?.id, name: header.teams?.[1]?.name, score: header.teams?.[1]?.score },
+    status: { started: general.started, finished: general.finished },
+    goals,
+    cards,
+    stats: statsFormatted,
+    venue: matchFacts.infoBox?.Stadium?.value || '',
+    referee: matchFacts.infoBox?.Referee?.text || '',
+  };
+}
+
 export { LEAGUES, ACTIVE_LEAGUES, PAUSED_LEAGUES };
 export default {
   getLeagueTable, getTopScorers, getTopAssists, getUpcomingMatches,
-  getTodayMatches, getAllMatches, getLeagueOverview, getTeamDetails,
+  getTodayMatches, getAllMatches, getLeagueOverview, getTeamDetails, getMatchDetails,
   LEAGUES, ACTIVE_LEAGUES, PAUSED_LEAGUES
 };

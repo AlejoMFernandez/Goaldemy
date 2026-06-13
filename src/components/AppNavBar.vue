@@ -10,6 +10,7 @@ import { listIncomingRequests, acceptRequest, blockRequest } from '../services/c
 import { getPublicProfilesByIds } from '../services/user-profiles';
 import { isAdmin } from '../services/admin';
 import GoaldemyLogo from './GoaldemyLogo.vue';
+import { getUnclaimedCount } from '../stores/notifications';
 
 export default {
   name: 'AppNavBar',
@@ -276,6 +277,9 @@ export default {
         }
     },
     computed: {
+        rewardCount() {
+            return getUnclaimedCount()
+        },
         progressPercent() {
             const li = this.levelInfo;
             if (!li) return 0;
@@ -372,6 +376,11 @@ export default {
                 </RouterLink>
                 <!-- Mobile controls: notifications + menu button -->
                 <div class="md:hidden flex items-center gap-2 flex-1 justify-end">
+                    <!-- Rewards icon (mobile) -->
+                    <RouterLink to="/rewards" class="relative inline-flex items-center justify-center rounded-full border border-white/10 p-2 text-slate-200 hover:border-white/20" aria-label="Recompensas">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+                        <span v-if="rewardCount>0" class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 text-white text-[11px] grid place-items-center">{{ rewardCount>9?'9+':rewardCount }}</span>
+                    </RouterLink>
                     <!-- Notifications icon (mobile) -->
                     <button @click="$router.push('/notifications')" class="relative inline-flex items-center justify-center rounded-full border border-white/10 p-2 text-slate-200 hover:border-white/20" aria-label="Notificaciones">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="text-slate-200"><path d="M14 18.5a2 2 0 1 1-4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 9a6 6 0 1 1 12 0c0 2.28.67 3.6 1.2 4.38.4.6.6.9.6 1.12 0 .83-.67 1.5-1.5 1.5H5.7A1.7 1.7 0 0 1 4 14.3c0-.22.2-.52.6-1.12C5.13 12.6 6 11.28 6 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -387,7 +396,7 @@ export default {
                 </div>
 
                 <ul class="hidden md:flex items-center gap-4 text-slate-200">
-                    <li><RouterLink class="hover:text-white transition-colors" to="/">Home</RouterLink></li>
+                    <li><RouterLink class="hover:text-white transition-colors" to="/">Inicio</RouterLink></li>
                     <!-- Play dropdown (hover) with descriptions -->
                     <li class="relative"
                         @mouseenter="onPlayEnter"
@@ -423,7 +432,7 @@ export default {
                              @mouseenter="onLeaguesEnter" @mouseleave="onLeaguesLeave">
                             <!-- World Cup - Featured -->
                             <RouterLink @click="leaguesOpen=false" to="/leagues/world-cup" class="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold hover:bg-amber-500/10 text-amber-300 border-b border-white/10 bg-amber-500/5 transition-colors">
-                                <span class="text-lg">🏆</span>
+                                <svg class="w-5 h-5 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3zm2.36 0l1.14 5h7l1.14-5H7.36zM4 9v1a4 4 0 003.5 3.97V15h9v-1.03A4 4 0 0020 10V9H4z"/></svg>
                                 <div class="flex-1">
                                     <div>Copa del Mundo 2026</div>
                                     <div class="text-[10px] font-normal text-amber-400/70 uppercase tracking-wider">EN VIVO</div>
@@ -460,7 +469,7 @@ export default {
                             </div>
                         </div>
                     </li>
-                    <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Leaderboards</RouterLink></li>
+                    <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Ranking</RouterLink></li>
                     <!-- Info dropdown (hover) -->
                     <li class="relative"
                         @mouseenter="onInfoEnter"
@@ -507,6 +516,13 @@ export default {
                             </li>
                     </template>
                     <template v-else>
+                        <!-- Rewards icon -->
+                        <li>
+                            <RouterLink to="/rewards" class="relative inline-flex items-center justify-center rounded-full border border-white/10 px-2 py-1.5 hover:border-white/20 text-slate-200" aria-label="Recompensas">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+                                <span v-if="rewardCount>0" class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 text-white text-[11px] grid place-items-center">{{ rewardCount>9?'9+':rewardCount }}</span>
+                            </RouterLink>
+                        </li>
                         <!-- Notifications dropdown -->
                         <li class="relative">
                             <button data-notif-button @click.stop="toggleNotif" class="relative inline-flex items-center justify-center rounded-full border border-white/10 px-2 py-1.5 hover:border-white/20">
@@ -522,7 +538,7 @@ export default {
                                         <li v-for="n in notifItems" :key="n.id"
                                             class="relative rounded-lg border border-white/10 p-2 flex items-center gap-2"
                                             @mouseenter="markNotif(n)">
-                                            <div class="w-8 h-8 rounded bg-sky-500/20 border border-sky-400/30 grid place-items-center text-sky-200">🤝</div>
+                                            <div class="w-8 h-8 rounded bg-sky-500/20 border border-sky-400/30 grid place-items-center text-sky-200"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
                                             <!-- Requests -->
                                             <template v-if="n.kind==='request'">
                                                 <div class="min-w-0 flex-1">
@@ -573,22 +589,35 @@ export default {
                                     <div v-if="!levelInfo && levelLoading" class="mt-1 h-2 rounded bg-white/10 overflow-hidden">
                                         <div class="h-full w-1/3 bg-[oklch(0.62_0.21_270)] animate-pulse"></div>
                                     </div>
-                                    <div v-else>
+                                    <div v-else-if="levelInfo">
                                         <div class="mt-1 flex items-center justify-between text-xs text-slate-300">
-                                            <span>Nivel {{ levelInfo?.level ?? '—' }}</span>
+                                            <span>Nivel {{ levelInfo.level ?? 1 }}</span>
                                             <span class="text-slate-200 font-medium">{{ xpNow }} XP</span>
                                         </div>
                                         <div class="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
                                             <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (progressPercent||0) + '%' }"></div>
                                         </div>
                                         <div class="mt-1 text-[11px] text-slate-400">
-                                            <template v-if="levelInfo?.next_level_xp">
-                                                Faltan {{ levelInfo?.xp_to_next }} XP para el nivel {{ (levelInfo?.next_level ?? (levelInfo?.level||0)+1) }}
+                                            <template v-if="levelInfo.next_level_xp">
+                                                Faltan {{ levelInfo.xp_to_next }} XP para el nivel {{ (levelInfo.next_level ?? (levelInfo.level||0)+1) }}
                                             </template>
-                                            <template v-else>
+                                            <template v-else-if="levelInfo.level >= 30">
                                                 Nivel máximo alcanzado
                                             </template>
+                                            <template v-else>
+                                                Nivel {{ levelInfo.level ?? 1 }} — {{ xpNow }} XP
+                                            </template>
                                         </div>
+                                    </div>
+                                    <div v-else>
+                                        <div class="mt-1 flex items-center justify-between text-xs text-slate-300">
+                                            <span>Nivel 1</span>
+                                            <span class="text-slate-200 font-medium">0 XP</span>
+                                        </div>
+                                        <div class="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
+                                            <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" style="width: 0%"></div>
+                                        </div>
+                                        <div class="mt-1 text-[11px] text-slate-400">Jugá para ganar XP</div>
                                     </div>
                                 </div>
                                 <RouterLink @click="menuOpen=false" to="/profile" class="block px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Ver Perfil</RouterLink>
@@ -642,22 +671,35 @@ export default {
                                                 <div v-if="!levelInfo && levelLoading" class="mt-1 h-2 rounded bg-white/10 overflow-hidden">
                                                     <div class="h-full w-1/3 bg-[oklch(0.62_0.21_270)] animate-pulse"></div>
                                                 </div>
-                                                <div v-else>
+                                                <div v-else-if="levelInfo">
                                                     <div class="mt-1 flex items-center justify-between text-xs text-slate-300">
-                                                        <span>Nivel {{ levelInfo?.level ?? '—' }}</span>
+                                                        <span>Nivel {{ levelInfo.level ?? 1 }}</span>
                                                         <span class="text-slate-200 font-medium">{{ xpNow }} XP</span>
                                                     </div>
                                                     <div class="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
                                                         <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (progressPercent||0) + '%' }"></div>
                                                     </div>
                                                     <div class="mt-1 text-[11px] text-slate-400">
-                                                        <template v-if="levelInfo?.next_level_xp">
-                                                            Faltan {{ levelInfo?.xp_to_next }} XP para el nivel {{ (levelInfo?.next_level ?? (levelInfo?.level||0)+1) }}
+                                                        <template v-if="levelInfo.next_level_xp">
+                                                            Faltan {{ levelInfo.xp_to_next }} XP para el nivel {{ (levelInfo.next_level ?? (levelInfo.level||0)+1) }}
                                                         </template>
-                                                        <template v-else>
+                                                        <template v-else-if="levelInfo.level >= 30">
                                                             Nivel máximo alcanzado
                                                         </template>
+                                                        <template v-else>
+                                                            Nivel {{ levelInfo.level ?? 1 }} — {{ xpNow }} XP
+                                                        </template>
                                                     </div>
+                                                </div>
+                                                <div v-else>
+                                                    <div class="mt-1 flex items-center justify-between text-xs text-slate-300">
+                                                        <span>Nivel 1</span>
+                                                        <span class="text-slate-200 font-medium">0 XP</span>
+                                                    </div>
+                                                    <div class="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
+                                                        <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" style="width: 0%"></div>
+                                                    </div>
+                                                    <div class="mt-1 text-[11px] text-slate-400">Jugá para ganar XP</div>
                                                 </div>
                                             </div>
                                             <RouterLink @click="isOpen=false; menuOpen=false" to="/profile" class="block px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Ver Perfil</RouterLink>
@@ -672,7 +714,7 @@ export default {
                         </li>
 
                         <!-- Nav items -->
-                        <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/">Home</RouterLink></li>
+                        <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/">Inicio</RouterLink></li>
                         <li>
                             <details class="group">
                                 <summary class="cursor-pointer hover:text-white">Jugar</summary>
@@ -686,7 +728,7 @@ export default {
                             <details class="group">
                                 <summary class="cursor-pointer hover:text-white">Ligas</summary>
                                 <ul class="mt-1 pl-3 flex flex-col gap-1 text-slate-300">
-                                    <li><RouterLink @click="isOpen=false" class="block text-amber-300 font-semibold hover:text-amber-200" to="/leagues/world-cup">🏆 Copa del Mundo 2026</RouterLink></li>
+                                    <li><RouterLink @click="isOpen=false" class="flex items-center gap-2 text-amber-300 font-semibold hover:text-amber-200" to="/leagues/world-cup"><svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3zm2.36 0l1.14 5h7l1.14-5H7.36zM4 9v1a4 4 0 003.5 3.97V15h9v-1.03A4 4 0 0020 10V9H4z"/></svg> Copa del Mundo 2026</RouterLink></li>
                                     <li class="mt-1 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Próximamente</li>
                                     <li class="text-slate-500 cursor-default opacity-50">Premier League</li>
                                     <li class="text-slate-500 cursor-default opacity-50">La Liga</li>
@@ -697,7 +739,7 @@ export default {
                                 </ul>
                             </details>
                         </li>
-                        <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leaderboards">Leaderboards</RouterLink></li>
+                        <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leaderboards">Ranking</RouterLink></li>
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/notifications">Notificaciones</RouterLink></li>
                                                 <li>
                                                     <details class="group">

@@ -26,6 +26,7 @@ import AboutObjective from '../pages/info/AboutObjective.vue';
 import NotFound from '../pages/NotFound.vue';
 import PlayPoints from '../pages/PlayPoints.vue';
 import PlayFree from '../pages/PlayFree.vue';
+import RewardCenter from '../pages/RewardCenter.vue';
 import Notifications from '../pages/social/Notifications.vue';
 import DirectChat from '../pages/social/DirectChat.vue';
 import DirectMessages from '../pages/social/DirectMessages.vue';
@@ -80,6 +81,7 @@ const routes = [
     // Play landing pages
     { path: '/play/points', component: PlayPoints, meta: { requiresAuth: true } },
     { path: '/play/free', component: PlayFree },
+    { path: '/rewards', component: RewardCenter, meta: { requiresAuth: true } },
     // 404 fallback
     { path: '/:pathMatch(.*)*', component: NotFound },
 ]

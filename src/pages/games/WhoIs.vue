@@ -9,10 +9,11 @@ import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLeve
 import { getGameMetadata } from '../../services/games'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
+import StreakBadge from '../../components/game/StreakBadge.vue'
 
 export default {
   name: 'WhoIs',
-  components: { AppH1, GamePreviewModal, GameSummaryPopup },
+  components: { AppH1, GamePreviewModal, GameSummaryPopup, StreakBadge },
   data() {
     return { 
       ...initState(), 
@@ -271,9 +272,7 @@ export default {
             <span class="text-slate-300 text-xs uppercase tracking-wider">Puntaje</span>
             <span class="text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * (pointsPerCorrect || 10) }}</span>
           </div>
-          <div v-if="streak > 0" class="rounded-full border border-emerald-500/60 bg-emerald-500/10 text-emerald-300 text-xs px-2.5 py-1 font-semibold">
-            ×{{ streak }}
-          </div>
+          <StreakBadge :streak="streak" />
         </div>
       </div>
 
