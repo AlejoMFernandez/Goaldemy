@@ -137,12 +137,13 @@ export function findPlayerByName(name) {
  * @param {Set} excludeIds - Set de IDs a excluir (opcional)
  * @returns {Array} Array de items seleccionados aleatoriamente
  */
-export function sampleDistinct(arr, n, excludeIds = new Set()) {
+export function sampleDistinct(arr, n, excludeIds = new Set(), rng) {
+  const rand = rng || Math.random
   const pool = arr.filter(x => !excludeIds.has(x.id));
   const result = [];
   const used = new Set();
   while (result.length < Math.min(n, pool.length)) {
-    const idx = Math.floor(Math.random() * pool.length);
+    const idx = Math.floor(rand() * pool.length);
     const item = pool[idx];
     if (!used.has(item.id)) {
       used.add(item.id);
@@ -153,14 +154,14 @@ export function sampleDistinct(arr, n, excludeIds = new Set()) {
 }
 
 // Build multiple choice options including the correct answer
-export function buildOptions(allItems, correct, count = 4, key = 'name') {
+export function buildOptions(allItems, correct, count = 4, key = 'name', rng) {
+  const rand = rng || Math.random
   const others = allItems.filter(x => x[key] !== correct[key]);
-  const distractors = sampleDistinct(others, count - 1);
+  const distractors = sampleDistinct(others, count - 1, new Set(), rng);
   const options = [correct, ...distractors]
     .map(x => ({ label: x[key], value: x[key] }));
-  // shuffle
   for (let i = options.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rand() * (i + 1));
     [options[i], options[j]] = [options[j], options[i]];
   }
   return options;

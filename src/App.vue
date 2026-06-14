@@ -7,6 +7,7 @@ import AppLoader from './components/common/AppLoader.vue';
 import BrandedBackground from './components/BrandedBackground.vue';
 import AchievementUnlockOverlay from './components/rewards/AchievementUnlockOverlay.vue';
 import LevelUpOverlay from './components/rewards/LevelUpOverlay.vue';
+import ClaimNotificationStack from './components/rewards/ClaimNotificationStack.vue';
 import { authReady } from './services/auth';
 
 export default {
@@ -20,6 +21,7 @@ export default {
     BrandedBackground,
     AchievementUnlockOverlay,
     LevelUpOverlay,
+    ClaimNotificationStack,
   },
   data() {
     return {
@@ -44,9 +46,9 @@ export default {
     <AppNavBar v-if="!isAuthLayout" />
     <main :class="isAuthLayout ? 'relative z-10 min-h-screen grid place-items-center px-4 py-8' : 'relative z-10 w-full max-w-[1600px] mx-auto px-6 py-10 lg:py-12'">
       <AppLoader v-if="authBooting" />
-      <RouterView v-else v-slot="{ Component }">
+      <RouterView v-else v-slot="{ Component, route }">
         <Transition name="fade-slide" mode="out-in">
-          <component :is="Component" />
+          <component :is="Component" :key="route.path" />
         </Transition>
       </RouterView>
     </main>
@@ -54,6 +56,7 @@ export default {
     <AppToast />
     <AchievementUnlockOverlay />
     <LevelUpOverlay />
+    <ClaimNotificationStack />
     <DirectMessagesDock v-if="!isAuthLayout" />
   </div>
 </template>

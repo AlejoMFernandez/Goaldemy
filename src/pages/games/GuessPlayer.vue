@@ -3,7 +3,9 @@ import AppH1 from '../../components/common/AppH1.vue'
 import { initState, loadPlayers, nextRound, pickAnswer, optionClass } from '../../services/guess-player-mcq'
 import { initScoring } from '../../services/scoring'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
-import { getUserLevel } from '../../services/xp'
+import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
+import { awardXpBatch } from '../../services/game-xp'
+import { createDailyRng } from '../../services/seeded-random'
 import { celebrateCorrect, checkEarlyWin, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 
 import { getGameMetadata } from '../../services/games'
@@ -122,15 +124,13 @@ export default {
       try {
         // capture XP/level before starting
         try {
-          const { data } = await getUserLevel(null)
-          const info = Array.isArray(data) ? data[0] : data
-          this.levelBefore = info?.level ?? null
-          this.xpBeforeTotal = info?.xp_total ?? 0
-          const next = info?.next_level_xp || 0
-          const toNext = info?.xp_to_next ?? 0
-          const completed = next ? (next - toNext) : next
-          this.beforePercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
+          const snap = await captureLevelSnapshot()
+          this.levelBefore = snap.level
+          this.xpBeforeTotal = snap.xpTotal
+          this.beforePercent = snap.percent
         } catch {}
+        this.rng = createDailyRng('guess-player')
+        this.difficultyConfig = config
         this.sessionId = await startChallengeSession('guess-player', timeLimit)
         this.overlayOpen = false
         this.timeLeft = timeLimit
@@ -158,25 +158,19 @@ export default {
       }
     },
     async finishChallenge(result) {
-      // Save session first
+      if (this.allowXp && this.xpEarned > 0) {
+        await awardXpBatch({ gameCode: 'guess-player', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
+      }
       await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects }).catch(()=>{})
       
-      // Fetch XP/level after to build friendly summary
       try {
-        const { data } = await getUserLevel(null)
-        const info = Array.isArray(data) ? data[0] : data
-        const newLevel = info?.level ?? null
-        this.levelAfter = newLevel
-        this.xpAfterTotal = info?.xp_total ?? 0
-        const next = info?.next_level_xp || 0
-        const toNext = info?.xp_to_next ?? 0
-        const completed = next ? (next - toNext) : next
-        this.afterPercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
-        this.xpToNextAfter = toNext ?? null
-        
-        // 🎊 Level up celebration!
-        if (newLevel && this.levelBefore && newLevel > this.levelBefore) {
-          setTimeout(() => celebrateGameLevelUp(newLevel), 500)
+        const snap = await captureLevelSnapshot()
+        this.levelAfter = snap.level
+        this.xpAfterTotal = snap.xpTotal
+        this.afterPercent = snap.percent
+        this.xpToNextAfter = snap.xpToNext
+        if (snap.level && this.levelBefore && snap.level > this.levelBefore) {
+          setTimeout(() => celebrateGameLevelUp(snap.level), 500)
         }
       } catch {}
       
@@ -210,18 +204,17 @@ export default {
 </script>
 
 <template>
-  <GamePreviewModal
-    :open="overlayOpen && mode === 'challenge' && !reviewMode"
-    gameName="Adivina el jugador"
-    gameDescription="Hacé 10 aciertos en 30 segundos para ganar"
-    :mechanic="gameMetadata.mechanic"
-    :videoUrl="gameMetadata.videoUrl"
-    :tips="gameMetadata.tips"
-    @close="overlayOpen = false"
-    @start="startChallenge"
-  />
-
   <section class="grid place-items-center min-h-[600px]">
+    <GamePreviewModal
+      :open="overlayOpen && mode === 'challenge' && !reviewMode"
+      gameName="Adivina el jugador"
+      gameDescription="Hacé 10 aciertos en 30 segundos para ganar"
+      :mechanic="gameMetadata.mechanic"
+      :videoUrl="gameMetadata.videoUrl"
+      :tips="gameMetadata.tips"
+      @close="overlayOpen = false"
+      @start="startChallenge"
+    />
   <div class="space-y-4 w-full max-w-4xl">
       <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 w-full">
         <AppH1 class="text-3xl md:text-4xl flex-none">Adivina el jugador</AppH1>

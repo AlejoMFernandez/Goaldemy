@@ -1,7 +1,7 @@
 <script>
 import AppH1 from '../../components/common/AppH1.vue';
 import { subscribeToAuthStateChanges } from '../../services/auth';
-import { getUserLevel } from '../../services/xp';
+import { getUserLevel, computeProgressPercentSync } from '../../services/xp';
 import { getUserAchievements } from '../../services/achievements';
 import { getUserXpByGame } from '../../services/games';
 import { getPublicProfile, updateFeaturedAchievements } from '../../services/user-profiles';
@@ -85,15 +85,7 @@ export default {
       return this.user?.display_name || this.user?.email || '—';
     },
     progressPercent() {
-      if (!this.levelInfo) return 0;
-      // xp_to_next is remaining XP to next level
-      // next_level_xp is total XP required for the level range
-      const remaining = this.levelInfo.xp_to_next ?? 0;
-      const total = this.levelInfo.next_level_xp;
-      if (!total || total <= 0) return 100;
-      const earned = total - remaining;
-      const pct = Math.max(0, Math.min(100, Math.round((earned / total) * 100)));
-      return pct;
+      return computeProgressPercentSync(this.levelInfo);
     },
     xpNow() {
       return this.levelInfo?.xp_total ?? 0;

@@ -1,6 +1,5 @@
 import { spawnXpBadge } from './ui-effects'
 import { onCorrect } from './scoring'
-import { awardXpForCorrect } from './game-xp'
 import { flagUrl, countryCodeFromName } from './countries'
 import { celebrateCorrect, celebrateIncorrect } from './game-celebrations'
 import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, getBroadPosition, selectRandomPlayerFromBucket } from './game-common'
@@ -76,7 +75,8 @@ export function nextRound(state) {
   
   // Si no hay jugador en buckets, tomar aleatorio
   if (!state.current) {
-    const idx = Math.floor(Math.random() * state.allPlayers.length)
+    const rand = state.rng || Math.random
+    const idx = Math.floor(rand() * state.allPlayers.length)
     state.current = state.allPlayers[idx]
   }
   
@@ -87,7 +87,7 @@ export function nextRound(state) {
   state.roundKey += 1
 }
 
-export async function submitGuess(state, confettiHost) {
+export function submitGuess(state, confettiHost) {
   if (state.answered) return false
   const val = normalize(state.guess)
   if (!val || val.length < state.minGuessLen) return false
@@ -98,20 +98,13 @@ export async function submitGuess(state, confettiHost) {
     const nextStreak = state.streak + 1
     if (state.allowXp) {
       const xpAmount = state.difficultyConfig?.xpPerCorrect || 100
-      await awardXpForCorrect({ gameCode: 'who-is', amount: xpAmount, attemptIndex: state.attempts, streak: nextStreak, corrects: state.corrects + 1 })
       state.xpEarned += xpAmount
+      spawnXpBadge(confettiHost, `+${xpAmount} XP`, { position: 'top-right' })
     }
     onCorrect(state)
     state.streak = nextStreak
     state.maxStreak = Math.max(state.maxStreak || 0, nextStreak)
-    
-    // 🎉 Celebrate correct answer
     celebrateCorrect()
-    
-    if (state.allowXp) { 
-      const xpAmount = state.difficultyConfig?.xpPerCorrect || 100
-      spawnXpBadge(confettiHost, `+${xpAmount} XP`, { position: 'top-right' }) 
-    }
     state.feedback = ''
     return true
   } else {
@@ -120,7 +113,6 @@ export async function submitGuess(state, confettiHost) {
     if (state.lives === 0) {
       state.answered = true
       state.streak = 0
-      // Count this round as an attempt (lost round)
       state.attempts += 1
     }
     return false

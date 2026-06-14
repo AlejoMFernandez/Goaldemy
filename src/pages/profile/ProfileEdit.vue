@@ -56,23 +56,28 @@ export default {
     }
   },
   mounted() {
+    let initialized = false
     unsubscribeAuth = subscribeToAuthStateChanges(userState => {
-      // Debounce form updates to avoid flicker on rapid auth changes
+      if (initialized) {
+        this.user = userState
+        return
+      }
       if (this._debounceTimer) clearTimeout(this._debounceTimer)
       this._debounceTimer = setTimeout(() => {
         this.formData = {
           display_name: userState.display_name ?? '',
           bio: userState.bio ?? '',
           career: userState.career ?? '',
-    nationality_code: userState.nationality_code ?? '',
-    favorite_team: userState.favorite_team ?? '',
-    favorite_player: userState.favorite_player ?? '',
-    linkedin_url: userState.linkedin_url ?? '',
-    github_url: userState.github_url ?? '',
-    x_url: userState.x_url ?? '',
-    instagram_url: userState.instagram_url ?? '',
+          nationality_code: userState.nationality_code ?? '',
+          favorite_team: userState.favorite_team ?? '',
+          favorite_player: userState.favorite_player ?? '',
+          linkedin_url: userState.linkedin_url ?? '',
+          github_url: userState.github_url ?? '',
+          x_url: userState.x_url ?? '',
+          instagram_url: userState.instagram_url ?? '',
         }
         this.user = userState
+        initialized = true
       }, 100)
     });
   },

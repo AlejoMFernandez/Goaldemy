@@ -3,42 +3,50 @@ import { onMounted, reactive, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { fetchGames, gameRouteForSlug } from '../services/games'
 import { isChallengeAvailable, fetchDailyWinStreak } from '../services/game-modes'
+import { getGameUnlockLevel, isGameUnlocked } from '../services/level-rewards'
+import { getUserLevel } from '../services/xp'
 import DailyStreakCalendar from '../components/rewards/DailyStreakCalendar.vue'
 import DailyResetCountdown from '../components/DailyResetCountdown.vue'
 import { supabase } from '../services/supabase'
 
-const state = reactive({ 
-  games: [], 
-  availability: {}, 
-  streaks: {}, 
+const state = reactive({
+  games: [],
+  availability: {},
+  streaks: {},
   loading: true,
-  dailyStreak: { current: 0, best: 0 }
+  dailyStreak: { current: 0, best: 0 },
+  userLevel: 1,
 })
 
 async function load() {
   state.loading = true
-  const all = await fetchGames()
-  const list = (all || []).filter(g => !!g?.slug && gameRouteForSlug(g.slug) !== '/games')
-  state.games = list
-  const entriesAv = await Promise.all(list.map(async g => [g.slug, await isChallengeAvailable(g.slug)]))
-  state.availability = Object.fromEntries(entriesAv)
-  const entriesSt = await Promise.all(list.map(async g => [g.slug, await fetchDailyWinStreak(g.slug)]))
-  state.streaks = Object.fromEntries(entriesSt)
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (user) {
-    const { data } = await supabase
-      .from('user_profiles')
-      .select('daily_streak, best_daily_streak')
-      .eq('id', user.id)
-      .single()
-    if (data) {
-      state.dailyStreak.current = data.daily_streak || 0
-      state.dailyStreak.best = data.best_daily_streak || 0
+  try {
+    const all = await fetchGames()
+    const list = (all || []).filter(g => !!g?.slug && gameRouteForSlug(g.slug) !== '/games')
+    state.games = list
+    const entriesAv = await Promise.all(list.map(async g => [g.slug, await isChallengeAvailable(g.slug)]))
+    state.availability = Object.fromEntries(entriesAv)
+    const entriesSt = await Promise.all(list.map(async g => [g.slug, await fetchDailyWinStreak(g.slug)]))
+    state.streaks = Object.fromEntries(entriesSt)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const [profileRes, levelRes] = await Promise.all([
+        supabase.from('user_profiles').select('daily_streak, best_daily_streak').eq('id', user.id).single(),
+        getUserLevel(null),
+      ])
+      if (profileRes.data) {
+        state.dailyStreak.current = profileRes.data.daily_streak || 0
+        state.dailyStreak.best = profileRes.data.best_daily_streak || 0
+      }
+      const lvlInfo = Array.isArray(levelRes.data) ? levelRes.data[0] : levelRes.data
+      state.userLevel = Number(lvlInfo?.level) || 1
     }
+  } catch (e) {
+    console.error('PlayPoints load error:', e)
+  } finally {
+    state.loading = false
   }
-  
-  state.loading = false
 }
 
 onMounted(load)
@@ -118,63 +126,90 @@ const GAME_META = {
       class="mb-4"
     />
 
-    <div v-if="state.loading" class="text-slate-400">Cargando…</div>
+    <div v-if="state.loading" class="flex flex-col items-center justify-center py-20 gap-4">
+      <div class="h-10 w-10 rounded-full border-4 border-emerald-400/30 border-t-emerald-400 animate-spin"></div>
+      <span class="text-slate-400 text-sm">Cargando juegos…</span>
+    </div>
     <div v-else>
       <!-- Game cards -->
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 stagger-grid">
-        <RouterLink
-          v-for="g in state.games"
-          :key="g.slug"
-          :to="toChallenge(g.slug)"
-          class="group relative flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-slate-800/80 to-slate-900 transition-all duration-300 hover:shadow-xl hover:shadow-white/5 hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]"
-          :class="[
-            state.availability[g.slug]?.result === 'win'
-              ? 'border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
-              : state.availability[g.slug]?.result === 'loss'
-              ? 'border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
-              : 'hover:border-white/20'
-          ]"
-        >
-          <!-- Cover image area -->
-          <div class="relative flex items-center justify-center h-36 bg-slate-800/60">
-            <!-- Win/Loss overlay -->
-            <div
-              v-if="state.availability[g.slug]?.available === false"
-              class="absolute inset-0 flex items-center justify-center bg-black/50 z-10"
-            >
-              <div
-                v-if="state.availability[g.slug]?.result === 'win'"
-                class="w-14 h-14 rounded-full flex items-center justify-center ring-2 ring-emerald-400/70 bg-emerald-500/30"
-              >
-                <span class="text-emerald-400 text-3xl font-extrabold leading-none">✓</span>
-              </div>
-              <div
-                v-else
-                class="w-14 h-14 rounded-full flex items-center justify-center ring-2 ring-red-400/70 bg-red-500/30"
-              >
-                <span class="text-red-400 text-3xl font-extrabold leading-none">✕</span>
+        <template v-for="g in state.games" :key="g.slug">
+          <!-- Locked game -->
+          <div
+            v-if="!isGameUnlocked(g.slug, state.userLevel)"
+            class="relative flex flex-col rounded-2xl overflow-hidden border border-white/5 bg-gradient-to-b from-slate-800/40 to-slate-900/60 opacity-60 cursor-not-allowed select-none"
+          >
+            <div class="relative flex items-center justify-center h-36 bg-slate-800/40">
+              <img
+                v-if="g.cover_url"
+                :src="g.cover_url"
+                :alt="g.name"
+                class="w-24 h-24 object-contain opacity-20 grayscale"
+              />
+              <div class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/40">
+                <svg class="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                <span class="text-[10px] text-slate-400 font-semibold text-center px-2 leading-tight">
+                  Nivel {{ getGameUnlockLevel(g.slug) }}
+                </span>
               </div>
             </div>
-            <!-- Game cover image -->
-            <img
-              v-if="g.cover_url"
-              :src="g.cover_url"
-              :alt="g.name"
-              class="w-24 h-24 object-contain transition-transform duration-300 group-hover:scale-110"
-              :class="state.availability[g.slug]?.available === false ? 'opacity-30' : 'opacity-90'"
-            />
-            <!-- Streak chip -->
-            <div v-if="(state.streaks[g.slug] || 0) > 0" class="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 rounded-full bg-slate-900/90 ring-1 ring-white/10 px-2 py-0.5">
-              <span class="text-[11px] leading-none">🔥</span>
-              <span class="text-amber-300 font-bold text-[11px] leading-none tabular-nums">{{ state.streaks[g.slug] }}</span>
+            <div class="bg-slate-900/90 px-3 py-3 border-t border-white/5 text-center">
+              <div class="font-display font-bold text-slate-500 text-xs tracking-widest uppercase">BLOQUEADO</div>
+              <div class="text-slate-500 text-xs mt-0.5 truncate">{{ g.name }}</div>
             </div>
           </div>
-          <!-- Footer -->
-          <div class="bg-slate-900/90 px-3 py-3 border-t border-white/5 text-center">
-            <div class="font-display font-bold text-white text-xs tracking-widest uppercase">JUGAR</div>
-            <div class="text-slate-400 text-xs mt-0.5 truncate">{{ g.name }}</div>
-          </div>
-        </RouterLink>
+
+          <!-- Unlocked game -->
+          <RouterLink
+            v-else
+            :to="toChallenge(g.slug)"
+            class="group relative flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-slate-800/80 to-slate-900 transition-all duration-300 hover:shadow-xl hover:shadow-white/5 hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]"
+            :class="[
+              state.availability[g.slug]?.result === 'win'
+                ? 'border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
+                : state.availability[g.slug]?.result === 'loss'
+                ? 'border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
+                : 'hover:border-white/20'
+            ]"
+          >
+            <div class="relative flex items-center justify-center h-36 bg-slate-800/60">
+              <div
+                v-if="state.availability[g.slug]?.available === false"
+                class="absolute inset-0 flex items-center justify-center bg-black/50 z-10"
+              >
+                <div
+                  v-if="state.availability[g.slug]?.result === 'win'"
+                  class="w-14 h-14 rounded-full flex items-center justify-center ring-2 ring-emerald-400/70 bg-emerald-500/30"
+                >
+                  <span class="text-emerald-400 text-3xl font-extrabold leading-none">✓</span>
+                </div>
+                <div
+                  v-else
+                  class="w-14 h-14 rounded-full flex items-center justify-center ring-2 ring-red-400/70 bg-red-500/30"
+                >
+                  <span class="text-red-400 text-3xl font-extrabold leading-none">✕</span>
+                </div>
+              </div>
+              <img
+                v-if="g.cover_url"
+                :src="g.cover_url"
+                :alt="g.name"
+                class="w-24 h-24 object-contain transition-transform duration-300 group-hover:scale-110"
+                :class="state.availability[g.slug]?.available === false ? 'opacity-30' : 'opacity-90'"
+              />
+              <div v-if="(state.streaks[g.slug] || 0) > 0" class="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 rounded-full bg-slate-900/90 ring-1 ring-white/10 px-2 py-0.5">
+                <span class="text-[11px] leading-none">🔥</span>
+                <span class="text-amber-300 font-bold text-[11px] leading-none tabular-nums">{{ state.streaks[g.slug] }}</span>
+              </div>
+            </div>
+            <div class="bg-slate-900/90 px-3 py-3 border-t border-white/5 text-center">
+              <div class="font-display font-bold text-white text-xs tracking-widest uppercase">JUGAR</div>
+              <div class="text-slate-400 text-xs mt-0.5 truncate">{{ g.name }}</div>
+            </div>
+          </RouterLink>
+        </template>
       </div>
     </div>
   </section>

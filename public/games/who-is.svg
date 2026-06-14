@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="wi-bg" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4c1d95"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <filter id="blur-face">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+  <rect width="200" height="200" rx="24" fill="url(#wi-bg)"/>
+  <!-- Blurred face silhouette -->
+  <g filter="url(#blur-face)">
+    <circle cx="100" cy="78" r="26" fill="#7c3aed" opacity="0.6"/>
+    <path d="M65 145c0-20 16-35 35-35s35 15 35 35" fill="#7c3aed" opacity="0.5"/>
+  </g>
+  <!-- Magnifying glass -->
+  <circle cx="125" cy="110" r="22" fill="none" stroke="#a78bfa" stroke-width="2.5"/>
+  <line x1="141" y1="126" x2="158" y2="143" stroke="#a78bfa" stroke-width="3" stroke-linecap="round"/>
+  <!-- Eye icon inside magnifying glass -->
+  <path d="M115 110c0 0 4-7 10-7s10 7 10 7s-4 7-10 7-10-7-10-7z" fill="none" stroke="#c4b5fd" stroke-width="1.5"/>
+  <circle cx="125" cy="110" r="3" fill="#c4b5fd"/>
+  <!-- Decorative -->
+  <circle cx="30" cy="30" r="3" fill="#a78bfa" opacity="0.3"/>
+  <circle cx="170" cy="170" r="2" fill="#8b5cf6" opacity="0.2"/>
+</svg>

@@ -3,8 +3,9 @@ import AppH1 from '../../components/common/AppH1.vue'
 import { getAllPlayersAsync, sampleDistinct } from '../../services/players'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
 import { initScoring } from '../../services/scoring'
-import { getUserLevel } from '../../services/xp'
-import { awardXpForCorrect } from '../../services/game-xp'
+import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
+import { awardXpBatch } from '../../services/game-xp'
+import { createDailyRng } from '../../services/seeded-random'
 import { spawnXpBadge } from '../../services/ui-effects'
 import { celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { getGameMetadata } from '../../services/games'
@@ -81,7 +82,7 @@ export default {
     async setup() {
       this.locked = false
       const all = (await getAllPlayersAsync()).filter(p => Number.isFinite(p?.age))
-      const picks = sampleDistinct(all, 5)
+      const picks = sampleDistinct(all, 5, new Set(), this.rng)
       this.items = picks
       this.slots = [null, null, null, null, null]
       this.answered = false
@@ -156,10 +157,7 @@ export default {
       const xpPerCorrect = this.difficultyConfig?.xpPerCorrect || 20
       this.xpEarned = this.allowXp ? (correctPositions * xpPerCorrect) : 0
       if (this.allowXp && this.xpEarned > 0) {
-        try {
-          await awardXpForCorrect({ gameCode: 'age-order', amount: this.xpEarned, attemptIndex: 0, streak: 0, corrects: correctPositions })
-          spawnXpBadge(this.$refs.confettiHost, `+${this.xpEarned} XP`, { position: 'top-right' })
-        } catch {}
+        spawnXpBadge(this.$refs.confettiHost, `+${this.xpEarned} XP`, { position: 'top-right' })
       }
       const delayMs = 1200
       if (this.mode === 'challenge') {
@@ -167,20 +165,17 @@ export default {
         const result = correctPositions === winThreshold ? 'win' : 'loss'
         if (result === 'win') celebrateGameWin()
         else announceGameLoss()
+        if (this.allowXp && this.xpEarned > 0) {
+          try { await awardXpBatch({ gameCode: 'age-order', totalXp: this.xpEarned, corrects: correctPositions }) } catch {}
+        }
         try { await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, correctPositions, finalOrder: [...this.slots], correctness: [...this.correctness], items: this.items, corrects: correctPositions }) } catch {}
         try { const mod = await import('../../services/game-modes'); await mod.checkAndUnlockDailyWins('age-order') } catch {}
         try {
-          const { data } = await getUserLevel(null)
-          const info = Array.isArray(data) ? data[0] : data
-          this.levelAfter = info?.level ?? null
-          this.xpAfterTotal = info?.xp_total ?? 0
-          const next = info?.next_level_xp || 0
-          const toNext = info?.xp_to_next ?? 0
-          const completed = next ? (next - toNext) : next
-          this.afterPercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
-          this.xpToNextAfter = toNext ?? null
-          
-          // Level up celebration
+          const snap = await captureLevelSnapshot()
+          this.levelAfter = snap.level
+          this.xpAfterTotal = snap.xpTotal
+          this.afterPercent = snap.percent
+          this.xpToNextAfter = snap.xpToNext
           if ((this.levelAfter || 0) > (this.levelBefore || 0)) {
             celebrateGameLevelUp(this.levelAfter, 500)
           }
@@ -202,15 +197,12 @@ export default {
       
       try {
         try {
-          const { data } = await getUserLevel(null)
-          const info = Array.isArray(data) ? data[0] : data
-          this.levelBefore = info?.level ?? null
-          this.xpBeforeTotal = info?.xp_total ?? 0
-          const next = info?.next_level_xp || 0
-          const toNext = info?.xp_to_next ?? 0
-          const completed = next ? (next - toNext) : next
-          this.beforePercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
+          const snap = await captureLevelSnapshot()
+          this.levelBefore = snap.level
+          this.xpBeforeTotal = snap.xpTotal
+          this.beforePercent = snap.percent
         } catch {}
+        this.rng = createDailyRng('age-order')
         this.sessionId = await startChallengeSession('age-order', null)
         this.overlayOpen = false
         // Ajustar el número de slots según la dificultad
@@ -224,18 +216,17 @@ export default {
 </script>
 
 <template>
-  <GamePreviewModal
-    :open="overlayOpen && mode === 'challenge' && !reviewMode"
-    gameName="Ordenar por edad"
-    gameDescription="Ordená 5 jugadores del más viejo al más joven"
-    :mechanic="gameMetadata.mechanic"
-    :videoUrl="gameMetadata.videoUrl"
-    :tips="gameMetadata.tips"
-    @close="overlayOpen = false"
-    @start="startChallenge"
-  />
-
   <section class="grid place-items-center min-h-[600px]">
+    <GamePreviewModal
+      :open="overlayOpen && mode === 'challenge' && !reviewMode"
+      gameName="Ordenar por edad"
+      gameDescription="Ordená 5 jugadores del más viejo al más joven"
+      :mechanic="gameMetadata.mechanic"
+      :videoUrl="gameMetadata.videoUrl"
+      :tips="gameMetadata.tips"
+      @close="overlayOpen = false"
+      @start="startChallenge"
+    />
     <div class="space-y-4 w-full max-w-4xl">
       <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 w-full">
         <AppH1 class="text-3xl md:text-4xl flex-none">Ordenar por edad</AppH1>

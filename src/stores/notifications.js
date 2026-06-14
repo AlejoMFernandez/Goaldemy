@@ -1,4 +1,6 @@
 import { reactive } from 'vue'
+import { supabase } from '../services/supabase'
+import { getLevelUpXpBonus, getMilestone } from '../services/level-rewards'
 
 const state = reactive({
   items: [],
@@ -6,6 +8,7 @@ const state = reactive({
   levelUpQueue: [],
   pendingRewards: [],
   suppressOverlays: false,
+  claimNotifications: [],
 })
 
 const _lastLevelToastAt = new Map()
@@ -49,14 +52,53 @@ export function queueLevelUpOverlay({ oldLevel, newLevel }) {
   if (now - lastAt < LEVEL_TOAST_DEDUPE_MS) return null
   _lastLevelToastAt.set(newLevel, now)
 
+  const xpBonus = getLevelUpXpBonus(newLevel)
+  const milestone = getMilestone(newLevel)
+  const totalBonus = milestone ? milestone.xpBonus : xpBonus
+
+  const rewardId = addPendingReward(milestone ? 'milestone' : 'levelUp', {
+    level: newLevel,
+    xpBonus: totalBonus,
+    tier: milestone?.tier || null,
+    color: milestone?.color || null,
+  })
+
   const id = _genId()
-  state.levelUpQueue.push({ id, oldLevel, newLevel })
-  addPendingReward('levelUp', { level: newLevel, id })
+  state.levelUpQueue.push({
+    id, oldLevel, newLevel, xpBonus: totalBonus, rewardId,
+    milestone: milestone || null,
+  })
+
   return id
 }
 
 export function shiftLevelUpQueue() {
   return state.levelUpQueue.shift()
+}
+
+// ── Claim notifications (bottom-right stack) ──
+
+export function pushClaimNotification({ type, title, xp, emoji }) {
+  const id = _genId()
+  state.claimNotifications.push({ id, type, title, xp: xp || 0, emoji: emoji || '🎁' })
+  setTimeout(() => {
+    const idx = state.claimNotifications.findIndex(n => n.id === id)
+    if (idx !== -1) state.claimNotifications.splice(idx, 1)
+  }, 3500)
+}
+
+// ── Silent XP award (no level-up detection to prevent cascade) ──
+
+async function _awardBonusXpSilent(amount) {
+  try {
+    await supabase.rpc('award_xp', {
+      p_amount: amount,
+      p_reason: 'level_up_bonus',
+      p_game_id: null,
+      p_session_id: null,
+      p_meta: { source: 'reward_claim' },
+    })
+  } catch {}
 }
 
 // ── Pending rewards (Reward Center) ──
@@ -86,13 +128,48 @@ export function addPendingReward(type, data) {
 
 export function claimReward(id) {
   const r = state.pendingRewards.find(r => r.id === id)
-  if (r) r.claimed = true
+  if (!r || r.claimed) return
+  r.claimed = true
   _saveRewards()
+
+  const xpBonus = r.data?.xpBonus || 0
+  if (xpBonus > 0) {
+    _awardBonusXpSilent(xpBonus)
+  }
+
+  const notifTitle = r.type === 'milestone' ? `Rango: ${r.data?.tier}`
+    : r.type === 'levelUp' ? `Nivel ${r.data?.level}`
+    : r.type === 'achievement' ? (r.data?.title || 'Logro')
+    : 'Recompensa'
+  const emoji = r.type === 'achievement' ? '🏆'
+    : r.type === 'milestone' ? '🏅'
+    : r.type === 'levelUp' ? '⬆️'
+    : '🎁'
+
+  pushClaimNotification({ type: r.type, title: notifTitle, xp: xpBonus, emoji })
 }
 
 export function claimAllRewards() {
-  state.pendingRewards.forEach(r => { r.claimed = true })
+  const unclaimed = state.pendingRewards.filter(r => !r.claimed)
+  let totalXpBonus = 0
+  for (const r of unclaimed) {
+    r.claimed = true
+    totalXpBonus += (r.data?.xpBonus || 0)
+  }
   _saveRewards()
+
+  if (totalXpBonus > 0) {
+    _awardBonusXpSilent(totalXpBonus)
+  }
+
+  if (unclaimed.length > 0) {
+    pushClaimNotification({
+      type: 'batch',
+      title: `${unclaimed.length} recompensa${unclaimed.length > 1 ? 's' : ''}`,
+      xp: totalXpBonus,
+      emoji: '🎁',
+    })
+  }
 }
 
 export function getUnclaimedCount() {

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="pp-bg" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0c4a6e"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="24" fill="url(#pp-bg)"/>
+  <!-- Mini pitch -->
+  <rect x="40" y="50" width="120" height="100" rx="4" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity="0.5"/>
+  <line x1="100" y1="50" x2="100" y2="150" stroke="#38bdf8" stroke-width="1.5" opacity="0.5"/>
+  <circle cx="100" cy="100" r="18" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity="0.5"/>
+  <!-- Position dots -->
+  <circle cx="60" cy="100" r="7" fill="#38bdf8" opacity="0.9"/>
+  <circle cx="85" cy="75" r="6" fill="#38bdf8" opacity="0.7"/>
+  <circle cx="85" cy="125" r="6" fill="#38bdf8" opacity="0.7"/>
+  <circle cx="115" cy="85" r="6" fill="#0ea5e9" opacity="0.7"/>
+  <circle cx="115" cy="115" r="6" fill="#0ea5e9" opacity="0.7"/>
+  <circle cx="140" cy="100" r="7" fill="#0ea5e9" opacity="0.9"/>
+  <!-- Highlighted position with pulse ring -->
+  <circle cx="115" cy="85" r="12" fill="none" stroke="#38bdf8" stroke-width="1" opacity="0.3"/>
+  <!-- Pin icon on highlighted -->
+  <path d="M115 79v-4m0 0l-3 3m3-3l3 3" stroke="#7dd3fc" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

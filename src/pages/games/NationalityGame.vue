@@ -3,7 +3,9 @@ import AppH1 from '../../components/common/AppH1.vue';
 import { initState, loadPlayers, nextRound, optionClass, pick, flag } from '../../services/nationality';
 import { initScoring } from '../../services/scoring'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
-import { getUserLevel } from '../../services/xp'
+import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
+import { awardXpBatch } from '../../services/game-xp'
+import { createDailyRng } from '../../services/seeded-random'
 import { gameSummaryBlurb, getGameMetadata } from '../../services/games'
 import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp, GAME_TYPES } from '../../services/game-celebrations'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
@@ -122,15 +124,13 @@ export default {
       try {
         // capture XP/level before starting
         try {
-          const { data } = await getUserLevel(null)
-          const info = Array.isArray(data) ? data[0] : data
-          this.levelBefore = info?.level ?? null
-          this.xpBeforeTotal = info?.xp_total ?? 0
-          const next = info?.next_level_xp || 0
-          const toNext = info?.xp_to_next ?? 0
-          const completed = next ? (next - toNext) : next
-          this.beforePercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
+          const snap = await captureLevelSnapshot()
+          this.levelBefore = snap.level
+          this.xpBeforeTotal = snap.xpTotal
+          this.beforePercent = snap.percent
         } catch {}
+        this.rng = createDailyRng('nationality')
+        this.difficultyConfig = config
         this.sessionId = await startChallengeSession('nationality', timeLimit)
         this.overlayOpen = false
         this.timeLeft = timeLimit
@@ -160,26 +160,19 @@ export default {
       }
     },
     async finishChallenge(result) {
-      // No need to hide banner since we're not showing it anymore
-      
-      // Complete session
+      if (this.allowXp && this.xpEarned > 0) {
+        await awardXpBatch({ gameCode: 'nationality', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
+      }
       await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects }).catch(()=>{})
       
-      // Fetch level after
       try {
-        const { data } = await getUserLevel(null)
-        const info = Array.isArray(data) ? data[0] : data
-        this.levelAfter = info?.level ?? null
-        this.xpAfterTotal = info?.xp_total ?? 0
-        const next = info?.next_level_xp || 0
-        const toNext = info?.xp_to_next ?? 0
-        const completed = next ? (next - toNext) : next
-        this.afterPercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
-        this.xpToNextAfter = toNext ?? null
-        
-        // Check level up
-        if (this.levelAfter && this.levelBefore && this.levelAfter > this.levelBefore) {
-          celebrateGameLevelUp(this.levelAfter)
+        const snap = await captureLevelSnapshot()
+        this.levelAfter = snap.level
+        this.xpAfterTotal = snap.xpTotal
+        this.afterPercent = snap.percent
+        this.xpToNextAfter = snap.xpToNext
+        if (snap.level && this.levelBefore && snap.level > this.levelBefore) {
+          celebrateGameLevelUp(snap.level)
         }
       } catch {}
       
@@ -211,20 +204,18 @@ export default {
 </script>
 
 <template>
-  <!-- Game Preview Modal (pre-game info) -->
-  <GamePreviewModal
-    :open="overlayOpen && mode === 'challenge' && !reviewMode"
-    :gameType="'TIMED'"
-    gameName="Nacionalidad correcta"
-    gameDescription="Identificá la nacionalidad correcta de cada jugador"
-    :mechanic="gameMetadata.mechanic"
-    :videoUrl="gameMetadata.videoUrl"
-    :tips="gameMetadata.tips"
-    @close="overlayOpen = false"
-    @start="startChallenge"
-  />
-  
   <section class="grid place-items-center min-h-[600px]">
+    <GamePreviewModal
+      :open="overlayOpen && mode === 'challenge' && !reviewMode"
+      :gameType="'TIMED'"
+      gameName="Nacionalidad correcta"
+      gameDescription="Identificá la nacionalidad correcta de cada jugador"
+      :mechanic="gameMetadata.mechanic"
+      :videoUrl="gameMetadata.videoUrl"
+      :tips="gameMetadata.tips"
+      @close="overlayOpen = false"
+      @start="startChallenge"
+    />
     <div class="space-y-4 w-full max-w-4xl">
         <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 w-full">
           <AppH1 class="text-3xl md:text-4xl flex-none">Nacionalidad correcta</AppH1>

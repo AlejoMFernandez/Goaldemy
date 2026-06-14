@@ -71,3 +71,16 @@ export async function awardXpForCorrect({ gameCode, amount = 10, attemptIndex = 
     }
   } catch {}
 }
+
+export async function awardXpBatch({ gameCode, totalXp, corrects = 0 }) {
+  if (totalXp <= 0) return
+  try {
+    const gameId = await getGameIdBySlug(gameCode)
+    await awardXp({ amount: totalXp, reason: 'correct_answer', gameId, sessionId: null, meta: { game: gameCode, corrects, batch: true } })
+  } catch {}
+  try { await updateDailyLoginStreak() } catch {}
+  try {
+    if (corrects >= 1) await unlockAchievementWithToast('first_correct', { game: gameCode })
+    if (corrects >= 10) await unlockAchievementWithToast('ten_correct', { game: gameCode })
+  } catch {}
+}

@@ -1,7 +1,7 @@
 <script>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { soundManager } from '@/services/sounds'
-import { setSuppressOverlays } from '@/stores/notifications'
+import { setSuppressOverlays, notificationsState, shiftAchievementQueue } from '@/stores/notifications'
 
 export default {
   name: 'GameSummaryPopup',
@@ -32,8 +32,17 @@ export default {
     const starsRevealed = ref(0)
     const xpBarWidth = ref(0)
     const showActions = ref(false)
+    const sessionAchievements = ref([])
     let timers = []
     let countFrame = null
+    let achWatcher = null
+
+    function drainAchievementQueue() {
+      while (notificationsState.achievementQueue.length > 0) {
+        const item = shiftAchievementQueue()
+        if (item) sessionAchievements.value.push(item)
+      }
+    }
 
     const won = computed(() => props.corrects >= props.winThreshold)
 
@@ -77,6 +86,10 @@ export default {
       starsRevealed.value = 0
       xpBarWidth.value = props.beforePercent || 0
       showActions.value = false
+      sessionAchievements.value = []
+      drainAchievementQueue()
+      if (achWatcher) achWatcher()
+      achWatcher = watch(() => notificationsState.achievementQueue.length, drainAchievementQueue)
 
       timers.push(setTimeout(() => {
         phase.value = 1
@@ -133,6 +146,7 @@ export default {
       if (val) runSequence()
       else {
         clearAll()
+        if (achWatcher) { achWatcher(); achWatcher = null }
         setSuppressOverlays(false)
       }
     })
@@ -143,7 +157,7 @@ export default {
     return {
       phase, won, animatedCorrects, animatedStreak,
       starsRevealed, starCount, accuracy, xpBarWidth,
-      showActions, difficultyInfo, xpGained,
+      showActions, difficultyInfo, xpGained, sessionAchievements,
     }
   }
 }
@@ -152,7 +166,7 @@ export default {
 <template>
   <Teleport to="body">
     <Transition name="summary-overlay">
-      <div v-if="show" class="fixed inset-0 z-[55] grid place-items-center bg-black/80 backdrop-blur-lg p-4 overflow-y-auto">
+      <div v-if="show" class="fixed inset-0 z-[55] flex items-start justify-center bg-black/80 backdrop-blur-lg px-4 pt-6 pb-6 overflow-y-auto">
         <div class="summary-card w-full max-w-lg rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden shadow-2xl shadow-black/50">
 
         <!-- Phase 1: Result header -->
@@ -243,19 +257,27 @@ export default {
 
           <!-- Phase 3: Star rating -->
           <div
-            class="flex justify-center gap-2 py-2 transition-all duration-400"
+            class="flex flex-col items-center gap-1 py-2 transition-all duration-400"
             :class="phase >= 3 ? 'opacity-100' : 'opacity-0'"
           >
-            <template v-for="i in 3" :key="i">
-              <svg
-                class="w-10 h-10 transition-all duration-300"
-                :class="i <= starsRevealed ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]' : 'text-slate-700'"
-                :style="i <= starsRevealed ? 'animation: star-fill 0.4s var(--ease-bounce) both' : ''"
-                fill="currentColor" viewBox="0 0 24 24"
-              >
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-              </svg>
-            </template>
+            <div class="flex justify-center gap-2">
+              <template v-for="i in 3" :key="i">
+                <div class="relative group">
+                  <svg
+                    class="w-10 h-10 transition-all duration-300 cursor-help"
+                    :class="i <= starsRevealed ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]' : 'text-slate-700'"
+                    :style="i <= starsRevealed ? 'animation: star-fill 0.4s var(--ease-bounce) both' : ''"
+                    fill="currentColor" viewBox="0 0 24 24"
+                  >
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 border border-white/10 px-2 py-0.5 text-[10px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    {{ i === 1 ? '50%+ aciertos' : i === 2 ? '80%+ aciertos' : '100% aciertos' }}
+                  </span>
+                </div>
+              </template>
+            </div>
+            <p class="text-[10px] text-slate-500">{{ starCount }}/3 estrellas</p>
           </div>
 
           <!-- Phase 4: XP Progress -->
@@ -286,6 +308,35 @@ export default {
               <span v-if="xpToNextAfter != null" class="text-slate-400">
                 Faltan <span class="text-white font-semibold">{{ xpToNextAfter }} XP</span>
               </span>
+            </div>
+          </div>
+
+          <!-- Achievements earned this session -->
+          <div
+            v-if="sessionAchievements.length > 0"
+            class="transition-all duration-500"
+            :class="phase >= 4 ? 'opacity-100' : 'opacity-0 translate-y-4'"
+          >
+            <div class="text-[10px] uppercase tracking-wider text-yellow-400 font-semibold mb-2">Logros desbloqueados</div>
+            <div class="space-y-2">
+              <div
+                v-for="(ach, idx) in sessionAchievements"
+                :key="ach.id"
+                class="flex items-center gap-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 p-3"
+                :style="phase >= 4 ? `animation: stat-slide-in 0.5s var(--ease-spring) ${0.3 + idx * 0.15}s both` : ''"
+              >
+                <div class="shrink-0 w-10 h-10 rounded-full bg-yellow-500/20 border border-yellow-500/30 grid place-items-center">
+                  <img v-if="ach.iconUrl" :src="ach.iconUrl" class="w-6 h-6 rounded" alt="" />
+                  <svg v-else class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3z"/>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-white truncate">{{ ach.title }}</div>
+                  <div v-if="ach.description" class="text-[10px] text-slate-400 truncate">{{ ach.description }}</div>
+                </div>
+                <div v-if="ach.points" class="shrink-0 text-xs font-bold text-yellow-400">+{{ ach.points }} XP</div>
+              </div>
             </div>
           </div>
 

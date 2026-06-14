@@ -1,7 +1,6 @@
 import { countryCodeFromName, flagUrl } from './countries'
 import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
-import { awardXpForCorrect } from './game-xp'
 import { celebrateCorrect, celebrateIncorrect } from './game-celebrations'
 import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, shuffleArray, getOptionClasses, selectRandomPlayerFromBucket } from './game-common'
 
@@ -41,11 +40,12 @@ export async function loadPlayers(state) {
  * Genera 4 opciones de nacionalidad con la correcta incluida
  */
 export function buildOptions(state) {
+  const rand = state.rng || Math.random
   const countries = Array.from(new Set(state.allPlayers.map(p => p.cname)))
   const distractors = countries.filter(c => c !== state.current.cname)
   const picked = []
   while (picked.length < 3 && distractors.length > 0) {
-    const j = Math.floor(Math.random() * distractors.length)
+    const j = Math.floor(rand() * distractors.length)
     picked.push(distractors.splice(j, 1)[0])
   }
   const opts = [state.current.cname, ...picked].map(c => ({
@@ -53,7 +53,7 @@ export function buildOptions(state) {
     value: c,
     code: countryCodeFromName(c),
   }))
-  state.options = shuffleArray(opts)
+  state.options = shuffleArray(opts, state.rng)
 }
 
 /**
@@ -66,7 +66,8 @@ export function nextRound(state) {
   
   // Si no hay jugador en buckets, tomar aleatorio
   if (!state.current) {
-    const idx = Math.floor(Math.random() * state.allPlayers.length)
+    const rand = state.rng || Math.random
+    const idx = Math.floor(rand() * state.allPlayers.length)
     state.current = state.allPlayers[idx]
   }
   
@@ -93,39 +94,22 @@ export function optionClass(state, opt) {
   })
 }
 
-export async function pick(state, option, confettiHost) {
+export function pick(state, option, confettiHost) {
   if (state.answered) return false
   state.answered = true
   state.selected = option.value
   const correct = option.value === state.current.cname
   if (correct) {
-    // Play correct sound immediately
     celebrateCorrect()
-    
-    // Calculate XP based on difficulty
     const xpAmount = state.difficultyConfig?.xpPerCorrect || 10
-    
-    // First award XP with current attempt/streak values (before increment)
     const nextStreak = state.streak + 1
     if (state.allowXp) {
-      await awardXpForCorrect({ 
-        gameCode: 'nationality', 
-        amount: xpAmount, 
-        attemptIndex: state.attempts, 
-        streak: nextStreak, 
-        corrects: state.corrects + 1,
-        difficulty: state.difficulty
-      })
       state.xpEarned += xpAmount
+      spawnXpBadge(confettiHost, `+${xpAmount} XP`, { position: 'top-right' })
     }
-    
     onCorrect(state)
     state.streak = nextStreak
     state.maxStreak = Math.max(state.maxStreak || 0, nextStreak)
-    
-    if (state.allowXp) {
-      spawnXpBadge(confettiHost, `+${xpAmount} XP`, { position: 'top-right' })
-    }
   } else {
     celebrateIncorrect()
     onIncorrect(state)

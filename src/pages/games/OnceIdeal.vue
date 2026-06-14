@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getAllPlayers } from '../../services/players'
-import { awardXpForCorrect } from '../../services/game-xp'
+import { awardXpBatch } from '../../services/game-xp'
 import AppH1 from '../../components/common/AppH1.vue'
 
 // ── Formation 4-3-3 with % positions on the field ──────────────────────────
@@ -107,18 +107,16 @@ function selectSlot(id) {
   inputValue.value = ''
 }
 
-async function pickPlayer(player) {
+function pickPlayer(player) {
   const idx = activeSlot.value
   if (idx === null || slots.value[idx]?.filled) return
   slots.value[idx].filled = player
   xpEarned.value += 10
   activeSlot.value = null
   inputValue.value = ''
-  try {
-    await awardXpForCorrect({ gameCode: 'once-ideal', amount: 10, streak: filledCount.value })
-  } catch {}
   if (slots.value.every(s => s.filled)) {
     finished.value = true
+    awardXpBatch({ gameCode: 'once-ideal', totalXp: xpEarned.value, corrects: 11 }).catch(() => {})
   }
 }
 

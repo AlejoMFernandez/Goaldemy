@@ -3,7 +3,7 @@ import { RouterLink } from 'vue-router';
 import { subscribeToAuthStateChanges } from '../services/auth';
 import { logout } from '../services/auth';
 import { searchPublicProfiles } from '../services/user-profiles';
-import { getUserLevel } from '../services/xp';
+import { getUserLevel, computeProgressPercentSync, fetchLevelThresholds } from '../services/xp';
 import { fetchUnreadCount, listNotifications, markAsRead } from '../services/notifications';
 import { supabase } from '../services/supabase';
 import { listIncomingRequests, acceptRequest, blockRequest } from '../services/connections';
@@ -62,11 +62,11 @@ export default {
             if (!this.user?.id) return;
             const now = Date.now();
             if (!force && this._lastLevelAt && (now - this._lastLevelAt < 15000)) {
-                // Cache for 15s
                 return;
             }
             this.levelLoading = true;
             try {
+                await fetchLevelThresholds();
                 const { data, error } = await getUserLevel(null);
                 if (!error) {
                     this.levelInfo = Array.isArray(data) ? data[0] : data;
@@ -100,7 +100,8 @@ export default {
             this.$router.push(`/u/${u.id}`)
         },
         avatarInitial() {
-            const letter = (this.user?.email || '?').trim()[0] || '?'
+            const name = this.user?.display_name || this.user?.email || '?'
+            const letter = name.trim()[0] || '?'
             return letter.toUpperCase()
         },
         // Dropdown controls (less sensitive hover)
@@ -221,7 +222,10 @@ export default {
         },
         toggleNotif() {
             this.notifOpen = !this.notifOpen
-            if (this.notifOpen) this.loadNotifMenu()
+            if (this.notifOpen) {
+                this.menuOpen = false
+                this.loadNotifMenu()
+            }
         },
         nameFor(id) { const p = this.notifProfiles?.[id] || {}; return p.display_name || p.email || 'Usuario' },
         fmtNotifLine(n) {
@@ -281,12 +285,7 @@ export default {
             return getUnclaimedCount()
         },
         progressPercent() {
-            const li = this.levelInfo;
-            if (!li) return 0;
-            if (!li.next_level_xp) return 100;
-            const completed = li.next_level_xp - (li.xp_to_next ?? 0);
-            const denom = li.next_level_xp || 1;
-            return Math.max(0, Math.min(100, Math.round((completed / denom) * 100)));
+            return computeProgressPercentSync(this.levelInfo);
         },
         xpNow() {
             return this.levelInfo?.xp_total ?? 0;
@@ -323,6 +322,17 @@ export default {
                         }
                     }
                     document.addEventListener('click', this._onDocClick)
+                    this._onKeyDown = (e) => {
+                        if (e.key === 'Escape') {
+                            this.menuOpen = false
+                            this.notifOpen = false
+                            this.searchOpen = false
+                            this.infoOpen = false
+                            this.playOpen = false
+                            this.leaguesOpen = false
+                        }
+                    }
+                    document.addEventListener('keydown', this._onKeyDown)
                     // Watch menu open to fetch level lazily
                     this.$watch('menuOpen', (open) => { if (open) this.loadLevelIfNeeded() })
                     // Notifications: load and subscribe when auth ready
@@ -358,6 +368,7 @@ export default {
         },
         unmounted() {
             document.removeEventListener('click', this._onDocClick)
+            document.removeEventListener('keydown', this._onKeyDown)
             try { if (this._notifChannel) this._notifChannel.unsubscribe() } catch {}
             try { if (this._connChannel) this._connChannel.unsubscribe() } catch {}
             try { clearInterval(this._pollInterval) } catch {}
@@ -396,7 +407,6 @@ export default {
                 </div>
 
                 <ul class="hidden md:flex items-center gap-4 text-slate-200">
-                    <li><RouterLink class="hover:text-white transition-colors" to="/">Inicio</RouterLink></li>
                     <!-- Play dropdown (hover) with descriptions -->
                     <li class="relative"
                         @mouseenter="onPlayEnter"
@@ -420,6 +430,7 @@ export default {
                             </div>
                         </div>
                     </li>
+                    <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Ranking</RouterLink></li>
                     <!-- Ligas dropdown (hover) -->
                     <li class="relative"
                         @mouseenter="onLeaguesEnter"
@@ -469,7 +480,6 @@ export default {
                             </div>
                         </div>
                     </li>
-                    <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Ranking</RouterLink></li>
                     <!-- Info dropdown (hover) -->
                     <li class="relative"
                         @mouseenter="onInfoEnter"
@@ -579,7 +589,7 @@ export default {
                         </li>
                         <!-- User menu -->
                         <li class="relative">
-                            <button data-user-button @click="menuOpen = !menuOpen" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-2 py-1.5 text-sm text-slate-200 hover:border-white/20">
+                            <button data-user-button @click="menuOpen = !menuOpen; if(menuOpen) notifOpen = false" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-2 py-1.5 text-sm text-slate-200 hover:border-white/20">
                                 <img v-if="user.avatar_url" :src="user.avatar_url" class="w-7 h-7 rounded-full object-cover" alt="avatar" />
                                 <div v-else class="w-7 h-7 rounded-full bg-slate-700 grid place-items-center text-xs">{{ avatarInitial() }}</div>
                                 <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
@@ -714,7 +724,6 @@ export default {
                         </li>
 
                         <!-- Nav items -->
-                        <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/">Inicio</RouterLink></li>
                         <li>
                             <details class="group">
                                 <summary class="cursor-pointer hover:text-white">Jugar</summary>
@@ -724,6 +733,7 @@ export default {
                                 </ul>
                             </details>
                         </li>
+                        <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leaderboards">Ranking</RouterLink></li>
                         <li>
                             <details class="group">
                                 <summary class="cursor-pointer hover:text-white">Ligas</summary>
@@ -739,7 +749,6 @@ export default {
                                 </ul>
                             </details>
                         </li>
-                        <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leaderboards">Ranking</RouterLink></li>
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/notifications">Notificaciones</RouterLink></li>
                                                 <li>
                                                     <details class="group">

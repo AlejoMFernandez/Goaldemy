@@ -149,10 +149,11 @@ export function getOptionClasses(config) {
  * @param {Array} arr - Array a mezclar
  * @returns {Array} - Array mezclado
  */
-export function shuffleArray(arr) {
+export function shuffleArray(arr, rng) {
+  const rand = rng || Math.random
   const shuffled = [...arr]
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rand() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
   }
   return shuffled
@@ -164,41 +165,39 @@ export function shuffleArray(arr) {
  * @returns {Object|null} - Jugador seleccionado o null
  */
 export function selectRandomPlayerFromBucket(state) {
+  const rand = state.rng || Math.random
   if (!state.allPlayers.length) return null
-  
+
   const order = state.posOrder
   let selectedPlayer = null
-  
+
   for (let k = 0; k < order.length; k++) {
     const bucket = order[state.posIndex % order.length]
     const arr = state.byPos[bucket] || []
     state.posIndex = (state.posIndex + 1) % order.length
-    
+
     if (arr.length) {
-      // Intenta encontrar un jugador que realmente pertenezca al bucket
       for (let tries = 0; tries < 5; tries++) {
-        const idx = Math.floor(Math.random() * arr.length)
+        const idx = Math.floor(rand() * arr.length)
         const candidate = arr[idx]
         if (getBroadPosition(candidate) === bucket) {
           selectedPlayer = candidate
           break
         }
       }
-      
-      // Si no encuentra uno perfecto, toma uno aleatorio del bucket
+
       if (!selectedPlayer) {
-        const idx = Math.floor(Math.random() * arr.length)
+        const idx = Math.floor(rand() * arr.length)
         selectedPlayer = arr[idx]
       }
       break
     }
   }
-  
-  // Fallback: jugador totalmente aleatorio
+
   if (!selectedPlayer) {
-    const idx = Math.floor(Math.random() * state.allPlayers.length)
+    const idx = Math.floor(rand() * state.allPlayers.length)
     selectedPlayer = state.allPlayers[idx]
   }
-  
+
   return selectedPlayer
 }

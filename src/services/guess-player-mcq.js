@@ -1,7 +1,6 @@
 // Servicio para el juego "Adivina el jugador" (opción múltiple)
 import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
-import { awardXpForCorrect } from './game-xp'
 import { celebrateIncorrect } from './game-celebrations'
 import {
   createMCQGameState,
@@ -32,17 +31,18 @@ export function broadPos(p) {
  * Prioriza jugadores de la misma posición para mayor desafío
  */
 function buildOptions(state, correct) {
+  const rand = state.rng || Math.random
   const names = new Set([correct.name])
   const bucket = getBroadPosition(correct)
   const pool = (state.byPos[bucket] || state.allPlayers).filter(p => p.name !== correct.name)
-  
+
   while (names.size < 4 && pool.length) {
-    const idx = Math.floor(Math.random() * pool.length)
+    const idx = Math.floor(rand() * pool.length)
     names.add(pool[idx].name)
   }
-  
+
   const arr = Array.from(names)
-  return shuffleArray(arr.map(n => ({ label: n, value: n })))
+  return shuffleArray(arr.map(n => ({ label: n, value: n })), state.rng)
 }
 
 /**
@@ -69,46 +69,31 @@ export function nextRound(state) {
  * Maneja la selección de una respuesta
  * Otorga XP, actualiza puntaje y rachas
  */
-export async function pickAnswer(state, option, confettiHost) {
+export function pickAnswer(state, option, confettiHost) {
   if (state.answered) return false
-  
+
   state.answered = true
   state.selected = option.value
   const correct = option.value === state.current.name
-  
+
   if (correct) {
     const nextStreak = state.streak + 1
     const nextCorrects = (state.corrects || 0) + 1
-    
-    // Otorga XP por respuesta correcta
     if (state.allowXp) {
       const xpAmount = state.difficultyConfig?.xpPerCorrect || 10
-      await awardXpForCorrect({ 
-        gameCode: 'guess-player', 
-        amount: xpAmount, 
-        attemptIndex: state.attempts, 
-        streak: nextStreak, 
-        corrects: nextCorrects 
-      })
       state.xpEarned += xpAmount
+      spawnXpBadge(confettiHost, `+${xpAmount} XP`, { position: 'top-right' })
     }
-    
     onCorrect(state)
     state.streak = nextStreak
     state.corrects = nextCorrects
     state.maxStreak = Math.max(state.maxStreak || 0, nextStreak)
-    
-    // Muestra badge de XP ganado
-    if (state.allowXp) {
-      const xpAmount = state.difficultyConfig?.xpPerCorrect || 10
-      spawnXpBadge(confettiHost, `+${xpAmount} XP`, { position: 'top-right' })
-    }
   } else {
     celebrateIncorrect()
     onIncorrect(state)
     state.streak = 0
   }
-  
+
   state.feedback = ''
   return correct
 }

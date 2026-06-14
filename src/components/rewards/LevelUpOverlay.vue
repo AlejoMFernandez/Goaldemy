@@ -1,6 +1,6 @@
 <script>
 import { ref, computed, watch, nextTick } from 'vue'
-import { notificationsState, shiftLevelUpQueue } from '@/stores/notifications'
+import { notificationsState, shiftLevelUpQueue, claimReward } from '@/stores/notifications'
 import { getTierForLevel } from '@/services/tiers'
 import { soundManager } from '@/services/sounds'
 import { celebrateLevelUp, confettiGold } from '@/services/confetti'
@@ -23,6 +23,7 @@ export default {
       if (!oldTier.value || !newTier.value) return false
       return oldTier.value.key !== newTier.value.key
     })
+    const isMilestone = computed(() => !!current.value?.milestone)
 
     function showNext() {
       clearTimers()
@@ -43,12 +44,24 @@ export default {
         timers.push(setTimeout(() => { phase.value = 3 }, 1000))
         if (tierChanged.value) {
           timers.push(setTimeout(() => { phase.value = 4 }, 1600))
+          timers.push(setTimeout(() => { phase.value = 5 }, 2200))
           confettiGold()
         } else {
+          timers.push(setTimeout(() => { phase.value = 5 }, 1500))
           celebrateLevelUp()
         }
         soundManager.play('levelUp')
       })
+    }
+
+    function claim() {
+      if (current.value?.rewardId) {
+        claimReward(current.value.rewardId)
+      }
+      clearTimers()
+      current.value = null
+      phase.value = 0
+      setTimeout(showNext, 400)
     }
 
     function dismiss() {
@@ -68,7 +81,7 @@ export default {
       }
     })
 
-    return { current, phase, oldTier, newTier, tierChanged, dismiss }
+    return { current, phase, oldTier, newTier, tierChanged, isMilestone, claim, dismiss }
   }
 }
 </script>
@@ -86,9 +99,10 @@ export default {
             class="mb-4 transition-all duration-500"
             :class="phase >= 1 ? 'opacity-100' : 'opacity-0'"
           >
-            <div class="font-display text-xs font-bold uppercase text-yellow-400 mb-4"
+            <div class="font-display text-xs font-bold uppercase tracking-wider mb-4"
+              :class="isMilestone ? 'text-fuchsia-400' : 'text-yellow-400'"
               :style="phase >= 1 ? 'animation: tracking-reveal 0.6s var(--ease-out-expo) both' : ''">
-              ¡Subiste de Nivel!
+              {{ isMilestone ? '¡Hito Alcanzado!' : '¡Subiste de Nivel!' }}
             </div>
             <div class="flex items-center justify-center gap-4">
               <span class="text-5xl font-display font-extrabold text-slate-500 line-through decoration-2">{{ current.oldLevel }}</span>
@@ -102,10 +116,26 @@ export default {
             </div>
           </div>
 
+          <!-- XP bonus badge -->
+          <div
+            class="mb-4 transition-all duration-500"
+            :class="phase >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'"
+          >
+            <div
+              class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-display font-bold text-sm"
+              :class="isMilestone
+                ? 'bg-gradient-to-r from-fuchsia-500/20 to-amber-500/20 border border-fuchsia-500/30 text-fuchsia-300'
+                : 'bg-emerald-500/15 border border-emerald-500/25 text-emerald-400'"
+              :style="phase >= 2 ? 'animation: scale-spring 0.5s var(--ease-bounce) both' : ''"
+            >
+              <span>+{{ current.xpBonus }} XP</span>
+            </div>
+          </div>
+
           <!-- Tier badge (always shows current tier) -->
           <div
-            class="mb-6 transition-all duration-500"
-            :class="phase >= 2 ? 'opacity-100' : 'opacity-0'"
+            class="mb-4 transition-all duration-500"
+            :class="phase >= 3 ? 'opacity-100' : 'opacity-0'"
           >
             <!-- Tier evolution -->
             <template v-if="tierChanged && phase >= 3">
@@ -148,28 +178,44 @@ export default {
                   </span>
                 </div>
               </div>
+
+              <!-- Milestone rewards list -->
+              <div v-if="isMilestone && current.milestone?.rewards" class="mt-4 space-y-1.5">
+                <div
+                  v-for="(rw, i) in current.milestone.rewards"
+                  :key="i"
+                  class="flex items-center justify-center gap-2 text-sm text-slate-200"
+                  :style="`animation: slide-up 0.3s ease ${0.1 * i}s both`"
+                >
+                  <span class="text-base">{{ rw.icon }}</span>
+                  <span>{{ rw.label }}</span>
+                </div>
+              </div>
             </template>
 
             <!-- Same tier, just show badge -->
             <template v-else-if="newTier">
               <div class="flex flex-col items-center"
-                :style="phase >= 2 ? 'animation: scale-spring 0.5s var(--ease-bounce) both' : ''">
+                :style="phase >= 3 ? 'animation: scale-spring 0.5s var(--ease-bounce) both' : ''">
                 <img v-if="newTier.image" :src="newTier.image" class="w-20 h-20 object-contain mb-2" :alt="newTier.label" />
                 <span class="text-sm font-semibold text-slate-300">{{ newTier.emoji }} {{ newTier.label }}</span>
               </div>
             </template>
           </div>
 
-          <!-- Continue button -->
+          <!-- Claim button -->
           <div
             class="transition-all duration-400"
-            :class="phase >= 3 ? 'opacity-100' : 'opacity-0'"
+            :class="phase >= 5 ? 'opacity-100' : 'opacity-0'"
           >
             <button
-              @click="dismiss"
-              class="rounded-2xl px-8 py-3 font-display font-bold text-white bg-gradient-to-r from-yellow-500 to-amber-500 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-yellow-500/25"
+              @click="claim"
+              class="rounded-2xl px-8 py-3 font-display font-bold text-white hover:brightness-110 active:scale-95 transition-all shadow-lg"
+              :class="isMilestone
+                ? 'bg-gradient-to-r from-fuchsia-500 to-amber-500 shadow-fuchsia-500/25'
+                : 'bg-gradient-to-r from-yellow-500 to-amber-500 shadow-yellow-500/25'"
             >
-              Continuar
+              Reclamar +{{ current.xpBonus }} XP
             </button>
           </div>
         </div>
@@ -182,4 +228,9 @@ export default {
 .overlay-fade-enter-active { transition: opacity 0.3s ease; }
 .overlay-fade-leave-active { transition: opacity 0.25s ease; }
 .overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 </style>

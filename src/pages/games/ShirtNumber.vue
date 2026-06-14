@@ -2,7 +2,8 @@
 import AppH1 from '../../components/common/AppH1.vue'
 import { getAllPlayers, getAllPlayersAsync } from '../../services/players'
 import { initScoring, onCorrect, onIncorrect } from '../../services/scoring'
-import { awardXpForCorrect } from '../../services/game-xp'
+import { awardXpBatch } from '../../services/game-xp'
+import { createDailyRng } from '../../services/seeded-random'
 import { celebrateCorrect, celebrateIncorrect, checkEarlyWin, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { getGameMetadata } from '../../services/games'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
@@ -10,7 +11,7 @@ import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 import CircularTimer from '../../components/game/CircularTimer.vue'
 import StreakBadge from '../../components/game/StreakBadge.vue'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
-import { getUserLevel } from '../../services/xp'
+import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
 import { shuffleArray } from '../../services/game-common'
 
 export default {
@@ -113,7 +114,7 @@ export default {
       this.loading = false
     },
     buildOptions(correct) {
-      // Collect unique numbers excluding the correct one
+      const rand = this.rng || Math.random
       const used = new Set([Number(correct.shirtNumber)])
       const nums = []
       for (const p of this.allPlayers) {
@@ -122,18 +123,18 @@ export default {
         if (!used.has(n)) { used.add(n); nums.push(n) }
         if (nums.length >= 20) break
       }
-      // pick 3 distractors
       const distractors = []
       while (distractors.length < 3 && nums.length > 0) {
-        const i = Math.floor(Math.random() * nums.length)
+        const i = Math.floor(rand() * nums.length)
         distractors.push(nums.splice(i, 1)[0])
       }
       const opts = [Number(correct.shirtNumber), ...distractors].slice(0,4).map(n => ({ label: String(n), value: n }))
-      return shuffleArray(opts)
+      return shuffleArray(opts, this.rng)
     },
     nextRound() {
       if (!this.allPlayers.length) return
-      const idx = Math.floor(Math.random() * this.allPlayers.length)
+      const rand = this.rng || Math.random
+      const idx = Math.floor(rand() * this.allPlayers.length)
       this.current = this.allPlayers[idx]
       this.options = this.buildOptions(this.current)
       this.answered = false
@@ -151,7 +152,7 @@ export default {
       if (isSelected) return base + ' border-red-500 bg-red-500/10 text-red-300 shake'
       return base + ' border-white/10 opacity-50'
     },
-    async choose(opt) {
+    choose(opt) {
       if (this.timeOver || this.earlyWin) return false
       if (this.answered) return false
       this.answered = true
@@ -162,9 +163,7 @@ export default {
         const nextStreak = (this.streak || 0) + 1
         const nextCorrects = (this.corrects || 0) + 1
         if (this.allowXp) {
-          const xpAmount = this.difficultyConfig?.xpPerCorrect || 10
-          try { await awardXpForCorrect({ gameCode: 'shirt-number', amount: xpAmount, attemptIndex: this.attempts, streak: nextStreak, corrects: nextCorrects }) } catch {}
-          this.xpEarned += xpAmount
+          this.xpEarned += (this.difficultyConfig?.xpPerCorrect || 10)
         }
         onCorrect(this)
         this.streak = nextStreak
@@ -175,7 +174,6 @@ export default {
         onIncorrect(this)
         this.streak = 0
       }
-      // advance after a short delay
       setTimeout(() => this.nextRound(), 800)
       return correct
     },
@@ -191,15 +189,12 @@ export default {
       try {
         // capture XP/level before starting
         try {
-          const { data } = await getUserLevel(null)
-          const info = Array.isArray(data) ? data[0] : data
-          this.levelBefore = info?.level ?? null
-          this.xpBeforeTotal = info?.xp_total ?? 0
-          const next = info?.next_level_xp || 0
-          const toNext = info?.xp_to_next ?? 0
-          const completed = next ? (next - toNext) : next
-          this.beforePercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
+          const snap = await captureLevelSnapshot()
+          this.levelBefore = snap.level
+          this.xpBeforeTotal = snap.xpTotal
+          this.beforePercent = snap.percent
         } catch {}
+        this.rng = createDailyRng('shirt-number')
         this.sessionId = await startChallengeSession('shirt-number', timeLimit)
         this.overlayOpen = false
         this.timeLeft = timeLimit
@@ -221,19 +216,18 @@ export default {
       }
     },
     async finishChallenge(result) {
+      if (this.allowXp && this.xpEarned > 0) {
+        await awardXpBatch({ gameCode: 'shirt-number', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
+      }
       try {
         await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects })
         
-        const { data } = await getUserLevel(null)
-        const info = Array.isArray(data) ? data[0] : data
-        this.levelAfter = info?.level ?? null
-        this.xpAfterTotal = info?.xp_total ?? 0
-        const next = info?.next_level_xp || 0
-        const toNext = info?.xp_to_next ?? 0
-        const completed = next ? (next - toNext) : next
-        this.afterPercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
-        this.xpToNextAfter = toNext ?? null
-        
+        const snap = await captureLevelSnapshot()
+        this.levelAfter = snap.level
+        this.xpAfterTotal = snap.xpTotal
+        this.afterPercent = snap.percent
+        this.xpToNextAfter = snap.xpToNext
+
         if ((this.levelAfter || 0) > (this.levelBefore || 0)) {
           celebrateGameLevelUp(this.levelAfter, 500)
         }
@@ -262,18 +256,17 @@ export default {
 </script>
 
 <template>
-  <GamePreviewModal
-    :open="overlayOpen && mode === 'challenge' && !reviewMode"
-    gameName="Número de camiseta"
-    gameDescription="Identificá el número de camiseta correcto del jugador"
-    :mechanic="gameMetadata.mechanic"
-    :videoUrl="gameMetadata.videoUrl"
-    :tips="gameMetadata.tips"
-    @close="overlayOpen = false"
-    @start="startChallenge"
-  />
-
   <section class="grid place-items-center min-h-[600px]">
+    <GamePreviewModal
+      :open="overlayOpen && mode === 'challenge' && !reviewMode"
+      gameName="Número de camiseta"
+      gameDescription="Identificá el número de camiseta correcto del jugador"
+      :mechanic="gameMetadata.mechanic"
+      :videoUrl="gameMetadata.videoUrl"
+      :tips="gameMetadata.tips"
+      @close="overlayOpen = false"
+      @start="startChallenge"
+    />
     <div class="space-y-4 w-full max-w-4xl">
       <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 w-full">
         <AppH1 class="text-3xl md:text-4xl flex-none">Número de camiseta</AppH1>

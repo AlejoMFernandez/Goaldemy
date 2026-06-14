@@ -221,15 +221,15 @@ const GAME_METADATA = {
 }
 
 const KNOWN_GAMES = [
-  { slug: 'nationality', name: FALLBACK_NAMES['nationality'], description: FALLBACK_DESC['nationality'], cover_url: '/games/nationality.png' },
-  { slug: 'player-position', name: FALLBACK_NAMES['player-position'], description: FALLBACK_DESC['player-position'], cover_url: '/games/player-position.png' },
-  { slug: 'guess-player', name: FALLBACK_NAMES['guess-player'], description: FALLBACK_DESC['guess-player'], cover_url: '/games/guess-player.png' },
-  { slug: 'who-is', name: FALLBACK_NAMES['who-is'], description: FALLBACK_DESC['who-is'], cover_url: '/games/who-is.png' },
-  { slug: 'value-order', name: FALLBACK_NAMES['value-order'], description: FALLBACK_DESC['value-order'], cover_url: '/games/value-order.png' },
-  { slug: 'age-order', name: FALLBACK_NAMES['age-order'], description: FALLBACK_DESC['age-order'], cover_url: '/games/age-order.png' },
-  { slug: 'height-order', name: FALLBACK_NAMES['height-order'], description: FALLBACK_DESC['height-order'], cover_url: '/games/height-order.png' },
-  { slug: 'shirt-number', name: FALLBACK_NAMES['shirt-number'], description: FALLBACK_DESC['shirt-number'], cover_url: '/games/shirt-number.png' },
-  { slug: 'once-ideal', name: FALLBACK_NAMES['once-ideal'], description: FALLBACK_DESC['once-ideal'], cover_url: null },
+  { slug: 'nationality', name: FALLBACK_NAMES['nationality'], description: FALLBACK_DESC['nationality'], cover_url: '/games/nationality.svg' },
+  { slug: 'player-position', name: FALLBACK_NAMES['player-position'], description: FALLBACK_DESC['player-position'], cover_url: '/games/player-position.svg' },
+  { slug: 'guess-player', name: FALLBACK_NAMES['guess-player'], description: FALLBACK_DESC['guess-player'], cover_url: '/games/guess-player.svg' },
+  { slug: 'who-is', name: FALLBACK_NAMES['who-is'], description: FALLBACK_DESC['who-is'], cover_url: '/games/who-is.svg' },
+  { slug: 'value-order', name: FALLBACK_NAMES['value-order'], description: FALLBACK_DESC['value-order'], cover_url: '/games/value-order.svg' },
+  { slug: 'age-order', name: FALLBACK_NAMES['age-order'], description: FALLBACK_DESC['age-order'], cover_url: '/games/age-order.svg' },
+  { slug: 'height-order', name: FALLBACK_NAMES['height-order'], description: FALLBACK_DESC['height-order'], cover_url: '/games/height-order.svg' },
+  { slug: 'shirt-number', name: FALLBACK_NAMES['shirt-number'], description: FALLBACK_DESC['shirt-number'], cover_url: '/games/shirt-number.svg' },
+  { slug: 'once-ideal', name: FALLBACK_NAMES['once-ideal'], description: FALLBACK_DESC['once-ideal'], cover_url: '/games/once-ideal.svg' },
 ]
 
 function fallbackCoverForSlug(slug) {

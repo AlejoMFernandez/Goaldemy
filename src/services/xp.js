@@ -100,28 +100,77 @@ export async function getLeaderboard({ period = 'all_time', gameId = null, limit
   return { data, error }
 }
 
-/**
- * CACHE DE UMBRALES DE NIVEL
- * Almacena los umbrales en memoria durante 60 segundos para evitar consultas repetitivas
- */
+const FALLBACK_THRESHOLDS = [
+  { level: 1, xp_required: 0 }, { level: 2, xp_required: 100 }, { level: 3, xp_required: 250 },
+  { level: 4, xp_required: 450 }, { level: 5, xp_required: 700 }, { level: 6, xp_required: 1000 },
+  { level: 7, xp_required: 1350 }, { level: 8, xp_required: 1750 }, { level: 9, xp_required: 2200 },
+  { level: 10, xp_required: 2700 }, { level: 11, xp_required: 3300 }, { level: 12, xp_required: 4000 },
+  { level: 13, xp_required: 4800 }, { level: 14, xp_required: 5700 }, { level: 15, xp_required: 6700 },
+  { level: 16, xp_required: 7800 }, { level: 17, xp_required: 9000 }, { level: 18, xp_required: 10300 },
+  { level: 19, xp_required: 11700 }, { level: 20, xp_required: 13200 }, { level: 21, xp_required: 14850 },
+  { level: 22, xp_required: 16650 }, { level: 23, xp_required: 18600 }, { level: 24, xp_required: 20700 },
+  { level: 25, xp_required: 22950 }, { level: 26, xp_required: 25350 }, { level: 27, xp_required: 27900 },
+  { level: 28, xp_required: 30600 }, { level: 29, xp_required: 33450 }, { level: 30, xp_required: 36450 },
+]
+
 let _levelThresholdsCache = null
 let _levelThresholdsAt = 0
 
-/**
- * Obtiene los umbrales de nivel desde la base de datos (con cache)
- * @param {boolean} force - Si es true, fuerza la recarga desde la BD ignorando cache
- * @returns {Array} [{ level: 1, xp_required: 0 }, { level: 2, xp_required: 100 }, ...]
- */
 export async function fetchLevelThresholds(force = false) {
   const now = Date.now()
-  if (!force && _levelThresholdsCache && (now - _levelThresholdsAt < 60_000)) {
+  if (!force && _levelThresholdsCache && _levelThresholdsCache.length > 0 && (now - _levelThresholdsAt < 60_000)) {
     return _levelThresholdsCache
   }
-  const { data, error } = await supabase.from('level_thresholds').select('level, xp_required').order('level', { ascending: true })
-  if (error) return []
-  _levelThresholdsCache = Array.isArray(data) ? data : []
-  _levelThresholdsAt = now
+  try {
+    const { data, error } = await supabase.from('level_thresholds').select('level, xp_required').order('level', { ascending: true })
+    if (!error && Array.isArray(data) && data.length > 0) {
+      _levelThresholdsCache = data
+      _levelThresholdsAt = now
+      return _levelThresholdsCache
+    }
+  } catch {}
+  if (!_levelThresholdsCache || _levelThresholdsCache.length === 0) {
+    _levelThresholdsCache = FALLBACK_THRESHOLDS
+    _levelThresholdsAt = now
+  }
   return _levelThresholdsCache
+}
+
+fetchLevelThresholds()
+
+function getThresholds() {
+  if (_levelThresholdsCache && _levelThresholdsCache.length > 0) return _levelThresholdsCache
+  return FALLBACK_THRESHOLDS
+}
+
+export function computeProgressPercentSync(levelInfo) {
+  if (!levelInfo) return 0
+  if (levelInfo.next_level == null) return 100
+
+  const nextXp = Number(levelInfo.next_level_xp) || 0
+  if (nextXp <= 0) return 0
+
+  const thresholds = getThresholds()
+  const lvl = Number(levelInfo.level) || 1
+  const t = thresholds.find(t => Number(t.level) === lvl)
+  const currXp = Number(t?.xp_required) || 0
+  const range = nextXp - currXp
+  if (range <= 0) return 100
+  const earned = (Number(levelInfo.xp_total) || 0) - currXp
+  return Math.max(0, Math.min(100, Math.round((earned / range) * 100)))
+}
+
+export async function captureLevelSnapshot() {
+  const { data, error } = await getUserLevel(null)
+  const info = Array.isArray(data) ? data[0] : data
+  await fetchLevelThresholds()
+  const pct = computeProgressPercentSync(info)
+  return {
+    level: info?.level ?? null,
+    xpTotal: info?.xp_total ?? 0,
+    percent: pct,
+    xpToNext: info?.xp_to_next ?? null,
+  }
 }
 
 /**

@@ -46,8 +46,9 @@ export default {
 </script>
 
 <template>
+  <Teleport to="body">
   <Transition name="modal">
-    <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="$emit('close')">
+    <div v-if="open" class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-4 pt-24 pb-6" @click.self="$emit('close')">
       <!-- Backdrop -->
       <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
       
@@ -100,6 +101,16 @@ export default {
               <span>{{ tip }}</span>
             </li>
           </ul>
+        </div>
+
+        <!-- Star rating explanation -->
+        <div class="mb-6 rounded-xl border border-white/5 bg-white/[0.02] p-3">
+          <div class="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Estrellas</div>
+          <div class="flex items-center gap-4 text-xs text-slate-400">
+            <span>⭐ 50%+ aciertos</span>
+            <span>⭐⭐ 80%+ aciertos</span>
+            <span>⭐⭐⭐ 100% aciertos</span>
+          </div>
         </div>
 
         <!-- Difficulty Selector -->
@@ -175,6 +186,7 @@ export default {
       </div>
     </div>
   </Transition>
+  </Teleport>
 </template>
 
 <style scoped>

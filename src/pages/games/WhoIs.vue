@@ -2,7 +2,9 @@
 import AppH1 from '../../components/common/AppH1.vue'
 import { initState, loadPlayers, nextRound, submitGuess, blurForLives, posLabel, countryFlag, teamLogo } from '../../services/guess-player-typing'
 import { initScoring, GAME_SCORING } from '../../services/scoring'
-import { getUserLevel } from '../../services/xp'
+import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
+import { awardXpBatch } from '../../services/game-xp'
+import { createDailyRng } from '../../services/seeded-random'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
 import { gameSummaryBlurb } from '../../services/games'
 import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
@@ -163,24 +165,20 @@ export default {
         } else {
           setTimeout(() => announceGameLoss(), 100)
         }
+        if (this.allowXp && this.xpEarned > 0) {
+          await awardXpBatch({ gameCode: 'who-is', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
+        }
         try {
           await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, maxStreak: this.maxStreak, playerId: this.current?.id })
         } catch (e) { console.error('[WhoIs complete]', e) }
-        // fetch xp/level after
         try {
-          const { data } = await getUserLevel(null)
-          const info = Array.isArray(data) ? data[0] : data
-          this.levelAfter = info?.level ?? null
-          this.xpAfterTotal = info?.xp_total ?? 0
-          const next = info?.next_level_xp || 0
-          const toNext = info?.xp_to_next ?? 0
-          const completed = next ? (next - toNext) : next
-          this.afterPercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
-          this.xpToNextAfter = toNext ?? null
-          
-          // 🎊 Level up celebration!
-          if (this.levelAfter && this.levelBefore && this.levelAfter > this.levelBefore) {
-            setTimeout(() => celebrateGameLevelUp(this.levelAfter), 500)
+          const snap = await captureLevelSnapshot()
+          this.levelAfter = snap.level
+          this.xpAfterTotal = snap.xpTotal
+          this.afterPercent = snap.percent
+          this.xpToNextAfter = snap.xpToNext
+          if (snap.level && this.levelBefore && snap.level > this.levelBefore) {
+            setTimeout(() => celebrateGameLevelUp(snap.level), 500)
           }
         } catch {}
         // Delay summary so el acierto no se tapa enseguida
@@ -231,15 +229,13 @@ export default {
       try {
         // capture level/xp before
         try {
-          const { data } = await getUserLevel(null)
-          const info = Array.isArray(data) ? data[0] : data
-          this.levelBefore = info?.level ?? null
-          this.xpBeforeTotal = info?.xp_total ?? 0
-          const next = info?.next_level_xp || 0
-          const toNext = info?.xp_to_next ?? 0
-          const completed = next ? (next - toNext) : next
-          this.beforePercent = next ? Math.max(0, Math.min(100, Math.round((completed / next) * 100))) : 100
+          const snap = await captureLevelSnapshot()
+          this.levelBefore = snap.level
+          this.xpBeforeTotal = snap.xpTotal
+          this.beforePercent = snap.percent
         } catch {}
+        this.rng = createDailyRng('who-is')
+        this.difficultyConfig = config
         this.sessionId = await startChallengeSession('who-is', null)
         this.overlayOpen = false
       } catch (e) {
@@ -251,18 +247,17 @@ export default {
 </script>
 
 <template>
-  <GamePreviewModal
-    :open="overlayOpen && mode === 'challenge' && !reviewMode"
-    gameName="¿Quién es?"
-    gameDescription="Adiviná el jugador con 3 vidas"
-    :mechanic="gameMetadata.mechanic"
-    :videoUrl="gameMetadata.videoUrl"
-    :tips="gameMetadata.tips"
-    @close="overlayOpen = false"
-    @start="startChallenge"
-  />
-
   <section class="grid place-items-center min-h-[600px]">
+    <GamePreviewModal
+      :open="overlayOpen && mode === 'challenge' && !reviewMode"
+      gameName="¿Quién es?"
+      gameDescription="Adiviná el jugador con 3 vidas"
+      :mechanic="gameMetadata.mechanic"
+      :videoUrl="gameMetadata.videoUrl"
+      :tips="gameMetadata.tips"
+      @close="overlayOpen = false"
+      @start="startChallenge"
+    />
     <div class="space-y-4 w-full max-w-4xl">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <AppH1 class="text-3xl md:text-4xl flex-none">¿Quién es?</AppH1>

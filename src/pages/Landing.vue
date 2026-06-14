@@ -69,13 +69,18 @@ async function loadTodayByLeague() {
 
 async function load() {
   state.loading = true
-  const { data: { user } } = await supabase.auth.getUser()
-  state.isAuthenticated = !!user
-  const allGames = await fetchGames()
-  state.featuredGames = (allGames || [])
-    .filter(g => !!g?.slug && gameRouteForSlug(g.slug) !== '/games')
-    .slice(-4)
-  state.loading = false
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    state.isAuthenticated = !!user
+    const allGames = await fetchGames()
+    state.featuredGames = (allGames || [])
+      .filter(g => !!g?.slug && gameRouteForSlug(g.slug) !== '/games')
+      .slice(-4)
+  } catch (e) {
+    console.error('Landing load error:', e)
+  } finally {
+    state.loading = false
+  }
   loadTodayByLeague()
 }
 

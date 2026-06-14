@@ -8,31 +8,36 @@ export default {
   computed: {
     icon() {
       if (this.reward.type === 'achievement') return { emoji: '🏆', color: 'emerald' }
+      if (this.reward.type === 'milestone') return { emoji: '🏅', color: this.reward.data?.color || 'amber' }
       if (this.reward.type === 'levelUp') return { emoji: '⬆️', color: 'yellow' }
       if (this.reward.type === 'streak') return { emoji: '🔥', color: 'orange' }
       return { emoji: '🎁', color: 'cyan' }
     },
     title() {
       if (this.reward.type === 'achievement') return this.reward.data?.title || 'Logro desbloqueado'
+      if (this.reward.type === 'milestone') return `Rango: ${this.reward.data?.tier || '?'}`
       if (this.reward.type === 'levelUp') return `Nivel ${this.reward.data?.level || '?'}`
       if (this.reward.type === 'streak') return `Racha de ${this.reward.data?.days || '?'} días`
       return 'Recompensa'
     },
     subtitle() {
       if (this.reward.type === 'achievement') return 'Logro'
+      if (this.reward.type === 'milestone') return `Nivel ${this.reward.data?.level} alcanzado`
       if (this.reward.type === 'levelUp') return 'Subida de nivel'
       if (this.reward.type === 'streak') return 'Racha diaria'
       return 'Recompensa'
     },
     points() {
-      return this.reward.data?.points || 0
+      return this.reward.data?.xpBonus || this.reward.data?.points || 0
     },
     borderColor() {
       const c = this.icon.color
       return {
         emerald: 'border-emerald-500/30 hover:border-emerald-500/50',
         yellow: 'border-yellow-500/30 hover:border-yellow-500/50',
+        amber: 'border-amber-500/30 hover:border-amber-500/50',
         orange: 'border-orange-500/30 hover:border-orange-500/50',
+        red: 'border-red-500/30 hover:border-red-500/50',
         cyan: 'border-cyan-500/30 hover:border-cyan-500/50',
       }[c] || 'border-white/15'
     }
@@ -49,7 +54,9 @@ export default {
       :class="{
         'bg-emerald-500/15': icon.color === 'emerald',
         'bg-yellow-500/15': icon.color === 'yellow',
+        'bg-amber-500/15': icon.color === 'amber',
         'bg-orange-500/15': icon.color === 'orange',
+        'bg-red-500/15': icon.color === 'red',
         'bg-cyan-500/15': icon.color === 'cyan',
       }"
     >
