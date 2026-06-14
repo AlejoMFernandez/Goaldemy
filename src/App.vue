@@ -9,6 +9,7 @@ import AchievementUnlockOverlay from './components/rewards/AchievementUnlockOver
 import LevelUpOverlay from './components/rewards/LevelUpOverlay.vue';
 import ClaimNotificationStack from './components/rewards/ClaimNotificationStack.vue';
 import { authReady } from './services/auth';
+import { setSuppressOverlays } from './stores/notifications';
 
 export default {
   name: 'App',
@@ -36,6 +37,9 @@ export default {
   async mounted() {
     try { await authReady; } finally { this.authBooting = false }
     import('./services/players').then(m => m.initializePlayers?.()).catch(() => {})
+    this.$watch(() => this.$route?.path, () => {
+      setSuppressOverlays(false)
+    })
   }
 }
 </script>

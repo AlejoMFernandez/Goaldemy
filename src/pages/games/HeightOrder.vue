@@ -81,9 +81,10 @@ export default {
     async setup() {
       this.locked = false
       const all = (await getAllPlayersAsync()).filter(p => Number.isFinite(p?.height))
-      const picks = sampleDistinct(all, 5, new Set(), this.rng)
+      const count = this.difficultyConfig?.itemCount || 5
+      const picks = sampleDistinct(all, count, new Set(), this.rng)
       this.items = picks
-      this.slots = [null, null, null, null, null]
+      this.slots = new Array(count).fill(null)
       this.answered = false
       this.showSummary = false
       this.selectedIndex = null
@@ -219,6 +220,7 @@ export default {
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="Ordenar por altura"
+      gameType="ordering"
       gameDescription="Ordená 5 jugadores del más alto al más bajo"
       :mechanic="gameMetadata.mechanic"
       :videoUrl="gameMetadata.videoUrl"

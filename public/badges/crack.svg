@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" fill="none">
+  <defs>
+    <linearGradient id="ck-bg" x1="60" y1="0" x2="60" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5b21b6"/>
+      <stop offset="100%" stop-color="#2e1065"/>
+    </linearGradient>
+    <linearGradient id="ck-shine" x1="30" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ck-crown" x1="60" y1="36" x2="60" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#ck-bg)" stroke="#a78bfa" stroke-width="2.5"/>
+  <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#ck-shine)"/>
+  <path d="M60 16L100 32V72C100 94 80 116 60 125C40 116 20 94 20 72V32L60 16Z" fill="none" stroke="#a78bfa" stroke-width="0.8" opacity="0.3"/>
+  <!-- Crown -->
+  <path d="M34 70L34 54L44 62L52 42L60 56L68 42L76 62L86 54L86 70Z" fill="none" stroke="url(#ck-crown)" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Crown base band -->
+  <rect x="34" y="70" width="52" height="8" rx="1" fill="none" stroke="#a78bfa" stroke-width="2"/>
+  <!-- Crown jewels -->
+  <circle cx="44" cy="62" r="3" fill="#c4b5fd" opacity="0.5"/>
+  <circle cx="60" cy="56" r="3.5" fill="#c4b5fd" opacity="0.6"/>
+  <circle cx="76" cy="62" r="3" fill="#c4b5fd" opacity="0.5"/>
+  <!-- Crown tips diamonds -->
+  <polygon points="52,42 54,45 52,48 50,45" fill="#a78bfa" opacity="0.7"/>
+  <polygon points="60,36 62,39 60,42 58,39" fill="#c4b5fd" opacity="0.5"/>
+  <polygon points="68,42 70,45 68,48 66,45" fill="#a78bfa" opacity="0.7"/>
+  <!-- Band gems -->
+  <circle cx="46" cy="74" r="2" fill="#a78bfa" opacity="0.4"/>
+  <circle cx="60" cy="74" r="2.5" fill="#c4b5fd" opacity="0.5"/>
+  <circle cx="74" cy="74" r="2" fill="#a78bfa" opacity="0.4"/>
+  <!-- Five stars -->
+  <polygon points="30,102 31.5,106 36,106 32.5,108.5 33.5,112.5 30,110 26.5,112.5 27.5,108.5 24,106 28.5,106" fill="#a78bfa" opacity="0.35"/>
+  <polygon points="45,98 46.5,102 51,102 47.5,104.5 48.5,108.5 45,106 41.5,108.5 42.5,104.5 39,102 43.5,102" fill="#a78bfa" opacity="0.45"/>
+  <polygon points="60,96 61.5,100 66,100 62.5,102.5 63.5,106.5 60,104 56.5,106.5 57.5,102.5 54,100 58.5,100" fill="#c4b5fd" opacity="0.6"/>
+  <polygon points="75,98 76.5,102 81,102 77.5,104.5 78.5,108.5 75,106 71.5,108.5 72.5,104.5 69,102 73.5,102" fill="#a78bfa" opacity="0.45"/>
+  <polygon points="90,102 91.5,106 96,106 92.5,108.5 93.5,112.5 90,110 86.5,112.5 87.5,108.5 84,106 88.5,106" fill="#a78bfa" opacity="0.35"/>
+</svg>

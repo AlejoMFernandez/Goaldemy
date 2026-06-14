@@ -1,1 +1,31 @@
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#10b981'/><stop offset='100%' stop-color='#34d399'/></linearGradient></defs><rect width='96' height='96' rx='16' fill='#0b1220'/><g transform='translate(8,8)'><rect width='80' height='80' rx='16' fill='url(#g)' opacity='0.2'/><circle cx='40' cy='40' r='22' fill='none' stroke='#34d399' stroke-width='6'/><circle cx='40' cy='40' r='6' fill='#34d399'/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" fill="none">
+  <defs>
+    <linearGradient id="af-bg" x1="60" y1="0" x2="60" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#065f46"/>
+      <stop offset="100%" stop-color="#022c22"/>
+    </linearGradient>
+    <linearGradient id="af-shine" x1="30" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- Shield shape -->
+  <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#af-bg)" stroke="#34d399" stroke-width="2.5"/>
+  <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#af-shine)"/>
+  <!-- Inner border -->
+  <path d="M60 16L100 32V72C100 94 80 116 60 125C40 116 20 94 20 72V32L60 16Z" fill="none" stroke="#34d399" stroke-width="0.8" opacity="0.3"/>
+  <!-- Football -->
+  <circle cx="60" cy="60" r="22" fill="none" stroke="#34d399" stroke-width="2.5"/>
+  <circle cx="60" cy="60" r="8" fill="none" stroke="#34d399" stroke-width="1.5" opacity="0.7"/>
+  <!-- Pentagon lines -->
+  <line x1="60" y1="38" x2="60" y2="52" stroke="#34d399" stroke-width="1.2" opacity="0.5"/>
+  <line x1="60" y1="68" x2="60" y2="82" stroke="#34d399" stroke-width="1.2" opacity="0.5"/>
+  <line x1="38" y1="60" x2="52" y2="60" stroke="#34d399" stroke-width="1.2" opacity="0.5"/>
+  <line x1="68" y1="60" x2="82" y2="60" stroke="#34d399" stroke-width="1.2" opacity="0.5"/>
+  <line x1="45" y1="44" x2="54" y2="53" stroke="#34d399" stroke-width="1" opacity="0.4"/>
+  <line x1="75" y1="44" x2="66" y2="53" stroke="#34d399" stroke-width="1" opacity="0.4"/>
+  <line x1="45" y1="76" x2="54" y2="67" stroke="#34d399" stroke-width="1" opacity="0.4"/>
+  <line x1="75" y1="76" x2="66" y2="67" stroke="#34d399" stroke-width="1" opacity="0.4"/>
+  <!-- Star above -->
+  <polygon points="60,92 63,99 70,99 64,104 66,111 60,107 54,111 56,104 50,99 57,99" fill="#34d399" opacity="0.6"/>
+</svg>

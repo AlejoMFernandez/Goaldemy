@@ -50,7 +50,7 @@ export default {
   <Transition name="modal">
     <div v-if="open" class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-4 pt-24 pb-6" @click.self="$emit('close')">
       <!-- Backdrop -->
-      <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+      <div class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
       
       <!-- Modal -->
       <div class="relative w-full max-w-2xl rounded-2xl border border-white/20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 shadow-2xl">
@@ -107,9 +107,9 @@ export default {
         <div class="mb-6 rounded-xl border border-white/5 bg-white/[0.02] p-3">
           <div class="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Estrellas</div>
           <div class="flex items-center gap-4 text-xs text-slate-400">
-            <span>⭐ 50%+ aciertos</span>
-            <span>⭐⭐ 80%+ aciertos</span>
-            <span>⭐⭐⭐ 100% aciertos</span>
+            <span class="inline-flex items-center gap-1"><svg class="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> 50%+</span>
+            <span class="inline-flex items-center gap-1"><svg class="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> 80%+</span>
+            <span class="inline-flex items-center gap-1"><svg class="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> 100%</span>
           </div>
         </div>
 

@@ -7,6 +7,7 @@ import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
 import { createDailyRng } from '../../services/seeded-random'
 import { celebrateCorrect, checkEarlyWin, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
+import { playTimeUpSound } from '../../services/sounds'
 
 import { getGameMetadata } from '../../services/games'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
@@ -141,15 +142,15 @@ export default {
           if (this.timeLeft <= 0) {
             this.timeOver = true
             clearInterval(this.timer)
+            playTimeUpSound()
             const result = (this.corrects || 0) >= 10 ? 'win' : 'loss'
-            
-            // 🎉 Celebrate based on result
+
             if (result === 'win') {
               setTimeout(() => celebrateGameWin(), 100)
             } else {
               setTimeout(() => announceGameLoss(), 100)
             }
-            
+
             this.finishChallenge(result)
           }
         }, 1000)
@@ -269,7 +270,14 @@ export default {
           @close="showSummary = false"
         />
         
-        <div v-if="timeOver && mode==='challenge'" class="mt-4 text-center text-amber-300 text-sm font-medium">⏱ Tiempo agotado. ¡Buen intento!</div>
+        <Transition name="time-over-fade">
+          <div v-if="timeOver && mode==='challenge'" class="mt-4 flex items-center justify-center gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2.5">
+            <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-sm font-semibold text-amber-300">Tiempo agotado</span>
+          </div>
+        </Transition>
       </div>
     </div>
   </section>
@@ -283,6 +291,8 @@ export default {
   opacity: 0;
   transform: translateY(8px) scale(0.98);
 }
+.time-over-fade-enter-active { transition: opacity 0.4s ease, transform 0.4s ease; }
+.time-over-fade-enter-from { opacity: 0; transform: translateY(6px); }
 </style>
 
 

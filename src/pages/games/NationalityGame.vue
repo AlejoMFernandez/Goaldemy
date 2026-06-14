@@ -8,6 +8,7 @@ import { awardXpBatch } from '../../services/game-xp'
 import { createDailyRng } from '../../services/seeded-random'
 import { gameSummaryBlurb, getGameMetadata } from '../../services/games'
 import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp, GAME_TYPES } from '../../services/game-celebrations'
+import { playTimeUpSound } from '../../services/sounds'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 import CircularTimer from '../../components/game/CircularTimer.vue'
@@ -141,8 +142,8 @@ export default {
           if (this.timeLeft <= 0) {
             this.timeOver = true
             clearInterval(this.timer)
-            
-            // Determine result and celebrate
+            playTimeUpSound()
+
             const result = (this.corrects || 0) >= 10 ? 'win' : 'loss'
             
             if (result === 'win') {
@@ -207,7 +208,7 @@ export default {
   <section class="grid place-items-center min-h-[600px]">
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
-      :gameType="'TIMED'"
+      gameType="timed"
       gameName="Nacionalidad correcta"
       gameDescription="Identificá la nacionalidad correcta de cada jugador"
       :mechanic="gameMetadata.mechanic"
@@ -255,7 +256,14 @@ export default {
           <div v-if="mode==='challenge'" class="absolute left-4 top-4 z-20 pointer-events-none">
             <CircularTimer :seconds="Math.max(0, timeLeft)" :total="chosenSeconds" />
           </div>
-          <div v-if="timeOver && mode==='challenge'" class="mt-4 text-center text-amber-300 text-sm font-medium">⏱ Tiempo agotado. ¡Buen intento!</div>
+          <Transition name="time-over-fade">
+            <div v-if="timeOver && mode==='challenge'" class="mt-4 flex items-center justify-center gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2.5">
+              <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-sm font-semibold text-amber-300">Tiempo agotado</span>
+            </div>
+          </Transition>
           
           <!-- Cinematic summary -->
           <GameSummaryPopup
@@ -294,6 +302,8 @@ export default {
   .streak-enter-leave-active { transition: all 0.15s ease; }
   .streak-enter-enter-from { opacity: 0; transform: scale(0.5); }
   .streak-enter-leave-to { opacity: 0; transform: scale(0.8); }
+  .time-over-fade-enter-active { transition: opacity 0.4s ease, transform 0.4s ease; }
+  .time-over-fade-enter-from { opacity: 0; transform: translateY(6px); }
   </style>
 
 

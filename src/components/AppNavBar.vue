@@ -689,17 +689,6 @@ export default {
                                                     <div class="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
                                                         <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (progressPercent||0) + '%' }"></div>
                                                     </div>
-                                                    <div class="mt-1 text-[11px] text-slate-400">
-                                                        <template v-if="levelInfo.next_level_xp">
-                                                            Faltan {{ levelInfo.xp_to_next }} XP para el nivel {{ (levelInfo.next_level ?? (levelInfo.level||0)+1) }}
-                                                        </template>
-                                                        <template v-else-if="levelInfo.level >= 30">
-                                                            Nivel máximo alcanzado
-                                                        </template>
-                                                        <template v-else>
-                                                            Nivel {{ levelInfo.level ?? 1 }} — {{ xpNow }} XP
-                                                        </template>
-                                                    </div>
                                                 </div>
                                                 <div v-else>
                                                     <div class="mt-1 flex items-center justify-between text-xs text-slate-300">

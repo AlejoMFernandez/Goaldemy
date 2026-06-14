@@ -252,6 +252,7 @@ export default {
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="¿Quién es?"
       gameDescription="Adiviná el jugador con 3 vidas"
+      gameType="lives"
       :mechanic="gameMetadata.mechanic"
       :videoUrl="gameMetadata.videoUrl"
       :tips="gameMetadata.tips"

@@ -187,9 +187,9 @@ export function pushAchievementToast({ title, iconUrl, earnedAt, points = null }
   return queueAchievementOverlay({ title, iconUrl, earnedAt, points: points || 0 })
 }
 
-export function pushLevelUpToast({ level }) {
-  const currentLevel = parseInt(localStorage.getItem('gl:last_known_level') || '1')
-  return queueLevelUpOverlay({ oldLevel: currentLevel, newLevel: level })
+export function pushLevelUpToast({ level, oldLevel }) {
+  const resolvedOld = oldLevel ?? parseInt(localStorage.getItem('gl:last_known_level') || '1')
+  return queueLevelUpOverlay({ oldLevel: resolvedOld, newLevel: level })
 }
 
 export function setSuppressOverlays(val) { state.suppressOverlays = !!val }

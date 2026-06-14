@@ -1,1 +1,33 @@
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#ef4444'/><stop offset='100%' stop-color='#fb7185'/></linearGradient></defs><rect width='96' height='96' rx='16' fill='#0b1220'/><g transform='translate(8,8)'><rect width='80' height='80' rx='16' fill='url(#g)' opacity='0.2'/><path d='M28 28 h24 v24 h-24 z' fill='none' stroke='#ef4444' stroke-width='6'/><circle cx='40' cy='40' r='6' fill='#ef4444'/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" fill="none">
+  <defs>
+    <linearGradient id="rv-bg" x1="60" y1="0" x2="60" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#991b1b"/>
+      <stop offset="100%" stop-color="#450a0a"/>
+    </linearGradient>
+    <linearGradient id="rv-shine" x1="30" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f87171" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="rv-flame" x1="60" y1="85" x2="60" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="50%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+  </defs>
+  <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#rv-bg)" stroke="#f87171" stroke-width="2.5"/>
+  <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#rv-shine)"/>
+  <path d="M60 16L100 32V72C100 94 80 116 60 125C40 116 20 94 20 72V32L60 16Z" fill="none" stroke="#f87171" stroke-width="0.8" opacity="0.3"/>
+  <!-- Flames -->
+  <path d="M60 36C54 44 42 52 42 66C42 76 50 84 60 84C70 84 78 76 78 66C78 52 66 44 60 36Z" fill="none" stroke="url(#rv-flame)" stroke-width="2.5"/>
+  <path d="M60 48C56 54 48 58 48 66C48 72 54 78 60 78C66 78 72 72 72 66C72 58 64 54 60 48Z" fill="none" stroke="#f97316" stroke-width="1.5" opacity="0.6"/>
+  <!-- Inner flame core -->
+  <path d="M60 56C58 60 54 62 54 66C54 70 56 72 60 72C64 72 66 70 66 66C66 62 62 60 60 56Z" fill="#fbbf24" opacity="0.4"/>
+  <!-- Football in flame -->
+  <circle cx="60" cy="66" r="6" fill="none" stroke="#fbbf24" stroke-width="1.5" opacity="0.7"/>
+  <line x1="60" y1="60" x2="60" y2="72" stroke="#fbbf24" stroke-width="0.8" opacity="0.5"/>
+  <line x1="54" y1="66" x2="66" y2="66" stroke="#fbbf24" stroke-width="0.8" opacity="0.5"/>
+  <!-- Three stars -->
+  <polygon points="42,100 44,105 49,105 45,108 46,113 42,110 38,113 39,108 35,105 40,105" fill="#f87171" opacity="0.5"/>
+  <polygon points="60,96 62,101 67,101 63,104 64,109 60,106 56,109 57,104 53,101 58,101" fill="#f87171" opacity="0.6"/>
+  <polygon points="78,100 80,105 85,105 81,108 82,113 78,110 74,113 75,108 71,105 76,105" fill="#f87171" opacity="0.5"/>
+</svg>

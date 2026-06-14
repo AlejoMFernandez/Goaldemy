@@ -39,7 +39,7 @@ export function initLevelUpRealtime() {
           if (!row || row.user_id !== currentUserId) return
           const newLevel = await fetchLevel(currentUserId)
           if (newLevel && lastKnownLevel && newLevel > lastKnownLevel) {
-            pushLevelUpToast({ level: newLevel })
+            pushLevelUpToast({ level: newLevel, oldLevel: lastKnownLevel })
           }
           lastKnownLevel = newLevel ?? lastKnownLevel
           try { if (lastKnownLevel != null) localStorage.setItem(storageKeyForUser(currentUserId), String(lastKnownLevel)) } catch {}

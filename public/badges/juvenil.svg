@@ -1,1 +1,29 @@
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#f59e0b'/><stop offset='100%' stop-color='#fbbf24'/></linearGradient></defs><rect width='96' height='96' rx='16' fill='#0b1220'/><g transform='translate(8,8)'><rect width='80' height='80' rx='16' fill='url(#g)' opacity='0.2'/><path d='M20 56 L40 24 L60 56 Z' fill='none' stroke='#fbbf24' stroke-width='6' stroke-linejoin='round'/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" fill="none">
+  <defs>
+    <linearGradient id="jv-bg" x1="60" y1="0" x2="60" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#92400e"/>
+      <stop offset="100%" stop-color="#451a03"/>
+    </linearGradient>
+    <linearGradient id="jv-shine" x1="30" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#jv-bg)" stroke="#fbbf24" stroke-width="2.5"/>
+  <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#jv-shine)"/>
+  <path d="M60 16L100 32V72C100 94 80 116 60 125C40 116 20 94 20 72V32L60 16Z" fill="none" stroke="#fbbf24" stroke-width="0.8" opacity="0.3"/>
+  <!-- Football boot -->
+  <path d="M38 72L42 52L56 44L64 44L72 48L78 56L82 68L80 76L72 80L38 80Z" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M38 76L38 80L72 80L80 76" fill="none" stroke="#fbbf24" stroke-width="1.8" opacity="0.7"/>
+  <!-- Studs -->
+  <line x1="44" y1="80" x2="44" y2="85" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="54" y1="80" x2="54" y2="85" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="64" y1="80" x2="64" y2="85" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <!-- Boot lace details -->
+  <line x1="48" y1="54" x2="62" y2="48" stroke="#fbbf24" stroke-width="1" opacity="0.4"/>
+  <line x1="46" y1="60" x2="66" y2="52" stroke="#fbbf24" stroke-width="1" opacity="0.4"/>
+  <!-- Star -->
+  <polygon points="60,96 62,101 67,101 63,104 64,109 60,106 56,109 57,104 53,101 58,101" fill="#fbbf24" opacity="0.6"/>
+  <circle cx="42" cy="36" r="2" fill="#fbbf24" opacity="0.3"/>
+  <circle cx="78" cy="36" r="1.5" fill="#fbbf24" opacity="0.25"/>
+</svg>

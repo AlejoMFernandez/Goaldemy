@@ -10,6 +10,7 @@ const SOUND_FILES = {
   combo: '/sounds/combo.mp3',
   claim: '/sounds/reward-claim.mp3',
   starReveal: '/sounds/star-reveal.mp3',
+  timeUp: '/sounds/time-up.mp3',
 }
 
 class SoundManager {
@@ -131,6 +132,10 @@ class SoundManager {
         makeOsc(659.25, 'triangle', 0.5, 0.2)
         makeOsc(783.99, 'triangle', 0.6, 0.3, 0.1)
         break
+      case 'timeUp':
+        makeOsc(3200, 'sine', 0.5, 0.18)
+        makeOsc(3200, 'sine', 0.6, 0.25, 0.22)
+        break
     }
   }
 
@@ -172,4 +177,5 @@ export const playClickSound = () => soundManager.play('click')
 export const playComboSound = () => soundManager.play('combo')
 export const playClaimSound = () => soundManager.play('claim')
 export const playStarRevealSound = () => soundManager.play('starReveal')
+export const playTimeUpSound = () => soundManager.play('timeUp')
 export const toggleSound = () => soundManager.toggle()

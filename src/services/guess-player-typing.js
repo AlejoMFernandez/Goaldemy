@@ -92,7 +92,7 @@ export function submitGuess(state, confettiHost) {
   const val = normalize(state.guess)
   if (!val || val.length < state.minGuessLen) return false
   const target = normalize(state.current?.name)
-  const correct = target.includes(val)
+  const correct = target.includes(val) || val.includes(target)
   if (correct) {
     state.answered = true
     const nextStreak = state.streak + 1

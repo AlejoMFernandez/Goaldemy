@@ -1,6 +1,7 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { getTierForLevel, getNextTier } from '../../services/tiers'
+import LevelProgressionModal from './LevelProgressionModal.vue'
 
 const props = defineProps({
   levelInfo: { type: Object, default: null },
@@ -10,6 +11,8 @@ const props = defineProps({
   achievementsCount: { type: Number, default: 0 },
   topRank: { type: Number, default: null },
 })
+
+const showProgression = ref(false)
 
 const level = computed(() => Number(props.levelInfo?.level) || 1)
 const currentTier = computed(() => getTierForLevel(level.value))
@@ -42,7 +45,18 @@ const colors = computed(() => tierColorMap[currentTier.value?.color] || tierColo
 </script>
 
 <template>
-  <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur p-6 shadow-xl">
+  <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur p-6 shadow-xl relative">
+    <!-- Info button -->
+    <button
+      @click="showProgression = true"
+      class="absolute top-3 right-3 h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 grid place-items-center transition-colors"
+      title="Ver todos los niveles"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 text-slate-300">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
+      </svg>
+    </button>
+
     <div v-if="loading" class="text-center py-8 text-slate-400">
       <div class="animate-pulse">Cargando progreso...</div>
     </div>
@@ -123,22 +137,22 @@ const colors = computed(() => tierColorMap[currentTier.value?.color] || tierColo
 
       <!-- XP progress to next level -->
       <div class="rounded-xl border border-white/10 bg-slate-800/30 p-4">
-        <p class="text-[10px] uppercase tracking-wider text-slate-400 mb-2">Progreso al próximo nivel</p>
+        <div class="flex items-center justify-between text-[10px] uppercase tracking-wider text-slate-400 mb-2">
+          <span>Progreso al próximo nivel</span>
+          <span class="text-slate-300 normal-case tracking-normal">{{ progressPercent }}%</span>
+        </div>
         <div class="h-3 w-full rounded-full bg-slate-900/50 overflow-hidden shadow-inner border border-white/5">
           <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700 shadow-lg" :style="{ width: progressPercent + '%' }"></div>
         </div>
-        <div class="mt-2 flex items-center justify-between text-xs">
-          <span class="text-slate-400">{{ progressPercent }}%</span>
-          <span class="font-semibold" :class="levelInfo?.xp_to_next <= 100 ? 'text-emerald-300' : 'text-slate-300'">
-            <template v-if="levelInfo && levelInfo.next_level">
-              {{ levelInfo.xp_to_next }} XP → Nivel {{ levelInfo.next_level }}
-            </template>
-            <template v-else>
-              Nivel máximo alcanzado
-            </template>
-          </span>
-        </div>
       </div>
     </div>
+
+    <Teleport to="body">
+      <LevelProgressionModal
+        v-if="showProgression"
+        :current-level="level"
+        @close="showProgression = false"
+      />
+    </Teleport>
   </div>
 </template>

@@ -61,9 +61,10 @@ export async function awardXp({ amount, reason = 'correct_answer', gameId = null
           prev = raw != null ? Number(raw) : null
         } catch {}
         if (prev != null && Number.isFinite(prev) && newLevel > prev) {
-          pushLevelUpToast({ level: newLevel })
+          pushLevelUpToast({ level: newLevel, oldLevel: prev })
         }
         try { localStorage.setItem(key, String(newLevel)) } catch {}
+        try { localStorage.setItem('gl:last_known_level', String(newLevel)) } catch {}
         try { _setKnownLevelRealtime(newLevel) } catch {}
       }
     }
@@ -111,6 +112,13 @@ const FALLBACK_THRESHOLDS = [
   { level: 22, xp_required: 16650 }, { level: 23, xp_required: 18600 }, { level: 24, xp_required: 20700 },
   { level: 25, xp_required: 22950 }, { level: 26, xp_required: 25350 }, { level: 27, xp_required: 27900 },
   { level: 28, xp_required: 30600 }, { level: 29, xp_required: 33450 }, { level: 30, xp_required: 36450 },
+  { level: 31, xp_required: 39600 }, { level: 32, xp_required: 42900 }, { level: 33, xp_required: 46350 },
+  { level: 34, xp_required: 49950 }, { level: 35, xp_required: 53700 }, { level: 36, xp_required: 57600 },
+  { level: 37, xp_required: 61650 }, { level: 38, xp_required: 65850 }, { level: 39, xp_required: 70200 },
+  { level: 40, xp_required: 74700 }, { level: 41, xp_required: 79400 }, { level: 42, xp_required: 84300 },
+  { level: 43, xp_required: 89400 }, { level: 44, xp_required: 94700 }, { level: 45, xp_required: 100200 },
+  { level: 46, xp_required: 105900 }, { level: 47, xp_required: 111800 }, { level: 48, xp_required: 117900 },
+  { level: 49, xp_required: 124200 }, { level: 50, xp_required: 130700 },
 ]
 
 let _levelThresholdsCache = null
@@ -145,18 +153,23 @@ function getThresholds() {
 
 export function computeProgressPercentSync(levelInfo) {
   if (!levelInfo) return 0
-  if (levelInfo.next_level == null) return 100
-
-  const nextXp = Number(levelInfo.next_level_xp) || 0
-  if (nextXp <= 0) return 0
 
   const thresholds = getThresholds()
   const lvl = Number(levelInfo.level) || 1
-  const t = thresholds.find(t => Number(t.level) === lvl)
-  const currXp = Number(t?.xp_required) || 0
+  const maxLvl = thresholds.length > 0 ? Math.max(...thresholds.map(t => t.level)) : 50
+  if (lvl >= maxLvl) return 100
+
+  const currT = thresholds.find(t => Number(t.level) === lvl)
+  const nextT = thresholds.find(t => Number(t.level) === lvl + 1)
+  if (!currT || !nextT) return 0
+
+  const currXp = Number(currT.xp_required) || 0
+  const nextXp = Number(nextT.xp_required) || 0
   const range = nextXp - currXp
   if (range <= 0) return 100
-  const earned = (Number(levelInfo.xp_total) || 0) - currXp
+
+  const totalXp = Number(levelInfo.xp_total ?? levelInfo.xp ?? 0)
+  const earned = totalXp - currXp
   return Math.max(0, Math.min(100, Math.round((earned / range) * 100)))
 }
 
