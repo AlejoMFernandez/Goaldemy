@@ -13,7 +13,11 @@ export const GAME_TYPES = {
   TIMED: 'timed',           // Juegos con tiempo límite (30s para 10 aciertos)
   ORDERING: 'ordering',     // Juegos de ordenar jugadores (5 correctos)
   LIVES: 'lives',           // Juegos con vidas (guess player style)
-  ROUNDS: 'rounds'          // Juegos por rondas
+  ROUNDS: 'rounds',         // Juegos por rondas
+  WORDLE: 'wordle',         // Adiviná el jugador con pistas de colores
+  CHAIN: 'chain',           // Cadena de comparaciones (Higher or Lower)
+  PUZZLE: 'puzzle',         // Agrupación lógica (Connections)
+  GRID: 'grid',             // Grilla con restricciones cruzadas
 }
 
 /**

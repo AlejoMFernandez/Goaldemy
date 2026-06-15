@@ -19,6 +19,11 @@ import AgeOrder from '../pages/games/AgeOrder.vue';
 import HeightOrder from '../pages/games/HeightOrder.vue';
 import ShirtNumber from '../pages/games/ShirtNumber.vue';
 import OnceIdeal from '../pages/games/OnceIdeal.vue';
+import FootballWordle from '../pages/games/FootballWordle.vue';
+import HigherOrLower from '../pages/games/HigherOrLower.vue';
+import Connections from '../pages/games/Connections.vue';
+import FootballGrid from '../pages/games/FootballGrid.vue';
+import StatChallenge from '../pages/games/StatChallenge.vue';
 import Leaderboards from '../pages/Leaderboards.vue';
 import AboutMe from '../pages/info/AboutMe.vue';
 import AboutGoaldemy from '../pages/info/AboutGoaldemy.vue';
@@ -67,6 +72,11 @@ const routes = [
     { path: '/games/height-order', component: HeightOrder, meta: { requiresAuth: true } },
     { path: '/games/shirt-number', component: ShirtNumber, meta: { requiresAuth: true } },
     { path: '/games/once-ideal', component: OnceIdeal, meta: { requiresAuth: true } },
+    { path: '/games/football-wordle', component: FootballWordle, meta: { requiresAuth: true } },
+    { path: '/games/higher-or-lower', component: HigherOrLower, meta: { requiresAuth: true } },
+    { path: '/games/connections', component: Connections, meta: { requiresAuth: true } },
+    { path: '/games/football-grid', component: FootballGrid, meta: { requiresAuth: true } },
+    { path: '/games/stat-challenge', component: StatChallenge, meta: { requiresAuth: true } },
     { path: '/leaderboards', component: Leaderboards },
     { path: '/u/:id', component: Profile, meta: { requiresAuth: true } },
     { path: '/notifications', component: Notifications, meta: { requiresAuth: true } },

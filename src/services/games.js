@@ -68,6 +68,115 @@ export const ORDERING_DIFFICULTY_CONFIG = {
   }
 };
 
+// Configuración de dificultad para juegos WORDLE (intentos para adivinar)
+export const WORDLE_DIFFICULTY_CONFIG = {
+  [DIFFICULTY_LEVELS.EASY]: {
+    label: 'Fácil',
+    icon: '🟢',
+    guesses: 8,
+    xpCompletion: 100,
+    description: '8 intentos para adivinar'
+  },
+  [DIFFICULTY_LEVELS.NORMAL]: {
+    label: 'Normal',
+    icon: '🟡',
+    guesses: 6,
+    xpCompletion: 175,
+    description: '6 intentos para adivinar'
+  },
+  [DIFFICULTY_LEVELS.HARD]: {
+    label: 'Difícil',
+    icon: '🔴',
+    guesses: 4,
+    xpCompletion: 300,
+    description: '4 intentos para adivinar'
+  }
+};
+
+// Configuración de dificultad para juegos CHAIN (cadena de aciertos)
+export const CHAIN_DIFFICULTY_CONFIG = {
+  [DIFFICULTY_LEVELS.EASY]: {
+    label: 'Fácil',
+    icon: '🟢',
+    target: 8,
+    xpPerCorrect: 15,
+    xpCompletion: 80,
+    description: 'Cadena de 8 aciertos'
+  },
+  [DIFFICULTY_LEVELS.NORMAL]: {
+    label: 'Normal',
+    icon: '🟡',
+    target: 12,
+    xpPerCorrect: 20,
+    xpCompletion: 150,
+    description: 'Cadena de 12 aciertos'
+  },
+  [DIFFICULTY_LEVELS.HARD]: {
+    label: 'Difícil',
+    icon: '🔴',
+    target: 16,
+    xpPerCorrect: 30,
+    xpCompletion: 250,
+    description: 'Cadena de 16 aciertos'
+  }
+};
+
+// Configuración de dificultad para juegos PUZZLE (agrupación con errores limitados)
+export const PUZZLE_DIFFICULTY_CONFIG = {
+  [DIFFICULTY_LEVELS.EASY]: {
+    label: 'Fácil',
+    icon: '🟢',
+    mistakes: 4,
+    xpPerGroup: 40,
+    xpCompletion: 80,
+    description: '4 errores permitidos'
+  },
+  [DIFFICULTY_LEVELS.NORMAL]: {
+    label: 'Normal',
+    icon: '🟡',
+    mistakes: 3,
+    xpPerGroup: 50,
+    xpCompletion: 150,
+    description: '3 errores permitidos'
+  },
+  [DIFFICULTY_LEVELS.HARD]: {
+    label: 'Difícil',
+    icon: '🔴',
+    mistakes: 2,
+    xpPerGroup: 75,
+    xpCompletion: 250,
+    description: '2 errores permitidos'
+  }
+};
+
+// Configuración de dificultad para juegos GRID (intentos por celda)
+export const GRID_DIFFICULTY_CONFIG = {
+  [DIFFICULTY_LEVELS.EASY]: {
+    label: 'Fácil',
+    icon: '🟢',
+    guessesPerCell: 3,
+    xpPerCell: 20,
+    xpCompletion: 75,
+    description: '3 intentos por celda'
+  },
+  [DIFFICULTY_LEVELS.NORMAL]: {
+    label: 'Normal',
+    icon: '🟡',
+    guessesPerCell: 2,
+    xpPerCell: 30,
+    xpCompletion: 150,
+    description: '2 intentos por celda'
+  },
+  [DIFFICULTY_LEVELS.HARD]: {
+    label: 'Difícil',
+    icon: '🔴',
+    guessesPerCell: 1,
+    xpPerCell: 50,
+    xpCompletion: 300,
+    description: '1 intento por celda'
+  }
+};
+
 // Configuración de dificultad para juegos LIVES (con sistema de vidas)
 export const LIVES_DIFFICULTY_CONFIG = {
   [DIFFICULTY_LEVELS.EASY]: {
@@ -100,21 +209,22 @@ export const LIVES_DIFFICULTY_CONFIG = {
  * Obtiene la configuración de dificultad según el tipo de juego
  */
 export function getDifficultyConfig(gameType, difficulty = DIFFICULTY_LEVELS.NORMAL) {
-  if (gameType === GAME_TYPES.TIMED) {
-    return TIMED_DIFFICULTY_CONFIG[difficulty] || TIMED_DIFFICULTY_CONFIG[DIFFICULTY_LEVELS.NORMAL];
-  } else if (gameType === GAME_TYPES.ORDERING) {
-    return ORDERING_DIFFICULTY_CONFIG[difficulty] || ORDERING_DIFFICULTY_CONFIG[DIFFICULTY_LEVELS.NORMAL];
-  } else if (gameType === GAME_TYPES.LIVES) {
-    return LIVES_DIFFICULTY_CONFIG[difficulty] || LIVES_DIFFICULTY_CONFIG[DIFFICULTY_LEVELS.NORMAL];
+  const configs = {
+    [GAME_TYPES.TIMED]: TIMED_DIFFICULTY_CONFIG,
+    [GAME_TYPES.ORDERING]: ORDERING_DIFFICULTY_CONFIG,
+    [GAME_TYPES.LIVES]: LIVES_DIFFICULTY_CONFIG,
+    [GAME_TYPES.WORDLE]: WORDLE_DIFFICULTY_CONFIG,
+    [GAME_TYPES.CHAIN]: CHAIN_DIFFICULTY_CONFIG,
+    [GAME_TYPES.PUZZLE]: PUZZLE_DIFFICULTY_CONFIG,
+    [GAME_TYPES.GRID]: GRID_DIFFICULTY_CONFIG,
   }
-  // Fallback: usar configuración TIMED por defecto
-  return TIMED_DIFFICULTY_CONFIG[difficulty] || TIMED_DIFFICULTY_CONFIG[DIFFICULTY_LEVELS.NORMAL];
+  const map = configs[gameType] || TIMED_DIFFICULTY_CONFIG
+  return map[difficulty] || map[DIFFICULTY_LEVELS.NORMAL]
 }
 
 const FALLBACK_NAMES = {
   'guess-player': 'Adivina el jugador',
   'who-is': '¿Quién es?',
-  // mantener compatibilidad histórica si existieran eventos con este slug
   'quien-es': '¿Quién es?',
   'nationality': 'Nacionalidad correcta',
   'player-position': 'Posición correcta',
@@ -124,6 +234,11 @@ const FALLBACK_NAMES = {
   'height-order': 'Ordenar por altura',
   'shirt-number': 'Número de camiseta',
   'once-ideal': 'Once Ideal',
+  'football-wordle': 'Adiviná el Crack',
+  'higher-or-lower': 'Mayor o Menor',
+  'connections': 'Conexiones',
+  'football-grid': 'La Grilla',
+  'stat-challenge': 'Duelo de Stats',
 }
 
 const FALLBACK_DESC = {
@@ -138,6 +253,11 @@ const FALLBACK_DESC = {
   'height-order': 'Ordená 5 jugadores del más alto al más bajo',
   'shirt-number': 'Elegí el número de camiseta correcto',
   'once-ideal': 'Armá tu once ideal con una restricción de equipo o nacionalidad',
+  'football-wordle': 'Adiviná el jugador misterioso con pistas de colores',
+  'higher-or-lower': '¿Quién tiene más? Armá la cadena más larga',
+  'connections': 'Agrupá 16 jugadores en 4 grupos por rasgo compartido',
+  'football-grid': 'Completá la grilla 3x3 con jugadores que cumplan ambas condiciones',
+  'stat-challenge': 'Identificá al jugador a partir de sus estadísticas reales',
 }
 
 // Metadata extendida: tipo de juego, mecánica, video preview, tips
@@ -217,6 +337,56 @@ const GAME_METADATA = {
       'Eliminá opciones imposibles primero',
       'Confiá en tu intuición y responde rápido'
     ]
+  },
+  'football-wordle': {
+    type: GAME_TYPES.WORDLE,
+    mechanic: 'Adiviná al jugador misterioso antes de quedarte sin intentos',
+    videoUrl: '',
+    tips: [
+      'Empezá con un jugador muy conocido para descartar atributos',
+      'Verde = exacto, amarillo = cerca, gris = lejos',
+      'Las flechas de edad/altura/dorsal te indican si es mayor o menor'
+    ]
+  },
+  'higher-or-lower': {
+    type: GAME_TYPES.CHAIN,
+    mechanic: 'Elegí cuál jugador tiene el stat más alto y armá la cadena',
+    videoUrl: '',
+    tips: [
+      'Prestá atención a la categoría que cambia en cada ronda',
+      'Los delanteros top suelen liderar en goles',
+      'El valor de mercado favorece a los más jóvenes'
+    ]
+  },
+  'connections': {
+    type: GAME_TYPES.PUZZLE,
+    mechanic: 'Encontrá los 4 grupos de 4 jugadores con un rasgo en común',
+    videoUrl: '',
+    tips: [
+      'Buscá primero el grupo más obvio',
+      'Pensá en equipos, países, posiciones y edades',
+      'Si no estás seguro, no arriesgues — cada error cuenta'
+    ]
+  },
+  'football-grid': {
+    type: GAME_TYPES.GRID,
+    mechanic: 'Completá las 9 celdas con jugadores que cumplan fila y columna',
+    videoUrl: '',
+    tips: [
+      'Cada celda necesita un jugador que cumpla AMBAS condiciones',
+      'Empezá por las celdas más difíciles primero',
+      'Pensá en jugadores que cambiaron de equipo o selección'
+    ]
+  },
+  'stat-challenge': {
+    type: GAME_TYPES.TIMED,
+    mechanic: 'Hacé 10 aciertos antes de que se acabe el tiempo',
+    videoUrl: '',
+    tips: [
+      'Las stats reales incluyen goles, asistencias y apariciones',
+      'Fijate en los números altos — suelen ser jugadores top',
+      'Compará mentalmente las stats con jugadores conocidos'
+    ]
   }
 }
 
@@ -230,6 +400,11 @@ const KNOWN_GAMES = [
   { slug: 'height-order', name: FALLBACK_NAMES['height-order'], description: FALLBACK_DESC['height-order'], cover_url: '/games/height-order.svg' },
   { slug: 'shirt-number', name: FALLBACK_NAMES['shirt-number'], description: FALLBACK_DESC['shirt-number'], cover_url: '/games/shirt-number.svg' },
   { slug: 'once-ideal', name: FALLBACK_NAMES['once-ideal'], description: FALLBACK_DESC['once-ideal'], cover_url: '/games/once-ideal.svg' },
+  { slug: 'football-wordle', name: FALLBACK_NAMES['football-wordle'], description: FALLBACK_DESC['football-wordle'], cover_url: '/games/football-wordle.svg' },
+  { slug: 'higher-or-lower', name: FALLBACK_NAMES['higher-or-lower'], description: FALLBACK_DESC['higher-or-lower'], cover_url: '/games/higher-or-lower.svg' },
+  { slug: 'connections', name: FALLBACK_NAMES['connections'], description: FALLBACK_DESC['connections'], cover_url: '/games/connections.svg' },
+  { slug: 'football-grid', name: FALLBACK_NAMES['football-grid'], description: FALLBACK_DESC['football-grid'], cover_url: '/games/football-grid.svg' },
+  { slug: 'stat-challenge', name: FALLBACK_NAMES['stat-challenge'], description: FALLBACK_DESC['stat-challenge'], cover_url: '/games/stat-challenge.svg' },
 ]
 
 function fallbackCoverForSlug(slug) {
@@ -275,6 +450,11 @@ export function gameRouteForSlug(slug) {
     case 'height-order': return '/games/height-order'
     case 'shirt-number': return '/games/shirt-number'
     case 'once-ideal': return '/games/once-ideal'
+    case 'football-wordle': return '/games/football-wordle'
+    case 'higher-or-lower': return '/games/higher-or-lower'
+    case 'connections': return '/games/connections'
+    case 'football-grid': return '/games/football-grid'
+    case 'stat-challenge': return '/games/stat-challenge'
     default: return '/games'
   }
 }

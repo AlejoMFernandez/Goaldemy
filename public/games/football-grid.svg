@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="fg-bg" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#14532d"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="24" fill="url(#fg-bg)"/>
+  <!-- 3x3 grid -->
+  <!-- Grid lines -->
+  <line x1="80" y1="45" x2="80" y2="165" stroke="#475569" stroke-width="2"/>
+  <line x1="130" y1="45" x2="130" y2="165" stroke="#475569" stroke-width="2"/>
+  <line x1="40" y1="85" x2="170" y2="85" stroke="#475569" stroke-width="2"/>
+  <line x1="40" y1="125" x2="170" y2="125" stroke="#475569" stroke-width="2"/>
+  <!-- Filled cells -->
+  <circle cx="58" cy="65" r="14" fill="#22c55e" opacity="0.8"/>
+  <circle cx="108" cy="65" r="14" fill="#22c55e" opacity="0.8"/>
+  <circle cx="58" cy="105" r="14" fill="#22c55e" opacity="0.8"/>
+  <!-- Empty cells -->
+  <circle cx="158" cy="65" r="14" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+  <circle cx="158" cy="105" r="14" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+  <circle cx="108" cy="105" r="14" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+  <!-- Bottom row empty -->
+  <circle cx="58" cy="145" r="14" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+  <circle cx="108" cy="145" r="14" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+  <circle cx="158" cy="145" r="14" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+  <!-- Check marks in filled -->
+  <text x="58" y="70" text-anchor="middle" font-family="system-ui" font-size="14" fill="white" font-weight="700">✓</text>
+  <text x="108" y="70" text-anchor="middle" font-family="system-ui" font-size="14" fill="white" font-weight="700">✓</text>
+  <text x="58" y="110" text-anchor="middle" font-family="system-ui" font-size="14" fill="white" font-weight="700">✓</text>
+  <!-- Decorative -->
+  <circle cx="30" cy="30" r="3" fill="#22c55e" opacity="0.3"/>
+  <circle cx="170" cy="170" r="3" fill="#34d399" opacity="0.3"/>
+</svg>

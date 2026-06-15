@@ -32,4 +32,9 @@ export const GAME_SCORING = {
   'value-order': { pointsPerCorrect: 20, summaryDelayMs: 1200 },
   'age-order': { pointsPerCorrect: 20, summaryDelayMs: 1200 },
   'height-order': { pointsPerCorrect: 20, summaryDelayMs: 1200 },
+  'football-wordle': { pointsPerCorrect: 150, summaryDelayMs: 2000 },
+  'higher-or-lower': { pointsPerCorrect: 20, summaryDelayMs: 1200 },
+  'connections': { pointsPerCorrect: 50, summaryDelayMs: 1500 },
+  'football-grid': { pointsPerCorrect: 30, summaryDelayMs: 1500 },
+  'stat-challenge': { pointsPerCorrect: 15, summaryDelayMs: 0 },
 }
