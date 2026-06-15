@@ -18,7 +18,8 @@ const POS_LABELS = { 0: 'Arquero', 1: 'Defensor', 2: 'Mediocampista', 3: 'Delant
 
 function generateRound(allPlayers, rng, usedIds) {
   const withStats = allPlayers.filter(p =>
-    p.stats && (p.stats.goals > 0 || p.stats.assists > 0 || p.stats.appearances > 0) && !usedIds.has(p.id)
+    ((p.stats && (p.stats.goals > 0 || p.stats.assists > 0 || p.stats.appearances > 0)) ||
+    (p.age != null && p.height != null)) && !usedIds.has(p.id)
   )
   if (withStats.length < 4) return null
 
@@ -131,7 +132,8 @@ export default {
   methods: {
     async load() {
       const all = (await getAllPlayersAsync()).filter(p =>
-        p.stats && (p.stats.goals > 0 || p.stats.assists > 0 || p.stats.appearances > 0)
+        (p.stats && (p.stats.goals > 0 || p.stats.assists > 0 || p.stats.appearances > 0)) ||
+        (p.age != null && p.height != null)
       )
       this.allPlayers = all
       this.loading = false
@@ -301,15 +303,15 @@ export default {
 
               <div class="grid grid-cols-3 gap-3 sm:gap-5">
                 <div class="rounded-xl bg-emerald-500/10 border border-emerald-500/15 py-3 px-2">
-                  <div class="text-3xl sm:text-4xl font-display font-bold text-emerald-400">{{ currentCorrect.stats.goals }}</div>
+                  <div class="text-3xl sm:text-4xl font-display font-bold text-emerald-400">{{ currentCorrect.stats?.goals ?? '—' }}</div>
                   <div class="text-[10px] sm:text-xs text-emerald-400/60 uppercase tracking-wider mt-1">Goles</div>
                 </div>
                 <div class="rounded-xl bg-sky-500/10 border border-sky-500/15 py-3 px-2">
-                  <div class="text-3xl sm:text-4xl font-display font-bold text-sky-400">{{ currentCorrect.stats.assists }}</div>
+                  <div class="text-3xl sm:text-4xl font-display font-bold text-sky-400">{{ currentCorrect.stats?.assists ?? '—' }}</div>
                   <div class="text-[10px] sm:text-xs text-sky-400/60 uppercase tracking-wider mt-1">Asistencias</div>
                 </div>
                 <div class="rounded-xl bg-amber-500/10 border border-amber-500/15 py-3 px-2">
-                  <div class="text-3xl sm:text-4xl font-display font-bold text-amber-400">{{ currentCorrect.stats.appearances }}</div>
+                  <div class="text-3xl sm:text-4xl font-display font-bold text-amber-400">{{ currentCorrect.stats?.appearances ?? '—' }}</div>
                   <div class="text-[10px] sm:text-xs text-amber-400/60 uppercase tracking-wider mt-1">Apariciones</div>
                 </div>
               </div>

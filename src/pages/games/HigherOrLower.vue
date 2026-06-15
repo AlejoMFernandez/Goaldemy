@@ -121,15 +121,20 @@ export default {
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
 
     async load() {
-      const all = (await getAllPlayersAsync()).filter(p => p.stats && p.stats.goals != null)
+      const all = (await getAllPlayersAsync()).filter(p => p.age != null || p.height != null)
       this.allPlayers = all
       this.loading = false
       if (!this.reviewMode && this.mode !== 'challenge') this.startNewRound()
     },
 
-    pickCategory(rng) {
+    pickCategory(rng, left, right) {
       const rand = rng || Math.random
-      return CATEGORIES[Math.floor(rand() * CATEGORIES.length)]
+      const viable = CATEGORIES.filter(c => {
+        const hasData = (left && c.field(left) !== 0) || (right && c.field(right) !== 0)
+        return hasData
+      })
+      const pool = viable.length > 0 ? viable : CATEGORIES.filter(c => !['goals','assists','appearances'].includes(c.key))
+      return pool[Math.floor(rand() * pool.length)]
     },
 
     pickPlayer(exclude, rng) {
@@ -147,12 +152,11 @@ export default {
         this.leftPlayer = first
       }
 
-      // Pick category and right player ensuring different stat values
       let attempts = 0
       let cat, right
       do {
-        cat = this.pickCategory(rand)
         right = this.pickPlayer(this.usedIds, rand)
+        cat = this.pickCategory(rand, this.leftPlayer, right)
         attempts++
       } while (right && this.leftPlayer && cat.field(right) === cat.field(this.leftPlayer) && attempts < 20)
 

@@ -34,8 +34,8 @@ function positionClose(a, b) {
 
 const POS_LABELS = { 0: 'POR', 1: 'DEF', 2: 'MED', 3: 'DEL' }
 
-const LEAGUE_NAMES = { 47: 'Premier', 87: 'La Liga', 55: 'Serie A', 54: 'Bundesliga', 53: 'Ligue 1', 77: 'Mundial' }
-function leagueNameForId(id) { return LEAGUE_NAMES[id] || 'Otra' }
+const LEAGUE_LOGOS = { 47: 'https://images.fotmob.com/image_resources/logo/leaguelogo/47.png', 87: 'https://images.fotmob.com/image_resources/logo/leaguelogo/87.png', 55: 'https://images.fotmob.com/image_resources/logo/leaguelogo/55.png', 54: 'https://images.fotmob.com/image_resources/logo/leaguelogo/54.png', 53: 'https://images.fotmob.com/image_resources/logo/leaguelogo/53.png' }
+function leagueLogoForId(id) { return LEAGUE_LOGOS[id] || null }
 
 function evaluateGuess(g, t) {
   return {
@@ -43,10 +43,9 @@ function evaluateGuess(g, t) {
     teamResult: g.teamName === t.teamName ? 'green' : 'gray',
     teamLogo: g.teamLogo,
     leagueResult: g.leagueId === t.leagueId ? 'green' : 'gray',
-    leagueLabel: leagueNameForId(g.leagueId),
+    leagueLogo: leagueLogoForId(g.leagueId),
     countryResult: g.cname === t.cname ? 'green' : getContinent(g.cname) === getContinent(t.cname) ? 'yellow' : 'gray',
-    countryLabel: g.cname,
-    posResult: g.positionId === t.positionId ? 'green' : positionClose(g.positionId, t.positionId) ? 'yellow' : 'gray',
+    posResult: g.positionId === t.positionId ? 'green' : 'gray',
     posLabel: POS_LABELS[g.positionId] || 'MED',
     ageResult: g.age === t.age ? 'green' : Math.abs(g.age - t.age) <= 2 ? 'yellow' : 'gray',
     ageArrow: g.age === t.age ? '' : g.age < t.age ? '▲' : '▼',
@@ -343,6 +342,9 @@ export default {
             <template v-if="gameOver && target">
               <img :src="target.image" :alt="target.name" class="w-full h-full object-cover reveal-img" />
             </template>
+            <template v-else-if="target">
+              <img :src="target.image" :alt="'?'" class="w-full h-full object-cover" style="filter: blur(20px) brightness(0.5); user-select: none; -webkit-user-drag: none; pointer-events: none;" draggable="false" />
+            </template>
             <template v-else>
               <svg class="w-12 h-12 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
@@ -352,19 +354,19 @@ export default {
           <p v-if="!gameOver" class="text-slate-300 text-sm text-center">Adiviná al jugador misterioso</p>
           <div v-if="gameOver && won" class="text-center">
             <p class="text-emerald-400 font-bold text-lg">{{ target.name }}</p>
-            <p class="text-slate-400 text-sm flex items-center justify-center gap-1">
-              <span>{{ target.teamName }} -</span>
+            <p class="text-slate-400 text-sm flex items-center justify-center gap-1.5">
+              <img v-if="target.teamLogo" :src="target.teamLogo" class="w-4 h-4 object-contain" />
+              <span>{{ target.teamName }}</span>
               <img v-if="playerFlagUrl(target)" :src="playerFlagUrl(target)" class="w-4 h-3 object-cover rounded-sm" />
-              <span>{{ target.cname }}</span>
             </p>
           </div>
           <div v-else-if="gameOver && !won" class="text-center">
             <p class="text-red-400 font-semibold text-sm">No adivinaste. Era:</p>
             <p class="text-white font-bold text-lg">{{ target.name }}</p>
-            <p class="text-slate-400 text-sm flex items-center justify-center gap-1">
-              <span>{{ target.teamName }} -</span>
+            <p class="text-slate-400 text-sm flex items-center justify-center gap-1.5">
+              <img v-if="target.teamLogo" :src="target.teamLogo" class="w-4 h-4 object-contain" />
+              <span>{{ target.teamName }}</span>
               <img v-if="playerFlagUrl(target)" :src="playerFlagUrl(target)" class="w-4 h-3 object-cover rounded-sm" />
-              <span>{{ target.cname }}</span>
             </p>
           </div>
         </div>
@@ -403,13 +405,13 @@ export default {
                 <img v-if="row.teamLogo" :src="row.teamLogo" alt="" class="w-6 h-6 object-contain" @error="e => e.target.style.display='none'" />
               </div>
               <!-- League -->
-              <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5 text-xs text-center leading-tight', cellColor(row.leagueResult)]">
-                {{ row.leagueLabel }}
+              <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5', cellColor(row.leagueResult)]">
+                <img v-if="row.leagueLogo" :src="row.leagueLogo" alt="" class="w-6 h-6 object-contain" :class="row.leagueResult === 'gray' ? 'opacity-40 grayscale' : ''" @error="e => e.target.style.display='none'" />
+                <span v-else class="text-xs">?</span>
               </div>
               <!-- Country -->
-              <div :class="['rounded-lg flex items-center justify-center gap-1 px-1 py-1.5 text-xs text-center leading-tight', cellColor(row.countryResult)]">
-                <img v-if="playerFlagUrl(row.player)" :src="playerFlagUrl(row.player)" class="w-4 h-3 object-cover rounded-sm shrink-0" />
-                <span class="truncate">{{ row.countryLabel }}</span>
+              <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5', cellColor(row.countryResult)]">
+                <img v-if="playerFlagUrl(row.player)" :src="playerFlagUrl(row.player)" class="w-5 h-4 object-cover rounded-sm" />
               </div>
               <!-- Position -->
               <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5 text-xs font-bold text-center', cellColor(row.posResult)]">

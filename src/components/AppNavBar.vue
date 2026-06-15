@@ -3,7 +3,7 @@ import { RouterLink } from 'vue-router';
 import { subscribeToAuthStateChanges } from '../services/auth';
 import { logout } from '../services/auth';
 import { searchPublicProfiles } from '../services/user-profiles';
-import { getUserLevel, computeProgressPercentSync, fetchLevelThresholds } from '../services/xp';
+import { getUserLevel, computeProgressPercentSync, computeLevelProgress, fetchLevelThresholds } from '../services/xp';
 import { fetchUnreadCount, listNotifications, markAsRead } from '../services/notifications';
 import { supabase } from '../services/supabase';
 import { listIncomingRequests, acceptRequest, blockRequest } from '../services/connections';
@@ -289,6 +289,9 @@ export default {
         },
         xpNow() {
             return this.levelInfo?.xp_total ?? 0;
+        },
+        levelProgress() {
+            return computeLevelProgress(this.levelInfo);
         }
     },
     mounted() {
@@ -608,14 +611,11 @@ export default {
                                             <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (progressPercent||0) + '%' }"></div>
                                         </div>
                                         <div class="mt-1 text-[11px] text-slate-400">
-                                            <template v-if="levelInfo.next_level_xp">
-                                                Faltan {{ levelInfo.xp_to_next }} XP para el nivel {{ (levelInfo.next_level ?? (levelInfo.level||0)+1) }}
-                                            </template>
-                                            <template v-else-if="levelInfo.level >= 30">
+                                            <template v-if="levelInfo.level >= 30">
                                                 Nivel máximo alcanzado
                                             </template>
                                             <template v-else>
-                                                Nivel {{ levelInfo.level ?? 1 }} — {{ xpNow }} XP
+                                                {{ levelProgress.earned }}/{{ levelProgress.range }} XP
                                             </template>
                                         </div>
                                     </div>
@@ -688,6 +688,10 @@ export default {
                                                     </div>
                                                     <div class="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
                                                         <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (progressPercent||0) + '%' }"></div>
+                                                    </div>
+                                                    <div class="mt-1 text-[11px] text-slate-400">
+                                                        <template v-if="levelInfo.level >= 30">Nivel máximo alcanzado</template>
+                                                        <template v-else>{{ levelProgress.earned }}/{{ levelProgress.range }} XP</template>
                                                     </div>
                                                 </div>
                                                 <div v-else>

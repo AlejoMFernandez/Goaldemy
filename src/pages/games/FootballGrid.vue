@@ -17,7 +17,7 @@ const POS_LABELS = { 0: 'Arquero', 1: 'Defensor', 2: 'Mediocampista', 3: 'Delant
 function generateGrid(allPlayers, rng) {
   const teamCounts = {}
   allPlayers.forEach(p => { if (p.teamName) teamCounts[p.teamName] = (teamCounts[p.teamName] || 0) + 1 })
-  const validTeams = Object.keys(teamCounts).filter(t => teamCounts[t] >= 8)
+  const validTeams = Object.keys(teamCounts).filter(t => teamCounts[t] >= 5)
   const shuffledTeams = validTeams.sort(() => rng() - 0.5)
   const rowTeams = shuffledTeams.slice(0, 3)
   if (rowTeams.length < 3) return null
@@ -188,7 +188,7 @@ export default {
     initGrid(guessesPerCell) {
       const rng = createDailyRng('football-grid')
       let grid = null
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 80; i++) {
         grid = generateGrid(this.allPlayers, rng)
         if (grid) break
       }

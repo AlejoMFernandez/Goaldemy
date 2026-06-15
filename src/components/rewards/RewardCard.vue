@@ -30,6 +30,17 @@ export default {
     points() {
       return this.reward.data?.xpBonus || this.reward.data?.points || 0
     },
+    timeAgo() {
+      if (!this.reward.createdAt) return ''
+      const diff = Date.now() - this.reward.createdAt
+      const mins = Math.floor(diff / 60000)
+      if (mins < 1) return 'ahora'
+      if (mins < 60) return `hace ${mins}m`
+      const hrs = Math.floor(mins / 60)
+      if (hrs < 24) return `hace ${hrs}h`
+      const days = Math.floor(hrs / 24)
+      return `hace ${days}d`
+    },
     borderColor() {
       const c = this.icon.color
       return {
@@ -65,7 +76,7 @@ export default {
 
     <div class="min-w-0 flex-1">
       <p class="text-sm font-semibold text-white truncate">{{ title }}</p>
-      <p class="text-[11px] text-slate-400">{{ subtitle }}</p>
+      <p class="text-[11px] text-slate-400">{{ subtitle }}<span v-if="timeAgo" class="text-slate-500"> · {{ timeAgo }}</span></p>
     </div>
 
     <div v-if="!reward.claimed" class="shrink-0">

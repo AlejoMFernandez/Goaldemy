@@ -53,6 +53,7 @@ function normalizeMember(member, team, leagueId = null) {
     shirtNumber: member.shirtNumber ?? null,
     image: `https://images.fotmob.com/image_resources/playerimages/${member.id}.png`,
     leagueId,
+    stats: member.stats || null,
   }
 }
 

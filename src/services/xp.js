@@ -151,6 +151,19 @@ function getThresholds() {
   return FALLBACK_THRESHOLDS
 }
 
+export function computeLevelProgress(levelInfo) {
+  if (!levelInfo) return { earned: 0, range: 0 }
+  const thresholds = getThresholds()
+  const lvl = Number(levelInfo.level) || 1
+  const currT = thresholds.find(t => Number(t.level) === lvl)
+  const nextT = thresholds.find(t => Number(t.level) === lvl + 1)
+  if (!currT || !nextT) return { earned: 0, range: 0 }
+  const currXp = Number(currT.xp_required) || 0
+  const nextXp = Number(nextT.xp_required) || 0
+  const totalXp = Number(levelInfo.xp_total ?? levelInfo.xp ?? 0)
+  return { earned: Math.max(0, totalXp - currXp), range: Math.max(1, nextXp - currXp) }
+}
+
 export function computeProgressPercentSync(levelInfo) {
   if (!levelInfo) return 0
 

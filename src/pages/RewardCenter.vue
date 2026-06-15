@@ -16,8 +16,8 @@ export default {
     const playedToday = ref(false)
 
     const rewards = computed(() => notificationsState.pendingRewards)
-    const unclaimed = computed(() => rewards.value.filter(r => !r.claimed))
-    const claimed = computed(() => rewards.value.filter(r => r.claimed))
+    const unclaimed = computed(() => rewards.value.filter(r => !r.claimed).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)))
+    const claimed = computed(() => rewards.value.filter(r => r.claimed).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)))
     const unclaimedCount = computed(() => unclaimed.value.length)
 
     function handleClaim(id) {

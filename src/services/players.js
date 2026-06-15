@@ -89,6 +89,7 @@ export function getAllPlayers() {
           transferValue: member.transferValue ?? null,
           shirtNumber: member.shirtNumber ?? null,
           image: playerImageUrl(member.id),
+          stats: member.stats || null,
         });
       }
     }

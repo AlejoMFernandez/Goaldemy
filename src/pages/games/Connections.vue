@@ -347,7 +347,7 @@ export default {
       @close="overlayOpen = false"
       @start="startChallenge"
     />
-    <div class="space-y-4 w-full max-w-2xl">
+    <div class="space-y-3 w-full max-w-lg sm:max-w-xl">
       <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 w-full">
         <AppH1 class="text-3xl md:text-4xl flex-none">Conexiones</AppH1>
         <div class="flex items-center gap-2 self-stretch sm:self-auto flex-none">
@@ -378,7 +378,7 @@ export default {
         </TransitionGroup>
 
         <!-- 4x4 grid -->
-        <div v-if="remainingPlayers.length" class="grid grid-cols-4 gap-2">
+        <div v-if="remainingPlayers.length" class="grid grid-cols-4 gap-1.5">
           <button v-for="p in remainingPlayers" :key="p.id"
                   :class="[
                     'group relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-150',
