@@ -26,6 +26,8 @@
 import teams from '../dataGAMES.json'
 import { getDifficulty, filterPlayersByDifficulty } from './difficulty';
 
+const EXCLUDED_TEAMS = new Set(['Boca Juniors', 'River Plate', 'Racing Club'])
+
 // Módulo-level cache: se llena con datos de FotMob cuando initializePlayers() completa
 let _fotmobCache = null
 
@@ -66,6 +68,7 @@ export function getAllPlayers() {
 
   const players = [];
   for (const team of teams) {
+    if (EXCLUDED_TEAMS.has(team.name)) continue
     for (const section of team.squad) {
       for (const member of section.members) {
         players.push({

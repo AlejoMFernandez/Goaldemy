@@ -254,7 +254,7 @@ export default {
 </script>
 
 <template>
-  <section class="grid place-items-center min-h-[600px]">
+  <section class="grid place-items-center min-h-[calc(100dvh-4rem)]">
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameType="timed"
@@ -294,23 +294,23 @@ export default {
         <Transition name="round-fade" mode="out-in">
           <div :key="roundKey" v-if="currentCorrect">
             <!-- Stat card -->
-            <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800 to-slate-900 p-6 text-center space-y-4">
-              <span class="inline-block rounded-full border border-white/15 bg-white/5 px-3 py-1 text-sm text-slate-200">
+            <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800 to-slate-900 p-6 sm:p-8 text-center space-y-5">
+              <span class="inline-block rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-semibold text-slate-200">
                 {{ posLabel }}
               </span>
 
-              <div class="grid grid-cols-3 gap-4">
-                <div>
-                  <div class="text-3xl font-display font-bold text-emerald-400">{{ currentCorrect.stats.goals }}</div>
-                  <div class="text-xs text-slate-400 uppercase tracking-wider">Goles</div>
+              <div class="grid grid-cols-3 gap-3 sm:gap-5">
+                <div class="rounded-xl bg-emerald-500/10 border border-emerald-500/15 py-3 px-2">
+                  <div class="text-3xl sm:text-4xl font-display font-bold text-emerald-400">{{ currentCorrect.stats.goals }}</div>
+                  <div class="text-[10px] sm:text-xs text-emerald-400/60 uppercase tracking-wider mt-1">Goles</div>
                 </div>
-                <div>
-                  <div class="text-3xl font-display font-bold text-sky-400">{{ currentCorrect.stats.assists }}</div>
-                  <div class="text-xs text-slate-400 uppercase tracking-wider">Asistencias</div>
+                <div class="rounded-xl bg-sky-500/10 border border-sky-500/15 py-3 px-2">
+                  <div class="text-3xl sm:text-4xl font-display font-bold text-sky-400">{{ currentCorrect.stats.assists }}</div>
+                  <div class="text-[10px] sm:text-xs text-sky-400/60 uppercase tracking-wider mt-1">Asistencias</div>
                 </div>
-                <div>
-                  <div class="text-3xl font-display font-bold text-amber-400">{{ currentCorrect.stats.appearances }}</div>
-                  <div class="text-xs text-slate-400 uppercase tracking-wider">Apariciones</div>
+                <div class="rounded-xl bg-amber-500/10 border border-amber-500/15 py-3 px-2">
+                  <div class="text-3xl sm:text-4xl font-display font-bold text-amber-400">{{ currentCorrect.stats.appearances }}</div>
+                  <div class="text-[10px] sm:text-xs text-amber-400/60 uppercase tracking-wider mt-1">Apariciones</div>
                 </div>
               </div>
 
@@ -318,13 +318,13 @@ export default {
             </div>
 
             <!-- Options -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
               <button v-for="opt in options" :key="opt.id" @click="choose(opt)"
                 :disabled="answered || timeOver"
                 :class="optionClass(opt)">
-                <img :src="opt.image" :alt="opt.name" class="w-10 h-10 rounded-full object-cover shrink-0" />
+                <img :src="opt.image" :alt="opt.name" class="w-12 h-12 rounded-xl object-cover shrink-0" />
                 <div class="text-left min-w-0">
-                  <div class="text-white font-medium truncate">{{ opt.name }}</div>
+                  <div class="text-white font-medium truncate text-sm sm:text-base">{{ opt.name }}</div>
                   <div class="text-slate-400 text-xs truncate">{{ opt.teamName }}</div>
                 </div>
               </button>

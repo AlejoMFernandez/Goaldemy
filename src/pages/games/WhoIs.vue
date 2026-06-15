@@ -300,10 +300,13 @@ export default {
                 <img v-if="flagSrc()" :src="flagSrc()" alt="flag" width="36" height="26" class="object-cover" style="aspect-ratio: 20/14;" />
                 <img v-if="teamLogo()" :src="teamLogo()" alt="team" width="32" height="32" class="object-cover" />
               </div>
-              <div v-if="current" class="mb-2 overflow-hidden rounded-xl shadow-lg">
+              <div v-if="current" class="mb-2 overflow-hidden rounded-xl shadow-lg no-peek"
+                   @contextmenu.prevent @touchstart.passive>
                 <img :src="current.image" :alt="current.name"
                      :style="{ filter: `blur(${blurPx()}px)` }"
                      class="w-32 h-32 sm:w-40 sm:h-40 object-cover blur-img"
+                     draggable="false"
+                     @dragstart.prevent @contextmenu.prevent
                      @error="e => e.target.style.display='none'" />
               </div>
               <div v-if="answered && lastResultOk" class="text-emerald-300 text-sm">¡Correcto! El jugador era: <span class="text-white font-medium">{{ current?.name }}</span></div>
@@ -375,6 +378,18 @@ export default {
 /* reserved for game local styles */
 /* Smooth blur change on reveal/hints */
 .blur-img { transition: filter 220ms ease; }
+.no-peek {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  pointer-events: auto;
+}
+.no-peek img {
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
 
 /* Lives loss animation using TransitionGroup */
 .life-leave-active { transition: transform 220ms ease, opacity 220ms ease; }

@@ -303,9 +303,12 @@ export default {
                     <span class="font-display text-sm font-bold text-yellow-400">{{ levelAfter }}</span>
                   </template>
                 </div>
-                <span v-if="xpToNextAfter != null" class="text-[10px] text-slate-500">
-                  {{ xpToNextAfter }} XP para nivel {{ (levelAfter || levelBefore || 0) + (didLevelUp ? 0 : 1) }}
-                </span>
+                <div class="flex items-center gap-2">
+                  <span v-if="xpEarned > 0" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/20 rounded-full px-1.5 py-0.5">+{{ xpEarned }} XP</span>
+                  <span v-if="xpToNextAfter != null" class="text-[10px] text-slate-500">
+                    {{ xpToNextAfter }} XP para nivel {{ (levelAfter || levelBefore || 0) + (didLevelUp ? 0 : 1) }}
+                  </span>
+                </div>
               </div>
               <div class="h-2 rounded-full bg-black/30 overflow-hidden">
                 <div

@@ -79,3 +79,41 @@ export function flagUrl(code, _width = 40) {
   // Always use w40 per requirement; size is controlled with CSS
   return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 }
+
+// FotMob uses non-standard country codes; map them to ISO alpha-2 for flagcdn
+const FOTMOB_TO_ISO = {
+  geo: 'ge', eng: 'gb-eng', sco: 'gb-sct', wal: 'gb-wls',
+  ger: 'de', por: 'pt', sui: 'ch', ned: 'nl', cro: 'hr',
+  den: 'dk', gre: 'gr', aut: 'at', bos: 'ba', srb: 'rs',
+  slk: 'sk', slo: 'si', cze: 'cz', mon: 'me', mkd: 'mk',
+  tur: 'tr', rou: 'ro', bul: 'bg', ukr: 'ua', isl: 'is',
+  nor: 'no', swe: 'se', fin: 'fi', pol: 'pl', hun: 'hu',
+  irl: 'ie', chi: 'cl', par: 'py', uru: 'uy', ecu: 'ec',
+  per: 'pe', bol: 'bo', ven: 've', col: 'co', bra: 'br',
+  arg: 'ar', mex: 'mx', usa: 'us', can: 'ca', jam: 'jm',
+  crc: 'cr', hon: 'hn', slv: 'sv', pan: 'pa', tri: 'tt',
+  hai: 'ht', jpn: 'jp', kor: 'kr', irn: 'ir', ksa: 'sa',
+  aus: 'au', chn: 'cn', irq: 'iq', qat: 'qa', uzb: 'uz',
+  tha: 'th', nig: 'ng', sen: 'sn', cmr: 'cm', gha: 'gh',
+  civ: 'ci', mar: 'ma', alg: 'dz', tun: 'tn', egy: 'eg',
+  mli: 'ml', gui: 'gn', cod: 'cd', rsa: 'za', zam: 'zm',
+  zim: 'zw', moz: 'mz', gab: 'ga', gnb: 'gw', eqg: 'gq',
+  cpv: 'cv', com: 'km', gam: 'gm', sle: 'sl', tog: 'tg',
+  ben: 'bj', cta: 'cf', cgo: 'cg', ang: 'ao', nir: 'gb-nir',
+  esp: 'es', fra: 'fr', ita: 'it', alb: 'al', lux: 'lu',
+}
+
+/**
+ * Derives a working flag URL for a player, handling FotMob's non-standard ccodes.
+ * Tries countryCodeFromName(cname) first, then FOTMOB_TO_ISO mapping, then raw ccode.
+ */
+export function playerFlagUrl(player) {
+  if (!player) return null
+  const fromName = player.cname ? countryCodeFromName(player.cname) : null
+  if (fromName) return flagUrl(fromName)
+  const raw = (player.ccode || '').toLowerCase()
+  const iso = FOTMOB_TO_ISO[raw]
+  if (iso) return flagUrl(iso)
+  if (raw.length === 2) return flagUrl(raw)
+  return null
+}

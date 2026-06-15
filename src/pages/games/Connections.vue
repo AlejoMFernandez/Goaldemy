@@ -18,14 +18,30 @@ const GROUP_COLORS = [
   { bg: 'bg-violet-500/90', text: 'text-violet-950', border: 'border-violet-400' },
 ]
 
+const LEAGUE_NAMES = {
+  47: 'Premier League', 87: 'La Liga', 55: 'Serie A',
+  54: 'Bundesliga', 53: 'Ligue 1', 77: 'World Cup',
+}
+
 const GROUP_GENERATORS = [
+  { type: 'league', generate(players, rng) {
+    const map = {}
+    players.forEach(p => {
+      const lid = p.leagueId
+      if (lid && LEAGUE_NAMES[lid]) (map[lid] = map[lid] || []).push(p)
+    })
+    const valid = Object.entries(map).filter(([, a]) => a.length >= 4)
+    if (!valid.length) return null
+    const [lid, arr] = valid[Math.floor(rng() * valid.length)]
+    return { label: `Juegan en la ${LEAGUE_NAMES[lid]}`, players: [...arr].sort(() => rng() - 0.5).slice(0, 4) }
+  }},
   { type: 'country', generate(players, rng) {
     const map = {}
     players.forEach(p => { if (p.cname) (map[p.cname] = map[p.cname] || []).push(p) })
     const valid = Object.entries(map).filter(([, a]) => a.length >= 4)
     if (!valid.length) return null
     const [country, arr] = valid[Math.floor(rng() * valid.length)]
-    return { label: `Jugadores de ${country}`, players: [...arr].sort(() => rng() - 0.5).slice(0, 4) }
+    return { label: `Selección de ${country}`, players: [...arr].sort(() => rng() - 0.5).slice(0, 4) }
   }},
   { type: 'team', generate(players, rng) {
     const map = {}
@@ -44,20 +60,25 @@ const GROUP_GENERATORS = [
     const [posId, arr] = valid[Math.floor(rng() * valid.length)]
     return { label: posLabels[posId], players: [...arr].sort(() => rng() - 0.5).slice(0, 4) }
   }},
-  { type: 'age', generate(players, rng) {
-    const young = players.filter(p => p.age && p.age <= 23)
-    const veteran = players.filter(p => p.age && p.age >= 30)
-    if (rng() > 0.5 && young.length >= 4) return { label: 'Menores de 24 años', players: [...young].sort(() => rng() - 0.5).slice(0, 4) }
-    if (veteran.length >= 4) return { label: 'Mayores de 29 años', players: [...veteran].sort(() => rng() - 0.5).slice(0, 4) }
-    if (young.length >= 4) return { label: 'Menores de 24 años', players: [...young].sort(() => rng() - 0.5).slice(0, 4) }
-    return null
+  { type: 'shirtSingleDigit', generate(players, rng) {
+    const single = players.filter(p => p.shirtNumber && p.shirtNumber >= 1 && p.shirtNumber <= 9)
+    if (single.length < 4) return null
+    return { label: 'Dorsal de un solo dígito', players: [...single].sort(() => rng() - 0.5).slice(0, 4) }
   }},
-  { type: 'shirt', generate(players, rng) {
-    const single = players.filter(p => p.shirtNumber && p.shirtNumber <= 9)
-    const double = players.filter(p => p.shirtNumber && p.shirtNumber >= 20)
-    if (rng() > 0.5 && single.length >= 4) return { label: 'Dorsal del 1 al 9', players: [...single].sort(() => rng() - 0.5).slice(0, 4) }
-    if (double.length >= 4) return { label: 'Dorsal 20 o mayor', players: [...double].sort(() => rng() - 0.5).slice(0, 4) }
-    return null
+  { type: 'shirtHighNumber', generate(players, rng) {
+    const high = players.filter(p => p.shirtNumber && p.shirtNumber >= 20)
+    if (high.length < 4) return null
+    return { label: 'Dorsal 20+', players: [...high].sort(() => rng() - 0.5).slice(0, 4) }
+  }},
+  { type: 'goalScorers', generate(players, rng) {
+    const scorers = players.filter(p => p.stats?.goals != null && p.stats.goals >= 10)
+    if (scorers.length < 4) return null
+    return { label: 'Goleadores (10+ goles)', players: [...scorers].sort(() => rng() - 0.5).slice(0, 4) }
+  }},
+  { type: 'assistProviders', generate(players, rng) {
+    const assisters = players.filter(p => p.stats?.assists != null && p.stats.assists >= 5)
+    if (assisters.length < 4) return null
+    return { label: 'Asistidores (5+ asistencias)', players: [...assisters].sort(() => rng() - 0.5).slice(0, 4) }
   }},
 ]
 
@@ -103,6 +124,8 @@ export default {
       gameOver: false,
       won: false,
       shaking: false,
+      almostGroup: null,
+      almostTimer: null,
       // mode / challenge
       mode: 'normal',
       reviewMode: false,
@@ -234,6 +257,18 @@ export default {
         this.mistakes++
         this.shaking = true
         setTimeout(() => { this.shaking = false }, 500)
+        // Check for "almost" — 3 of 4 correct in any group
+        if (this.almostTimer) clearTimeout(this.almostTimer)
+        this.almostGroup = null
+        const selSet = new Set(selIds)
+        for (const g of this.groups) {
+          const gIds = g.players.map(p => p.id)
+          const overlap = gIds.filter(id => selSet.has(id)).length
+          if (overlap === 3) { this.almostGroup = g.label; break }
+        }
+        if (this.almostGroup) {
+          this.almostTimer = setTimeout(() => { this.almostGroup = null; this.almostTimer = null }, 2000)
+        }
         if (this.mistakes >= this.maxMistakes) {
           this.gameOver = true
           this.won = false
@@ -300,7 +335,7 @@ export default {
 </script>
 
 <template>
-  <section class="grid place-items-center min-h-[600px]">
+  <section class="grid place-items-center min-h-[calc(100dvh-4rem)]">
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="Conexiones"
@@ -331,8 +366,13 @@ export default {
           <div v-for="(sg, i) in solvedGroups" :key="'sg-' + i"
                :class="[sg.color.bg, sg.color.border, 'rounded-xl border px-4 py-3 solved-row']">
             <div :class="[sg.color.text, 'text-sm font-bold uppercase tracking-wide mb-1']">{{ sg.label }}</div>
-            <div class="flex flex-wrap gap-2">
-              <span v-for="p in sg.players" :key="p.id" :class="[sg.color.text, 'text-sm font-medium']">{{ p.name }}</span>
+            <div class="flex items-center gap-3">
+              <div v-for="p in sg.players" :key="p.id" class="flex items-center gap-1.5">
+                <img :src="p.image" :alt="p.name"
+                     class="w-8 h-8 rounded-full object-cover ring-1 ring-black/20 bg-slate-700 flex-shrink-0"
+                     @error="e => e.target.style.display = 'none'" />
+                <span :class="[sg.color.text, 'text-xs font-medium hidden sm:inline truncate max-w-[80px]']">{{ p.name }}</span>
+              </div>
             </div>
           </div>
         </TransitionGroup>
@@ -341,20 +381,38 @@ export default {
         <div v-if="remainingPlayers.length" class="grid grid-cols-4 gap-2">
           <button v-for="p in remainingPlayers" :key="p.id"
                   :class="[
-                    'relative flex flex-col items-center gap-1 rounded-lg border p-2 transition-all duration-150',
+                    'group relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-150',
                     isSelected(p)
-                      ? 'border-white/50 bg-white/15 ring-2 ring-white/30 scale-[1.03]'
-                      : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20',
+                      ? 'border-emerald-400 ring-2 ring-emerald-400/50 scale-[1.04] z-10'
+                      : 'border-white/10 hover:border-white/25',
                     shaking && isSelected(p) ? 'shake' : '',
                     gameOver ? 'pointer-events-none opacity-60' : 'cursor-pointer active:scale-95'
                   ]"
                   @click="toggleSelect(p)">
             <img :src="p.image" :alt="p.name"
-                 class="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover bg-slate-700"
-                 @error="e => e.target.style.display = 'none'" />
-            <span class="text-[11px] sm:text-xs text-slate-200 text-center leading-tight line-clamp-2 w-full">{{ p.name }}</span>
+                 class="w-full h-full object-cover bg-slate-700"
+                 @error="e => e.target.src = ''" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
+            <div class="absolute inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm px-2 py-1.5
+                        opacity-0 group-hover:opacity-100 sm:opacity-0 max-sm:opacity-100 transition-opacity">
+              <span class="text-white text-xs font-medium truncate block">{{ p.name }}</span>
+            </div>
+            <div v-if="isSelected(p)"
+                 class="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-emerald-400 flex items-center justify-center">
+              <svg class="w-3 h-3 text-emerald-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
           </button>
         </div>
+
+        <!-- Almost feedback toast -->
+        <Transition name="almost-toast">
+          <div v-if="almostGroup"
+               class="text-center rounded-lg bg-amber-500/20 border border-amber-400/30 px-4 py-2">
+            <span class="text-amber-300 text-sm font-medium">¡Casi! 3 de 4 pertenecen a: {{ almostGroup }}</span>
+          </div>
+        </Transition>
 
         <!-- Controls -->
         <div v-if="!gameOver" class="flex flex-col items-center gap-3">
@@ -451,10 +509,8 @@ export default {
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+.almost-toast-enter-active { transition: all 250ms ease-out; }
+.almost-toast-leave-active { transition: all 200ms ease-in; }
+.almost-toast-enter-from { opacity: 0; transform: translateY(8px); }
+.almost-toast-leave-to { opacity: 0; transform: translateY(-4px); }
 </style>

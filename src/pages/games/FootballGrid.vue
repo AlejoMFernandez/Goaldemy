@@ -10,6 +10,7 @@ import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLeve
 import { playCorrectSound, playIncorrectSound } from '../../services/sounds'
 import { createDailyRng } from '../../services/seeded-random'
 import { getGameMetadata } from '../../services/games'
+import { countryCodeFromName } from '../../services/countries'
 
 const POS_LABELS = { 0: 'Arquero', 1: 'Defensor', 2: 'Mediocampista', 3: 'Delantero' }
 
@@ -326,8 +327,9 @@ export default {
       } catch (e) { console.error('[FootballGrid start]', e) }
     },
     flagSrc(constraint) {
-      const code = (constraint.ccode || '').toLowerCase()
-      return code ? `https://flagcdn.com/w40/${code}.png` : ''
+      if (constraint.type !== 'country') return ''
+      const iso = countryCodeFromName(constraint.value)
+      return iso ? `https://flagcdn.com/w40/${iso}.png` : ''
     },
     cellClass(r, c) {
       const cell = this.cells[r][c]
@@ -335,14 +337,14 @@ export default {
       if (cell.player) return 'bg-emerald-500/15 border-emerald-400/30'
       if (cell.failed) return 'bg-red-500/10 border-red-400/20 opacity-60'
       if (flash) return 'bg-red-500/20 border-red-400/40 shake'
-      return 'border-white/10 hover:border-white/25 hover:bg-white/5 cursor-pointer'
+      return 'border-white/10 hover:border-white/25 hover:bg-white/5 hover:shadow-[inset_0_0_20px_rgba(255,255,255,0.05)] cursor-pointer'
     },
   }
 }
 </script>
 
 <template>
-  <section class="grid place-items-center min-h-[600px]">
+  <section class="grid place-items-center min-h-[calc(100dvh-4rem)]">
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="La Grilla"
@@ -355,7 +357,7 @@ export default {
       @start="startChallenge"
     />
 
-    <div class="space-y-4 w-full max-w-2xl">
+    <div class="space-y-4 w-full max-w-3xl">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <AppH1 class="text-3xl md:text-4xl flex-none">La Grilla</AppH1>
         <div class="flex items-center gap-2 self-stretch sm:self-auto flex-none">
@@ -385,7 +387,7 @@ export default {
           <!-- Header row: empty corner + 3 column headers -->
           <div class="grid-corner"></div>
           <div v-for="(col, ci) in gridConfig.cols" :key="'ch-'+ci" class="grid-col-header">
-            <img v-if="flagSrc(col)" :src="flagSrc(col)" alt="" class="w-7 h-5 object-cover rounded-sm mx-auto" />
+            <img v-if="flagSrc(col)" :src="flagSrc(col)" alt="" class="w-9 h-6 object-cover rounded-sm mx-auto" />
             <span class="text-[11px] sm:text-xs text-slate-300 leading-tight text-center block mt-1 truncate">{{ col.label }}</span>
           </div>
 
@@ -393,7 +395,7 @@ export default {
           <template v-for="(row, ri) in gridConfig.rows" :key="'r-'+ri">
             <!-- Row header -->
             <div class="grid-row-header">
-              <img v-if="teamLogoForRow(ri)" :src="teamLogoForRow(ri)" alt="" class="w-6 h-6 sm:w-7 sm:h-7 object-contain mx-auto" />
+              <img v-if="teamLogoForRow(ri)" :src="teamLogoForRow(ri)" alt="" class="w-8 h-8 sm:w-10 sm:h-10 object-contain mx-auto" />
               <span class="text-[11px] sm:text-xs text-slate-300 leading-tight text-center block mt-1 truncate">{{ row.label }}</span>
             </div>
             <!-- 3 cells -->
@@ -403,19 +405,23 @@ export default {
               <!-- Filled -->
               <template v-if="cells[ri][ci].player">
                 <img :src="cells[ri][ci].player.image" :alt="cells[ri][ci].player.name"
-                     class="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover mx-auto" @error="e => e.target.style.display='none'" />
-                <span class="text-[10px] sm:text-xs text-emerald-300 leading-tight text-center block mt-0.5 truncate px-1">{{ cells[ri][ci].player.name }}</span>
+                     class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover mx-auto" @error="e => e.target.style.display='none'" />
+                <span class="text-xs sm:text-sm text-emerald-300 leading-tight text-center block mt-0.5 truncate px-1">{{ cells[ri][ci].player.name }}</span>
               </template>
               <!-- Failed -->
               <template v-else-if="cells[ri][ci].failed">
-                <span class="text-2xl text-red-400/60">✕</span>
+                <span class="text-xl text-red-400/40">✕</span>
               </template>
               <!-- Empty -->
               <template v-else>
-                <span class="text-xl text-slate-500 group-hover:text-slate-300">+</span>
-                <span v-if="cells[ri][ci].guessesLeft < (difficultyConfig?.guessesPerCell || 3)" class="text-[10px] text-slate-500 block">
-                  {{ cells[ri][ci].guessesLeft }} left
-                </span>
+                <div class="flex flex-col items-center gap-1">
+                  <div class="w-10 h-10 rounded-full border-2 border-dashed border-white/15 flex items-center justify-center">
+                    <span class="text-lg text-slate-500">+</span>
+                  </div>
+                  <span v-if="cells[ri][ci].guessesLeft < (difficultyConfig?.guessesPerCell || 3)" class="text-[10px] text-slate-500">
+                    {{ cells[ri][ci].guessesLeft }} restantes
+                  </span>
+                </div>
               </template>
             </div>
           </template>
@@ -491,11 +497,11 @@ export default {
 <style scoped>
 .grid-table {
   display: grid;
-  grid-template-columns: 72px repeat(3, 1fr);
-  gap: 6px;
+  grid-template-columns: 80px repeat(3, 1fr);
+  gap: 8px;
 }
 @media (min-width: 640px) {
-  .grid-table { grid-template-columns: 90px repeat(3, 1fr); gap: 8px; }
+  .grid-table { grid-template-columns: 100px repeat(3, 1fr); gap: 10px; }
 }
 .grid-corner { /* empty top-left cell */ }
 .grid-col-header, .grid-row-header {
@@ -511,11 +517,11 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 80px;
+  min-height: 100px;
   padding: 4px;
 }
 @media (min-width: 640px) {
-  .grid-cell { min-height: 100px; }
+  .grid-cell { min-height: 130px; }
 }
 
 /* Transitions */

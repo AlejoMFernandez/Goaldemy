@@ -246,7 +246,7 @@ export default {
           <span>Más viejo (+)</span>
           <span>Más joven (−)</span>
         </div>
-        <div class="grid grid-cols-5 gap-2 mb-3">
+        <div class="grid gap-2 mb-3" :style="{ gridTemplateColumns: `repeat(${items.length || 5}, minmax(0, 1fr))` }">
           <button v-for="(slot, i) in slots" :key="'slot'+i"
                   @click="clickSlot(i)" @dragover="onDragOverSlot" @drop="onDropOnSlot($event, i)" @mouseenter="hoveredSlot=i" @mouseleave="hoveredSlot=null"
                   class="h-40 rounded-lg border bg-white/5 transition ring-offset-1"
@@ -271,7 +271,7 @@ export default {
           </button>
         </div>
 
-        <div class="grid grid-cols-5 gap-2">
+        <div class="grid gap-2" :style="{ gridTemplateColumns: `repeat(${items.length || 5}, minmax(0, 1fr))` }">
           <button v-for="(p,i) in items" :key="p.id" :disabled="isPlaced(i) || locked" @click="selectCard(i)" :draggable="!locked" @dragstart="onDragStartFromList($event, i)" :class="['rounded-lg border p-2 bg-white/5 text-left', selectedIndex===i ? 'ring-2 ring-sky-400 border-white/20' : 'border-white/15', (isPlaced(i) || locked) ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/10']">
             <div class="flex flex-col items-center sm:flex-row sm:items-center gap-2">
               <img :src="p.image" :alt="p.name" class="h-10 w-10 object-cover rounded" />

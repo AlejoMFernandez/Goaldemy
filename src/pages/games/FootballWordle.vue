@@ -2,6 +2,7 @@
 import AppH1 from '../../components/common/AppH1.vue'
 import { getAllPlayersAsync, sampleDistinct } from '../../services/players'
 import { getBroadPosition } from '../../services/game-common'
+import { playerFlagUrl } from '../../services/countries'
 import { captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
 import { createDailyRng } from '../../services/seeded-random'
@@ -33,11 +34,16 @@ function positionClose(a, b) {
 
 const POS_LABELS = { 0: 'POR', 1: 'DEF', 2: 'MED', 3: 'DEL' }
 
+const LEAGUE_NAMES = { 47: 'Premier', 87: 'La Liga', 55: 'Serie A', 54: 'Bundesliga', 53: 'Ligue 1', 77: 'Mundial' }
+function leagueNameForId(id) { return LEAGUE_NAMES[id] || 'Otra' }
+
 function evaluateGuess(g, t) {
   return {
     player: g,
     teamResult: g.teamName === t.teamName ? 'green' : 'gray',
     teamLogo: g.teamLogo,
+    leagueResult: g.leagueId === t.leagueId ? 'green' : 'gray',
+    leagueLabel: leagueNameForId(g.leagueId),
     countryResult: g.cname === t.cname ? 'green' : getContinent(g.cname) === getContinent(t.cname) ? 'yellow' : 'gray',
     countryLabel: g.cname,
     posResult: g.positionId === t.positionId ? 'green' : positionClose(g.positionId, t.positionId) ? 'yellow' : 'gray',
@@ -166,6 +172,7 @@ export default {
     }
   },
   methods: {
+    playerFlagUrl,
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
     blurb() { return gameSummaryBlurb('football-wordle') },
     pickTarget() {
@@ -298,7 +305,7 @@ export default {
 </script>
 
 <template>
-  <section class="grid place-items-center min-h-[600px]">
+  <section class="grid place-items-center min-h-[calc(100dvh-4rem)]">
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="Adiviná el Crack"
@@ -345,12 +352,20 @@ export default {
           <p v-if="!gameOver" class="text-slate-300 text-sm text-center">Adiviná al jugador misterioso</p>
           <div v-if="gameOver && won" class="text-center">
             <p class="text-emerald-400 font-bold text-lg">{{ target.name }}</p>
-            <p class="text-slate-400 text-sm">{{ target.teamName }} - {{ target.cname }}</p>
+            <p class="text-slate-400 text-sm flex items-center justify-center gap-1">
+              <span>{{ target.teamName }} -</span>
+              <img v-if="playerFlagUrl(target)" :src="playerFlagUrl(target)" class="w-4 h-3 object-cover rounded-sm" />
+              <span>{{ target.cname }}</span>
+            </p>
           </div>
           <div v-else-if="gameOver && !won" class="text-center">
             <p class="text-red-400 font-semibold text-sm">No adivinaste. Era:</p>
             <p class="text-white font-bold text-lg">{{ target.name }}</p>
-            <p class="text-slate-400 text-sm">{{ target.teamName }} - {{ target.cname }}</p>
+            <p class="text-slate-400 text-sm flex items-center justify-center gap-1">
+              <span>{{ target.teamName }} -</span>
+              <img v-if="playerFlagUrl(target)" :src="playerFlagUrl(target)" class="w-4 h-3 object-cover rounded-sm" />
+              <span>{{ target.cname }}</span>
+            </p>
           </div>
         </div>
 
@@ -364,9 +379,10 @@ export default {
         <!-- Guess grid -->
         <div v-if="guesses.length > 0" class="overflow-x-auto mb-4">
           <!-- Column headers -->
-          <div class="grid grid-cols-[minmax(100px,1fr)_repeat(6,minmax(56px,1fr))] gap-1 text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1 px-1 min-w-[500px]">
+          <div class="grid grid-cols-[minmax(90px,1fr)_repeat(7,minmax(48px,1fr))] gap-1 text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1 px-1 min-w-[500px]">
             <div>Jugador</div>
             <div class="text-center">Equipo</div>
+            <div class="text-center">Liga</div>
             <div class="text-center">País</div>
             <div class="text-center">Pos</div>
             <div class="text-center">Edad</div>
@@ -376,7 +392,7 @@ export default {
           <!-- Rows -->
           <TransitionGroup name="guess-row" tag="div" class="space-y-1">
             <div v-for="(row, idx) in guesses" :key="idx"
-                 class="grid grid-cols-[minmax(100px,1fr)_repeat(6,minmax(56px,1fr))] gap-1 min-w-[500px]">
+                 class="grid grid-cols-[minmax(90px,1fr)_repeat(7,minmax(48px,1fr))] gap-1 min-w-[500px]">
               <!-- Player name + image -->
               <div class="flex items-center gap-2 rounded-lg bg-slate-700/40 px-2 py-1.5 min-w-0">
                 <img :src="row.player.image" :alt="row.player.name" class="w-7 h-7 rounded object-cover flex-shrink-0" @error="e => e.target.style.display='none'" />
@@ -386,9 +402,14 @@ export default {
               <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5 text-center', cellColor(row.teamResult)]">
                 <img v-if="row.teamLogo" :src="row.teamLogo" alt="" class="w-6 h-6 object-contain" @error="e => e.target.style.display='none'" />
               </div>
+              <!-- League -->
+              <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5 text-xs text-center leading-tight', cellColor(row.leagueResult)]">
+                {{ row.leagueLabel }}
+              </div>
               <!-- Country -->
-              <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5 text-xs text-center leading-tight', cellColor(row.countryResult)]">
-                {{ row.countryLabel }}
+              <div :class="['rounded-lg flex items-center justify-center gap-1 px-1 py-1.5 text-xs text-center leading-tight', cellColor(row.countryResult)]">
+                <img v-if="playerFlagUrl(row.player)" :src="playerFlagUrl(row.player)" class="w-4 h-3 object-cover rounded-sm shrink-0" />
+                <span class="truncate">{{ row.countryLabel }}</span>
               </div>
               <!-- Position -->
               <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5 text-xs font-bold text-center', cellColor(row.posResult)]">

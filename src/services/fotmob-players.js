@@ -9,7 +9,7 @@
  */
 import { LEAGUES, getLeagueTable, getTeamDetails } from './fotmob'
 
-const CACHE_KEY = 'goaldemy_players_v1'
+const CACHE_KEY = 'goaldemy_players_v2'
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24 horas
 
 /**
@@ -72,8 +72,8 @@ export async function loadPlayersFromFotMob() {
     }
   } catch { /* caché corrupto, reconstruir */ }
 
-  // 2. Obtener standings de todas las ligas en paralelo
-  const leagueList = Object.values(LEAGUES)
+  // 2. Obtener standings de ligas activas
+  const leagueList = Object.values(LEAGUES).filter(l => l.active)
   const tables = await Promise.allSettled(
     leagueList.map(l => getLeagueTable(l.id))
   )

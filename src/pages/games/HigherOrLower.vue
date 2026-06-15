@@ -295,7 +295,7 @@ export default {
 </script>
 
 <template>
-  <section class="grid place-items-center min-h-[600px]">
+  <section class="grid place-items-center min-h-[calc(100dvh-4rem)]">
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameType="chain"
@@ -307,7 +307,7 @@ export default {
       @close="overlayOpen = false"
       @start="startChallenge"
     />
-    <div class="space-y-4 w-full max-w-4xl">
+    <div class="space-y-4 w-full max-w-3xl">
       <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 w-full">
         <AppH1 class="text-3xl md:text-4xl flex-none">Mayor o Menor</AppH1>
         <div class="flex items-center gap-2 self-stretch sm:self-auto flex-none">
@@ -337,40 +337,42 @@ export default {
         <Transition name="round-fade" mode="out-in">
           <div :key="roundKey" class="grid grid-cols-2 gap-4 sm:gap-6">
             <!-- Left player -->
-            <div class="flex flex-col items-center text-center space-y-2">
+            <div class="flex flex-col items-center text-center space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4 sm:p-6">
               <img v-if="leftPlayer" :src="leftPlayer.image" :alt="leftPlayer.name"
-                class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-xl ring-1 ring-white/10" />
-              <p class="text-white font-semibold text-sm sm:text-base truncate max-w-[140px] sm:max-w-[180px]">{{ leftPlayer?.name }}</p>
+                class="w-28 h-28 sm:w-36 sm:h-36 object-cover rounded-2xl ring-1 ring-white/10 shadow-lg" />
+              <p class="text-white font-semibold text-base sm:text-lg truncate max-w-[160px] sm:max-w-[200px]">{{ leftPlayer?.name }}</p>
               <div v-if="leftPlayer?.teamLogo" class="flex items-center gap-1.5">
-                <img :src="leftPlayer.teamLogo" :alt="leftPlayer.teamName" class="w-4 h-4 object-contain" />
-                <span class="text-slate-400 text-xs truncate max-w-[100px]">{{ leftPlayer?.teamName }}</span>
+                <img :src="leftPlayer.teamLogo" :alt="leftPlayer.teamName" class="w-5 h-5 object-contain" />
+                <span class="text-slate-400 text-sm truncate max-w-[120px]">{{ leftPlayer?.teamName }}</span>
               </div>
-              <div class="mt-1 text-2xl sm:text-3xl font-extrabold text-emerald-400 font-display">
+              <div class="mt-1 text-3xl sm:text-4xl font-extrabold text-emerald-400 font-display">
                 {{ leftStatDisplay() }}
               </div>
             </div>
 
             <!-- Right player -->
-            <div class="flex flex-col items-center text-center space-y-2">
+            <div class="flex flex-col items-center text-center space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4 sm:p-6">
               <img v-if="rightPlayer" :src="rightPlayer.image" :alt="rightPlayer.name"
-                class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-xl ring-1 ring-white/10" />
-              <p class="text-white font-semibold text-sm sm:text-base truncate max-w-[140px] sm:max-w-[180px]">{{ rightPlayer?.name }}</p>
+                class="w-28 h-28 sm:w-36 sm:h-36 object-cover rounded-2xl ring-1 ring-white/10 shadow-lg" />
+              <p class="text-white font-semibold text-base sm:text-lg truncate max-w-[160px] sm:max-w-[200px]">{{ rightPlayer?.name }}</p>
               <div v-if="rightPlayer?.teamLogo" class="flex items-center gap-1.5">
-                <img :src="rightPlayer.teamLogo" :alt="rightPlayer.teamName" class="w-4 h-4 object-contain" />
-                <span class="text-slate-400 text-xs truncate max-w-[100px]">{{ rightPlayer?.teamName }}</span>
+                <img :src="rightPlayer.teamLogo" :alt="rightPlayer.teamName" class="w-5 h-5 object-contain" />
+                <span class="text-slate-400 text-sm truncate max-w-[120px]">{{ rightPlayer?.teamName }}</span>
               </div>
-              <div class="mt-1 text-2xl sm:text-3xl font-extrabold font-display" :class="revealed ? 'text-amber-400' : 'text-slate-500'">
+              <div class="mt-1 text-3xl sm:text-4xl font-extrabold font-display" :class="revealed ? 'text-amber-400' : 'text-slate-500'">
                 {{ revealed ? rightStatDisplay() : '?' }}
               </div>
 
               <!-- Guess buttons -->
-              <div v-if="!gameOver" class="flex gap-2 mt-2">
+              <div v-if="!gameOver" class="flex gap-3 mt-3">
                 <button @click="guess(true)" :disabled="revealed || animating"
-                  class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/20 transition active:scale-95 disabled:opacity-40 disabled:pointer-events-none">
+                  class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-6 py-2.5 text-sm font-bold text-emerald-300 hover:bg-emerald-500/20 transition active:scale-95 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
                   Mayor
                 </button>
                 <button @click="guess(false)" :disabled="revealed || animating"
-                  class="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-300 hover:bg-red-500/20 transition active:scale-95 disabled:opacity-40 disabled:pointer-events-none">
+                  class="rounded-xl border border-red-500/30 bg-red-500/10 px-6 py-2.5 text-sm font-bold text-red-300 hover:bg-red-500/20 transition active:scale-95 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                   Menor
                 </button>
               </div>
