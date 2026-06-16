@@ -1,4 +1,4 @@
-const PROXY_BASE = import.meta.env.DEV ? '/fotmob' : '';
+const PROXY_BASE = '/fotmob';
 
 const LEAGUES = {
   WORLD_CUP: { id: 77, name: 'Copa del Mundo 2026', country: 'Internacional', ccode: 'INT', active: true, slug: 'world-cup' },

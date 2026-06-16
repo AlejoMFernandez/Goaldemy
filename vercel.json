@@ -5,6 +5,8 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
+    { "source": "/fotmob", "destination": "https://www.fotmob.com/" },
+    { "source": "/fotmob/:path*", "destination": "https://www.fotmob.com/:path*" },
     { "source": "/(.*)", "destination": "/" }
   ],
   "headers": [

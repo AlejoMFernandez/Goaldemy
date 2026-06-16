@@ -45,6 +45,7 @@ import Ligue1 from '../pages/leagues/Ligue1.vue';
 import LigaArgentina from '../pages/leagues/LigaArgentina.vue';
 import WorldCup from '../pages/leagues/WorldCup.vue';
 import TeamPage from '../pages/TeamPage.vue';
+import Pricing from '../pages/Pricing.vue';
 
 const routes = [
     { path: '/', component: Landing },
@@ -92,6 +93,7 @@ const routes = [
     { path: '/play/points', component: PlayPoints, meta: { requiresAuth: true } },
     { path: '/play/free', component: PlayFree },
     { path: '/rewards', component: RewardCenter, meta: { requiresAuth: true } },
+    { path: '/pricing', component: Pricing },
     // 404 fallback
     { path: '/:pathMatch(.*)*', component: NotFound },
 ]

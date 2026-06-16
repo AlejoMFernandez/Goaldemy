@@ -13,10 +13,11 @@ import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 import CircularTimer from '../../components/game/CircularTimer.vue'
 import StreakBadge from '../../components/game/StreakBadge.vue'
+import PowerupBar from '../../components/game/PowerupBar.vue'
 
 export default {
   name: 'NationalityGame',
-  components: { AppH1, GamePreviewModal, GameSummaryPopup, CircularTimer, StreakBadge },
+  components: { AppH1, GamePreviewModal, GameSummaryPopup, CircularTimer, StreakBadge, PowerupBar },
   data() {
   return { 
     ...initState(), 
@@ -44,6 +45,10 @@ export default {
     afterPercent: 0,
     progressShown: 0,
     xpToNextAfter: null,
+    // Powerups
+    shieldActive: false,
+    eliminatedOptions: [],
+    hintVisible: false,
   };
   },
   computed: {
@@ -101,10 +106,29 @@ export default {
     nextRound() { nextRound(this); },
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
     blurb() { return gameSummaryBlurb('nationality') },
-  pick(option) { 
+  pick(option) {
     if (this.timeOver) return
+    if (this.shieldActive && option.value !== this.current.cname) {
+      this.shieldActive = false
+      this.answered = true
+      this.selected = option.value
+      setTimeout(() => { this.nextRound(); this.eliminatedOptions = []; this.hintVisible = false }, 1000)
+      return
+    }
     const ok = pick(this, option, this.$refs.confettiHost)
-    setTimeout(() => this.nextRound(), 1000)
+    setTimeout(() => { this.nextRound(); this.eliminatedOptions = []; this.hintVisible = false }, 1000)
+  },
+  handlePowerup(type) {
+    if (type === 'fifty_fifty' && this.options.length > 2) {
+      const wrong = this.options.filter(o => o.value !== this.current.cname)
+      this.eliminatedOptions = wrong.slice(0, 2).map(o => o.value)
+    } else if (type === 'shield') {
+      this.shieldActive = true
+    } else if (type === 'extra_time') {
+      this.timeLeft = Math.min(this.timeLeft + 15, 999)
+    } else if (type === 'reveal_hint') {
+      this.hintVisible = true
+    }
   },
     optionClass(opt) { return optionClass(this, opt) },
     flag(opt) { return flag(opt.code, 40) },
@@ -243,8 +267,13 @@ export default {
                 <img v-if="current" :src="current.image" :alt="current.name" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg" />
               </div>
 
+              <Transition name="hint-fade">
+                <p v-if="hintVisible && current" class="text-center text-amber-300 text-sm font-medium mb-1">
+                  Juega en {{ current.teamName }}
+                </p>
+              </Transition>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button v-for="opt in options" :key="opt.label" @click="pick(opt)" :class="optionClass(opt)" :disabled="answered || timeOver"
+                <button v-for="opt in options" :key="opt.label" @click="pick(opt)" :class="optionClass(opt)" :disabled="answered || timeOver || eliminatedOptions.includes(opt.value)" v-show="!eliminatedOptions.includes(opt.value)"
                   class="transition-transform duration-150 active:scale-[0.98]">
                   <img v-if="opt.code" :src="flag(opt)" :alt="opt.label" width="40" height="28" class="rounded ring-1 ring-white/10 object-cover" style="aspect-ratio: 20/14;" />
                   <span class="truncate">{{ opt.label }}</span>
@@ -256,6 +285,15 @@ export default {
           <div v-if="mode==='challenge'" class="absolute left-4 top-4 z-20 pointer-events-none">
             <CircularTimer :seconds="Math.max(0, timeLeft)" :total="chosenSeconds" />
           </div>
+          <div v-if="shieldActive" class="absolute right-4 top-4 z-20 text-xl animate-pulse" title="Escudo activo">🛡️</div>
+
+          <!-- Powerup Bar -->
+          <PowerupBar
+            v-if="mode === 'challenge' && !timeOver && !showSummary"
+            :hide="overlayOpen"
+            :disabled-types="answered ? ['fifty_fifty','shield','extra_time','reveal_hint'] : []"
+            @use="handlePowerup"
+          />
           <Transition name="time-over-fade">
             <div v-if="timeOver && mode==='challenge'" class="mt-4 flex items-center justify-center gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2.5">
               <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">

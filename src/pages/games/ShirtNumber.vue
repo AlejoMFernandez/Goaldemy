@@ -11,13 +11,14 @@ import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 import CircularTimer from '../../components/game/CircularTimer.vue'
 import StreakBadge from '../../components/game/StreakBadge.vue'
+import PowerupBar from '../../components/game/PowerupBar.vue'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
 import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
 import { shuffleArray } from '../../services/game-common'
 
 export default {
   name: 'ShirtNumber',
-  components: { AppH1, GamePreviewModal, GameSummaryPopup, CircularTimer, StreakBadge },
+  components: { AppH1, GamePreviewModal, GameSummaryPopup, CircularTimer, StreakBadge, PowerupBar },
   computed: {
     gameMetadata() { return getGameMetadata('shirt-number') }
   },
@@ -63,6 +64,10 @@ export default {
       // difficulty
       selectedDifficulty: 'normal',
       difficultyConfig: null,
+      // Powerups
+      shieldActive: false,
+      eliminatedOptions: [],
+      hintVisible: false,
     }
   },
   mounted() {
@@ -156,9 +161,16 @@ export default {
     choose(opt) {
       if (this.timeOver || this.earlyWin) return false
       if (this.answered) return false
+      const correct = Number(opt.value) === Number(this.current?.shirtNumber)
+      if (this.shieldActive && !correct) {
+        this.shieldActive = false
+        this.answered = true
+        this.selected = opt.value
+        setTimeout(() => { this.nextRound(); this.eliminatedOptions = []; this.hintVisible = false }, 800)
+        return false
+      }
       this.answered = true
       this.selected = opt.value
-      const correct = Number(opt.value) === Number(this.current?.shirtNumber)
       if (correct) {
         celebrateCorrect()
         const nextStreak = (this.streak || 0) + 1
@@ -175,8 +187,20 @@ export default {
         onIncorrect(this)
         this.streak = 0
       }
-      setTimeout(() => this.nextRound(), 800)
+      setTimeout(() => { this.nextRound(); this.eliminatedOptions = []; this.hintVisible = false }, 800)
       return correct
+    },
+    handlePowerup(type) {
+      if (type === 'fifty_fifty' && this.options.length > 2) {
+        const wrong = this.options.filter(o => Number(o.value) !== Number(this.current.shirtNumber))
+        this.eliminatedOptions = wrong.slice(0, 2).map(o => o.value)
+      } else if (type === 'shield') {
+        this.shieldActive = true
+      } else if (type === 'extra_time') {
+        this.timeLeft = Math.min(this.timeLeft + 15, 999)
+      } else if (type === 'reveal_hint') {
+        this.hintVisible = true
+      }
     },
     async checkAvailability() { this.availability = await isChallengeAvailable('shirt-number') },
     async startChallenge({ difficulty, config }) {
@@ -293,6 +317,15 @@ export default {
         <div v-if="mode==='challenge'" class="absolute left-4 top-4 z-20 pointer-events-none">
           <CircularTimer :seconds="Math.max(0, timeLeft)" :total="chosenSeconds" />
         </div>
+        <div v-if="shieldActive" class="absolute right-4 top-4 z-20 text-xl animate-pulse" title="Escudo activo">🛡️</div>
+
+        <!-- Powerup Bar -->
+        <PowerupBar
+          v-if="mode === 'challenge' && !timeOver && !showSummary"
+          :hide="overlayOpen"
+          :disabled-types="answered ? ['fifty_fifty','shield','extra_time','reveal_hint'] : []"
+          @use="handlePowerup"
+        />
         
         <Transition name="round-fade" mode="out-in">
           <div :key="roundKey">
@@ -301,8 +334,13 @@ export default {
               <img v-if="current" :src="current.image" :alt="current.name" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg" />
               <div class="text-slate-300 text-sm">{{ current?.name }}</div>
             </div>
+            <Transition name="hint-fade">
+              <p v-if="hintVisible && current" class="text-center text-amber-300 text-sm font-medium mt-1">
+                Juega en {{ current.teamName }}
+              </p>
+            </Transition>
             <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button v-for="opt in options" :key="opt.value" :class="optionClass(opt)" :disabled="timeOver" @click="choose(opt)">#{{ opt.label }}</button>
+              <button v-for="opt in options" :key="opt.value" :class="optionClass(opt)" :disabled="timeOver || eliminatedOptions.includes(opt.value)" v-show="!eliminatedOptions.includes(opt.value)" @click="choose(opt)">#{{ opt.label }}</button>
             </div>
           </div>
         </Transition>

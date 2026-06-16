@@ -33,6 +33,7 @@ import { getAuthUser } from './auth'
 import { fetchGameBySlug, friendlyNameForSlug } from './games'
 import { unlockAchievementWithToast } from './xp'
 import { checkAllAchievementsAfterChallenge, checkTimeBasedAchievements } from './achievement-triggers'
+import { getDailyChallengeLimit } from './premium'
 
 // Cache de game_id por slug para evitar consultas repetitivas
 const _gameIdCache = new Map()
@@ -145,7 +146,8 @@ export async function isChallengeAvailable(slug) {
   // Consider ONLY finished sessions as "already played" to allow leaving mid-game without burning the daily
   const todaySessions = (data || []).filter(r => (r?.metadata || {})?.mode === 'challenge')
   const finished = todaySessions.filter(r => !!r.ended_at)
-  const already = finished.length > 0
+  const dailyLimit = await getDailyChallengeLimit()
+  const already = finished.length >= dailyLimit
   const last = finished.sort((a,b)=> new Date(b.started_at) - new Date(a.started_at))[0]
   let result = last?.metadata?.result || null
   // Robust fallback: infer result if missing, so UI can always show ✓/✕
@@ -166,7 +168,8 @@ export async function isChallengeAvailable(slug) {
       else result = score >= 100 ? 'win' : 'loss'
     }
   }
-  return { available: !already, reason: already ? 'Ya jugaste hoy' : null, result }
+  const remaining = dailyLimit - finished.length
+  return { available: !already, reason: already ? `Ya usaste tus ${dailyLimit} intentos de hoy` : null, result, remaining }
 }
 
 // Start a challenge session and return session id

@@ -27,19 +27,13 @@
 import { supabase } from './supabase'
 import { pushAchievementToast, pushLevelUpToast } from '../stores/notifications'
 import { setKnownLevel as _setKnownLevelRealtime } from './levelup-realtime'
+import { getXpMultiplier } from './premium'
 
-/**
- * Otorga XP al usuario autenticado actual
- * @param {Object} params
- * @param {number} params.amount - Cantidad de XP a otorgar (>=0)
- * @param {string} [params.reason='correct_answer'] - Razón por la que se otorga (para logs/auditoría)
- * @param {string|null} [params.gameId=null] - UUID del juego (si aplica)
- * @param {string|null} [params.sessionId=null] - UUID de la sesión de juego (si aplica)
- * @param {Object|null} [params.meta=null] - Metadata adicional (se guarda como JSON)
- */
 export async function awardXp({ amount, reason = 'correct_answer', gameId = null, sessionId = null, meta = null }) {
+  const multiplier = await getXpMultiplier()
+  const boostedAmount = Math.round(amount * multiplier)
   const { data, error } = await supabase.rpc('award_xp', {
-    p_amount: amount,
+    p_amount: boostedAmount,
     p_reason: reason,
     p_game_id: gameId,
     p_session_id: sessionId,

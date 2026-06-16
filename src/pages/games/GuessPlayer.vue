@@ -14,10 +14,11 @@ import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 import CircularTimer from '../../components/game/CircularTimer.vue'
 import StreakBadge from '../../components/game/StreakBadge.vue'
+import PowerupBar from '../../components/game/PowerupBar.vue'
 
 export default {
   name: 'GuessPlayer',
-  components: { AppH1, GamePreviewModal, GameSummaryPopup, CircularTimer, StreakBadge },
+  components: { AppH1, GamePreviewModal, GameSummaryPopup, CircularTimer, StreakBadge, PowerupBar },
   computed: {
     gameMetadata() {
       return getGameMetadata('guess-player')
@@ -42,6 +43,10 @@ export default {
       selectedDifficulty: 'normal',
       difficultyConfig: null,
       xpEarned: 0,
+      // Powerups
+      shieldActive: false,
+      eliminatedOptions: [],
+      hintVisible: false,
       // XP progress for summary
       levelBefore: null,
       levelAfter: null,
@@ -102,15 +107,30 @@ export default {
     },
     async choose(opt) {
       if (this.timeOver) return false
-      const ok = await pickAnswer(this, opt, this.$refs.confettiHost)
-      
-      // 🎉 Celebrate correct answer
-      if (ok && this.mode === 'challenge') {
-        celebrateCorrect()
+      if (this.shieldActive && opt.value !== this.current.name) {
+        this.shieldActive = false
+        this.answered = true
+        this.selected = opt.value
+        setTimeout(() => { this.nextRound(); this.eliminatedOptions = []; this.hintVisible = false }, 800)
+        return false
       }
-      
-      setTimeout(() => this.nextRound(), 800)
+      const ok = await pickAnswer(this, opt, this.$refs.confettiHost)
+      if (ok && this.mode === 'challenge') celebrateCorrect()
+      setTimeout(() => { this.nextRound(); this.eliminatedOptions = []; this.hintVisible = false }, 800)
       return ok
+    },
+    handlePowerup(type) {
+      if (type === 'fifty_fifty' && this.options.length > 2) {
+        const wrong = this.options.filter(o => o.value !== this.current.name)
+        const toRemove = wrong.slice(0, 2).map(o => o.value)
+        this.eliminatedOptions = toRemove
+      } else if (type === 'shield') {
+        this.shieldActive = true
+      } else if (type === 'extra_time') {
+        this.timeLeft = Math.min(this.timeLeft + 15, 999)
+      } else if (type === 'reveal_hint') {
+        this.hintVisible = true
+      }
     },
     optionClass(opt) { return optionClass(this, opt) },
     async checkAvailability() { this.availability = await isChallengeAvailable('guess-player') },
@@ -238,8 +258,13 @@ export default {
               <p class="text-slate-200 text-center text-base">Adivina el jugador</p>
               <img v-if="current" :src="current.image" :alt="current.name" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg" />
             </div>
+            <Transition name="hint-fade">
+              <p v-if="hintVisible && current" class="text-center text-amber-300 text-sm font-medium mb-1">
+                Juega en {{ current.teamName }}
+              </p>
+            </Transition>
             <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button v-for="opt in options" :key="opt.value" :class="optionClass(opt)" :disabled="timeOver" @click="choose(opt)">{{ opt.label }}</button>
+              <button v-for="opt in options" :key="opt.value" :class="optionClass(opt)" :disabled="timeOver || eliminatedOptions.includes(opt.value)" v-show="!eliminatedOptions.includes(opt.value)" @click="choose(opt)">{{ opt.label }}</button>
             </div>
           </div>
         </Transition>
@@ -247,6 +272,15 @@ export default {
         <div v-if="mode==='challenge'" class="pointer-events-none absolute left-3 top-3 z-20">
           <CircularTimer :seconds="Math.max(0, timeLeft)" :total="chosenSeconds" />
         </div>
+        <div v-if="shieldActive" class="absolute right-3 top-3 z-20 text-xl animate-pulse" title="Escudo activo">🛡️</div>
+
+        <!-- Powerup Bar -->
+        <PowerupBar
+          v-if="mode === 'challenge' && !timeOver && !showSummary"
+          :hide="overlayOpen"
+          :disabled-types="answered ? ['fifty_fifty','shield','extra_time','reveal_hint'] : []"
+          @use="handlePowerup"
+        />
         
         <!-- Summary Popup -->
         <GameSummaryPopup

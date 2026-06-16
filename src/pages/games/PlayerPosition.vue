@@ -8,6 +8,7 @@ import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 import CircularTimer from '../../components/game/CircularTimer.vue'
 import StreakBadge from '../../components/game/StreakBadge.vue'
+import PowerupBar from '../../components/game/PowerupBar.vue'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
 import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
@@ -15,7 +16,7 @@ import { createDailyRng } from '../../services/seeded-random'
 
 export default {
   name: 'PlayerPosition',
-  components: { AppH1, GamePreviewModal, GameSummaryPopup, CircularTimer, StreakBadge },
+  components: { AppH1, GamePreviewModal, GameSummaryPopup, CircularTimer, StreakBadge, PowerupBar },
   data() {
     return { 
       ...initState(), 
@@ -35,6 +36,10 @@ export default {
       selectedDifficulty: 'normal',
       difficultyConfig: null,
       xpEarned: 0,
+      // Powerups
+      shieldActive: false,
+      eliminatedOptions: [],
+      hintVisible: false,
       // XP summary fields
       levelBefore: null,
       levelAfter: null,
@@ -95,9 +100,28 @@ export default {
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
     async pick(option) {
       if (this.timeOver) return false
+      if (this.shieldActive && option.value !== this.current.position) {
+        this.shieldActive = false
+        this.answered = true
+        this.selected = option.value
+        setTimeout(() => { this.nextRound(); this.eliminatedOptions = []; this.hintVisible = false }, 1000)
+        return false
+      }
       const ok = await pickAnswer(this, option, this.$refs.confettiHost);
-      setTimeout(() => this.nextRound(), 1000);
+      setTimeout(() => { this.nextRound(); this.eliminatedOptions = []; this.hintVisible = false }, 1000);
       return ok
+    },
+    handlePowerup(type) {
+      if (type === 'fifty_fifty' && this.options.length > 2) {
+        const wrong = this.options.filter(o => o.value !== this.current.position)
+        this.eliminatedOptions = wrong.slice(0, 2).map(o => o.value)
+      } else if (type === 'shield') {
+        this.shieldActive = true
+      } else if (type === 'extra_time') {
+        this.timeLeft = Math.min(this.timeLeft + 15, 999)
+      } else if (type === 'reveal_hint') {
+        this.hintVisible = true
+      }
     },
     optionClass(opt) { return optionClass(this, opt); },
     async checkAvailability() { this.availability = await isChallengeAvailable('player-position') },
@@ -217,6 +241,15 @@ export default {
         <div v-if="mode==='challenge'" class="absolute left-4 top-4 z-20 pointer-events-none">
           <CircularTimer :seconds="Math.max(0, timeLeft)" :total="chosenSeconds" />
         </div>
+        <div v-if="shieldActive" class="absolute right-4 top-4 z-20 text-xl animate-pulse" title="Escudo activo">🛡️</div>
+
+        <!-- Powerup Bar -->
+        <PowerupBar
+          v-if="mode === 'challenge' && !timeOver && !showSummary"
+          :hide="overlayOpen"
+          :disabled-types="answered ? ['fifty_fifty','shield','extra_time','reveal_hint'] : []"
+          @use="handlePowerup"
+        />
 
         <Transition name="round-fade" mode="out-in">
           <div :key="roundKey">
@@ -225,8 +258,13 @@ export default {
               <img v-if="current" :src="current.image" :alt="current.name" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg" />
             </div>
 
+            <Transition name="hint-fade">
+              <p v-if="hintVisible && current" class="text-center text-amber-300 text-sm font-medium mb-1">
+                Juega en {{ current.teamName }}
+              </p>
+            </Transition>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button v-for="opt in options" :key="opt.label" @click="pick(opt)" :class="optionClass(opt)" :disabled="answered || timeOver"
+              <button v-for="opt in options" :key="opt.label" @click="pick(opt)" :class="optionClass(opt)" :disabled="answered || timeOver || eliminatedOptions.includes(opt.value)" v-show="!eliminatedOptions.includes(opt.value)"
                 class="transition-transform duration-150 active:scale-[0.98]">
                 {{ opt.label }}
               </button>
