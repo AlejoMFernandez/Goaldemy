@@ -28,6 +28,16 @@ import { getDifficulty, filterPlayersByDifficulty } from './difficulty';
 
 const EXCLUDED_TEAMS = new Set(['Boca Juniors', 'River Plate', 'Racing Club'])
 
+const MIN_TRANSFER_VALUE = 500_000
+
+const TEAM_LEAGUE_MAP = {
+  8455: 47, 8586: 47, 10260: 47, 8650: 47, 9825: 47, 8456: 47, // Premier League
+  8634: 87, 9906: 87, 8633: 87, // La Liga
+  8564: 55, 9875: 55, 8636: 55, // Serie A
+  9789: 54, 9823: 54, // Bundesliga
+  9847: 53, // Ligue 1
+}
+
 // Módulo-level cache: se llena con datos de FotMob cuando initializePlayers() completa
 let _fotmobCache = null
 
@@ -63,15 +73,14 @@ export function playerImageUrl(playerId) {
  * @returns {Array} Array de objetos jugador con todas sus propiedades
  */
 export function getAllPlayers() {
-  // Usa el cache de FotMob si ya está listo, si no usa el JSON estático
-  if (_fotmobCache && _fotmobCache.length > 0) return _fotmobCache
+  if (_fotmobCache && _fotmobCache.length > 0) return _fotmobCache.filter(isNotablePlayer)
 
   const players = [];
   for (const team of teams) {
     if (EXCLUDED_TEAMS.has(team.name)) continue
     for (const section of team.squad) {
       for (const member of section.members) {
-        players.push({
+        const p = {
           id: member.id,
           name: member.name,
           teamId: team.id,
@@ -79,9 +88,6 @@ export function getAllPlayers() {
           teamLogo: team.logo,
           ccode: member.ccode,
           cname: member.cname,
-          // Include both a broad numeric positionId (0: GK, 1: DF, 2: MF, 3: FW)
-          // and the descriptive string list (e.g., "CB", "LB,LWB", "ST"),
-          // so game logic can group reliably and still have a readable descriptor.
           positionId: member.positionId,
           position: member.positionIdsDesc,
           height: member.height ?? null,
@@ -90,11 +96,22 @@ export function getAllPlayers() {
           shirtNumber: member.shirtNumber ?? null,
           image: playerImageUrl(member.id),
           stats: member.stats || null,
-        });
+          leagueId: TEAM_LEAGUE_MAP[team.id] ?? null,
+        }
+        if (isNotablePlayer(p)) players.push(p)
       }
     }
   }
   return players;
+}
+
+function isNotablePlayer(p) {
+  if (!p) return false
+  const tv = p.transferValue ?? 0
+  if (tv >= MIN_TRANSFER_VALUE) return true
+  const apps = p.stats?.appearances ?? 0
+  if (apps >= 10) return true
+  return false
 }
 
 export function getAllTeams() {

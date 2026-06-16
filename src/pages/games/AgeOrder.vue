@@ -217,7 +217,7 @@ export default {
 </script>
 
 <template>
-  <section class="grid place-items-center min-h-[600px]">
+  <section class="grid place-items-center min-h-[calc(100dvh-4rem)]">
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="Ordenar por edad"
@@ -229,10 +229,10 @@ export default {
       @close="overlayOpen = false"
       @start="startChallenge"
     />
-    <div class="space-y-4 w-full max-w-4xl">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 w-full">
-        <AppH1 class="text-3xl md:text-4xl flex-none">Ordenar por edad</AppH1>
-        <div class="flex items-center gap-2 self-stretch sm:self-auto flex-none">
+    <div class="space-y-4 w-full max-w-2xl">
+      <div class="flex items-center justify-between">
+        <AppH1 class="text-2xl md:text-3xl">Ordenar por edad</AppH1>
+        <div class="flex items-center gap-2">
           <router-link :to="backPath()" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">← Volver</router-link>
           <div class="rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-white/15 px-3 py-2 flex items-center gap-2 shadow-lg shadow-black/20">
             <span class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Puntaje</span>
@@ -241,52 +241,64 @@ export default {
         </div>
       </div>
 
-  <div class="relative card p-6 ring-1 ring-white/5">
-        <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1 px-1">
-          <span>Más viejo (+)</span>
-          <span>Más joven (−)</span>
-        </div>
-        <div class="grid gap-2 mb-3" :style="{ gridTemplateColumns: `repeat(${items.length || 5}, minmax(0, 1fr))` }">
-          <button v-for="(slot, i) in slots" :key="'slot'+i"
-                  @click="clickSlot(i)" @dragover="onDragOverSlot" @drop="onDropOnSlot($event, i)" @mouseenter="hoveredSlot=i" @mouseleave="hoveredSlot=null"
-                  class="h-40 rounded-lg border bg-white/5 transition ring-offset-1"
-                  :class="[
-                    answered ? (correctness[i] ? 'border-green-500 bg-green-500/10 option-correct' : 'border-red-500 bg-red-500/10 shake') : 'border-white/15 text-slate-400',
-                    (selectedFromSlot===i) ? 'ring-2 ring-sky-400' : '',
-                    (hoveredSlot===i && (selectedIndex!=null || selectedFromSlot!=null)) ? 'ring-2 ring-amber-400' : '',
-                    locked ? 'cursor-not-allowed' : ''
-                  ]">
-            <template v-if="slot != null">
-              <div class="flex flex-col items-center justify-center h-full text-slate-200">
-                <img :src="items[slot].image" :alt="items[slot].name" class="h-16 w-16 object-cover rounded mb-2" :draggable="!locked" @dragstart="onDragStartFromSlot($event, i)" />
-                  <div class="text-slate-100 text-sm sm:text-base text-center leading-tight px-1 whitespace-normal break-words">{{ items[slot].name }}</div>
-                <div v-if="answered" class="text-[12px] mt-1" :class="correctness[i] ? 'text-emerald-300' : 'text-red-300'">
-                  {{ items[slot].age }} años
-                </div>
-              </div>
-            </template>
-            <template v-else>
-              <span class="text-sm text-slate-400 font-semibold">#{{ i+1 }}</span>
-            </template>
-          </button>
+      <div class="relative card p-4 sm:p-6 ring-1 ring-white/5" ref="confettiHost">
+        <div class="flex items-center justify-between text-[11px] text-slate-400 mb-2 px-1">
+          <span class="flex items-center gap-1">⬆ Más viejo</span>
+          <span class="flex items-center gap-1">Más joven ⬇</span>
         </div>
 
-        <div class="grid gap-2" :style="{ gridTemplateColumns: `repeat(${items.length || 5}, minmax(0, 1fr))` }">
-          <button v-for="(p,i) in items" :key="p.id" :disabled="isPlaced(i) || locked" @click="selectCard(i)" :draggable="!locked" @dragstart="onDragStartFromList($event, i)" :class="['rounded-lg border p-2 bg-white/5 text-left', selectedIndex===i ? 'ring-2 ring-sky-400 border-white/20' : 'border-white/15', (isPlaced(i) || locked) ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/10']">
-            <div class="flex flex-col items-center sm:flex-row sm:items-center gap-2">
-              <img :src="p.image" :alt="p.name" class="h-10 w-10 object-cover rounded" />
-              <div class="min-w-0">
-                <div class="text-slate-100 text-sm leading-tight whitespace-normal break-words text-center sm:text-left">{{ p.name }}</div>
-              </div>
+        <Transition name="board-fade" mode="out-in">
+          <div :key="items.map(p=>p.id).join()">
+            <div class="grid gap-2 mb-4" :style="{ gridTemplateColumns: `repeat(${items.length || 5}, minmax(0, 1fr))` }">
+              <button v-for="(slot, i) in slots" :key="'slot'+i"
+                      @click="clickSlot(i)" @dragover="onDragOverSlot" @drop="onDropOnSlot($event, i)" @mouseenter="hoveredSlot=i" @mouseleave="hoveredSlot=null"
+                      class="aspect-[3/4] rounded-xl border-2 border-dashed transition-all duration-200 flex items-center justify-center"
+                      :class="[
+                        answered ? (correctness[i] ? 'border-emerald-500 bg-emerald-500/10 slot-correct' : 'border-red-500 bg-red-500/10 shake') : 'border-white/15 bg-white/3 hover:border-white/25',
+                        (selectedFromSlot===i) ? 'ring-2 ring-sky-400 border-sky-400' : '',
+                        (hoveredSlot===i && (selectedIndex!=null || selectedFromSlot!=null)) ? 'ring-2 ring-amber-400 border-amber-400 scale-[1.03]' : '',
+                        locked ? 'cursor-not-allowed' : 'cursor-pointer'
+                      ]">
+                <template v-if="slot != null">
+                  <div class="flex flex-col items-center justify-center h-full p-1.5 gap-1">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden ring-2 shadow-lg"
+                         :class="answered ? (correctness[i] ? 'ring-emerald-400/60' : 'ring-red-400/60') : 'ring-white/20'">
+                      <img :src="items[slot].image" :alt="items[slot].name" class="w-full h-full object-cover" :draggable="!locked" @dragstart="onDragStartFromSlot($event, i)" />
+                    </div>
+                    <div class="text-white text-[11px] sm:text-xs font-semibold text-center leading-tight px-0.5 line-clamp-2">{{ items[slot].name }}</div>
+                    <div v-if="answered" class="text-[11px] font-bold px-2 py-0.5 rounded-full" :class="correctness[i] ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'">
+                      {{ items[slot].age }} años
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <div class="flex flex-col items-center gap-1 text-slate-500">
+                    <div class="w-10 h-10 rounded-full border-2 border-dashed border-white/10 flex items-center justify-center text-xs font-bold">{{ i+1 }}</div>
+                  </div>
+                </template>
+              </button>
             </div>
-          </button>
-        </div>
+
+            <div class="grid gap-1.5" :style="{ gridTemplateColumns: `repeat(${items.length || 5}, minmax(0, 1fr))` }">
+              <button v-for="(p,i) in items" :key="p.id" :disabled="isPlaced(i) || locked" @click="selectCard(i)" :draggable="!locked" @dragstart="onDragStartFromList($event, i)"
+                      class="rounded-xl border p-1.5 transition-all duration-150"
+                      :class="[selectedIndex===i ? 'ring-2 ring-sky-400 border-sky-400/50 bg-sky-500/10 scale-[1.03]' : 'border-white/10 bg-white/5', (isPlaced(i) || locked) ? 'opacity-30 cursor-not-allowed scale-95' : 'hover:bg-white/10 hover:scale-[1.02] active:scale-[0.97] cursor-pointer']">
+                <div class="flex flex-col items-center gap-1">
+                  <img :src="p.image" :alt="p.name" class="h-9 w-9 sm:h-10 sm:w-10 object-cover rounded-full ring-1 ring-white/10" />
+                  <div class="text-slate-200 text-[10px] sm:text-xs leading-tight text-center line-clamp-1 font-medium">{{ p.name }}</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </Transition>
 
         <div class="mt-4 flex items-center justify-center">
-          <button @click="check" :disabled="slots.some(x=>x==null) || locked" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 border border-white/10 text-white px-5 py-2 text-sm font-semibold disabled:opacity-50">Comprobar</button>
+          <button @click="check" :disabled="slots.some(x=>x==null) || locked"
+                  class="rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 border border-white/10 text-white px-6 py-2.5 text-sm font-bold shadow-lg shadow-emerald-500/20 disabled:opacity-40 disabled:shadow-none transition-all active:scale-95">
+            Comprobar
+          </button>
         </div>
 
-        <!-- Summary Popup -->
         <GameSummaryPopup
           :show="showSummary && mode==='challenge'"
           :corrects="corrects"
@@ -312,4 +324,14 @@ export default {
   </section>
 </template>
 
-
+<style scoped>
+.board-fade-enter-active, .board-fade-leave-active {
+  transition: opacity 250ms ease, transform 250ms ease;
+}
+.board-fade-enter-from { opacity: 0; transform: translateY(10px) scale(0.97); }
+.board-fade-leave-to { opacity: 0; transform: translateY(-6px) scale(0.98); }
+.slot-correct { animation: slotPop 350ms cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes slotPop { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+.line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+</style>

@@ -182,7 +182,7 @@ export default {
 </script>
 
 <template>
-  <section class="grid place-items-center min-h-[600px]">
+  <section class="grid place-items-center min-h-[calc(100dvh-4rem)]">
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="Posición del jugador"

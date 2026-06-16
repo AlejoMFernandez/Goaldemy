@@ -1,8 +1,9 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getAllPlayers } from '../../services/players'
 import { awardXpBatch } from '../../services/game-xp'
 import AppH1 from '../../components/common/AppH1.vue'
+import CircularTimer from '../../components/game/CircularTimer.vue'
 
 // ── Formation 4-3-3 with % positions on the field ──────────────────────────
 const FORMATION = [
@@ -28,17 +29,18 @@ const constraint = ref(null)
 const xpEarned = ref(0)
 const finished = ref(false)
 const loading = ref(true)
+const TOTAL_TIME = 180
+const timeLeft = ref(TOTAL_TIME)
+const timeOver = ref(false)
+let timerHandle = null
 
 // ── Computed ───────────────────────────────────────────────────────────────
 const validPlayers = computed(() => {
   if (!constraint.value || !allPlayers.value.length) return []
   const c = constraint.value
-  if (c.type === 'team') {
-    return allPlayers.value.filter(p => p.teamId === c.id)
-  }
-  return allPlayers.value.filter(p =>
-    (p.ccode || '').toLowerCase() === c.code.toLowerCase()
-  )
+  if (c.type === 'team') return allPlayers.value.filter(p => p.teamId === c.id)
+  if (c.type === 'league') return allPlayers.value.filter(p => p.leagueId === c.id)
+  return allPlayers.value.filter(p => (p.ccode || '').toLowerCase() === c.code.toLowerCase())
 })
 
 const usedIds = computed(() =>
@@ -61,13 +63,21 @@ const suggestions = computed(() => {
 const filledCount = computed(() => slots.value.filter(s => s.filled).length)
 
 // ── Constraint generator ───────────────────────────────────────────────────
+const LEAGUE_INFO = {
+  47: { name: 'Premier League', logo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/47.png' },
+  87: { name: 'La Liga', logo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/87.png' },
+  55: { name: 'Serie A', logo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/55.png' },
+  54: { name: 'Bundesliga', logo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/54.png' },
+  53: { name: 'Ligue 1', logo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/53.png' },
+}
+
 function generateConstraint() {
   const players = allPlayers.value
   if (!players.length) return
 
-  const useTeam = Math.random() < 0.55
+  const roll = Math.random()
 
-  if (useTeam) {
+  if (roll < 0.4) {
     const byTeam = {}
     players.forEach(p => {
       if (!byTeam[p.teamId]) byTeam[p.teamId] = { id: p.teamId, name: p.teamName, logo: p.teamLogo, count: 0 }
@@ -81,7 +91,36 @@ function generateConstraint() {
     }
   }
 
-  // Nationality
+  if (roll < 0.7) {
+    const byNat = {}
+    players.forEach(p => {
+      const code = (p.ccode || '').toLowerCase()
+      if (!code) return
+      if (!byNat[code]) byNat[code] = { code, name: p.cname, count: 0 }
+      byNat[code].count++
+    })
+    const eligible = Object.values(byNat).filter(n => n.count >= 11)
+    if (eligible.length) {
+      const n = eligible[Math.floor(Math.random() * eligible.length)]
+      constraint.value = { type: 'nationality', code: n.code, label: n.name, flag: `https://flagcdn.com/w80/${n.code}.png` }
+      return
+    }
+  }
+
+  const byLeague = {}
+  players.forEach(p => {
+    const lid = p.leagueId
+    if (!lid || !LEAGUE_INFO[lid]) return
+    if (!byLeague[lid]) byLeague[lid] = { id: lid, ...LEAGUE_INFO[lid], count: 0 }
+    byLeague[lid].count++
+  })
+  const eligible = Object.values(byLeague).filter(l => l.count >= 11)
+  if (eligible.length) {
+    const l = eligible[Math.floor(Math.random() * eligible.length)]
+    constraint.value = { type: 'league', id: l.id, label: l.name, logo: l.logo }
+    return
+  }
+
   const byNat = {}
   players.forEach(p => {
     const code = (p.ccode || '').toLowerCase()
@@ -89,25 +128,23 @@ function generateConstraint() {
     if (!byNat[code]) byNat[code] = { code, name: p.cname, count: 0 }
     byNat[code].count++
   })
-  const eligible = Object.values(byNat).filter(n => n.count >= 11)
-  if (!eligible.length) return
-  const n = eligible[Math.floor(Math.random() * eligible.length)]
-  constraint.value = {
-    type: 'nationality',
-    code: n.code,
-    label: n.name,
-    flag: `https://flagcdn.com/w80/${n.code}.png`
+  const natEligible = Object.values(byNat).filter(n => n.count >= 11)
+  if (natEligible.length) {
+    const n = natEligible[Math.floor(Math.random() * natEligible.length)]
+    constraint.value = { type: 'nationality', code: n.code, label: n.name, flag: `https://flagcdn.com/w80/${n.code}.png` }
   }
 }
 
 // ── Interactions ───────────────────────────────────────────────────────────
 function selectSlot(id) {
+  if (timeOver.value || finished.value) return
   if (slots.value[id]?.filled) return
   activeSlot.value = activeSlot.value === id ? null : id
   inputValue.value = ''
 }
 
 function pickPlayer(player) {
+  if (timeOver.value || finished.value) return
   const idx = activeSlot.value
   if (idx === null || slots.value[idx]?.filled) return
   slots.value[idx].filled = player
@@ -116,8 +153,22 @@ function pickPlayer(player) {
   inputValue.value = ''
   if (slots.value.every(s => s.filled)) {
     finished.value = true
+    clearInterval(timerHandle)
     awardXpBatch({ gameCode: 'once-ideal', totalXp: xpEarned.value, corrects: 11 }).catch(() => {})
   }
+}
+
+function startTimer() {
+  clearInterval(timerHandle)
+  timeLeft.value = TOTAL_TIME
+  timeOver.value = false
+  timerHandle = setInterval(() => {
+    if (timeLeft.value > 0) timeLeft.value--
+    if (timeLeft.value <= 0) {
+      timeOver.value = true
+      clearInterval(timerHandle)
+    }
+  }, 1000)
 }
 
 function resetGame() {
@@ -126,7 +177,9 @@ function resetGame() {
   inputValue.value = ''
   xpEarned.value = 0
   finished.value = false
+  timeOver.value = false
   generateConstraint()
+  startTimer()
 }
 
 function changeConstraint() {
@@ -138,11 +191,14 @@ onMounted(() => {
   allPlayers.value = getAllPlayers()
   generateConstraint()
   loading.value = false
+  startTimer()
 })
+
+onUnmounted(() => clearInterval(timerHandle))
 </script>
 
 <template>
-  <section class="min-h-screen px-4 py-6 max-w-2xl mx-auto">
+  <section class="min-h-[calc(100dvh-4rem)] px-4 py-6 max-w-2xl mx-auto">
     <!-- Header -->
     <div class="flex items-center justify-between mb-5">
       <AppH1 class="text-2xl md:text-3xl shrink-0">Once Ideal</AppH1>
@@ -153,21 +209,18 @@ onMounted(() => {
 
     <!-- Constraint card -->
     <div v-if="constraint && !loading" class="mb-4 rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur px-5 py-4 flex items-center gap-4">
-      <!-- Constraint icon -->
       <img v-if="constraint.logo" :src="constraint.logo" class="w-12 h-12 object-contain flex-shrink-0" />
       <img v-else-if="constraint.flag" :src="constraint.flag" class="h-9 rounded shadow flex-shrink-0" />
-      <!-- Info -->
       <div class="flex-1 min-w-0">
         <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
-          {{ constraint.type === 'team' ? '⚽ Equipo' : '🏴 Selección' }}
+          {{ constraint.type === 'team' ? '⚽ Equipo' : constraint.type === 'league' ? '🏟️ Liga' : '🏴 Selección' }}
         </p>
         <p class="text-lg font-bold text-white truncate">{{ constraint.label }}</p>
         <p class="text-xs text-slate-400">{{ validPlayers.length }} jugadores disponibles</p>
       </div>
-      <!-- Progress -->
-      <div class="text-right flex-shrink-0">
+      <div class="flex flex-col items-center gap-1 flex-shrink-0">
+        <CircularTimer :seconds="Math.max(0, timeLeft)" :total="TOTAL_TIME" />
         <div class="text-2xl font-bold text-cyan-400">{{ filledCount }}<span class="text-slate-500 text-base">/11</span></div>
-        <div class="text-[10px] text-slate-400 uppercase tracking-widest">llenados</div>
       </div>
     </div>
 
@@ -213,13 +266,24 @@ onMounted(() => {
       </button>
     </div>
 
+    <!-- Time over -->
+    <div v-if="timeOver && !finished" class="mb-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5 text-center">
+      <div class="text-3xl mb-2">⏱️</div>
+      <h3 class="text-lg font-bold text-amber-300 mb-1">¡Se acabó el tiempo!</h3>
+      <p class="text-slate-300 text-sm mb-1">Llenaste <span class="font-bold text-white">{{ filledCount }}/11</span> posiciones</p>
+      <p v-if="xpEarned > 0" class="text-slate-400 text-sm mb-4">+<span class="text-cyan-400 font-bold">{{ xpEarned }} XP</span> ganados</p>
+      <button @click="resetGame" class="rounded-xl bg-[oklch(0.62_0.21_270)] hover:brightness-110 px-5 py-2.5 font-semibold text-white transition">
+        Intentar de nuevo
+      </button>
+    </div>
+
     <!-- Input panel (when a slot is active) -->
-    <div v-if="!finished" class="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-4 min-h-[90px]">
+    <div v-if="!finished && !timeOver" class="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-4 min-h-[90px]">
       <template v-if="activeSlot !== null">
         <p class="text-xs text-slate-400 uppercase tracking-wider mb-2">
           Escribí un jugador para
           <span class="text-cyan-400 font-bold">{{ slots[activeSlot]?.label }}</span>
-          <span class="text-slate-500 ml-1">({{ constraint?.type === 'team' ? constraint?.label : constraint?.label }})</span>
+          <span class="text-slate-500 ml-1">({{ constraint?.label }})</span>
         </p>
         <div class="relative">
           <input
