@@ -329,7 +329,7 @@ export default {
                   </ul>
                 </div>
               </div>
-              <button type="button" @click="submit" :disabled="answered || (guess?.length || 0) < 3" class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 border border-white/10 text-white px-4 py-2 disabled:opacity-50">Adivinar</button>
+              <button type="button" @click="submit" :disabled="answered || (guess?.length || 0) < 3" class="rounded-full bg-emerald-500 hover:brightness-110 border border-white/10 text-white px-4 py-2 disabled:opacity-50">Adivinar</button>
             </form>
 
             <!-- Removed old lives row; now shown as hearts on top-left -->

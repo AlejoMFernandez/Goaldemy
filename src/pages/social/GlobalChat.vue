@@ -106,7 +106,7 @@ export default {
                 class="flex-1 bg-transparent outline-none text-slate-100 placeholder-slate-400"
                 @keydown.enter.exact.prevent="handleSubmit"
               />
-              <button type="submit" class="shrink-0 rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 text-white h-10 w-10 grid place-items-center">
+              <button type="submit" class="shrink-0 rounded-full bg-emerald-500 hover:brightness-110 text-white h-10 w-10 grid place-items-center">
                 <!-- paper plane icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
                   <path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/>

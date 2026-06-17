@@ -523,7 +523,7 @@ export default {
                     <!-- User dropdown / login button -->
                     <template v-if="user.id === null">
                             <li>
-                                <RouterLink class="rounded-full bg-[oklch(0.62_0.21_270)] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[oklch(0.55_0.21_270)/30] transition hover:bg-[oklch(0.55_0.21_270)]" to="/login">
+                                <RouterLink class="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-600/30 transition hover:bg-emerald-600" to="/login">
                                     Acceder
                                 </RouterLink>
                             </li>
@@ -600,7 +600,7 @@ export default {
                             <div v-if="menuOpen" data-user-menu class="absolute right-0 mt-2 w-64 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl overflow-hidden">
                                 <div class="px-3 py-3 border-b border-white/10">
                                     <div v-if="!levelInfo && levelLoading" class="mt-1 h-2 rounded bg-white/10 overflow-hidden">
-                                        <div class="h-full w-1/3 bg-[oklch(0.62_0.21_270)] animate-pulse"></div>
+                                        <div class="h-full w-1/3 bg-emerald-500 animate-pulse"></div>
                                     </div>
                                     <div v-else-if="levelInfo">
                                         <div class="mt-1 flex items-center justify-between text-xs text-slate-300">
@@ -679,7 +679,7 @@ export default {
                                         <div v-if="menuOpen" data-user-menu class="absolute right-0 mt-2 w-64 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl overflow-hidden z-50">
                                             <div class="px-3 py-3 border-b border-white/10">
                                                 <div v-if="!levelInfo && levelLoading" class="mt-1 h-2 rounded bg-white/10 overflow-hidden">
-                                                    <div class="h-full w-1/3 bg-[oklch(0.62_0.21_270)] animate-pulse"></div>
+                                                    <div class="h-full w-1/3 bg-emerald-500 animate-pulse"></div>
                                                 </div>
                                                 <div v-else-if="levelInfo">
                                                     <div class="mt-1 flex items-center justify-between text-xs text-slate-300">

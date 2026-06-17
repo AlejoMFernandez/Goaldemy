@@ -423,7 +423,7 @@ export default {
               Deseleccionar
             </button>
             <button @click="verify" :disabled="!canVerify"
-                    class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 border border-white/10 text-white px-5 py-2 text-sm font-semibold transition disabled:opacity-40">
+                    class="rounded-full bg-emerald-500 hover:brightness-110 border border-white/10 text-white px-5 py-2 text-sm font-semibold transition disabled:opacity-40">
               Verificar
             </button>
           </div>

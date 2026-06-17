@@ -117,7 +117,7 @@ const accent = computed(() => {
     <div class="px-5 sm:px-6 -mt-11 relative z-10">
       <div class="flex items-end gap-4">
         <div class="relative shrink-0">
-          <div class="size-[88px] sm:size-24 rounded-2xl overflow-hidden shadow-xl bg-gradient-to-br from-[oklch(0.70_0.21_270)] to-[oklch(0.55_0.21_270)] text-white font-extrabold text-2xl sm:text-3xl grid place-items-center ring-4 ring-slate-900">
+          <div class="size-[88px] sm:size-24 rounded-2xl overflow-hidden shadow-xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white font-extrabold text-2xl sm:text-3xl grid place-items-center ring-4 ring-slate-900">
             <img v-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
             <span v-else>{{ avatarInitial }}</span>
           </div>

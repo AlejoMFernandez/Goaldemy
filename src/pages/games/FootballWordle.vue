@@ -462,7 +462,7 @@ export default {
             </div>
             <div class="flex items-center justify-center gap-3 mt-2">
               <button type="submit" :disabled="(guess?.length || 0) < 3"
-                      class="rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 border border-white/10 text-white px-5 py-2 text-sm font-semibold disabled:opacity-50 transition">
+                      class="rounded-full bg-emerald-500 hover:brightness-110 border border-white/10 text-white px-5 py-2 text-sm font-semibold disabled:opacity-50 transition">
                 Adivinar
               </button>
               <span class="text-slate-500 text-xs">{{ remainingGuesses }} intento{{ remainingGuesses === 1 ? '' : 's' }} restante{{ remainingGuesses === 1 ? '' : 's' }}</span>

@@ -187,7 +187,7 @@ export default {
                   <!-- Status: optimistic pending (clock) -->
                   <svg v-else-if="m.optimistic" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5 text-slate-400/70 ml-1"><path d="M12 1a11 11 0 1 0 11 11A11.012 11.012 0 0 0 12 1zm1 11H7V10h4V5h2z"/></svg>
                   <!-- Status: read receipts as single blue check; sent as single gray check -->
-                  <svg v-else-if="m.read" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5 text-[oklch(0.62_0.21_270)] ml-1"><path d="M9 16l-5-5 1.41-1.41L9 13.17l9.59-9.59L20 5z"/></svg>
+                  <svg v-else-if="m.read" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5 text-emerald-500 ml-1"><path d="M9 16l-5-5 1.41-1.41L9 13.17l9.59-9.59L20 5z"/></svg>
                   <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5 text-slate-400 ml-1"><path d="M9 16l-5-5 1.41-1.41L9 13.17l9.59-9.59L20 5z"/></svg>
                 </span>
               </div>
@@ -205,7 +205,7 @@ export default {
                 class="flex-1 bg-transparent outline-none text-slate-100 placeholder-slate-400"
                 @keydown.enter.exact.prevent="handleSubmit"
               />
-              <button type="submit" class="shrink-0 rounded-full bg-[oklch(0.62_0.21_270)] hover:brightness-110 text-white h-10 w-10 grid place-items-center">
+              <button type="submit" class="shrink-0 rounded-full bg-emerald-500 hover:brightness-110 text-white h-10 w-10 grid place-items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
                   <path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/>
                 </svg>

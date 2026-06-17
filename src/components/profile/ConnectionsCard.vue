@@ -24,7 +24,7 @@ defineProps({
         class="group relative flex flex-col items-center"
       >
         <!-- Avatar -->
-        <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-700 grid place-items-center text-xs text-slate-200 ring-2 ring-white/20 group-hover:ring-[oklch(0.62_0.21_270)] group-hover:scale-105 transition-all duration-200">
+        <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-700 grid place-items-center text-xs text-slate-200 ring-2 ring-white/20 group-hover:ring-emerald-500 group-hover:scale-105 transition-all duration-200">
           <img v-if="c.avatar_url" :src="c.avatar_url" class="w-full h-full object-cover" alt="avatar" />
           <span v-else>{{ ((c.display_name || c.email || '?').trim()[0] || '?').toUpperCase() }}</span>
         </div>

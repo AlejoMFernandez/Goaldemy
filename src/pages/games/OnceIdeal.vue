@@ -272,7 +272,7 @@ onUnmounted(() => clearInterval(timerHandle))
       <h3 class="text-lg font-bold text-amber-300 mb-1">¡Se acabó el tiempo!</h3>
       <p class="text-slate-300 text-sm mb-1">Llenaste <span class="font-bold text-white">{{ filledCount }}/11</span> posiciones</p>
       <p v-if="xpEarned > 0" class="text-slate-400 text-sm mb-4">+<span class="text-cyan-400 font-bold">{{ xpEarned }} XP</span> ganados</p>
-      <button @click="resetGame" class="rounded-xl bg-[oklch(0.62_0.21_270)] hover:brightness-110 px-5 py-2.5 font-semibold text-white transition">
+      <button @click="resetGame" class="rounded-xl bg-emerald-500 hover:brightness-110 px-5 py-2.5 font-semibold text-white transition">
         Intentar de nuevo
       </button>
     </div>
@@ -340,7 +340,7 @@ onUnmounted(() => clearInterval(timerHandle))
       </p>
       <div class="flex gap-3 justify-center flex-wrap">
         <button @click="resetGame"
-                class="rounded-xl bg-[oklch(0.62_0.21_270)] hover:brightness-110 px-5 py-2.5 font-semibold text-white transition">
+                class="rounded-xl bg-emerald-500 hover:brightness-110 px-5 py-2.5 font-semibold text-white transition">
           Nuevo desafío
         </button>
         <router-link to="/play/free"

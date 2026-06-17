@@ -299,7 +299,7 @@
               <template v-for="group in teamData.squad.squad" :key="group.title">
                 <!-- Position group header -->
                 <div class="px-4 py-2.5 bg-white/5 border-b border-white/10 flex items-center gap-2">
-                  <span class="w-0.5 h-4 rounded-full bg-[oklch(0.62_0.21_270)] flex-shrink-0"></span>
+                  <span class="w-0.5 h-4 rounded-full bg-emerald-500 flex-shrink-0"></span>
                   <h3 class="text-xs font-bold uppercase tracking-widest text-slate-200">
                     {{ group.title === 'coach' ? 'CUERPO TÉCNICO' :
                        group.title === 'keepers' ? 'ARQUEROS' :

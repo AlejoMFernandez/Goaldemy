@@ -85,7 +85,7 @@ export default {
             conn.state==='connected' ? 'bg-emerald-500/15 border-emerald-400/30 text-emerald-200' :
             conn.state==='pending_out' ? 'bg-amber-500/10 border-amber-400/30 text-amber-200' :
             conn.state==='pending_in' ? 'bg-sky-500/10 border-sky-400/30 text-sky-200' :
-            'bg-[oklch(0.62_0.21_270)] border-white/10 text-white hover:brightness-110'
+            'bg-emerald-500 border-white/10 text-white hover:brightness-110'
           ]">
           {{ connectLabel }}
         </button>
