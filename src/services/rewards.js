@@ -79,6 +79,26 @@ export async function claimPassTier(tier, track) {
   return data || { ok: false }
 }
 
+/** Retos progresivos (auto-upgrade) con tier/progreso/objetivo actuales. */
+export async function getProgressiveChallenges() {
+  const { id } = getAuthUser() || {}
+  if (!id) return []
+  const { data, error } = await supabase.rpc('get_progressive_challenges')
+  if (error) {
+    console.warn('[rewards] get_progressive_challenges:', error.message)
+    return []
+  }
+  return Array.isArray(data) ? data : []
+}
+
+/** Reclama un reto progresivo; sube de tier. Devuelve { ok, xp, powerup, new_tier, new_target }. */
+export async function claimProgressive(code) {
+  const { data, error } = await supabase.rpc('claim_progressive', { p_code: code })
+  if (error) return { ok: false, error: error.message }
+  if (data?.powerup) invalidatePlanCache()
+  return data || { ok: false }
+}
+
 const POWERUP_LABELS = {
   fifty_fifty: '50/50',
   shield: 'Escudo',

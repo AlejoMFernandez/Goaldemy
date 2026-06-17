@@ -7,7 +7,7 @@ import MonthlyPass from '../components/rewards/MonthlyPass.vue'
 import { notificationsState, claimReward, claimAllRewards, clearClaimedRewards, pushClaimNotification } from '../stores/notifications'
 import { soundManager } from '../services/sounds'
 import { supabase } from '../services/supabase'
-import { getDailyChallenges, claimDailyChallenge, getDailyReward, claimDailyReward, powerupLabel } from '../services/rewards'
+import { getDailyChallenges, claimDailyChallenge, getDailyReward, claimDailyReward, getProgressiveChallenges, claimProgressive, powerupLabel } from '../services/rewards'
 
 const POWERUP_ICONS = { fifty_fifty: '✂️', shield: '🛡️', extra_time: '⏱️', reveal_hint: '💡' }
 
@@ -20,6 +20,7 @@ export default {
     const playedToday = ref(false)
 
     const challenges = ref([])
+    const progressive = ref([])
     const dailyReward = ref({ available: false })
     const loadingDaily = ref(true)
     const claiming = ref(null)
@@ -56,9 +57,10 @@ export default {
     async function loadDaily() {
       loadingDaily.value = true
       try {
-        const [ch, dr] = await Promise.all([getDailyChallenges(), getDailyReward()])
+        const [ch, dr, pg] = await Promise.all([getDailyChallenges(), getDailyReward(), getProgressiveChallenges()])
         challenges.value = ch
         dailyReward.value = dr
+        progressive.value = pg
       } finally {
         loadingDaily.value = false
       }
@@ -103,14 +105,31 @@ export default {
       }
     }
 
+    async function handleClaimProgressive(c) {
+      const key = 'prog_' + c.code
+      if (!c.claimable || claiming.value === key) return
+      claiming.value = key
+      try {
+        const res = await claimProgressive(c.code)
+        if (res.ok) {
+          soundManager.play('claim')
+          if (res.powerup) pushClaimNotification({ type: 'powerup', title: res.title, emoji: powerupIcon(res.powerup) })
+          else pushClaimNotification({ type: 'xp', title: res.title, xp: res.xp, emoji: '🏆' })
+          await loadDaily()
+        }
+      } finally {
+        claiming.value = null
+      }
+    }
+
     onMounted(() => { loadStreak(); loadDaily() })
 
     return {
       rewards, unclaimed, claimed, unclaimedCount,
       currentStreak, bestStreak, playedToday,
-      challenges, dailyReward, loadingDaily, claiming,
+      challenges, progressive, dailyReward, loadingDaily, claiming,
       handleClaim, handleClaimAll, handleClearClaimed,
-      handleClaimDailyReward, handleClaimChallenge,
+      handleClaimDailyReward, handleClaimChallenge, handleClaimProgressive,
       powerupLabel, powerupIcon,
     }
   }
@@ -239,6 +258,57 @@ export default {
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
             Reclamado
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Retos progresivos -->
+    <div v-if="progressive.length" class="space-y-3">
+      <h2 class="font-display font-bold text-white text-lg flex items-center gap-2">
+        <span>🏆</span> Retos progresivos
+      </h2>
+      <div class="space-y-2">
+        <div
+          v-for="c in progressive"
+          :key="c.code"
+          class="relative rounded-2xl border p-4 transition-all"
+          :class="c.claimable ? 'border-amber-500/30 bg-amber-500/[0.06]' : 'border-white/10 bg-white/[0.03]'"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl grid place-items-center text-xl bg-white/5 border border-white/10 shrink-0">
+              {{ c.icon }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2">
+                <div class="font-semibold text-white text-sm truncate flex items-center gap-2">
+                  {{ c.title }}
+                  <span class="shrink-0 rounded-full bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">Nivel {{ c.tier }}</span>
+                </div>
+                <div class="shrink-0 flex items-center gap-1.5 text-xs font-bold">
+                  <span v-if="c.reward_xp > 0" class="text-emerald-400">+{{ c.reward_xp }} XP</span>
+                  <span v-if="c.reward_powerup && c.reward_powerup_qty > 0" class="text-amber-300">{{ powerupIcon(c.reward_powerup) }} ×{{ c.reward_powerup_qty }}</span>
+                </div>
+              </div>
+              <div class="text-[11px] text-slate-400 mt-0.5 truncate">{{ c.description }}</div>
+              <div class="mt-2 flex items-center gap-2">
+                <div class="flex-1 h-1.5 rounded-full bg-black/30 overflow-hidden">
+                  <div
+                    class="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-500"
+                    :style="{ width: Math.min(100, (c.progress / c.target) * 100) + '%' }"
+                  ></div>
+                </div>
+                <span class="text-[10px] tabular-nums text-slate-400 font-semibold">{{ Math.min(c.progress, c.target) }}/{{ c.target }}</span>
+              </div>
+            </div>
+          </div>
+          <button
+            v-if="c.claimable"
+            @click="handleClaimProgressive(c)"
+            :disabled="claiming === 'prog_' + c.code"
+            class="mt-3 w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 active:scale-[0.98] text-black py-2 text-sm font-bold transition-all shadow-lg shadow-amber-500/20 disabled:opacity-60"
+          >
+            Reclamar y subir de nivel
+          </button>
         </div>
       </div>
     </div>
