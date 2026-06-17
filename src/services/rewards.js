@@ -59,6 +59,26 @@ export async function claimDailyReward() {
   return data || { ok: false }
 }
 
+/** Estado del pase mensual: { month, points, is_premium, tiers[] }. */
+export async function getMonthlyPass() {
+  const { id } = getAuthUser() || {}
+  if (!id) return { points: 0, tiers: [], is_premium: false }
+  const { data, error } = await supabase.rpc('get_monthly_pass')
+  if (error) {
+    console.warn('[rewards] get_monthly_pass:', error.message)
+    return { points: 0, tiers: [], is_premium: false }
+  }
+  return data || { points: 0, tiers: [], is_premium: false }
+}
+
+/** Reclama un tier del pase. track: 'free' | 'premium'. */
+export async function claimPassTier(tier, track) {
+  const { data, error } = await supabase.rpc('claim_pass_tier', { p_tier: tier, p_track: track })
+  if (error) return { ok: false, error: error.message }
+  if (data?.powerup) invalidatePlanCache()
+  return data || { ok: false }
+}
+
 const POWERUP_LABELS = {
   fifty_fifty: '50/50',
   shield: 'Escudo',

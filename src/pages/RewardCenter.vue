@@ -3,6 +3,7 @@ import { computed, ref, onMounted } from 'vue'
 import AppH1 from '../components/common/AppH1.vue'
 import DailyStreakCalendar from '../components/rewards/DailyStreakCalendar.vue'
 import RewardCard from '../components/rewards/RewardCard.vue'
+import MonthlyPass from '../components/rewards/MonthlyPass.vue'
 import { notificationsState, claimReward, claimAllRewards, clearClaimedRewards, pushClaimNotification } from '../stores/notifications'
 import { soundManager } from '../services/sounds'
 import { supabase } from '../services/supabase'
@@ -12,7 +13,7 @@ const POWERUP_ICONS = { fifty_fifty: '✂️', shield: '🛡️', extra_time: '�
 
 export default {
   name: 'RewardCenter',
-  components: { AppH1, DailyStreakCalendar, RewardCard },
+  components: { AppH1, DailyStreakCalendar, RewardCard, MonthlyPass },
   setup() {
     const currentStreak = ref(0)
     const bestStreak = ref(0)
@@ -131,6 +132,9 @@ export default {
       :bestStreak="bestStreak"
       :playedToday="playedToday"
     />
+
+    <!-- Pase mensual (battle-pass) -->
+    <MonthlyPass />
 
     <!-- Recompensa diaria -->
     <div
