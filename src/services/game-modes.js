@@ -218,6 +218,21 @@ export async function completeChallengeSession(sessionId, score, xp, metadataPat
   } else {
     console.log('[completeChallengeSession] ✅ Saved successfully')
   }
+
+  // Reportar resultado a recompensas (retos diarios) — centralizado, sin tocar cada juego
+  try {
+    const won = !!(metadata && metadata.result === 'win')
+    const { data: srow } = await supabase
+      .from('game_sessions').select('game_id').eq('id', sessionId).maybeSingle()
+    if (srow?.game_id) {
+      const { data: grow } = await supabase
+        .from('games').select('slug').eq('id', srow.game_id).maybeSingle()
+      if (grow?.slug) {
+        const { reportGameResult } = await import('./rewards')
+        await reportGameResult(grow.slug, won)
+      }
+    }
+  } catch (_) {}
 }
 
 // Fetch the latest FINISHED session for today for a given game slug (for review mode)

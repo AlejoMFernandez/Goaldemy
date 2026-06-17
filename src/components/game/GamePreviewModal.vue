@@ -31,6 +31,8 @@ export default {
     });
 
     function startGame() {
+      // Resetear scroll para que el tablero quede a la vista al arrancar
+      window.scrollTo({ top: 0 });
       emit('start', { difficulty: selectedDifficulty.value, config: currentConfig.value });
     }
 
@@ -48,10 +50,12 @@ export default {
 <template>
   <Teleport to="body">
   <Transition name="modal">
-    <div v-if="open" class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-4 pt-24 pb-6" @click.self="$emit('close')">
+    <div v-if="open" class="fixed inset-0 z-50 overflow-y-auto">
       <!-- Backdrop -->
-      <div class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
-      
+      <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" @click="$emit('close')"></div>
+
+      <!-- Centering wrapper: centra si entra, padding parejo si es grande -->
+      <div class="relative min-h-full flex items-center justify-center p-4" @click.self="$emit('close')">
       <!-- Modal -->
       <div class="relative w-full max-w-2xl rounded-2xl border border-white/20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 shadow-2xl">
         <!-- Close button -->
@@ -183,6 +187,7 @@ export default {
             ¡Jugar ahora!
           </button>
         </div>
+      </div>
       </div>
     </div>
   </Transition>

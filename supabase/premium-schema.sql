@@ -18,9 +18,9 @@ CREATE TABLE IF NOT EXISTS public.plans (
 );
 
 INSERT INTO public.plans (slug, name, price_ars, price_usd_cents, daily_challenges_per_game, daily_powerups, xp_multiplier, weekly_streak_protectors, badge, sort_order) VALUES
-  ('free',   'Free',   0,    0,   1, 1, 1.00, 0, NULL,            0),
-  ('pro',    'Pro',    2999, 299, 3, 5, 1.25, 1, 'pro_badge',     1),
-  ('legend', 'Legend', 5999, 599, 5, 15, 1.50, 3, 'legend_badge', 2)
+  ('free',   'Free',   0,       0,   1, 1, 1.00, 0, NULL,            0),
+  ('pro',    'Pro',    1199000, 299, 3, 5, 1.25, 1, 'pro_badge',     1),
+  ('legend', 'Legend', 1499000, 599, 5, 15, 1.50, 3, 'legend_badge', 2)
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   price_ars = EXCLUDED.price_ars,

@@ -1,0 +1,71 @@
+/**
+ * SERVICIO DE RECOMPENSAS (Fase 1)
+ *
+ * Retos diarios + recompensa diaria (XP entre semana / powerup el finde).
+ * Envuelve las RPCs definidas en supabase/rewards-phase1.sql.
+ */
+import { supabase } from './supabase'
+import { getAuthUser } from './auth'
+import { invalidatePlanCache } from './premium'
+
+/** Retos diarios de hoy con progreso. */
+export async function getDailyChallenges() {
+  const { id } = getAuthUser() || {}
+  if (!id) return []
+  const { data, error } = await supabase.rpc('get_daily_challenges')
+  if (error) {
+    console.warn('[rewards] get_daily_challenges:', error.message)
+    return []
+  }
+  return Array.isArray(data) ? data : []
+}
+
+/** Reporta el resultado de un juego para sumar progreso a los retos. */
+export async function reportGameResult(gameSlug, won) {
+  const { id } = getAuthUser() || {}
+  if (!id) return
+  try {
+    await supabase.rpc('report_game_result', { p_game_slug: gameSlug, p_won: !!won })
+  } catch (e) {
+    console.warn('[rewards] report_game_result:', e?.message)
+  }
+}
+
+/** Reclama un reto diario completado. Devuelve { ok, title, reward_xp, reward_powerup, reward_powerup_qty }. */
+export async function claimDailyChallenge(code) {
+  const { data, error } = await supabase.rpc('claim_daily_challenge', { p_code: code })
+  if (error) return { ok: false, error: error.message }
+  if (data?.reward_powerup) invalidatePlanCache()
+  return data || { ok: false }
+}
+
+/** Estado de la recompensa diaria (disponible, tipo, monto). */
+export async function getDailyReward() {
+  const { id } = getAuthUser() || {}
+  if (!id) return { available: false }
+  const { data, error } = await supabase.rpc('get_daily_reward')
+  if (error) {
+    console.warn('[rewards] get_daily_reward:', error.message)
+    return { available: false }
+  }
+  return data || { available: false }
+}
+
+/** Reclama la recompensa diaria. Devuelve { ok, reward_kind, reward_powerup, amount }. */
+export async function claimDailyReward() {
+  const { data, error } = await supabase.rpc('claim_daily_reward')
+  if (error) return { ok: false, error: error.message }
+  if (data?.reward_kind === 'powerup') invalidatePlanCache()
+  return data || { ok: false }
+}
+
+const POWERUP_LABELS = {
+  fifty_fifty: '50/50',
+  shield: 'Escudo',
+  extra_time: 'Tiempo extra',
+  reveal_hint: 'Pista',
+}
+
+export function powerupLabel(type) {
+  return POWERUP_LABELS[type] || 'Power-up'
+}

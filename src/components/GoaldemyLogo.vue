@@ -32,28 +32,28 @@ const textClass = computed(() => sizeConfig[props.size].text)
 <template>
   <div class="flex items-center gap-2" :class="{ 'group cursor-pointer': animated }">
     <!-- Icon/Logo Mark -->
-    <img 
-      v-if="variant === 'full' || variant === 'icon'" 
+    <img
+      v-if="variant === 'full' || variant === 'icon'"
       src="/iconclaro.png"
       alt="Goaldemy"
       :class="[
         iconClass,
-        'w-auto object-contain',
+        'w-auto object-contain drop-shadow-[0_0_10px_rgba(34,211,238,0.25)]',
         { 'group-hover:scale-110 transition-transform duration-300': animated }
       ]"
     />
 
     <!-- Wordmark -->
-    <span 
-      v-if="variant === 'full' || variant === 'wordmark'" 
+    <span
+      v-if="variant === 'full' || variant === 'wordmark'"
       :class="[
         textClass,
-        'font-bold tracking-tight text-white',
+        'font-bold tracking-tight',
         { 'group-hover:translate-x-1 transition-transform duration-300': animated }
       ]"
       style="font-family: 'Montserrat', sans-serif;"
     >
-      GOALDEMY
+      <span class="text-white">GOAL</span><span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">DEMY</span>
     </span>
   </div>
 </template>

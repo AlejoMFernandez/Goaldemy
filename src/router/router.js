@@ -101,6 +101,14 @@ const routes = [
 const router = createRouter({
     routes,
     history: createWebHistory(),
+    scrollBehavior(to, from, savedPosition) {
+        // Volver/adelante: restaurar posición previa
+        if (savedPosition) return savedPosition;
+        // Anchor (#seccion): scrollear a ese elemento
+        if (to.hash) return { el: to.hash, behavior: 'smooth' };
+        // Navegación normal: siempre arrancar arriba
+        return { top: 0, left: 0 };
+    },
 });
 
 let user = getAuthUser();

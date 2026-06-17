@@ -3,9 +3,12 @@ import { computed, ref, onMounted } from 'vue'
 import AppH1 from '../components/common/AppH1.vue'
 import DailyStreakCalendar from '../components/rewards/DailyStreakCalendar.vue'
 import RewardCard from '../components/rewards/RewardCard.vue'
-import { notificationsState, claimReward, claimAllRewards, clearClaimedRewards, getUnclaimedCount } from '../stores/notifications'
+import { notificationsState, claimReward, claimAllRewards, clearClaimedRewards, pushClaimNotification } from '../stores/notifications'
 import { soundManager } from '../services/sounds'
 import { supabase } from '../services/supabase'
+import { getDailyChallenges, claimDailyChallenge, getDailyReward, claimDailyReward, powerupLabel } from '../services/rewards'
+
+const POWERUP_ICONS = { fifty_fifty: '✂️', shield: '🛡️', extra_time: '⏱️', reveal_hint: '💡' }
 
 export default {
   name: 'RewardCenter',
@@ -15,24 +18,21 @@ export default {
     const bestStreak = ref(0)
     const playedToday = ref(false)
 
+    const challenges = ref([])
+    const dailyReward = ref({ available: false })
+    const loadingDaily = ref(true)
+    const claiming = ref(null)
+
     const rewards = computed(() => notificationsState.pendingRewards)
     const unclaimed = computed(() => rewards.value.filter(r => !r.claimed).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)))
     const claimed = computed(() => rewards.value.filter(r => r.claimed).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)))
     const unclaimedCount = computed(() => unclaimed.value.length)
 
-    function handleClaim(id) {
-      claimReward(id)
-      soundManager.play('claim')
-    }
+    function powerupIcon(t) { return POWERUP_ICONS[t] || '🎁' }
 
-    function handleClaimAll() {
-      claimAllRewards()
-      soundManager.play('claim')
-    }
-
-    function handleClearClaimed() {
-      clearClaimedRewards()
-    }
+    function handleClaim(id) { claimReward(id); soundManager.play('claim') }
+    function handleClaimAll() { claimAllRewards(); soundManager.play('claim') }
+    function handleClearClaimed() { clearClaimedRewards() }
 
     async function loadStreak() {
       try {
@@ -40,24 +40,77 @@ export default {
         if (!user) return
         const { data } = await supabase
           .from('user_profiles')
-          .select('current_streak, best_streak, last_played_at')
+          .select('daily_streak, best_daily_streak, last_activity_date')
           .eq('id', user.id)
           .single()
         if (data) {
-          currentStreak.value = data.current_streak || 0
-          bestStreak.value = data.best_streak || 0
-          const today = new Date().toDateString()
-          playedToday.value = data.last_played_at && new Date(data.last_played_at).toDateString() === today
+          currentStreak.value = data.daily_streak || 0
+          bestStreak.value = data.best_daily_streak || 0
+          const today = new Date().toISOString().split('T')[0]
+          playedToday.value = data.last_activity_date === today
         }
       } catch {}
     }
 
-    onMounted(loadStreak)
+    async function loadDaily() {
+      loadingDaily.value = true
+      try {
+        const [ch, dr] = await Promise.all([getDailyChallenges(), getDailyReward()])
+        challenges.value = ch
+        dailyReward.value = dr
+      } finally {
+        loadingDaily.value = false
+      }
+    }
+
+    async function handleClaimDailyReward() {
+      if (!dailyReward.value.available || claiming.value === 'daily') return
+      claiming.value = 'daily'
+      try {
+        const res = await claimDailyReward()
+        if (res.ok) {
+          dailyReward.value = { ...dailyReward.value, available: false, claimed: true }
+          soundManager.play('claim')
+          if (res.reward_kind === 'powerup') {
+            pushClaimNotification({ type: 'powerup', title: `${powerupLabel(res.reward_powerup)} ×${res.amount}`, emoji: powerupIcon(res.reward_powerup) })
+          } else {
+            pushClaimNotification({ type: 'xp', title: 'Recompensa diaria', xp: res.amount, emoji: '⭐' })
+          }
+        }
+      } finally {
+        claiming.value = null
+      }
+    }
+
+    async function handleClaimChallenge(c) {
+      if (c.claimed || c.progress < c.target || claiming.value === c.code) return
+      claiming.value = c.code
+      try {
+        const res = await claimDailyChallenge(c.code)
+        if (res.ok) {
+          const idx = challenges.value.findIndex(x => x.code === c.code)
+          if (idx !== -1) challenges.value[idx] = { ...challenges.value[idx], claimed: true }
+          soundManager.play('claim')
+          if (res.reward_powerup) {
+            pushClaimNotification({ type: 'powerup', title: `${res.title}`, emoji: powerupIcon(res.reward_powerup) })
+          } else {
+            pushClaimNotification({ type: 'xp', title: res.title, xp: res.reward_xp, emoji: '🎯' })
+          }
+        }
+      } finally {
+        claiming.value = null
+      }
+    }
+
+    onMounted(() => { loadStreak(); loadDaily() })
 
     return {
       rewards, unclaimed, claimed, unclaimedCount,
       currentStreak, bestStreak, playedToday,
+      challenges, dailyReward, loadingDaily, claiming,
       handleClaim, handleClaimAll, handleClearClaimed,
+      handleClaimDailyReward, handleClaimChallenge,
+      powerupLabel, powerupIcon,
     }
   }
 }
@@ -79,7 +132,114 @@ export default {
       :playedToday="playedToday"
     />
 
-    <!-- Pending Rewards -->
+    <!-- Recompensa diaria -->
+    <div
+      class="relative overflow-hidden rounded-2xl border p-5 transition-all"
+      :class="dailyReward.available
+        ? 'border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-slate-900/40 to-cyan-500/5'
+        : 'border-white/10 bg-white/[0.03]'"
+    >
+      <div class="flex items-center gap-4">
+        <div
+          class="w-14 h-14 rounded-2xl grid place-items-center text-2xl border shrink-0"
+          :class="dailyReward.available ? 'bg-emerald-500/15 border-emerald-400/30' : 'bg-white/5 border-white/10 opacity-60'"
+        >
+          {{ dailyReward.reward_kind === 'powerup' ? powerupIcon(dailyReward.reward_powerup) : '⭐' }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-[10px] uppercase tracking-wider text-emerald-400/80 font-semibold">Recompensa diaria</div>
+          <div class="font-display font-bold text-white text-lg leading-tight">
+            <template v-if="dailyReward.reward_kind === 'powerup'">{{ powerupLabel(dailyReward.reward_powerup) }} ×{{ dailyReward.amount }}</template>
+            <template v-else>+{{ dailyReward.amount || 100 }} XP</template>
+          </div>
+          <div class="text-xs text-slate-400 mt-0.5">
+            {{ dailyReward.reward_kind === 'powerup' ? '¡Fin de semana! Llevate una ayuda' : 'Reclamala todos los días' }}
+          </div>
+        </div>
+        <button
+          v-if="dailyReward.available"
+          @click="handleClaimDailyReward"
+          :disabled="claiming === 'daily'"
+          class="shrink-0 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-95 text-white px-5 py-2.5 text-sm font-bold transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-60"
+          style="animation: claim-pulse 2s ease-in-out infinite"
+        >
+          Reclamar
+        </button>
+        <div v-else class="shrink-0 flex items-center gap-1.5 text-emerald-400 text-sm font-semibold">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          Reclamada
+        </div>
+      </div>
+    </div>
+
+    <!-- Retos diarios -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="font-display font-bold text-white text-lg flex items-center gap-2">
+          <span>🎯</span> Retos diarios
+        </h2>
+        <span class="text-[11px] text-slate-500">Se reinician cada día</span>
+      </div>
+
+      <div v-if="loadingDaily" class="space-y-2">
+        <div v-for="i in 3" :key="i" class="h-20 rounded-2xl bg-white/5 animate-pulse"></div>
+      </div>
+
+      <div v-else class="space-y-2">
+        <div
+          v-for="c in challenges"
+          :key="c.code"
+          class="relative rounded-2xl border p-4 transition-all"
+          :class="c.claimed
+            ? 'border-white/5 bg-white/[0.02] opacity-60'
+            : c.progress >= c.target
+            ? 'border-emerald-500/30 bg-emerald-500/[0.06]'
+            : 'border-white/10 bg-white/[0.03]'"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl grid place-items-center text-xl bg-white/5 border border-white/10 shrink-0">
+              {{ c.icon }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2">
+                <div class="font-semibold text-white text-sm truncate">{{ c.title }}</div>
+                <div class="shrink-0 flex items-center gap-1.5 text-xs font-bold">
+                  <span v-if="c.reward_xp > 0" class="text-emerald-400">+{{ c.reward_xp }} XP</span>
+                  <span v-if="c.reward_powerup" class="text-amber-300">{{ powerupIcon(c.reward_powerup) }} ×{{ c.reward_powerup_qty }}</span>
+                </div>
+              </div>
+              <div class="text-[11px] text-slate-400 mt-0.5 truncate">{{ c.description }}</div>
+              <!-- Progress -->
+              <div class="mt-2 flex items-center gap-2">
+                <div class="flex-1 h-1.5 rounded-full bg-black/30 overflow-hidden">
+                  <div
+                    class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-500"
+                    :style="{ width: Math.min(100, (c.progress / c.target) * 100) + '%' }"
+                  ></div>
+                </div>
+                <span class="text-[10px] tabular-nums text-slate-400 font-semibold">{{ Math.min(c.progress, c.target) }}/{{ c.target }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Claim / state -->
+          <button
+            v-if="!c.claimed && c.progress >= c.target"
+            @click="handleClaimChallenge(c)"
+            :disabled="claiming === c.code"
+            class="mt-3 w-full rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-[0.98] text-white py-2 text-sm font-bold transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-60"
+          >
+            Reclamar recompensa
+          </button>
+          <div v-else-if="c.claimed" class="mt-3 flex items-center justify-center gap-1.5 text-emerald-400 text-xs font-semibold">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+            Reclamado
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending Rewards (logros / niveles) -->
     <div v-if="unclaimed.length > 0" class="space-y-3">
       <div class="flex items-center justify-between">
         <h2 class="font-display font-bold text-white text-lg">
@@ -107,36 +267,16 @@ export default {
       </div>
     </div>
 
-    <!-- Empty state -->
-    <div v-else-if="claimed.length === 0" class="rounded-2xl border border-white/10 bg-white/3 p-8 text-center">
-      <div class="text-4xl mb-3">🎁</div>
-      <h3 class="font-display font-bold text-white text-lg mb-1">Sin recompensas pendientes</h3>
-      <p class="text-sm text-slate-400 mb-4">Jugá desafíos para ganar XP, logros y subir de nivel</p>
-      <router-link
-        to="/play/points"
-        class="inline-flex rounded-xl px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 transition"
-      >
-        Ir a jugar
-      </router-link>
-    </div>
-
     <!-- Claimed history -->
     <div v-if="claimed.length > 0" class="space-y-3">
       <div class="flex items-center justify-between">
         <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Reclamados</h2>
-        <button
-          @click="handleClearClaimed"
-          class="text-xs text-slate-500 hover:text-slate-300 transition"
-        >
+        <button @click="handleClearClaimed" class="text-xs text-slate-500 hover:text-slate-300 transition">
           Limpiar
         </button>
       </div>
       <div class="space-y-2">
-        <RewardCard
-          v-for="r in claimed"
-          :key="r.id"
-          :reward="r"
-        />
+        <RewardCard v-for="r in claimed" :key="r.id" :reward="r" />
       </div>
     </div>
   </section>
