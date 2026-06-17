@@ -6,7 +6,7 @@ defineOptions({ inheritAttrs: false })
 <template>
     <button
         v-bind="$attrs"
-        class="my-1 inline-flex items-center justify-center rounded-xl bg-[oklch(0.62_0.21_270)] px-5 py-2.5 font-semibold text-white shadow-lg shadow-[oklch(0.55_0.21_270)/30] transition hover:bg-[oklch(0.55_0.21_270)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.62_0.21_270)/40] active:translate-y-px"
+        class="my-1 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-2.5 font-semibold text-white shadow-lg shadow-emerald-500/25 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40 active:translate-y-px"
     >
         <slot />
     </button>

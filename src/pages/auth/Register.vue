@@ -183,7 +183,7 @@ export default {
         </button>
       </div>
     </form>
-    <p class="mt-4 text-center text-sm text-slate-300">¿Ya tenés cuenta? <RouterLink class="text-sky-300 hover:text-sky-200" to="/login">Acceder</RouterLink></p>
+    <p class="mt-4 text-center text-sm text-slate-300">¿Ya tenés cuenta? <RouterLink class="text-emerald-400 hover:text-emerald-300" to="/login">Acceder</RouterLink></p>
   </div>
 </template>
 

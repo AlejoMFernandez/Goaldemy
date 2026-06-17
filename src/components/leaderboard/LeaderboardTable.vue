@@ -7,10 +7,10 @@ const props = defineProps({
 </script>
 
 <template>
-  <div class="rounded-xl border border-white/10 overflow-hidden">
+  <div class="rounded-2xl border border-white/10 overflow-hidden bg-gradient-to-b from-white/[0.04] to-white/[0.01]">
     <div class="overflow-x-auto x-scroll">
       <table class="w-full text-xs sm:text-sm text-slate-200" style="min-width: 380px;">
-        <thead class="bg-white/5">
+        <thead class="bg-white/5 text-[11px] uppercase tracking-wider text-slate-400">
           <tr>
             <th class="px-2 sm:px-3 py-2 text-left whitespace-nowrap" style="width: 35px;">#</th>
             <th class="px-2 sm:px-3 py-2 text-left whitespace-nowrap" style="width: 140px;">Usuario</th>
@@ -71,7 +71,7 @@ const props = defineProps({
               </span>
               <span v-else class="text-slate-400 text-xs">—</span>
             </td>
-            <td class="px-2 sm:px-3 py-2 text-right font-semibold text-white whitespace-nowrap text-xs sm:text-sm">{{ r.total_xp }}</td>
+            <td class="px-2 sm:px-3 py-2 text-right font-display font-bold text-white whitespace-nowrap text-xs sm:text-sm tabular-nums">{{ r.total_xp }}</td>
           </tr>
         </tbody>
       </table>

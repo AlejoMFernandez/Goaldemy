@@ -98,7 +98,7 @@ export default {
         />
       </div>
       <div class="flex justify-end -mt-2">
-        <button type="button" @click="handleResetPassword" class="text-sm text-sky-300 hover:text-sky-200 underline-offset-2 hover:underline disabled:opacity-60" :disabled="loading">
+        <button type="button" @click="handleResetPassword" class="text-sm text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline disabled:opacity-60" :disabled="loading">
           ¿Olvidaste tu contraseña?
         </button>
       </div>
@@ -118,7 +118,7 @@ export default {
         </button>
       </div>
     </form>
-    <p class="mt-4 text-center text-sm text-slate-300">¿No tienes cuenta? <RouterLink to="/register" class="text-sky-300 hover:text-sky-200">Créala</RouterLink></p>
+    <p class="mt-4 text-center text-sm text-slate-300">¿No tienes cuenta? <RouterLink to="/register" class="text-emerald-400 hover:text-emerald-300">Créala</RouterLink></p>
   </div>
 </template>
 
