@@ -26,3 +26,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local tooling / agent config
+.claude/
+.agents/
+
+# Supabase CLI temp
+supabase/.temp/
+
+# Database backups / dumps (NUNCA subir — pueden tener datos de usuarios)
+*.backup.gz
+db_cluster-*
+migration-backup/
