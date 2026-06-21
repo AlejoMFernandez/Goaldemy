@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { getTierForLevel, getNextTier } from '../../services/tiers'
 import countryNames from '../../codeCOUNTRYS.json'
 import LevelProgressionModal from './LevelProgressionModal.vue'
+import { frameStyle, rarity } from '../../services/cosmetics'
 
 const props = defineProps({
   avatarInitial: { type: String, default: '?' },
@@ -23,9 +24,14 @@ const props = defineProps({
   xpNow: { type: Number, default: 0 },
   achievementsCount: { type: Number, default: 0 },
   topRank: { type: Number, default: null },
+  frameStyleKey: { type: String, default: 'none' },
+  titleText: { type: String, default: '' },
+  titleRarity: { type: String, default: 'common' },
 })
 
 const showProgression = ref(false)
+const frame = computed(() => frameStyle(props.frameStyleKey))
+const titleColor = computed(() => rarity(props.titleRarity).text)
 
 const level = computed(() => Number(props.levelInfo?.level) || 1)
 const currentTier = computed(() => getTierForLevel(level.value))
@@ -117,9 +123,14 @@ const accent = computed(() => {
     <div class="px-5 sm:px-6 -mt-11 relative z-10">
       <div class="flex items-end gap-4">
         <div class="relative shrink-0">
-          <div class="size-[88px] sm:size-24 rounded-2xl overflow-hidden shadow-xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white font-extrabold text-2xl sm:text-3xl grid place-items-center ring-4 ring-slate-900">
-            <img v-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
-            <span v-else>{{ avatarInitial }}</span>
+          <div :class="[frame.wrap, frame.pad, 'rounded-2xl']">
+            <div
+              class="size-[88px] sm:size-24 overflow-hidden shadow-xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white font-extrabold text-2xl sm:text-3xl grid place-items-center"
+              :class="frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl ring-4 ring-slate-900'"
+            >
+              <img v-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
+              <span v-else>{{ avatarInitial }}</span>
+            </div>
           </div>
           <div
             class="absolute -bottom-1 -right-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold bg-slate-900 border-2 shadow-lg"
@@ -147,6 +158,7 @@ const accent = computed(() => {
               }"
             >TOP {{ topRank }}</span>
           </div>
+          <p v-if="titleText" class="text-sm font-bold mt-0.5" :class="titleColor">{{ titleText }}</p>
           <div class="flex items-center gap-2 mt-0.5">
             <img v-if="currentTier?.image" :src="currentTier.image" :alt="currentTier.label" class="w-5 h-5 object-contain" />
             <span class="text-sm font-semibold" :class="accent.text">{{ currentTier?.label }}</span>

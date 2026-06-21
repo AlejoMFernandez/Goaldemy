@@ -16,6 +16,7 @@ import { checkAndUnlockSpecials } from '../../services/special-badges';
 import ConnectionsCard from '../../components/profile/ConnectionsCard.vue';
 import CommunityCard from '../../components/profile/CommunityCard.vue';
 import { findTeamByName, findPlayerByName } from '../../services/players';
+import { getEquippedCosmetics } from '../../services/cosmetics';
 import { listConnections } from '../../services/connections';
 import { getPublicProfilesByIds } from '../../services/user-profiles';
 
@@ -35,6 +36,9 @@ export default {
       },
       currentAuthId: null,
       levelInfo: null,
+      equippedFrameKey: 'none',
+      equippedTitleText: '',
+      equippedTitleRarity: 'common',
       levelLoading: false,
       achievements: [],
       achLoading: false,
@@ -163,6 +167,10 @@ export default {
         if (this.user?.x_url) s.push({ type: 'twitter', url: this.user.x_url })
         if (this.user?.instagram_url) s.push({ type: 'instagram', url: this.user.instagram_url })
         this.socials = s
+        const eq = await getEquippedCosmetics(userId)
+        this.equippedFrameKey = eq.frameKey
+        this.equippedTitleText = eq.titleText
+        this.equippedTitleRarity = eq.titleRarity
       } catch (e) {
         console.error('[Profile.vue] getPublicProfile exception:', e)
         this.user = { id: userId }
@@ -387,6 +395,9 @@ export default {
       :xp-now="xpNow"
       :achievements-count="achievements.length"
       :top-rank="topRank"
+      :frame-style-key="equippedFrameKey"
+      :title-text="equippedTitleText"
+      :title-rarity="equippedTitleRarity"
     />
 
     <!-- Tab bar -->

@@ -18,6 +18,27 @@ export async function getCosmetics() {
   return Array.isArray(data) ? data : []
 }
 
+/**
+ * Cosméticos equipados de un usuario, resueltos a estilo/texto.
+ * Resiliente: si el schema de cosméticos no existe todavía, devuelve defaults.
+ */
+export async function getEquippedCosmetics(userId) {
+  const out = { frameKey: 'none', titleText: '', titleRarity: 'common' }
+  if (!userId) return out
+  try {
+    const { data: prof } = await supabase
+      .from('user_profiles').select('equipped_frame, equipped_title').eq('id', userId).maybeSingle()
+    if (!prof || (!prof.equipped_frame && !prof.equipped_title)) return out
+    const { data: cat } = await supabase.from('cosmetics').select('code, name, rarity, style_key')
+    const byCode = Object.fromEntries((cat || []).map(c => [c.code, c]))
+    const fr = byCode[prof.equipped_frame]
+    const ti = byCode[prof.equipped_title]
+    if (fr) out.frameKey = fr.style_key || 'none'
+    if (ti) { out.titleText = ti.name || ''; out.titleRarity = ti.rarity || 'common' }
+  } catch { /* schema sin cosméticos: defaults */ }
+  return out
+}
+
 /** Equipa un cosmético (o desequipa el título pasando ''). */
 export async function equipCosmetic(code) {
   const { data, error } = await supabase.rpc('equip_cosmetic', { p_code: code })
