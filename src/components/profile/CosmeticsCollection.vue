@@ -50,6 +50,12 @@ async function unequipTitle() {
   busy.value = null
 }
 
+function lockLabel(c) {
+  if (c.unlock_achievement) return '🏆 Logro'
+  if (c.unlock_level > 100) return 'Pase'
+  return 'Nivel ' + c.unlock_level
+}
+
 onMounted(load)
 </script>
 
@@ -97,7 +103,7 @@ onMounted(load)
           </div>
           <span class="text-[11px] font-medium text-white truncate w-full text-center">{{ f.name }}</span>
           <span v-if="f.premium_only" class="absolute top-1.5 right-1.5 text-[8px] font-bold text-amber-300">PRO</span>
-          <span v-if="!f.owned" class="text-[9px] text-slate-500">{{ f.unlock_level > 100 ? 'Pase' : 'Nivel ' + f.unlock_level }}</span>
+          <span v-if="!f.owned" class="text-[9px] text-slate-500">{{ lockLabel(f) }}</span>
           <span v-else-if="f.equipped" class="text-[9px] text-emerald-400 font-bold">Equipado</span>
         </button>
       </div>
@@ -117,7 +123,7 @@ onMounted(load)
           <div class="size-10 rounded-lg bg-slate-800 grid place-items-center text-2xl">{{ i.style_key || '—' }}</div>
           <span class="text-[11px] font-medium text-white truncate w-full text-center">{{ i.name }}</span>
           <span v-if="i.premium_only" class="absolute top-1.5 right-1.5 text-[8px] font-bold text-amber-300">PRO</span>
-          <span v-if="!i.owned" class="text-[9px] text-slate-500">Nivel {{ i.unlock_level }}</span>
+          <span v-if="!i.owned" class="text-[9px] text-slate-500">{{ lockLabel(i) }}</span>
           <span v-else-if="i.equipped" class="text-[9px] text-emerald-400 font-bold">Equipado</span>
         </button>
       </div>
@@ -137,7 +143,7 @@ onMounted(load)
           <div class="flex items-center justify-between px-2.5 py-1.5 bg-slate-900/80">
             <span class="text-[11px] font-medium text-white truncate">{{ b.name }}</span>
             <span v-if="b.premium_only" class="text-[8px] font-bold text-amber-300">PRO</span>
-            <span v-else-if="!b.owned" class="text-[9px] text-slate-500">Nivel {{ b.unlock_level }}</span>
+            <span v-else-if="!b.owned" class="text-[9px] text-slate-500">{{ lockLabel(b) }}</span>
             <span v-else-if="b.equipped" class="text-[9px] text-emerald-400 font-bold">✓</span>
           </div>
         </button>
@@ -161,7 +167,7 @@ onMounted(load)
           <div class="text-sm font-bold truncate" :class="rarity(t.rarity).text">{{ t.name }}</div>
           <div class="text-[9px] mt-0.5" :class="t.owned ? 'text-slate-500' : 'text-slate-600'">
             <span v-if="t.premium_only" class="text-amber-300 font-bold">PREMIUM</span>
-            <span v-else-if="!t.owned">Nivel {{ t.unlock_level }}</span>
+            <span v-else-if="!t.owned">{{ lockLabel(t) }}</span>
             <span v-else-if="t.equipped" class="text-emerald-400 font-bold">Equipado</span>
             <span v-else>{{ rarity(t.rarity).label }}</span>
           </div>
