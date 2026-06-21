@@ -80,7 +80,12 @@ BEGIN
     RETURN true;
   END IF;
   RETURN (public.user_level_of(p_user_id) >= c.unlock_level)
-     AND (NOT c.premium_only OR public.user_is_premium(p_user_id));
+     AND (NOT c.premium_only OR EXISTS(
+       SELECT 1 FROM public.subscriptions s
+       WHERE s.user_id = p_user_id AND s.status = 'active'
+         AND s.plan_slug IN ('pro','legend')
+         AND (s.current_period_end IS NULL OR s.current_period_end > now())
+     ));
 END$$;
 
 -- ─── 8. RPC: catálogo con estado (owned / equipped) ─────────
@@ -96,7 +101,12 @@ DECLARE
 BEGIN
   IF uid IS NULL THEN RETURN '[]'::json; END IF;
   v_level := public.user_level_of(uid);
-  v_premium := public.user_is_premium(uid);
+  v_premium := EXISTS(
+    SELECT 1 FROM public.subscriptions s
+    WHERE s.user_id = uid AND s.status = 'active'
+      AND s.plan_slug IN ('pro','legend')
+      AND (s.current_period_end IS NULL OR s.current_period_end > now())
+  );
   SELECT equipped_frame, equipped_title INTO v_frame, v_title FROM public.user_profiles WHERE id = uid;
 
   SELECT COALESCE(json_agg(t ORDER BY t.type, t.sort_order), '[]'::json) INTO result
