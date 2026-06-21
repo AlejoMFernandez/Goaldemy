@@ -38,6 +38,41 @@ const TEAM_LEAGUE_MAP = {
   9847: 53, // Ligue 1
 }
 
+// Clubes top adicionales SOLO para el selector de "Favoritos" del perfil
+// (no entran a los juegos). Logo vía FotMob CDN por ID.
+const EXTRA_FAVORITE_TEAMS = [
+  // Premier League
+  { id: 10261, name: 'Newcastle United' },
+  { id: 10252, name: 'Aston Villa' },
+  { id: 8654, name: 'West Ham United' },
+  { id: 10204, name: 'Brighton & Hove Albion' },
+  { id: 8668, name: 'Everton' },
+  // La Liga
+  { id: 8302, name: 'Sevilla' },
+  { id: 8603, name: 'Real Betis' },
+  { id: 8560, name: 'Real Sociedad' },
+  { id: 10205, name: 'Villarreal' },
+  { id: 10267, name: 'Valencia' },
+  { id: 8315, name: 'Athletic Club' },
+  // Serie A
+  { id: 9885, name: 'Juventus' },
+  { id: 8686, name: 'AS Roma' },
+  { id: 8543, name: 'Lazio' },
+  { id: 8524, name: 'Atalanta' },
+  { id: 8535, name: 'Fiorentina' },
+  // Bundesliga
+  { id: 178475, name: 'RB Leipzig' },
+  { id: 8178, name: 'Bayer Leverkusen' },
+  { id: 9810, name: 'Eintracht Frankfurt' },
+  { id: 8721, name: 'VfL Wolfsburg' },
+  // Ligue 1
+  { id: 8592, name: 'Olympique de Marseille' },
+  { id: 9829, name: 'AS Monaco' },
+  { id: 9748, name: 'Olympique Lyonnais' },
+  { id: 8639, name: 'Lille' },
+  { id: 9831, name: 'OGC Nice' },
+]
+
 // Módulo-level cache: se llena con datos de FotMob cuando initializePlayers() completa
 let _fotmobCache = null
 
@@ -115,7 +150,14 @@ function isNotablePlayer(p) {
 }
 
 export function getAllTeams() {
-  return teams.map(t => ({ id: t.id, name: t.name, logo: t.logo }));
+  const base = teams.map(t => ({ id: t.id, name: t.name, logo: t.logo }));
+  const seen = new Set(base.map(t => t.id));
+  for (const t of EXTRA_FAVORITE_TEAMS) {
+    if (seen.has(t.id)) continue;
+    seen.add(t.id);
+    base.push({ id: t.id, name: t.name, logo: `https://images.fotmob.com/image_resources/logo/teamlogo/${t.id}.png` });
+  }
+  return base.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'));
 }
 
 /**
