@@ -1,13 +1,14 @@
 <script setup>
-import { onMounted, reactive, computed, ref } from 'vue'
+import { onMounted, onUnmounted, reactive, computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { supabase } from '../services/supabase'
+import { getAuthUser } from '../services/auth'
 import { fetchGames, gameRouteForSlug } from '../services/games'
 import { ACTIVE_LEAGUES, getTodayMatches, getUpcomingMatches } from '../services/fotmob'
 import MatchDetailModal from '../components/match/MatchDetailModal.vue'
 
 const state = reactive({
-  isAuthenticated: false,
+  isAuthenticated: !!(getAuthUser()?.id),
   loading: true,
   featuredGames: [],
   loadingToday: false,
@@ -70,8 +71,7 @@ async function loadTodayByLeague() {
 async function load() {
   state.loading = true
   try {
-    const { data: { user } } = await supabase.auth.getUser()
-    state.isAuthenticated = !!user
+    state.isAuthenticated = !!(getAuthUser()?.id)
     const allGames = await fetchGames()
     state.featuredGames = (allGames || [])
       .filter(g => !!g?.slug && gameRouteForSlug(g.slug) !== '/games')
@@ -84,7 +84,13 @@ async function load() {
   loadTodayByLeague()
 }
 
-onMounted(load)
+let pollTimer = null
+onMounted(() => {
+  load()
+  // Refrescar partidos del día cada 60s (marcador + minuto en vivo)
+  pollTimer = setInterval(() => loadTodayByLeague(), 60000)
+})
+onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 
 function getGameRoute(slug) {
   return `${gameRouteForSlug(slug)}?mode=challenge`
@@ -97,8 +103,8 @@ function getGameRoute(slug) {
     <div class="relative z-10 max-w-5xl mx-auto px-6 pt-12 pb-8">
       <template v-if="!state.isAuthenticated">
         <div class="text-center space-y-6">
-          <div class="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-1.5 text-sm text-amber-300 font-medium slide-up">
-            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <div class="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-1.5 text-sm text-cyan-300 font-medium slide-up">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             Copa del Mundo 2026 — EN VIVO
           </div>
           <h1 class="text-4xl sm:text-6xl font-extrabold text-white tracking-tight leading-[1.1]">
@@ -144,11 +150,11 @@ function getGameRoute(slug) {
     <div class="relative z-10 max-w-5xl mx-auto px-6 mb-16">
       <div class="flex items-center gap-3 mb-5">
         <div class="flex items-center gap-2.5">
-          <svg class="w-6 h-6 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3zm2.36 0l1.14 5h7l1.14-5H7.36zM4 9v1a4 4 0 003.5 3.97V15h9v-1.03A4 4 0 0020 10V9H4z"/></svg>
+          <svg class="w-6 h-6 text-cyan-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3zm2.36 0l1.14 5h7l1.14-5H7.36zM4 9v1a4 4 0 003.5 3.97V15h9v-1.03A4 4 0 0020 10V9H4z"/></svg>
           <h2 class="text-2xl font-bold text-white tracking-tight">Copa del Mundo 2026</h2>
         </div>
-        <div class="flex-1 h-px bg-gradient-to-r from-amber-400/30 to-transparent"></div>
-        <RouterLink to="/leagues/world-cup" class="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors">
+        <div class="flex-1 h-px bg-gradient-to-r from-cyan-400/30 to-transparent"></div>
+        <RouterLink to="/leagues/world-cup" class="text-xs text-cyan-400 hover:text-cyan-300 font-medium transition-colors">
           Ver todo →
         </RouterLink>
       </div>
@@ -178,7 +184,7 @@ function getGameRoute(slug) {
               @click="openMatch(match)"
               class="w-full grid items-center rounded-xl border px-4 py-3.5 transition-all duration-300 cursor-pointer text-left"
               :class="isLive(match)
-                ? 'border-emerald-500/30 bg-emerald-950/40 pulse-glow hover:bg-emerald-950/60'
+                ? 'border-emerald-500/40 bg-emerald-950/40 shadow-[0_0_18px_rgba(16,185,129,0.12)] hover:bg-emerald-950/60'
                 : 'border-white/5 bg-slate-900/50 hover:bg-slate-800/60 hover:border-white/10'"
               style="grid-template-columns: 1fr auto 1fr;"
             >
@@ -206,7 +212,7 @@ function getGameRoute(slug) {
                 </span>
                 <span v-if="isLive(match)" class="inline-flex items-center gap-1 text-[9px] font-bold tracking-widest text-emerald-400 uppercase">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  VIVO
+                  VIVO<span v-if="match.status?.liveTime?.short" class="ml-0.5 normal-case tracking-normal text-emerald-300">{{ match.status.liveTime.short }}</span>
                 </span>
               </div>
 
@@ -245,7 +251,7 @@ function getGameRoute(slug) {
       <div v-else-if="!state.loadingToday" class="rounded-2xl border border-white/10 bg-slate-900/40 p-10 text-center">
         <svg class="w-12 h-12 mx-auto text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="1.5"/><path stroke-linecap="round" stroke-width="1.5" d="M12 2a15 15 0 010 20M12 2a15 15 0 000 20M2 12h20"/></svg>
         <p class="text-slate-300 font-medium">No hay partidos programados para hoy</p>
-        <RouterLink to="/leagues/world-cup" class="inline-block mt-3 text-sm text-amber-400 hover:text-amber-300 transition-colors">
+        <RouterLink to="/leagues/world-cup" class="inline-block mt-3 text-sm text-cyan-400 hover:text-cyan-300 transition-colors">
           Ver calendario completo →
         </RouterLink>
       </div>

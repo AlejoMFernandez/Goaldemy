@@ -4,14 +4,14 @@
       <!-- Header -->
       <div class="league-header mb-6">
         <div class="flex items-center gap-4">
-          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-400/30 flex items-center justify-center text-3xl">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 border border-cyan-400/30 flex items-center justify-center text-3xl">
             🏆
           </div>
           <div>
             <h1 class="text-3xl font-bold text-white mb-0">Copa del Mundo 2026</h1>
             <div class="flex items-center gap-2 mt-0.5">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <p class="text-amber-400 text-sm font-medium mb-0">FIFA World Cup — USA, Canadá, México</p>
+              <p class="text-cyan-400 text-sm font-medium mb-0">FIFA World Cup — USA, Canadá, México</p>
             </div>
           </div>
         </div>
@@ -19,7 +19,7 @@
 
       <!-- Loading -->
       <div v-if="loading" class="text-center py-20">
-        <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
         <p class="mt-4 text-slate-300">Cargando datos del Mundial...</p>
       </div>
 
@@ -33,7 +33,7 @@
         <!-- Tabla de Posiciones / Grupos -->
         <div class="xl:col-span-2">
           <div class="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur shadow-2xl overflow-hidden">
-            <div class="bg-gradient-to-r from-amber-900/30 to-amber-800/20 border-b border-white/10 px-6 py-4">
+            <div class="bg-gradient-to-r from-cyan-900/30 to-cyan-800/20 border-b border-white/10 px-6 py-4">
               <h2 class="text-xl font-bold text-white flex items-center gap-2">
                 🏆 Tabla de Posiciones
               </h2>
@@ -43,7 +43,7 @@
             <template v-if="leagueData?.table?.tables?.length">
               <div v-for="group in leagueData.table.tables" :key="group.name" class="border-b border-white/10 last:border-b-0">
                 <div class="px-6 py-2.5 bg-slate-800/40">
-                  <span class="text-sm font-bold text-amber-300">{{ group.name }}</span>
+                  <span class="text-sm font-bold text-cyan-300">{{ group.name }}</span>
                 </div>
                 <div class="overflow-x-auto">
                   <table class="w-full">
@@ -57,7 +57,7 @@
                         <th class="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase w-10">E</th>
                         <th class="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase w-10">P</th>
                         <th class="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase w-10">DG</th>
-                        <th class="text-center py-2.5 px-2 text-xs font-semibold text-amber-400 uppercase w-12 font-bold">PTS</th>
+                        <th class="text-center py-2.5 px-2 text-xs font-semibold text-cyan-400 uppercase w-12 font-bold">PTS</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -77,7 +77,7 @@
                               :alt="team.name" class="w-6 h-6 object-contain flex-shrink-0"
                               @error="handleImageError"
                             />
-                            <span class="font-medium text-white text-sm truncate group-hover:text-amber-300 transition-colors">{{ team.name }}</span>
+                            <span class="font-medium text-white text-sm truncate group-hover:text-cyan-300 transition-colors">{{ team.name }}</span>
                           </router-link>
                         </td>
                         <td class="text-center py-2 px-2 text-slate-400 text-xs">{{ team.played }}</td>
@@ -111,7 +111,7 @@
                       <th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase w-12">E</th>
                       <th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase w-12">P</th>
                       <th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase w-12">DG</th>
-                      <th class="text-center py-3 px-2 text-xs font-semibold text-amber-400 uppercase w-16 font-bold">PTS</th>
+                      <th class="text-center py-3 px-2 text-xs font-semibold text-cyan-400 uppercase w-16 font-bold">PTS</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -131,7 +131,7 @@
                             :alt="team.name" class="w-6 h-6 object-contain flex-shrink-0"
                             @error="handleImageError"
                           />
-                          <span class="font-medium text-white text-sm truncate max-w-[180px] group-hover:text-amber-300 transition-colors">{{ team.name }}</span>
+                          <span class="font-medium text-white text-sm truncate max-w-[180px] group-hover:text-cyan-300 transition-colors">{{ team.name }}</span>
                         </router-link>
                       </td>
                       <td class="text-center py-2.5 px-2 text-slate-400 text-xs">{{ team.played }}</td>
@@ -208,7 +208,7 @@
 
           <!-- Goleadores -->
           <div class="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur shadow-2xl overflow-hidden">
-            <div class="bg-gradient-to-r from-amber-900/30 to-amber-800/20 border-b border-white/10 px-5 py-3.5">
+            <div class="bg-gradient-to-r from-cyan-900/30 to-cyan-800/20 border-b border-white/10 px-5 py-3.5">
               <h3 class="text-base font-bold text-white flex items-center gap-2">⚽ Top Goleadores</h3>
             </div>
             <div v-if="leagueData?.topScorers?.length">
@@ -216,10 +216,10 @@
                 <div class="text-slate-500 font-bold text-sm w-6">{{ idx + 1 }}</div>
                 <img v-if="player.teamId" :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${player.teamId}.png`" :alt="player.teamName" class="w-6 h-6 object-contain" @error="handleImageError" />
                 <div class="flex-grow min-w-0">
-                  <div class="font-semibold text-white text-sm truncate group-hover:text-amber-300 transition-colors">{{ player.name }}</div>
+                  <div class="font-semibold text-white text-sm truncate group-hover:text-cyan-300 transition-colors">{{ player.name }}</div>
                   <div class="text-xs text-slate-400 truncate">{{ player.teamName }}</div>
                 </div>
-                <div class="text-lg font-bold text-amber-400">{{ player.goals }}</div>
+                <div class="text-lg font-bold text-cyan-400">{{ player.goals }}</div>
               </div>
             </div>
             <div v-else class="text-slate-400 text-center py-8 text-sm">Los goleadores se actualizan durante el torneo</div>
