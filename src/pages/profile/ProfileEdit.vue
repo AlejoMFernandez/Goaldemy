@@ -16,6 +16,7 @@ export default {
   components: { AppH1, AppButton, SearchSelect, CosmeticsCollection },
   data() {
     return {
+      user: null,
       formData: {
         display_name: '',
         bio: '',

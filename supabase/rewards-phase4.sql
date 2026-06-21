@@ -118,7 +118,7 @@ BEGIN
 
   SELECT COALESCE(json_agg(t ORDER BY t.type, t.sort_order), '[]'::json) INTO result
   FROM (
-    SELECT c.code, c.type, c.name, c.rarity, c.style_key, c.unlock_level, c.premium_only,
+    SELECT c.code, c.type, c.name, c.rarity, c.style_key, c.unlock_level, c.premium_only, c.sort_order,
            (
              EXISTS(SELECT 1 FROM public.user_cosmetics uc WHERE uc.user_id = uid AND uc.cosmetic_code = c.code)
              OR ((v_level >= c.unlock_level) AND (NOT c.premium_only OR v_premium))
