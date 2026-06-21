@@ -61,13 +61,20 @@ ON CONFLICT (code) DO UPDATE SET
 
 -- ─── 6. Helper: nivel del usuario ───────────────────────────
 CREATE OR REPLACE FUNCTION public.user_level_of(p_user_id UUID)
-RETURNS INTEGER LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
-  SELECT COALESCE((
-    SELECT lt.level FROM public.level_thresholds lt
-    WHERE lt.xp_required <= COALESCE((SELECT SUM(e.amount) FROM public.xp_events e WHERE e.user_id = p_user_id), 0)
-    ORDER BY lt.level DESC LIMIT 1
-  ), 1);
-$$;
+RETURNS INTEGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_xp BIGINT := 0;
+  v_level INTEGER;
+BEGIN
+  IF to_regclass('public.xp_events') IS NOT NULL THEN
+    SELECT COALESCE(SUM(amount), 0) INTO v_xp FROM public.xp_events WHERE user_id = p_user_id;
+  END IF;
+  IF to_regclass('public.level_thresholds') IS NOT NULL THEN
+    SELECT lt.level INTO v_level FROM public.level_thresholds lt
+    WHERE lt.xp_required <= v_xp ORDER BY lt.level DESC LIMIT 1;
+  END IF;
+  RETURN COALESCE(v_level, GREATEST(1, (v_xp / 300)::int + 1));
+END$$;
 
 -- ─── 7. Helper interno: ¿el usuario posee el cosmético? ─────
 CREATE OR REPLACE FUNCTION public.owns_cosmetic(p_user_id UUID, p_code TEXT)
