@@ -5,7 +5,10 @@ import { supabase } from '../services/supabase'
 import { getAuthUser } from '../services/auth'
 import { fetchGames, gameRouteForSlug } from '../services/games'
 import { ACTIVE_LEAGUES, getTodayMatches, getUpcomingMatches } from '../services/fotmob'
+import { getDailyChallenges, getDailyReward, getMonthlyPass } from '../services/rewards'
+import { getUserLevel } from '../services/xp'
 import MatchDetailModal from '../components/match/MatchDetailModal.vue'
+import MonthlyPass from '../components/rewards/MonthlyPass.vue'
 
 const state = reactive({
   isAuthenticated: !!(getAuthUser()?.id),
@@ -15,6 +18,16 @@ const state = reactive({
   todayByLeague: [],
   upcomingMatches: [],
 })
+
+// Dashboard del usuario logueado
+const home = reactive({
+  loading: true,
+  name: '', avatarUrl: '', level: 1, dailyStreak: 0,
+  challengesDone: 0, challengesTotal: 0,
+  rewardsToClaim: 0,
+  passPoints: 0, passPercent: 0, passNextLabel: '', isPremium: false,
+})
+const showPassModal = ref(false)
 
 const selectedMatch = ref(null)
 const matchModalOpen = ref(false)
@@ -84,9 +97,63 @@ async function load() {
   loadTodayByLeague()
 }
 
+async function loadUserHome() {
+  const { id } = getAuthUser() || {}
+  if (!id) { home.loading = false; return }
+  try {
+    const [profileRes, lvlRes, challenges, daily, pass] = await Promise.all([
+      supabase.from('user_profiles').select('display_name, avatar_url, daily_streak').eq('id', id).single(),
+      getUserLevel(null),
+      getDailyChallenges(),
+      getDailyReward(),
+      getMonthlyPass(),
+    ])
+    if (profileRes.data) {
+      home.name = profileRes.data.display_name || ''
+      home.avatarUrl = profileRes.data.avatar_url || ''
+      home.dailyStreak = profileRes.data.daily_streak || 0
+    }
+    const lvlInfo = Array.isArray(lvlRes?.data) ? lvlRes.data[0] : lvlRes?.data
+    home.level = Number(lvlInfo?.level) || 1
+
+    const chArr = Array.isArray(challenges) ? challenges : []
+    home.challengesTotal = chArr.length
+    home.challengesDone = chArr.filter(c => c.claimed).length
+    const chClaimable = chArr.filter(c => !c.claimed && c.progress >= c.target).length
+    const dailyAvail = daily?.available ? 1 : 0
+
+    const tiers = Array.isArray(pass?.tiers) ? pass.tiers : []
+    home.isPremium = !!pass?.is_premium
+    home.passPoints = pass?.points || 0
+    let passClaimable = 0
+    for (const t of tiers) {
+      if (t.unlocked && !t.free_claimed && (t.free_xp > 0 || t.free_powerup)) passClaimable++
+      if (t.unlocked && home.isPremium && !t.premium_claimed && (t.premium_xp > 0 || t.premium_powerup)) passClaimable++
+    }
+    const nextTier = tiers.find(t => !t.unlocked)
+    if (nextTier) {
+      const idx = tiers.findIndex(t => t.tier === nextTier.tier)
+      const prevReq = idx > 0 ? tiers[idx - 1].points_required : 0
+      const span = Math.max(1, nextTier.points_required - prevReq)
+      home.passPercent = Math.min(100, Math.round(((home.passPoints - prevReq) / span) * 100))
+      home.passNextLabel = `Nivel ${nextTier.tier} · faltan ${Math.max(0, nextTier.points_required - home.passPoints)} pts`
+    } else {
+      home.passPercent = 100
+      home.passNextLabel = '¡Pase completo!'
+    }
+
+    home.rewardsToClaim = chClaimable + dailyAvail + passClaimable
+  } catch (e) {
+    console.warn('[Landing] home load error', e)
+  } finally {
+    home.loading = false
+  }
+}
+
 let pollTimer = null
 onMounted(() => {
   load()
+  if (state.isAuthenticated) loadUserHome()
   // Refrescar partidos del día cada 60s (marcador + minuto en vivo)
   pollTimer = setInterval(() => loadTodayByLeague(), 60000)
 })
@@ -125,23 +192,52 @@ function getGameRoute(slug) {
         </div>
       </template>
       <template v-else>
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p class="text-slate-200 font-bold text-xl">Bienvenido de vuelta</p>
-            <p class="text-slate-400 text-sm mt-0.5">¿Qué vas a jugar hoy?</p>
+        <!-- Status bar -->
+        <div class="flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/40 p-4 sm:p-5">
+          <div class="relative shrink-0">
+            <div class="size-14 rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-500 to-cyan-500 grid place-items-center text-white font-extrabold text-xl ring-2 ring-white/10">
+              <img v-if="home.avatarUrl" :src="home.avatarUrl" alt="" class="w-full h-full object-cover" />
+              <span v-else>{{ (home.name || '?')[0]?.toUpperCase() }}</span>
+            </div>
+            <div class="absolute -bottom-1 -right-1 rounded-full bg-slate-900 border border-emerald-400/60 px-1.5 py-0.5 text-[11px] font-extrabold text-emerald-400 leading-none">{{ home.level }}</div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-white font-bold text-lg leading-tight truncate">Hola{{ home.name ? ', ' + home.name : '' }}</p>
+            <div class="flex items-center gap-2.5 text-sm text-slate-400 mt-0.5">
+              <span class="inline-flex items-center gap-1">
+                <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 23c-3.6 0-8-3.1-8-8.5C4 9 8 4 11.5 1c.2-.1.4-.1.5 0 .2.1.2.3.1.5C11 4 14 6 14 6s1-1.5 1.5-4c0-.2.2-.3.4-.3s.3.1.4.3C18 5 20 9 20 14.5 20 19.9 15.6 23 12 23z"/></svg>
+                <span class="text-slate-200 font-semibold">{{ home.dailyStreak }}</span> días
+              </span>
+              <span class="text-slate-600">·</span>
+              <span>Nivel {{ home.level }}</span>
+            </div>
           </div>
           <div class="flex flex-wrap gap-2">
             <RouterLink to="/play/points" class="group rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-2.5 font-semibold text-white text-sm transition-all hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-95">
-              Desafíos del día
+              Jugar
               <span class="inline-block ml-1 transition-transform group-hover:translate-x-0.5">→</span>
             </RouterLink>
-            <RouterLink to="/play/free" class="rounded-xl border border-white/15 px-5 py-2.5 font-semibold text-slate-200 text-sm transition-all hover:border-white/25 hover:bg-white/5 active:scale-95">
-              Modo libre
-            </RouterLink>
-            <RouterLink to="/leaderboards" class="rounded-xl border border-white/15 px-5 py-2.5 font-semibold text-slate-200 text-sm transition-all hover:border-white/25 hover:bg-white/5 active:scale-95">
+            <RouterLink to="/leaderboards" class="rounded-xl border border-white/15 px-4 py-2.5 font-semibold text-slate-200 text-sm transition-all hover:border-white/25 hover:bg-white/5 active:scale-95">
               Ranking
             </RouterLink>
           </div>
+        </div>
+
+        <!-- Tu día -->
+        <div class="grid grid-cols-3 gap-3 mt-4">
+          <RouterLink to="/play/points" class="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4 hover:border-emerald-400/30 hover:bg-emerald-500/[0.04] transition-all">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Desafíos hoy</div>
+            <div class="font-display text-xl font-extrabold text-white">{{ home.challengesDone }}<span class="text-slate-600 text-sm">/{{ home.challengesTotal || '—' }}</span></div>
+          </RouterLink>
+          <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Racha</div>
+            <div class="font-display text-xl font-extrabold text-white">{{ home.dailyStreak }} <span class="text-slate-500 text-sm font-semibold">días</span></div>
+          </div>
+          <RouterLink to="/rewards" class="relative rounded-2xl border p-3 sm:p-4 transition-all" :class="home.rewardsToClaim > 0 ? 'border-amber-500/40 bg-amber-500/[0.07] hover:bg-amber-500/[0.12]' : 'border-white/10 bg-white/[0.03]'">
+            <div class="text-[10px] uppercase tracking-wider mb-1" :class="home.rewardsToClaim > 0 ? 'text-amber-300' : 'text-slate-500'">Recompensas</div>
+            <div class="font-display text-xl font-extrabold" :class="home.rewardsToClaim > 0 ? 'text-amber-300' : 'text-white'">{{ home.rewardsToClaim }}</div>
+            <span v-if="home.rewardsToClaim > 0" class="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+          </RouterLink>
         </div>
       </template>
     </div>
@@ -257,8 +353,8 @@ function getGameRoute(slug) {
       </div>
     </div>
 
-    <!-- How It Works -->
-    <div class="relative z-10 max-w-5xl mx-auto px-6 mb-20">
+    <!-- How It Works (solo invitados) -->
+    <div v-if="!state.isAuthenticated" class="relative z-10 max-w-5xl mx-auto px-6 mb-20">
       <div class="text-center mb-10">
         <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3">¿Cómo funciona?</h2>
         <p class="text-slate-400 text-sm max-w-md mx-auto">Tres pasos simples para empezar a competir</p>
@@ -364,8 +460,40 @@ function getGameRoute(slug) {
       </div>
     </div>
 
-    <!-- Pricing Plans -->
-    <div class="relative z-10 max-w-5xl mx-auto px-6 mb-24">
+    <!-- Pase mensual + plan (solo logueado) -->
+    <div v-if="state.isAuthenticated" class="relative z-10 max-w-5xl mx-auto px-6 mb-20 grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <!-- Pase teaser -->
+      <div class="lg:col-span-2 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.06] via-slate-900/40 to-cyan-500/[0.04] p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-display font-bold text-white text-lg flex items-center gap-2">🎟️ Pase mensual</h3>
+          <span class="text-[11px] rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-amber-300 font-bold">
+            {{ home.isPremium ? '⭐ Premium' : 'Premium 🔒' }}
+          </span>
+        </div>
+        <div class="h-2.5 rounded-full bg-black/30 overflow-hidden mb-2 border border-white/5">
+          <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: home.passPercent + '%' }"></div>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-sm text-slate-400 truncate">{{ home.passNextLabel || `${home.passPoints} pts` }}</span>
+          <button @click="showPassModal = true" class="shrink-0 rounded-xl bg-white/10 hover:bg-white/15 active:scale-95 text-white px-4 py-2 text-sm font-semibold transition">
+            Ver pase completo
+          </button>
+        </div>
+      </div>
+      <!-- Plan teaser -->
+      <div class="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.06] to-slate-900/40 p-5 flex flex-col justify-between">
+        <div>
+          <h3 class="font-display font-bold text-white text-lg mb-1">Mejorá tu plan</h3>
+          <p class="text-sm text-slate-400">Más desafíos, power-ups y bonus de XP.</p>
+        </div>
+        <RouterLink to="/pricing" class="mt-4 block text-center rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2.5 text-sm font-bold hover:opacity-90 active:scale-95 transition">
+          Ver planes
+        </RouterLink>
+      </div>
+    </div>
+
+    <!-- Pricing Plans (solo invitados) -->
+    <div v-if="!state.isAuthenticated" class="relative z-10 max-w-5xl mx-auto px-6 mb-24">
       <div class="text-center mb-10">
         <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3">Elegí tu plan</h2>
         <p class="text-slate-400 text-sm max-w-md mx-auto">Empezá gratis y mejorá tu experiencia cuando quieras</p>
@@ -441,5 +569,29 @@ function getGameRoute(slug) {
 
     <!-- Match Detail Modal -->
     <MatchDetailModal :match="selectedMatch" :open="matchModalOpen" @close="matchModalOpen = false" />
+
+    <!-- Pase mensual completo (modal) -->
+    <Teleport to="body">
+      <Transition name="pass-fade">
+        <div v-if="showPassModal" class="fixed inset-0 z-[60] overflow-y-auto bg-black/80 backdrop-blur-sm">
+          <div class="min-h-full flex items-start justify-center p-4 pt-10 pb-10" @click.self="showPassModal = false">
+            <div class="relative w-full max-w-2xl">
+              <div class="flex items-center justify-between mb-3">
+                <h2 class="font-display text-xl font-extrabold text-white">Pase mensual</h2>
+                <button @click="showPassModal = false" class="rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-slate-300 w-9 h-9 grid place-items-center transition" aria-label="Cerrar">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <MonthlyPass />
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </section>
 </template>
+
+<style scoped>
+.pass-fade-enter-active, .pass-fade-leave-active { transition: opacity 0.2s ease; }
+.pass-fade-enter-from, .pass-fade-leave-to { opacity: 0; }
+</style>
