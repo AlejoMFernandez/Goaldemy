@@ -39,6 +39,8 @@ export default {
       equippedFrameKey: 'none',
       equippedTitleText: '',
       equippedTitleRarity: 'common',
+      equippedIconGlyph: '',
+      equippedBannerKey: 'default',
       levelLoading: false,
       achievements: [],
       achLoading: false,
@@ -171,6 +173,8 @@ export default {
         this.equippedFrameKey = eq.frameKey
         this.equippedTitleText = eq.titleText
         this.equippedTitleRarity = eq.titleRarity
+        this.equippedIconGlyph = eq.iconGlyph
+        this.equippedBannerKey = eq.bannerKey
       } catch (e) {
         console.error('[Profile.vue] getPublicProfile exception:', e)
         this.user = { id: userId }
@@ -398,6 +402,8 @@ export default {
       :frame-style-key="equippedFrameKey"
       :title-text="equippedTitleText"
       :title-rarity="equippedTitleRarity"
+      :icon-glyph="equippedIconGlyph"
+      :banner-key="equippedBannerKey"
     />
 
     <!-- Tab bar -->

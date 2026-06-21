@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { getTierForLevel, getNextTier } from '../../services/tiers'
 import countryNames from '../../codeCOUNTRYS.json'
 import LevelProgressionModal from './LevelProgressionModal.vue'
-import { frameStyle, rarity } from '../../services/cosmetics'
+import { frameStyle, bannerStyle, rarity } from '../../services/cosmetics'
 
 const props = defineProps({
   avatarInitial: { type: String, default: '?' },
@@ -27,6 +27,8 @@ const props = defineProps({
   frameStyleKey: { type: String, default: 'none' },
   titleText: { type: String, default: '' },
   titleRarity: { type: String, default: 'common' },
+  iconGlyph: { type: String, default: '' },
+  bannerKey: { type: String, default: 'default' },
 })
 
 const showProgression = ref(false)
@@ -73,6 +75,12 @@ const bannerGradient = computed(() => {
   return map[currentTier.value?.color] || map.emerald
 })
 
+const bannerClass = computed(() =>
+  (props.bannerKey && props.bannerKey !== 'default')
+    ? bannerStyle(props.bannerKey)
+    : ('bg-gradient-to-br ' + bannerGradient.value)
+)
+
 const accent = computed(() => {
   const map = {
     emerald: { text: 'text-emerald-400', bar: 'from-emerald-400 to-cyan-400', glow: 'shadow-emerald-500/30', badge: 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300' },
@@ -90,7 +98,7 @@ const accent = computed(() => {
   <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur overflow-hidden shadow-2xl">
 
     <!-- Banner -->
-    <div class="relative h-28 sm:h-32 bg-gradient-to-br" :class="bannerGradient">
+    <div class="relative h-28 sm:h-32" :class="bannerClass">
       <div class="absolute inset-0 overflow-hidden">
         <div class="absolute top-3 right-6 w-24 h-24 rounded-full border-2 border-white/10 opacity-40"></div>
         <div class="absolute -bottom-4 right-20 w-16 h-16 rounded-full border border-white/8 opacity-30"></div>
@@ -128,7 +136,8 @@ const accent = computed(() => {
               class="size-[88px] sm:size-24 overflow-hidden shadow-xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white font-extrabold text-2xl sm:text-3xl grid place-items-center"
               :class="frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl ring-4 ring-slate-900'"
             >
-              <img v-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
+              <span v-if="iconGlyph" class="leading-none">{{ iconGlyph }}</span>
+              <img v-else-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
               <span v-else>{{ avatarInitial }}</span>
             </div>
           </div>

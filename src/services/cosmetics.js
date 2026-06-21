@@ -23,19 +23,33 @@ export async function getCosmetics() {
  * Resiliente: si el schema de cosméticos no existe todavía, devuelve defaults.
  */
 export async function getEquippedCosmetics(userId) {
-  const out = { frameKey: 'none', titleText: '', titleRarity: 'common' }
+  const out = { frameKey: 'none', titleText: '', titleRarity: 'common', iconGlyph: '', bannerKey: 'default' }
   if (!userId) return out
+  let byCode = {}
   try {
-    const { data: prof } = await supabase
-      .from('user_profiles').select('equipped_frame, equipped_title').eq('id', userId).maybeSingle()
-    if (!prof || (!prof.equipped_frame && !prof.equipped_title)) return out
     const { data: cat } = await supabase.from('cosmetics').select('code, name, rarity, style_key')
-    const byCode = Object.fromEntries((cat || []).map(c => [c.code, c]))
-    const fr = byCode[prof.equipped_frame]
-    const ti = byCode[prof.equipped_title]
-    if (fr) out.frameKey = fr.style_key || 'none'
-    if (ti) { out.titleText = ti.name || ''; out.titleRarity = ti.rarity || 'common' }
-  } catch { /* schema sin cosméticos: defaults */ }
+    byCode = Object.fromEntries((cat || []).map(c => [c.code, c]))
+  } catch { return out }
+  // Fase 4: bordes + títulos
+  try {
+    const { data: p } = await supabase
+      .from('user_profiles').select('equipped_frame, equipped_title').eq('id', userId).maybeSingle()
+    if (p) {
+      const fr = byCode[p.equipped_frame]; const ti = byCode[p.equipped_title]
+      if (fr) out.frameKey = fr.style_key || 'none'
+      if (ti) { out.titleText = ti.name || ''; out.titleRarity = ti.rarity || 'common' }
+    }
+  } catch { /* sin columnas de fase 4 */ }
+  // Fase 4b: íconos + banners (query aparte por si las columnas no existen)
+  try {
+    const { data: p2 } = await supabase
+      .from('user_profiles').select('equipped_icon, equipped_banner').eq('id', userId).maybeSingle()
+    if (p2) {
+      const ic = byCode[p2.equipped_icon]; const ba = byCode[p2.equipped_banner]
+      if (ic) out.iconGlyph = ic.style_key || ''
+      if (ba) out.bannerKey = ba.style_key || 'default'
+    }
+  } catch { /* sin columnas de fase 4b */ }
   return out
 }
 
@@ -56,10 +70,25 @@ export const FRAME_STYLES = {
   emerald: { wrap: 'bg-gradient-to-br from-emerald-300 to-cyan-500 shadow-[0_0_14px_rgba(16,185,129,0.45)]', pad: 'p-[3px]' },
   legend:  { wrap: 'bg-gradient-to-br from-fuchsia-400 via-amber-300 to-cyan-400 shadow-[0_0_18px_rgba(232,121,249,0.45)]', pad: 'p-[3px]' },
   premium: { wrap: 'bg-gradient-to-br from-amber-400 via-yellow-200 to-amber-500 shadow-[0_0_18px_rgba(251,191,36,0.5)]', pad: 'p-[3px]' },
+  champion:{ wrap: 'bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 shadow-[0_0_22px_rgba(251,191,36,0.6)]', pad: 'p-[3px]' },
 }
 
 export function frameStyle(styleKey) {
   return FRAME_STYLES[styleKey] || FRAME_STYLES.none
+}
+
+// ── Estilos de banners (fondo del header) por style_key ──
+export const BANNER_STYLES = {
+  default: 'bg-gradient-to-br from-slate-800 to-slate-900',
+  pitch:   'bg-gradient-to-br from-emerald-800 via-emerald-900 to-green-950',
+  night:   'bg-gradient-to-br from-slate-800 via-indigo-950 to-slate-950',
+  fire:    'bg-gradient-to-br from-orange-700 via-red-800 to-rose-950',
+  galaxy:  'bg-gradient-to-br from-fuchsia-800 via-indigo-900 to-slate-950',
+  gold:    'bg-gradient-to-br from-amber-600 via-yellow-700 to-amber-900',
+}
+
+export function bannerStyle(styleKey) {
+  return BANNER_STYLES[styleKey] || BANNER_STYLES.default
 }
 
 // ── Colores por rareza ──
