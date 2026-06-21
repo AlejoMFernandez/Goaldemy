@@ -7,12 +7,13 @@ import countriesMap from '../../codeCOUNTRYS.json';
 import { flagUrl } from '../../services/countries';
 import SearchSelect from '../../components/common/SearchSelect.vue';
 import { getAllPlayers, getAllTeams } from '../../services/players';
+import CosmeticsCollection from '../../components/profile/CosmeticsCollection.vue';
 
 let unsubscribeAuth = () => {};
 
 export default {
   name: 'ProfileEdit',
-  components: { AppH1, AppButton, SearchSelect },
+  components: { AppH1, AppButton, SearchSelect, CosmeticsCollection },
   data() {
     return {
       formData: {
@@ -189,6 +190,8 @@ export default {
       <!-- redireccionamos a perfil -->
       <AppButton type="submit">Guardar cambios</AppButton>
     </form>
+
+    <CosmeticsCollection class="mt-6 block" :avatar-url="user?.avatar_url || ''" :name="formData.display_name" :initial="avatarInitial" />
   </div>
 </template>
 
