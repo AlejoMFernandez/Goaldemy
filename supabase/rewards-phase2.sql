@@ -52,22 +52,18 @@ CREATE POLICY "Users read own pass claims" ON public.user_pass_claims
   FOR SELECT USING (auth.uid() = user_id);
 
 -- ─── 5. Seed de tiers (15). Premium siempre mejor. ──────────
-INSERT INTO public.monthly_pass_tiers (tier, points_required, free_xp, free_powerup, free_powerup_qty, premium_xp, premium_powerup, premium_powerup_qty) VALUES
-  (1,  10,  50,  NULL,          0, 100, 'fifty_fifty', 1),
-  (2,  25,  80,  NULL,          0, 150, 'shield',      1),
-  (3,  45,  100, 'reveal_hint', 1, 200, 'extra_time',  2),
-  (4,  70,  120, NULL,          0, 250, 'reveal_hint', 2),
-  (5,  100, 150, NULL,          0, 300, 'fifty_fifty', 2),
-  (6,  135, 180, 'shield',      1, 350, 'shield',      3),
-  (7,  175, 200, NULL,          0, 400, 'extra_time',  3),
-  (8,  220, 220, NULL,          0, 450, 'reveal_hint', 3),
-  (9,  270, 250, 'extra_time',  1, 500, 'fifty_fifty', 3),
-  (10, 325, 300, NULL,          0, 600, 'shield',      4),
-  (11, 385, 320, NULL,          0, 650, 'extra_time',  4),
-  (12, 450, 350, 'fifty_fifty', 1, 700, 'reveal_hint', 4),
-  (13, 520, 400, NULL,          0, 800, 'fifty_fifty', 5),
-  (14, 595, 450, NULL,          0, 900, 'shield',      5),
-  (15, 675, 600, 'reveal_hint', 2, 1200,'extra_time',  6)
+-- 30 niveles (mensual). Generados por fórmula: premium siempre mejor que gratis.
+INSERT INTO public.monthly_pass_tiers (tier, points_required, free_xp, free_powerup, free_powerup_qty, premium_xp, premium_powerup, premium_powerup_qty)
+SELECT
+  n,
+  (18 * n - 8),                                                                              -- puntos (alcanzable en el mes)
+  (50 + n * 10),                                                                             -- XP gratis
+  CASE WHEN n % 6 = 0 THEN (ARRAY['fifty_fifty','shield','extra_time','reveal_hint'])[(n % 4) + 1] ELSE NULL END,
+  CASE WHEN n % 6 = 0 THEN 1 ELSE 0 END,
+  (100 + n * 20),                                                                            -- XP premium (mayor)
+  CASE WHEN n % 3 = 0 THEN (ARRAY['fifty_fifty','shield','extra_time','reveal_hint'])[(n % 4) + 1] ELSE NULL END,
+  CASE WHEN n % 3 = 0 THEN 1 + (n / 15) ELSE 0 END
+FROM generate_series(1, 30) AS n
 ON CONFLICT (tier) DO UPDATE SET
   points_required = EXCLUDED.points_required,
   free_xp = EXCLUDED.free_xp, free_powerup = EXCLUDED.free_powerup, free_powerup_qty = EXCLUDED.free_powerup_qty,

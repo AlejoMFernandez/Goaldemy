@@ -14,6 +14,7 @@ const state = reactive({
   isAuthenticated: !!(getAuthUser()?.id),
   loading: true,
   featuredGames: [],
+  totalGames: 0,
   loadingToday: false,
   todayByLeague: [],
   upcomingMatches: [],
@@ -23,7 +24,7 @@ const state = reactive({
 const home = reactive({
   loading: true,
   name: '', avatarUrl: '', level: 1, dailyStreak: 0,
-  challengesDone: 0, challengesTotal: 0,
+  playedToday: 0,
   rewardsToClaim: 0,
   passPoints: 0, passPercent: 0, passNextLabel: '', isPremium: false,
 })
@@ -86,9 +87,9 @@ async function load() {
   try {
     state.isAuthenticated = !!(getAuthUser()?.id)
     const allGames = await fetchGames()
-    state.featuredGames = (allGames || [])
-      .filter(g => !!g?.slug && gameRouteForSlug(g.slug) !== '/games')
-      .slice(-4)
+    const playable = (allGames || []).filter(g => !!g?.slug && gameRouteForSlug(g.slug) !== '/games')
+    state.featuredGames = playable.slice(-4)
+    state.totalGames = playable.length
   } catch (e) {
     console.error('Landing load error:', e)
   } finally {
@@ -101,13 +102,16 @@ async function loadUserHome() {
   const { id } = getAuthUser() || {}
   if (!id) { home.loading = false; return }
   try {
-    const [profileRes, lvlRes, challenges, daily, pass] = await Promise.all([
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+    const [profileRes, lvlRes, challenges, daily, pass, sessionsRes] = await Promise.all([
       supabase.from('user_profiles').select('display_name, avatar_url, daily_streak').eq('id', id).single(),
       getUserLevel(null),
       getDailyChallenges(),
       getDailyReward(),
       getMonthlyPass(),
+      supabase.from('game_sessions').select('game_id').eq('user_id', id).gte('started_at', todayStart.toISOString()),
     ])
+    home.playedToday = new Set((sessionsRes?.data || []).map(s => s.game_id)).size
     if (profileRes.data) {
       home.name = profileRes.data.display_name || ''
       home.avatarUrl = profileRes.data.avatar_url || ''
@@ -117,8 +121,6 @@ async function loadUserHome() {
     home.level = Number(lvlInfo?.level) || 1
 
     const chArr = Array.isArray(challenges) ? challenges : []
-    home.challengesTotal = chArr.length
-    home.challengesDone = chArr.filter(c => c.claimed).length
     const chClaimable = chArr.filter(c => !c.claimed && c.progress >= c.target).length
     const dailyAvail = daily?.available ? 1 : 0
 
@@ -170,7 +172,7 @@ function getGameRoute(slug) {
     <div class="relative z-10 max-w-5xl mx-auto px-6 pt-12 pb-8">
       <template v-if="!state.isAuthenticated">
         <div class="text-center space-y-6">
-          <div class="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-1.5 text-sm text-cyan-300 font-medium slide-up">
+          <div class="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-sm text-amber-300 font-medium slide-up">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             Copa del Mundo 2026 — EN VIVO
           </div>
@@ -226,8 +228,8 @@ function getGameRoute(slug) {
         <!-- Tu día -->
         <div class="grid grid-cols-3 gap-3 mt-4">
           <RouterLink to="/play/points" class="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4 hover:border-emerald-400/30 hover:bg-emerald-500/[0.04] transition-all">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Desafíos hoy</div>
-            <div class="font-display text-xl font-extrabold text-white">{{ home.challengesDone }}<span class="text-slate-600 text-sm">/{{ home.challengesTotal || '—' }}</span></div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Jugados hoy</div>
+            <div class="font-display text-xl font-extrabold text-white">{{ home.playedToday }}<span class="text-slate-600 text-sm">/{{ state.totalGames || '—' }}</span></div>
           </RouterLink>
           <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
             <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Racha</div>
@@ -246,11 +248,11 @@ function getGameRoute(slug) {
     <div class="relative z-10 max-w-5xl mx-auto px-6 mb-16">
       <div class="flex items-center gap-3 mb-5">
         <div class="flex items-center gap-2.5">
-          <svg class="w-6 h-6 text-cyan-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3zm2.36 0l1.14 5h7l1.14-5H7.36zM4 9v1a4 4 0 003.5 3.97V15h9v-1.03A4 4 0 0020 10V9H4z"/></svg>
+          <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/77.png" alt="Copa del Mundo 2026" class="w-7 h-7 object-contain" @error="$event.target.style.display='none'" />
           <h2 class="text-2xl font-bold text-white tracking-tight">Copa del Mundo 2026</h2>
         </div>
-        <div class="flex-1 h-px bg-gradient-to-r from-cyan-400/30 to-transparent"></div>
-        <RouterLink to="/leagues/world-cup" class="text-xs text-cyan-400 hover:text-cyan-300 font-medium transition-colors">
+        <div class="flex-1 h-px bg-white/10"></div>
+        <RouterLink to="/leagues/world-cup" class="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition-colors">
           Ver todo →
         </RouterLink>
       </div>
@@ -263,16 +265,6 @@ function getGameRoute(slug) {
       <!-- Today's Matches — centered score layout -->
       <div v-else-if="hasTodayMatches" class="space-y-6">
         <div v-for="item in state.todayByLeague" :key="item.league.id">
-          <div class="flex items-center gap-3 mb-2.5">
-            <img
-              :src="`https://images.fotmob.com/image_resources/logo/leaguelogo/${item.league.id}_xsmall.png`"
-              class="w-5 h-5 object-contain flex-shrink-0"
-              :alt="item.league.name"
-              @error="$event.target.style.display='none'"
-            />
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">{{ item.league.name }}</span>
-            <div class="flex-1 h-px bg-white/8"></div>
-          </div>
           <div class="space-y-1.5">
             <button
               v-for="match in item.matches"
@@ -400,7 +392,7 @@ function getGameRoute(slug) {
           <div
             v-for="game in state.featuredGames"
             :key="game.slug"
-            class="relative group overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-sm transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
+            class="relative group flex flex-col overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-sm transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
             :class="state.isAuthenticated ? 'border-white/15 hover:border-emerald-400/40 hover:shadow-xl hover:shadow-emerald-500/15' : 'border-red-500/30'"
           >
             <div v-if="!state.isAuthenticated" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/90 backdrop-blur-sm">
@@ -416,18 +408,19 @@ function getGameRoute(slug) {
             <RouterLink
               :to="state.isAuthenticated ? getGameRoute(game.slug) : '#'"
               :class="state.isAuthenticated ? '' : 'pointer-events-none'"
+              class="flex flex-col flex-1"
             >
-              <div class="relative h-32 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 flex items-center justify-center overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-cyan-500/5 group-hover:scale-110 transition-transform duration-500"></div>
-                <img v-if="game.icon" :src="game.icon" :alt="game.name" class="relative z-10 w-16 h-16 object-contain group-hover:scale-110 transition-transform duration-300" />
-                <svg v-else class="relative z-10 w-16 h-16 text-emerald-400" fill="currentColor" viewBox="0 0 24 24">
+              <div class="relative h-36 bg-gradient-to-br from-slate-800/60 to-slate-900 flex items-center justify-center overflow-hidden">
+                <div class="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="background: radial-gradient(60% 60% at 50% 45%, rgba(16,185,129,0.18), transparent 70%);"></div>
+                <img v-if="game.cover_url" :src="game.cover_url" :alt="game.name" class="relative z-10 w-20 h-20 object-contain group-hover:scale-110 transition-transform duration-300" />
+                <svg v-else class="relative z-10 w-16 h-16 text-emerald-400/80" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
                 </svg>
               </div>
-              <div class="p-4">
-                <h3 class="text-lg font-bold text-white mb-1.5 line-clamp-1">{{ game.name }}</h3>
+              <div class="p-4 flex flex-col flex-1">
+                <h3 class="text-base font-bold text-white mb-1 line-clamp-1">{{ game.name }}</h3>
                 <p class="text-xs text-slate-400 line-clamp-2 mb-3">{{ game.description || 'Desafío diario disponible' }}</p>
-                <div v-if="state.isAuthenticated" class="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-white transition-all group-hover:shadow-lg group-hover:shadow-emerald-500/40">
+                <div v-if="state.isAuthenticated" class="mt-auto flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-white transition-all group-hover:shadow-lg group-hover:shadow-emerald-500/40">
                   <span>Jugar</span>
                   <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
@@ -460,10 +453,9 @@ function getGameRoute(slug) {
       </div>
     </div>
 
-    <!-- Pase mensual + plan (solo logueado) -->
-    <div v-if="state.isAuthenticated" class="relative z-10 max-w-5xl mx-auto px-6 mb-20 grid grid-cols-1 lg:grid-cols-3 gap-5">
-      <!-- Pase teaser -->
-      <div class="lg:col-span-2 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.06] via-slate-900/40 to-cyan-500/[0.04] p-5">
+    <!-- Pase mensual (sección propia, solo logueado) -->
+    <div v-if="state.isAuthenticated" class="relative z-10 max-w-5xl mx-auto px-6 mb-20">
+      <div class="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.06] via-slate-900/40 to-cyan-500/[0.04] p-5 sm:p-6">
         <div class="flex items-center justify-between mb-3">
           <h3 class="font-display font-bold text-white text-lg flex items-center gap-2">🎟️ Pase mensual</h3>
           <span class="text-[11px] rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-amber-300 font-bold">
@@ -475,28 +467,18 @@ function getGameRoute(slug) {
         </div>
         <div class="flex items-center justify-between gap-3">
           <span class="text-sm text-slate-400 truncate">{{ home.passNextLabel || `${home.passPoints} pts` }}</span>
-          <button @click="showPassModal = true" class="shrink-0 rounded-xl bg-white/10 hover:bg-white/15 active:scale-95 text-white px-4 py-2 text-sm font-semibold transition">
+          <button @click="showPassModal = true" class="shrink-0 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 active:scale-95 text-black font-bold px-4 py-2 text-sm transition">
             Ver pase completo
           </button>
         </div>
       </div>
-      <!-- Plan teaser -->
-      <div class="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.06] to-slate-900/40 p-5 flex flex-col justify-between">
-        <div>
-          <h3 class="font-display font-bold text-white text-lg mb-1">Mejorá tu plan</h3>
-          <p class="text-sm text-slate-400">Más desafíos, power-ups y bonus de XP.</p>
-        </div>
-        <RouterLink to="/pricing" class="mt-4 block text-center rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2.5 text-sm font-bold hover:opacity-90 active:scale-95 transition">
-          Ver planes
-        </RouterLink>
-      </div>
     </div>
 
-    <!-- Pricing Plans (solo invitados) -->
-    <div v-if="!state.isAuthenticated" class="relative z-10 max-w-5xl mx-auto px-6 mb-24">
+    <!-- Planes (sección propia, para todos) -->
+    <div class="relative z-10 max-w-5xl mx-auto px-6 mb-24">
       <div class="text-center mb-10">
-        <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3">Elegí tu plan</h2>
-        <p class="text-slate-400 text-sm max-w-md mx-auto">Empezá gratis y mejorá tu experiencia cuando quieras</p>
+        <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3">{{ state.isAuthenticated ? 'Mejorá tu plan' : 'Elegí tu plan' }}</h2>
+        <p class="text-slate-400 text-sm max-w-md mx-auto">Más desafíos, power-ups y bonus de XP para dominar Goaldemy</p>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Free -->
