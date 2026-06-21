@@ -64,7 +64,7 @@ CREATE OR REPLACE FUNCTION public.user_level_of(p_user_id UUID)
 RETURNS INTEGER LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
   SELECT COALESCE((
     SELECT lt.level FROM public.level_thresholds lt
-    WHERE lt.xp_required <= public.get_user_total_xp(p_user_id)
+    WHERE lt.xp_required <= COALESCE((SELECT SUM(e.amount) FROM public.xp_events e WHERE e.user_id = p_user_id), 0)
     ORDER BY lt.level DESC LIMIT 1
   ), 1);
 $$;
