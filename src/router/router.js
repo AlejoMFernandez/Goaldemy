@@ -101,12 +101,10 @@ const routes = [
 const router = createRouter({
     routes,
     history: createWebHistory(),
-    scrollBehavior(to, from, savedPosition) {
-        // Volver/adelante: restaurar posición previa
-        if (savedPosition) return savedPosition;
+    scrollBehavior(to) {
         // Anchor (#seccion): scrollear a ese elemento
         if (to.hash) return { el: to.hash, behavior: 'smooth' };
-        // Navegación normal: siempre arrancar arriba
+        // Siempre arrancar arriba (incluso al volver) — pedido del owner
         return { top: 0, left: 0 };
     },
 });
@@ -141,6 +139,15 @@ router.beforeEach(async (to, from) => {
     if (user.id && (to.path === '/login' || to.path === '/register')) {
         return '/'
     }
+});
+
+// Garantiza el scroll arriba tras cada navegación, inmune al timing de la
+// transición out-in (el scrollBehavior solo no alcanza con transiciones).
+router.afterEach((to) => {
+    if (to.hash) return;
+    const toTop = () => window.scrollTo({ top: 0, left: 0 });
+    requestAnimationFrame(toTop);
+    setTimeout(toTop, 320);
 });
 
 export default router;
