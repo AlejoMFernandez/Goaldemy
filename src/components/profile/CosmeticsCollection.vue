@@ -69,9 +69,9 @@ onMounted(load)
     <template v-else>
       <!-- Preview -->
       <div class="relative overflow-hidden rounded-2xl border border-white/10 mb-6">
-        <div class="absolute inset-0 opacity-90" :class="bannerStyle(equippedBanner.style_key)"></div>
+        <div class="absolute inset-0 opacity-90" :class="[bannerStyle(equippedBanner.style_key), equippedBanner.premium_only ? 'anim-pan' : '']"></div>
         <div class="relative flex items-center gap-4 p-4">
-          <div :class="[frameStyle(equippedFrame.style_key).wrap, frameStyle(equippedFrame.style_key).pad, 'rounded-2xl shrink-0']">
+          <div :class="[frameStyle(equippedFrame.style_key).wrap, frameStyle(equippedFrame.style_key).pad, 'rounded-2xl shrink-0', equippedFrame.premium_only ? 'anim-pan' : '']">
             <div class="size-16 rounded-[13px] overflow-hidden bg-gradient-to-br from-emerald-500 to-cyan-500 grid place-items-center text-white font-extrabold text-2xl">
               <span v-if="equippedIcon && equippedIcon.style_key">{{ equippedIcon.style_key }}</span>
               <img v-else-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
@@ -80,7 +80,7 @@ onMounted(load)
           </div>
           <div class="min-w-0">
             <p class="text-white font-bold text-lg truncate">{{ name || 'Tu nombre' }}</p>
-            <p v-if="equippedTitle" class="text-sm font-semibold" :class="rarity(equippedTitle.rarity).text">{{ equippedTitle.name }}</p>
+            <p v-if="equippedTitle" class="text-sm font-semibold" :class="equippedTitle.premium_only ? 'title-premium-anim' : rarity(equippedTitle.rarity).text">{{ equippedTitle.name }}</p>
             <p v-else class="text-sm text-slate-400">Sin título</p>
           </div>
         </div>
@@ -98,7 +98,7 @@ onMounted(load)
             f.owned ? 'hover:bg-white/5 cursor-pointer' : 'opacity-50 cursor-not-allowed',
           ]"
         >
-          <div :class="[frameStyle(f.style_key).wrap, frameStyle(f.style_key).pad, 'rounded-xl']">
+          <div :class="[frameStyle(f.style_key).wrap, frameStyle(f.style_key).pad, 'rounded-xl', f.premium_only ? 'anim-pan' : '']">
             <div class="size-10 rounded-[9px] bg-slate-800 grid place-items-center text-slate-500 text-[10px]">●</div>
           </div>
           <span class="text-[11px] font-medium text-white truncate w-full text-center">{{ f.name }}</span>
@@ -139,7 +139,7 @@ onMounted(load)
             b.equipped ? 'border-emerald-400/60' : b.owned ? 'border-white/10 hover:border-white/25 cursor-pointer' : 'border-white/10 opacity-50 cursor-not-allowed',
           ]"
         >
-          <div class="h-12" :class="bannerStyle(b.style_key)"></div>
+          <div class="h-12" :class="[bannerStyle(b.style_key), b.premium_only ? 'anim-pan' : '']"></div>
           <div class="flex items-center justify-between px-2.5 py-1.5 bg-slate-900/80">
             <span class="text-[11px] font-medium text-white truncate">{{ b.name }}</span>
             <span v-if="b.premium_only" class="text-[8px] font-bold text-amber-300">PRO</span>
@@ -164,7 +164,7 @@ onMounted(load)
             t.owned ? 'hover:brightness-110 cursor-pointer' : 'opacity-50 cursor-not-allowed',
           ]"
         >
-          <div class="text-sm font-bold truncate" :class="rarity(t.rarity).text">{{ t.name }}</div>
+          <div class="text-sm font-bold truncate" :class="t.premium_only ? 'title-premium-anim' : rarity(t.rarity).text">{{ t.name }}</div>
           <div class="text-[9px] mt-0.5" :class="t.owned ? 'text-slate-500' : 'text-slate-600'">
             <span v-if="t.premium_only" class="text-amber-300 font-bold">PREMIUM</span>
             <span v-else-if="!t.owned">{{ lockLabel(t) }}</span>
