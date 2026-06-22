@@ -16,24 +16,36 @@ import { captureLevelSnapshot } from '../../services/xp'
 
 const POS_LABELS = { 0: 'Arquero', 1: 'Defensor', 2: 'Mediocampista', 3: 'Delantero' }
 
+function statScore(p) {
+  const s = p.stats || {}
+  return (s.goals || 0) * 3 + (s.assists || 0) * 2 + (s.appearances || 0) * 0.2
+}
+
 function generateRound(allPlayers, rng, usedIds) {
-  const withStats = allPlayers.filter(p =>
-    ((p.stats && (p.stats.goals > 0 || p.stats.assists > 0 || p.stats.appearances > 0)) ||
-    (p.age != null && p.height != null)) && !usedIds.has(p.id)
-  )
-  if (withStats.length < 4) return null
+  const withStats = allPlayers.filter(p => p.stats && !usedIds.has(p.id))
+  // Pool de jugadores NOTORIOS: stats diferenciales esta temporada (no 0-0-1)
+  let notable = withStats.filter(p => {
+    const s = p.stats || {}
+    return (s.goals >= 3) || (s.assists >= 4) || (s.appearances >= 15)
+  })
+  if (notable.length < 4) notable = withStats.filter(p => statScore(p) >= 2)
+  if (notable.length < 4) return null
 
-  const correctIdx = Math.floor(rng() * withStats.length)
-  const correct = withStats[correctIdx]
+  // Correcto: sesgado hacia los de stats más altas (mitad superior)
+  const sorted = [...notable].sort((a, b) => statScore(b) - statScore(a))
+  const topHalf = sorted.slice(0, Math.max(4, Math.ceil(sorted.length / 2)))
+  const correct = topHalf[Math.floor(rng() * topHalf.length)]
 
-  const samePos = withStats.filter(p => p.id !== correct.id && p.positionId === correct.positionId)
-  const distractors = []
-  const pool = samePos.length >= 3 ? samePos : withStats.filter(p => p.id !== correct.id)
+  // Distractores de la misma posición (también notorios)
+  const samePos = notable.filter(p => p.id !== correct.id && p.positionId === correct.positionId)
+  const pool = samePos.length >= 3 ? samePos : notable.filter(p => p.id !== correct.id)
   const shuffled = [...pool].sort(() => rng() - 0.5)
+  const distractors = []
   for (const p of shuffled) {
     if (distractors.length >= 3) break
     if (p.id !== correct.id) distractors.push(p)
   }
+  if (distractors.length < 3) return null
 
   const options = [correct, ...distractors].sort(() => rng() - 0.5)
   return { correct, options }
