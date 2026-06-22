@@ -5,6 +5,7 @@
  */
 import { supabase } from './supabase'
 import { getAuthUser } from './auth'
+import { pushClaimNotification } from '../stores/notifications'
 
 /** Catálogo de cosméticos con estado owned/equipped del usuario. */
 export async function getCosmetics() {
@@ -101,4 +102,43 @@ export const RARITY = {
 
 export function rarity(r) {
   return RARITY[r] || RARITY.common
+}
+
+// ── Aviso de cosméticos recién desbloqueados ──
+const SEEN_KEY = 'gl:seen_cosmetics'
+const TYPE_LABEL = { frame: 'Borde', title: 'Título', icon: 'Ícono', banner: 'Banner' }
+const RARITY_EMOJI = { common: '✨', rare: '🔷', epic: '🟪', legendary: '🌟' }
+
+/**
+ * Compara los cosméticos que tenés ahora con los ya vistos y avisa los nuevos.
+ * La primera vez solo cachea (no spamea con los que ya tenías).
+ */
+export async function checkCosmeticUnlocks() {
+  const { id } = getAuthUser() || {}
+  if (!id) return
+  let items
+  try { items = await getCosmetics() } catch { return }
+  if (!Array.isArray(items) || items.length === 0) return
+
+  const owned = items.filter(c => c.owned).map(c => c.code)
+  let seen = []
+  let hadCache = false
+  try {
+    const raw = localStorage.getItem(SEEN_KEY)
+    if (raw) { seen = JSON.parse(raw) || []; hadCache = true }
+  } catch {}
+
+  if (hadCache) {
+    const seenSet = new Set(seen)
+    const fresh = items.filter(c => c.owned && !seenSet.has(c.code) && c.code !== 'frame_none')
+    for (const c of fresh) {
+      pushClaimNotification({
+        type: 'cosmetic',
+        title: `${TYPE_LABEL[c.type] || 'Cosmético'}: ${c.name}`,
+        emoji: RARITY_EMOJI[c.rarity] || '🎨',
+      })
+    }
+  }
+
+  try { localStorage.setItem(SEEN_KEY, JSON.stringify(owned)) } catch {}
 }

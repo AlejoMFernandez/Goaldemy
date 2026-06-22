@@ -37,6 +37,7 @@ export default {
   async mounted() {
     try { await authReady; } finally { this.authBooting = false }
     import('./services/players').then(m => m.initializePlayers?.()).catch(() => {})
+    import('./services/cosmetics').then(m => m.checkCosmeticUnlocks?.()).catch(() => {})
     this.$watch(() => this.$route?.path, () => {
       setSuppressOverlays(false)
     })

@@ -61,7 +61,7 @@ export default {
     class="rounded-xl border p-3 flex items-center gap-3 transition-all duration-200"
     :class="[borderColor, reward.claimed ? 'opacity-50 bg-white/2' : 'bg-white/5']"
   >
-    <div class="shrink-0 w-10 h-10 rounded-lg grid place-items-center text-xl"
+    <div class="shrink-0 w-11 h-11 rounded-xl grid place-items-center text-xl ring-1 ring-white/10"
       :class="{
         'bg-emerald-500/15': icon.color === 'emerald',
         'bg-yellow-500/15': icon.color === 'yellow',
@@ -82,7 +82,7 @@ export default {
     <div v-if="!reward.claimed" class="shrink-0">
       <button
         @click="$emit('claim', reward.id)"
-        class="rounded-lg px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-95 transition-all"
+        class="rounded-lg px-3 py-1.5 text-xs font-display font-bold text-white bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-95 transition-all"
       >
         +{{ points }} XP
       </button>
