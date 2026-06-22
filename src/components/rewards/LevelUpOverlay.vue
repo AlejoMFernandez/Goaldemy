@@ -2,7 +2,7 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { notificationsState, shiftLevelUpQueue } from '@/stores/notifications'
 import { getTierForLevel } from '@/services/tiers'
-import { getLevelUnlocks } from '@/services/level-rewards'
+import { getLevelUnlocks, getLevelRewards, getUpcomingRewards } from '@/services/level-rewards'
 import { soundManager } from '@/services/sounds'
 import { celebrateLevelUp, confettiGold } from '@/services/confetti'
 
@@ -30,6 +30,11 @@ export default {
       if (!current.value) return []
       return getLevelUnlocks(current.value.newLevel)
     })
+
+    const levelRewards = computed(() => current.value ? getLevelRewards(current.value.newLevel) : [])
+    const upcoming = computed(() => current.value ? getUpcomingRewards(current.value.newLevel, 3) : [])
+    const REWARD_EMOJI = { xp: '⚡', game: '🎮', tier: '🎖️', frame: '🖼️', title: '🏷️', icon: '⭐', banner: '🎴' }
+    const rewardEmoji = (k) => REWARD_EMOJI[k] || '🎁'
 
     function showNext() {
       clearTimers()
@@ -77,7 +82,7 @@ export default {
       }
     })
 
-    return { current, phase, oldTier, newTier, tierChanged, isMilestone, unlocks, dismiss }
+    return { current, phase, oldTier, newTier, tierChanged, isMilestone, unlocks, levelRewards, upcoming, rewardEmoji, dismiss }
   }
 }
 </script>
@@ -131,97 +136,84 @@ export default {
             </div>
           </div>
 
-          <!-- Tier badge (always shows current tier) -->
+          <!-- Evolución de rango: SOLO cuando cambiás de tier -->
           <div
+            v-if="tierChanged"
             class="mb-4 transition-all duration-500"
             :class="phase >= 3 ? 'opacity-100' : 'opacity-0'"
           >
-            <!-- Tier evolution -->
-            <template v-if="tierChanged && phase >= 3">
-              <div class="mb-3 font-display text-xs font-bold uppercase text-fuchsia-400"
-                style="animation: tracking-reveal 0.5s var(--ease-out-expo) both">
-                ¡Evolucion de Rango!
+            <div class="mb-3 font-display text-xs font-bold uppercase text-fuchsia-400"
+              style="animation: tracking-reveal 0.5s var(--ease-out-expo) both">
+              ¡Nuevo rango!
+            </div>
+
+            <div class="flex items-center justify-center gap-4">
+              <!-- Escudo viejo: se agita -->
+              <div class="flex flex-col items-center opacity-50" :class="phase >= 3 && phase < 4 ? 'shake' : ''">
+                <img v-if="oldTier?.image" :src="oldTier.image" class="w-16 h-16 object-contain mb-1" :alt="oldTier.label" />
+                <span class="text-xs text-slate-500">{{ oldTier?.label }}</span>
               </div>
 
-              <div class="flex items-center justify-center gap-4">
-                <div class="flex flex-col items-center opacity-50">
-                  <img v-if="oldTier?.image" :src="oldTier.image" class="w-16 h-16 object-contain mb-1" :alt="oldTier.label" />
-                  <span class="text-xs text-slate-500">{{ oldTier?.label }}</span>
-                </div>
+              <div
+                v-if="phase >= 4"
+                class="w-8 h-8 rounded-full bg-yellow-400/60"
+                style="animation: evolution-flash 0.5s ease both"
+              ></div>
 
-                <div
-                  v-if="phase >= 4"
-                  class="w-8 h-8 rounded-full bg-yellow-400/60"
-                  style="animation: evolution-flash 0.5s ease both"
-                ></div>
-
-                <div
-                  class="flex flex-col items-center"
-                  :style="phase >= 4 ? 'animation: scale-spring 0.6s var(--ease-bounce) both' : ''"
-                >
-                  <img v-if="newTier?.image" :src="newTier.image" class="w-24 h-24 object-contain mb-1" :alt="newTier.label" />
-                  <span class="text-sm font-bold" :class="{
-                    'text-emerald-400': newTier?.color === 'emerald',
-                    'text-amber-400': newTier?.color === 'amber',
-                    'text-orange-400': newTier?.color === 'orange',
-                    'text-red-400': newTier?.color === 'red',
-                    'text-sky-400': newTier?.color === 'sky',
-                    'text-blue-400': newTier?.color === 'blue',
-                    'text-violet-400': newTier?.color === 'violet',
-                    'text-fuchsia-400': newTier?.color === 'fuchsia',
-                    'text-rose-400': newTier?.color === 'rose',
-                    'text-yellow-400': newTier?.color === 'yellow',
-                  }">
-                    {{ newTier?.label }}
-                  </span>
-                </div>
+              <!-- Escudo nuevo: cae encima, reluciente -->
+              <div
+                class="flex flex-col items-center"
+                :style="phase >= 4 ? 'animation: scale-spring 0.6s var(--ease-bounce) both' : 'opacity:0'"
+              >
+                <img v-if="newTier?.image" :src="newTier.image" class="w-24 h-24 object-contain mb-1 drop-shadow-[0_0_18px_rgba(251,191,36,0.5)]" :alt="newTier.label" />
+                <span class="text-sm font-bold" :class="{
+                  'text-emerald-400': newTier?.color === 'emerald',
+                  'text-amber-400': newTier?.color === 'amber',
+                  'text-orange-400': newTier?.color === 'orange',
+                  'text-red-400': newTier?.color === 'red',
+                  'text-sky-400': newTier?.color === 'sky',
+                  'text-blue-400': newTier?.color === 'blue',
+                  'text-violet-400': newTier?.color === 'violet',
+                  'text-fuchsia-400': newTier?.color === 'fuchsia',
+                  'text-rose-400': newTier?.color === 'rose',
+                  'text-yellow-400': newTier?.color === 'yellow',
+                }">
+                  {{ newTier?.label }}
+                </span>
               </div>
-
-              <!-- Milestone rewards list -->
-              <div v-if="isMilestone && current.milestone?.rewards" class="mt-4 space-y-1.5">
-                <div
-                  v-for="(rw, i) in current.milestone.rewards"
-                  :key="i"
-                  class="flex items-center justify-center gap-2 text-sm text-slate-200"
-                  :style="`animation: slide-up 0.3s ease ${0.1 * i}s both`"
-                >
-                  <svg v-if="rw.type === 'xp'" class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                  </svg>
-                  <img v-else-if="rw.type === 'tier' && rw.image" :src="rw.image" class="w-4 h-4 object-contain" alt="" />
-                  <span>{{ rw.label }}</span>
-                </div>
-              </div>
-            </template>
-
-            <!-- Same tier, just show badge -->
-            <template v-else-if="newTier">
-              <div class="flex flex-col items-center"
-                :style="phase >= 3 ? 'animation: scale-spring 0.5s var(--ease-bounce) both' : ''">
-                <img v-if="newTier.image" :src="newTier.image" class="w-20 h-20 object-contain mb-2" :alt="newTier.label" />
-                <span class="text-sm font-semibold text-slate-300">{{ newTier.label }}</span>
-              </div>
-            </template>
+            </div>
           </div>
 
-          <!-- Unlocks at this level -->
-          <div
-            v-if="unlocks.length > 0 && phase >= 3"
-            class="mb-4 w-full max-w-xs"
-          >
-            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-2">Se desbloquea</p>
+          <!-- Recompensas de este nivel -->
+          <div v-if="phase >= 3 && levelRewards.filter(r => r.kind !== 'xp').length" class="mb-3 w-full max-w-xs">
+            <p class="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold mb-2">Recompensas de este nivel</p>
             <div class="space-y-1.5">
               <div
-                v-for="(u, ui) in unlocks"
-                :key="ui"
-                class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200"
-                :style="`animation: slide-up 0.3s ease ${0.15 * ui}s both`"
+                v-for="(r, ri) in levelRewards.filter(r => r.kind !== 'xp')"
+                :key="'lr'+ri"
+                class="flex items-center gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-2 text-sm text-white"
+                :style="`animation: slide-up 0.3s ease ${0.1 * ri}s both`"
               >
-                <svg v-if="u.type === 'game'" class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                </svg>
-                <img v-else-if="u.type === 'tier' && u.image" :src="u.image" class="w-4 h-4 object-contain shrink-0" alt="" />
-                <span>{{ u.label }}</span>
+                <span class="text-base">{{ rewardEmoji(r.kind) }}</span>
+                <span class="flex-1">{{ r.label }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lo que viene -->
+          <div v-if="phase >= 3 && upcoming.length" class="mb-4 w-full max-w-xs">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-2">Lo que viene — seguí jugando</p>
+            <div class="space-y-1.5">
+              <div
+                v-for="(r, ri) in upcoming"
+                :key="'up'+ri"
+                class="flex items-center gap-2.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-400"
+                :style="`animation: slide-up 0.3s ease ${0.3 + 0.1 * ri}s both`"
+              >
+                <span class="shrink-0 text-[11px] font-bold text-slate-500 w-11">Niv {{ r.level }}</span>
+                <span class="text-base opacity-70">{{ rewardEmoji(r.kind) }}</span>
+                <span class="flex-1 truncate">{{ r.label }}</span>
+                <svg class="w-3.5 h-3.5 text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
               </div>
             </div>
           </div>

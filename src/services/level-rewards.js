@@ -125,3 +125,56 @@ export function getLevelUnlocks(level) {
   }
   return unlocks
 }
+
+// ── Mapa de cosméticos por nivel (espejo del seed SQL, solo para mostrar) ──
+const COSMETIC_BY_LEVEL = [
+  { level: 2,  kind: 'title',  name: 'Promesa' },
+  { level: 3,  kind: 'frame',  name: 'Bronce' },
+  { level: 5,  kind: 'title',  name: 'Hincha' },
+  { level: 6,  kind: 'icon',   name: 'Botín' },
+  { level: 8,  kind: 'frame',  name: 'Plata' },
+  { level: 8,  kind: 'banner', name: 'Cancha' },
+  { level: 12, kind: 'title',  name: 'Crack' },
+  { level: 14, kind: 'icon',   name: 'Guantes' },
+  { level: 18, kind: 'banner', name: 'Nocturno' },
+  { level: 22, kind: 'icon',   name: 'Medalla' },
+  { level: 25, kind: 'frame',  name: 'Oro' },
+  { level: 30, kind: 'title',  name: 'Maestro del fútbol' },
+  { level: 35, kind: 'frame',  name: 'Esmeralda' },
+  { level: 35, kind: 'icon',   name: 'Trofeo' },
+  { level: 40, kind: 'banner', name: 'Fuego' },
+  { level: 50, kind: 'frame',  name: 'Leyenda' },
+  { level: 50, kind: 'title',  name: 'Leyenda Mundial' },
+  { level: 55, kind: 'icon',   name: 'GOAT' },
+  { level: 60, kind: 'banner', name: 'Galaxia' },
+]
+const COSMETIC_KIND_LABEL = { frame: 'Borde', title: 'Título', icon: 'Ícono', banner: 'Banner' }
+
+/** Recompensas otorgadas EN un nivel (XP bonus + juegos + rango + cosméticos). */
+export function getLevelRewards(level) {
+  const lvl = Number(level) || 1
+  const rewards = [{ kind: 'xp', label: `+${getLevelUpXpBonus(lvl)} XP bonus` }]
+  for (const [slug, req] of Object.entries(GAME_UNLOCK_LEVELS)) {
+    if (req === lvl && req > 1) rewards.push({ kind: 'game', label: `Juego: ${GAME_NAMES[slug] || slug}` })
+  }
+  const tier = TIERS.find(t => t.minLevel === lvl)
+  if (tier) rewards.push({ kind: 'tier', label: `Rango: ${tier.label}`, image: tier.image })
+  for (const c of COSMETIC_BY_LEVEL) {
+    if (c.level === lvl) rewards.push({ kind: c.kind, label: `${COSMETIC_KIND_LABEL[c.kind]}: ${c.name}` })
+  }
+  return rewards
+}
+
+/** Próximas recompensas notables (sin XP plano) para la senda "lo que viene". */
+export function getUpcomingRewards(level, count = 3) {
+  const lvl = Number(level) || 1
+  const out = []
+  for (let l = lvl + 1; l <= 60 && out.length < count; l++) {
+    const atLevel = getLevelRewards(l).filter(r => r.kind !== 'xp')
+    for (const r of atLevel) {
+      out.push({ level: l, ...r })
+      if (out.length >= count) break
+    }
+  }
+  return out
+}
