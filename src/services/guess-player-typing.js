@@ -63,7 +63,7 @@ export function countryFlag(p, width = 32) {
 }
 export function teamLogo(p) { return p?.teamLogo || null }
 // Progressive reveal: strong blur until hints reduce it
-export function blurForLives(lives) { return lives >= 3 ? 14 : lives === 2 ? 9 : lives === 1 ? 5 : 0 }
+export function blurForLives(lives) { return lives >= 3 ? 18 : lives === 2 ? 12 : lives === 1 ? 7 : 0 }
 
 /**
  * Selecciona siguiente jugador rotando entre posiciones

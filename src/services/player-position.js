@@ -1,7 +1,7 @@
 import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
 import { celebrateCorrect, celebrateIncorrect } from './game-celebrations'
-import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, shuffleArray, getOptionClasses } from './game-common'
+import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, shuffleArray, getOptionClasses, getBroadPosition } from './game-common'
 
 const POSITIONS = ['GK','DF','MF','FW']
 const POS_LABEL = {
@@ -51,7 +51,7 @@ export function nextRound(state) {
   const rand = state.rng || Math.random
   const idx = Math.floor(rand() * state.allPlayers.length)
   state.current = state.allPlayers[idx]
-  state.options = buildOptionsForPosition(state.current.position, state.rng)
+  state.options = buildOptionsForPosition(getBroadPosition(state.current), state.rng)
   state.answered = false
   state.selected = null
   state.feedback = null
@@ -63,7 +63,7 @@ export function pickAnswer(state, option, confettiHost) {
 
   state.answered = true
   state.selected = option.value
-  const correct = option.value === state.current.position
+  const correct = option.value === getBroadPosition(state.current)
 
   if (correct) {
     celebrateCorrect()
@@ -91,7 +91,7 @@ export function pickAnswer(state, option, confettiHost) {
 export function optionClass(state, opt) {
   return getOptionClasses({
     answered: state.answered,
-    isCorrect: opt.value === state.current.position,
+    isCorrect: opt.value === getBroadPosition(state.current),
     isSelected: opt.value === state.selected,
     baseClasses: 'rounded-lg border px-4 py-2 text-slate-200 transition text-left'
   })

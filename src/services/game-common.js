@@ -13,11 +13,14 @@ export function getBroadPosition(p) {
     return p.positionId === 0 ? 'GK' : p.positionId === 1 ? 'DF' : p.positionId === 2 ? 'MF' : 'FW'
   }
   const pos = (p?.position || '').toUpperCase()
-  if (pos.includes('GK')) return 'GK'
-  const tokens = pos.split(',').map(t => t.trim())
-  if (tokens.some(t => ['ST','CF','LW','RW','FW','ATT','FWD'].includes(t))) return 'FW'
-  if (tokens.some(t => ['CM','CDM','CAM','RM','LM','MID','MF'].includes(t))) return 'MF'
-  if (tokens.some(t => ['CB','LB','RB','LWB','RWB','WB','DEF','DF'].includes(t))) return 'DF'
+  if (pos.includes('GK') || pos.includes('POR') || pos.includes('ARQ')) return 'GK'
+  const tokens = pos.split(/[,/\s]+/).map(t => t.trim()).filter(Boolean)
+  const FW = ['ST','CF','LW','RW','FW','ATT','FWD','SS','DC','EI','ED','SD','DEL','DELC']
+  const MF = ['CM','CDM','CAM','RM','LM','MID','MF','DM','AM','MC','MCD','MCO','MCA','MI','MD','MP','VOL','MED','PIV','INT']
+  const DF = ['CB','LB','RB','LWB','RWB','WB','DEF','DF','DFC','LI','LD','CAI','CAD','LIB']
+  if (tokens.some(t => FW.includes(t))) return 'FW'
+  if (tokens.some(t => MF.includes(t))) return 'MF'
+  if (tokens.some(t => DF.includes(t))) return 'DF'
   return 'MF'
 }
 

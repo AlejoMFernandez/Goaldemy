@@ -1,6 +1,7 @@
 <script>
 import AppH1 from '../../components/common/AppH1.vue';
 import { initState, loadPlayers, nextRound, pickAnswer, optionClass } from '../../services/player-position';
+import { getBroadPosition } from '../../services/game-common';
 import { initScoring } from '../../services/scoring'
 import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { getGameMetadata } from '../../services/games'
@@ -100,7 +101,7 @@ export default {
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
     async pick(option) {
       if (this.timeOver) return false
-      if (this.shieldActive && option.value !== this.current.position) {
+      if (this.shieldActive && option.value !== getBroadPosition(this.current)) {
         this.shieldActive = false
         this.answered = true
         this.selected = option.value
@@ -113,7 +114,7 @@ export default {
     },
     handlePowerup(type) {
       if (type === 'fifty_fifty' && this.options.length > 2) {
-        const wrong = this.options.filter(o => o.value !== this.current.position)
+        const wrong = this.options.filter(o => o.value !== getBroadPosition(this.current))
         this.eliminatedOptions = wrong.slice(0, 2).map(o => o.value)
       } else if (type === 'shield') {
         this.shieldActive = true
@@ -254,7 +255,7 @@ export default {
         <Transition name="round-fade" mode="out-in">
           <div :key="roundKey">
             <div class="flex flex-col items-center">
-              <p class="text-slate-200 mb-2 text-center text-base">¿Cuál es la posición de este jugador?</p>
+              <p class="text-slate-200 mb-2 text-center text-base">¿Cuál es la posición de <strong class="text-white">{{ current?.name }}</strong>?</p>
               <img v-if="current" :src="current.image" :alt="current.name" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg" />
             </div>
 

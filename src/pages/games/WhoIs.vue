@@ -322,8 +322,7 @@ export default {
                 <div v-if="suggestOpen && !answered && (suggestions.length>0)" class="absolute z-20 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/90 backdrop-blur shadow-lg max-h-64 overflow-auto">
                   <ul>
                     <li v-for="(p,idx) in suggestions" :key="p.id" @click.prevent="chooseSuggestion(p)"
-                        :class="['px-3 py-2 cursor-pointer text-slate-200 flex items-center gap-2', idx===selectedIndex ? 'bg-white/10' : 'hover:bg-white/5']">
-                      <img :src="p.image" :alt="p.name" class="h-6 w-6 object-cover rounded" />
+                        :class="['px-3 py-2 cursor-pointer text-slate-200', idx===selectedIndex ? 'bg-white/10' : 'hover:bg-white/5']">
                       <span class="truncate">{{ p.name }}</span>
                     </li>
                   </ul>
