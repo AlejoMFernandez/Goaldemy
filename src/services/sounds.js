@@ -76,15 +76,23 @@ class SoundManager {
     const makeOsc = (freq, type = 'sine', vol = 1, dur = 0.15, delay = 0) => {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
-      osc.connect(gain)
+      // Filtro lowpass para suavizar los armónicos ásperos (square/sawtooth)
+      const filter = ctx.createBiquadFilter()
+      filter.type = 'lowpass'
+      filter.frequency.value = Math.max(1200, freq * 4)
+      osc.connect(filter)
+      filter.connect(gain)
       gain.connect(ctx.destination)
       osc.frequency.value = freq
       osc.type = type
       const t = ctx.currentTime + delay
-      gain.gain.setValueAtTime(this.volume * vol, t)
-      gain.gain.exponentialRampToValueAtTime(0.01, t + dur)
+      const peak = this.volume * vol
+      // Envolvente: ataque suave (evita clicks) + release exponencial
+      gain.gain.setValueAtTime(0.0001, t)
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + 0.012)
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur)
       osc.start(t)
-      osc.stop(t + dur)
+      osc.stop(t + dur + 0.03)
     }
 
     switch (name) {
