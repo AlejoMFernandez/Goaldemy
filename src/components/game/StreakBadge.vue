@@ -12,12 +12,14 @@ export default {
     const breaking = ref(false)
 
     const colorClass = (s) => {
+      if (s >= 20) return 'text-red-400 border-red-500/50 bg-red-500/15'
       if (s >= 10) return 'text-yellow-400 border-yellow-500/50 bg-yellow-500/15'
       if (s >= 5) return 'text-emerald-300 border-emerald-500/50 bg-emerald-500/15'
       return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
     }
 
     const glowIntensity = (s) => {
+      if (s >= 20) return 'shadow-red-500/50 shadow-lg'
       if (s >= 10) return 'shadow-yellow-500/40 shadow-lg'
       if (s >= 5) return 'shadow-emerald-500/30 shadow-md'
       return ''

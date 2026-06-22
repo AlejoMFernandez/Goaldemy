@@ -58,8 +58,9 @@ function statPercent(home, away) {
 </script>
 
 <template>
+  <Teleport to="body">
   <Transition name="modal">
-    <div v-if="open && match" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="emit('close')">
+    <div v-if="open && match" class="fixed inset-0 z-[60] flex items-center justify-center p-4" @click.self="emit('close')">
       <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
       <div class="relative w-full max-w-xl max-h-[85vh] overflow-y-auto rounded-2xl border border-white/15 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 shadow-2xl">
         <!-- Close -->
@@ -195,6 +196,7 @@ function statPercent(home, away) {
       </div>
     </div>
   </Transition>
+  </Teleport>
 </template>
 
 <style scoped>

@@ -126,6 +126,18 @@ export function addPendingReward(type, data) {
   return id
 }
 
+function _rewardNotifMeta(r) {
+  const title = r.type === 'milestone' ? `Rango: ${r.data?.tier}`
+    : r.type === 'levelUp' ? `Nivel ${r.data?.level}`
+    : r.type === 'achievement' ? (r.data?.title || 'Logro')
+    : 'Recompensa'
+  const emoji = r.type === 'achievement' ? '🏆'
+    : r.type === 'milestone' ? '🏅'
+    : r.type === 'levelUp' ? '⬆️'
+    : '🎁'
+  return { title, emoji }
+}
+
 export function claimReward(id) {
   const r = state.pendingRewards.find(r => r.id === id)
   if (!r || r.claimed) return
@@ -137,38 +149,26 @@ export function claimReward(id) {
     _awardBonusXpSilent(xpBonus)
   }
 
-  const notifTitle = r.type === 'milestone' ? `Rango: ${r.data?.tier}`
-    : r.type === 'levelUp' ? `Nivel ${r.data?.level}`
-    : r.type === 'achievement' ? (r.data?.title || 'Logro')
-    : 'Recompensa'
-  const emoji = r.type === 'achievement' ? '🏆'
-    : r.type === 'milestone' ? '🏅'
-    : r.type === 'levelUp' ? '⬆️'
-    : '🎁'
-
-  pushClaimNotification({ type: r.type, title: notifTitle, xp: xpBonus, emoji })
+  const { title, emoji } = _rewardNotifMeta(r)
+  pushClaimNotification({ type: r.type, title, xp: xpBonus, emoji })
 }
 
 export function claimAllRewards() {
   const unclaimed = state.pendingRewards.filter(r => !r.claimed)
+  if (!unclaimed.length) return
   let totalXpBonus = 0
-  for (const r of unclaimed) {
+  unclaimed.forEach((r, i) => {
     r.claimed = true
-    totalXpBonus += (r.data?.xpBonus || 0)
-  }
+    const xpBonus = r.data?.xpBonus || 0
+    totalXpBonus += xpBonus
+    const { title, emoji } = _rewardNotifMeta(r)
+    // Apiladas: una tras otra, pero todas visibles (no unificadas)
+    setTimeout(() => pushClaimNotification({ type: r.type, title, xp: xpBonus, emoji }), i * 150)
+  })
   _saveRewards()
 
   if (totalXpBonus > 0) {
     _awardBonusXpSilent(totalXpBonus)
-  }
-
-  if (unclaimed.length > 0) {
-    pushClaimNotification({
-      type: 'batch',
-      title: `${unclaimed.length} recompensa${unclaimed.length > 1 ? 's' : ''}`,
-      xp: totalXpBonus,
-      emoji: '🎁',
-    })
   }
 }
 

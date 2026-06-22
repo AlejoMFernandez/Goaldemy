@@ -5,7 +5,7 @@ import { notificationsState } from '@/stores/notifications'
 export default {
   name: 'ClaimNotificationStack',
   setup() {
-    const visible = computed(() => notificationsState.claimNotifications.slice(0, 3))
+    const visible = computed(() => notificationsState.claimNotifications.slice(-6))
     return { visible }
   }
 }
