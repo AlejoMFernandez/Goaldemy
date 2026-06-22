@@ -186,9 +186,9 @@ export default {
       this.attempts = this.slots.length
       this.score = correctPositions * 20
       this.answered = true
-      // Award XP based on difficulty (xpPerCorrect por acierto)
-      const xpPerCorrect = this.difficultyConfig?.xpPerCorrect || 20
-      this.xpEarned = this.allowXp ? (correctPositions * xpPerCorrect) : 0
+      // XP = bonus de completar (100/200/300) proporcional a los aciertos
+      const xpFull = this.difficultyConfig?.xpCompletion || 100
+      this.xpEarned = this.allowXp ? Math.round(xpFull * (correctPositions / Math.max(1, this.slots.length))) : 0
       if (this.allowXp && this.xpEarned > 0) {
         spawnXpBadge(this.$refs.confettiHost, `+${this.xpEarned} XP`, { position: 'top-right' })
       }

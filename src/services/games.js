@@ -49,21 +49,21 @@ export const ORDERING_DIFFICULTY_CONFIG = {
     label: 'Fácil',
     icon: '🟢',
     itemCount: 3, // Ordenar solo 3 jugadores
-    xpCompletion: 30,
+    xpCompletion: 100,
     description: 'Ordenar 3 jugadores'
   },
   [DIFFICULTY_LEVELS.NORMAL]: {
     label: 'Normal',
     icon: '🟡',
     itemCount: 5, // Ordenar 5 jugadores (default)
-    xpCompletion: 75,
+    xpCompletion: 200,
     description: 'Ordenar 5 jugadores'
   },
   [DIFFICULTY_LEVELS.HARD]: {
     label: 'Difícil',
     icon: '🔴',
     itemCount: 7, // Ordenar 7 jugadores
-    xpCompletion: 150,
+    xpCompletion: 300,
     description: 'Ordenar 7 jugadores'
   }
 };
@@ -183,7 +183,7 @@ export const LIVES_DIFFICULTY_CONFIG = {
     label: 'Fácil',
     icon: '🟢',
     lives: 5, // 5 vidas
-    xpPerCorrect: 10,
+    xpPerCorrect: 100,
     xpCompletion: 75,
     description: '5 vidas disponibles'
   },
@@ -191,7 +191,7 @@ export const LIVES_DIFFICULTY_CONFIG = {
     label: 'Normal',
     icon: '🟡',
     lives: 3, // 3 vidas (default)
-    xpPerCorrect: 15,
+    xpPerCorrect: 200,
     xpCompletion: 125,
     description: '3 vidas disponibles'
   },
@@ -199,7 +199,7 @@ export const LIVES_DIFFICULTY_CONFIG = {
     label: 'Difícil',
     icon: '🔴',
     lives: 1, // Solo 1 vida
-    xpPerCorrect: 30,
+    xpPerCorrect: 300,
     xpCompletion: 250,
     description: '1 vida (modo extremo)'
   }
