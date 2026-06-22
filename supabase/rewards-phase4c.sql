@@ -5,6 +5,7 @@
 -- ============================================================
 
 -- ─── 1. Columna de gateo por logro ──────────────────────────
+-- (las columnas equipped_icon/banner y el seed de íconos/banners viven en phase4b)
 ALTER TABLE public.cosmetics ADD COLUMN IF NOT EXISTS unlock_achievement TEXT;
 
 -- ─── 2. Cosméticos exclusivos por logro (los más prestigiosos) ──
