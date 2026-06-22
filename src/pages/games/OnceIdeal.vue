@@ -1,9 +1,16 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { getAllPlayers } from '../../services/players'
 import { awardXpBatch } from '../../services/game-xp'
+import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
 import AppH1 from '../../components/common/AppH1.vue'
 import CircularTimer from '../../components/game/CircularTimer.vue'
+
+const route = useRoute()
+const mode = ref('free')        // 'free' | 'challenge' | 'review'
+const sessionId = ref(null)
+const available = ref(true)
 
 // ── Formation 4-3-3 with % positions on the field ──────────────────────────
 const FORMATION = [
@@ -143,19 +150,34 @@ function selectSlot(id) {
   inputValue.value = ''
 }
 
+async function finishGame(result) {
+  if (finished.value) return
+  finished.value = true
+  clearInterval(timerHandle)
+  const won = result === 'win'
+  if (mode.value === 'challenge') {
+    const xp = won ? 100 : 0
+    xpEarned.value = xp
+    awardXpBatch({ gameCode: 'once-ideal', totalXp: xp, corrects: won ? 11 : filledCount.value }).catch(() => {})
+    if (sessionId.value) {
+      completeChallengeSession(sessionId.value, won ? 100 : filledCount.value, xp, { result, mode: 'challenge', corrects: won ? 11 : filledCount.value }).catch(() => {})
+    }
+    import('../../services/rewards').then(m => m.reportGameResult('once-ideal', won)).catch(() => {})
+  } else if (won) {
+    // Modo libre: XP por jugadores colocados
+    awardXpBatch({ gameCode: 'once-ideal', totalXp: xpEarned.value, corrects: 11 }).catch(() => {})
+  }
+}
+
 function pickPlayer(player) {
   if (timeOver.value || finished.value) return
   const idx = activeSlot.value
   if (idx === null || slots.value[idx]?.filled) return
   slots.value[idx].filled = player
-  xpEarned.value += 10
+  if (mode.value === 'free') xpEarned.value += 10
   activeSlot.value = null
   inputValue.value = ''
-  if (slots.value.every(s => s.filled)) {
-    finished.value = true
-    clearInterval(timerHandle)
-    awardXpBatch({ gameCode: 'once-ideal', totalXp: xpEarned.value, corrects: 11 }).catch(() => {})
-  }
+  if (slots.value.every(s => s.filled)) finishGame('win')
 }
 
 function startTimer() {
@@ -167,6 +189,7 @@ function startTimer() {
     if (timeLeft.value <= 0) {
       timeOver.value = true
       clearInterval(timerHandle)
+      if (mode.value === 'challenge') finishGame('loss')
     }
   }, 1000)
 }
@@ -187,10 +210,23 @@ function changeConstraint() {
   resetGame()
 }
 
-onMounted(() => {
+onMounted(async () => {
+  const m = (route.query.mode || '').toString().toLowerCase()
+  mode.value = (m === 'challenge' || m === 'review') ? m : 'free'
   allPlayers.value = getAllPlayers()
   generateConstraint()
   loading.value = false
+  if (mode.value === 'challenge') {
+    try {
+      const av = await isChallengeAvailable('once-ideal')
+      available.value = av?.available !== false
+      if (available.value) {
+        sessionId.value = await startChallengeSession('once-ideal', TOTAL_TIME)
+      } else {
+        mode.value = 'review' // ya jugó hoy: jugar sin XP/sesión
+      }
+    } catch { /* sigue como libre */ }
+  }
   startTimer()
 })
 
@@ -202,7 +238,7 @@ onUnmounted(() => clearInterval(timerHandle))
     <!-- Header -->
     <div class="flex items-center justify-between mb-5">
       <AppH1 class="text-2xl md:text-3xl shrink-0">Once Ideal</AppH1>
-      <router-link to="/play/free" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">
+      <router-link :to="mode === 'free' ? '/play/free' : '/play/points'" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">
         ← Volver
       </router-link>
     </div>
