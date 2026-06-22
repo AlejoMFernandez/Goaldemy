@@ -389,7 +389,7 @@ export default {
                     <GoaldemyLogo variant="full" size="sm" :animated="true" />
                 </RouterLink>
                 <!-- Mobile controls: notifications + menu button -->
-                <div class="md:hidden flex items-center gap-2 flex-1 justify-end">
+                <div class="lg:hidden flex items-center gap-2 flex-1 justify-end">
                     <!-- Rewards icon (mobile) -->
                     <RouterLink to="/rewards" class="relative inline-flex items-center justify-center rounded-full border border-white/10 p-2 text-slate-200 hover:border-white/20" aria-label="Recompensas">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
@@ -409,7 +409,7 @@ export default {
                     </button>
                 </div>
 
-                <ul class="hidden md:flex items-center gap-4 text-slate-200">
+                <ul class="hidden lg:flex items-center gap-4 text-slate-200">
                     <!-- Play dropdown (hover) with descriptions -->
                     <li class="relative"
                         @mouseenter="onPlayEnter"
@@ -500,7 +500,7 @@ export default {
                         </div>
                     </li>
                     <!-- Search -->
-                    <li class="relative w-56">
+                    <li class="relative w-44 xl:w-56">
                         <div class="relative" data-search-box>
                             <input type="search" v-model="q" @input="onSearchInput" placeholder="Buscar usuarios" class="searchbox w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20" />
                             <svg class="absolute right-2 top-1.5 h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -643,7 +643,7 @@ export default {
 
             <!-- Mobile header menu options -->
             <transition name="fade-slide">
-                <div v-if="isOpen" class="md:hidden border-t border-white/10">
+                <div v-if="isOpen" class="lg:hidden border-t border-white/10">
                     <ul class="container mx-auto px-4 py-3 flex flex-col gap-3 text-slate-200">
                         <!-- Row: searchbar - user dropdown -->
                         <li>
