@@ -24,11 +24,11 @@ export async function getCosmetics() {
  * Resiliente: si el schema de cosméticos no existe todavía, devuelve defaults.
  */
 export async function getEquippedCosmetics(userId) {
-  const out = { frameKey: 'none', titleText: '', titleRarity: 'common', iconGlyph: '', bannerKey: 'default' }
+  const out = { frameKey: 'none', titleText: '', titleRarity: 'common', iconGlyph: '', bannerKey: 'default', iconBg: 'emerald', framePremium: false, titlePremium: false, bannerPremium: false }
   if (!userId) return out
   let byCode = {}
   try {
-    const { data: cat } = await supabase.from('cosmetics').select('code, name, rarity, style_key')
+    const { data: cat } = await supabase.from('cosmetics').select('code, name, rarity, style_key, premium_only')
     byCode = Object.fromEntries((cat || []).map(c => [c.code, c]))
   } catch { return out }
   // Fase 4: bordes + títulos
@@ -37,20 +37,21 @@ export async function getEquippedCosmetics(userId) {
       .from('user_profiles').select('equipped_frame, equipped_title').eq('id', userId).maybeSingle()
     if (p) {
       const fr = byCode[p.equipped_frame]; const ti = byCode[p.equipped_title]
-      if (fr) out.frameKey = fr.style_key || 'none'
-      if (ti) { out.titleText = ti.name || ''; out.titleRarity = ti.rarity || 'common' }
+      if (fr) { out.frameKey = fr.style_key || 'none'; out.framePremium = !!fr.premium_only }
+      if (ti) { out.titleText = ti.name || ''; out.titleRarity = ti.rarity || 'common'; out.titlePremium = !!ti.premium_only }
     }
   } catch { /* sin columnas de fase 4 */ }
   // Fase 4b: íconos + banners (query aparte por si las columnas no existen)
   try {
     const { data: p2 } = await supabase
-      .from('user_profiles').select('equipped_icon, equipped_banner').eq('id', userId).maybeSingle()
+      .from('user_profiles').select('equipped_icon, equipped_banner, equipped_icon_bg').eq('id', userId).maybeSingle()
     if (p2) {
       const ic = byCode[p2.equipped_icon]; const ba = byCode[p2.equipped_banner]
       if (ic) out.iconGlyph = ic.style_key || ''
-      if (ba) out.bannerKey = ba.style_key || 'default'
+      if (ba) { out.bannerKey = ba.style_key || 'default'; out.bannerPremium = !!ba.premium_only }
+      if (p2.equipped_icon_bg) out.iconBg = p2.equipped_icon_bg
     }
-  } catch { /* sin columnas de fase 4b */ }
+  } catch { /* sin columnas de fase 4b/4d */ }
   return out
 }
 
@@ -90,6 +91,30 @@ export const BANNER_STYLES = {
 
 export function bannerStyle(styleKey) {
   return BANNER_STYLES[styleKey] || BANNER_STYLES.default
+}
+
+// ── Colores de fondo del ícono/avatar ──
+export const ICON_BG_STYLES = {
+  emerald: 'bg-gradient-to-br from-emerald-500 to-cyan-500',
+  cyan:    'bg-gradient-to-br from-cyan-500 to-teal-600',
+  sky:     'bg-gradient-to-br from-sky-500 to-blue-600',
+  violet:  'bg-gradient-to-br from-violet-500 to-fuchsia-600',
+  fuchsia: 'bg-gradient-to-br from-fuchsia-500 to-purple-600',
+  rose:    'bg-gradient-to-br from-rose-500 to-pink-600',
+  amber:   'bg-gradient-to-br from-amber-500 to-orange-600',
+  orange:  'bg-gradient-to-br from-orange-500 to-red-600',
+  slate:   'bg-gradient-to-br from-slate-600 to-slate-800',
+}
+export const ICON_BG_KEYS = Object.keys(ICON_BG_STYLES)
+export function iconBgStyle(key) {
+  return ICON_BG_STYLES[key] || ICON_BG_STYLES.emerald
+}
+
+/** Guarda el color de fondo del ícono del usuario. */
+export async function setIconBg(color) {
+  const { data, error } = await supabase.rpc('set_icon_bg', { p_color: color })
+  if (error) return { ok: false, error: error.message }
+  return data || { ok: false }
 }
 
 // ── Colores por rareza ──

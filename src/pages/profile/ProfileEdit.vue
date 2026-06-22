@@ -94,7 +94,9 @@ export default {
   <div class="mx-auto max-w-3xl">
     <AppH1>Editar mi Perfil</AppH1>
 
-    <form @submit.prevent="handleSubmit" class="card card-hover p-6 space-y-4"> 
+    <CosmeticsCollection class="mt-4 block" :avatar-url="user?.avatar_url || ''" :name="formData.display_name" :initial="avatarInitial">
+      <template #datos>
+        <form @submit.prevent="handleSubmit" class="space-y-4">
       <!-- Avatar upload removed intentionally to keep visual style consistent -->
       <div>
         <label for="display_name" class="label">Nombre para mostrar</label>
@@ -190,9 +192,9 @@ export default {
       </div>
       <!-- redireccionamos a perfil -->
       <AppButton type="submit">Guardar cambios</AppButton>
-    </form>
-
-    <CosmeticsCollection class="mt-6 block" :avatar-url="user?.avatar_url || ''" :name="formData.display_name" :initial="avatarInitial" />
+        </form>
+      </template>
+    </CosmeticsCollection>
   </div>
 </template>
 

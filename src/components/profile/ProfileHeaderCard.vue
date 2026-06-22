@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { getTierForLevel, getNextTier } from '../../services/tiers'
 import countryNames from '../../codeCOUNTRYS.json'
 import LevelProgressionModal from './LevelProgressionModal.vue'
-import { frameStyle, bannerStyle, rarity } from '../../services/cosmetics'
+import { frameStyle, bannerStyle, iconBgStyle, rarity } from '../../services/cosmetics'
 
 const props = defineProps({
   avatarInitial: { type: String, default: '?' },
@@ -29,6 +29,10 @@ const props = defineProps({
   titleRarity: { type: String, default: 'common' },
   iconGlyph: { type: String, default: '' },
   bannerKey: { type: String, default: 'default' },
+  iconBgKey: { type: String, default: 'emerald' },
+  framePremium: { type: Boolean, default: false },
+  titlePremium: { type: Boolean, default: false },
+  bannerPremium: { type: Boolean, default: false },
 })
 
 const showProgression = ref(false)
@@ -98,7 +102,7 @@ const accent = computed(() => {
   <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur overflow-hidden shadow-2xl">
 
     <!-- Banner -->
-    <div class="relative h-28 sm:h-32" :class="bannerClass">
+    <div class="relative h-28 sm:h-32" :class="[bannerClass, bannerPremium ? 'anim-pan' : '']">
       <div class="absolute inset-0 overflow-hidden">
         <div class="absolute top-3 right-6 w-24 h-24 rounded-full border-2 border-white/10 opacity-40"></div>
         <div class="absolute -bottom-4 right-20 w-16 h-16 rounded-full border border-white/8 opacity-30"></div>
@@ -131,10 +135,10 @@ const accent = computed(() => {
     <div class="px-5 sm:px-6 -mt-11 relative z-10">
       <div class="flex items-end gap-4">
         <div class="relative shrink-0">
-          <div :class="[frame.wrap, frame.pad, 'rounded-2xl']">
+          <div :class="[frame.wrap, frame.pad, 'rounded-2xl', framePremium ? 'anim-pan' : '']">
             <div
-              class="size-[88px] sm:size-24 overflow-hidden shadow-xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white font-extrabold text-2xl sm:text-3xl grid place-items-center"
-              :class="frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl ring-4 ring-slate-900'"
+              class="size-[88px] sm:size-24 overflow-hidden shadow-xl text-white font-extrabold text-2xl sm:text-3xl grid place-items-center"
+              :class="[iconBgStyle(iconBgKey), frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl ring-4 ring-slate-900']"
             >
               <span v-if="iconGlyph" class="leading-none">{{ iconGlyph }}</span>
               <img v-else-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
@@ -167,7 +171,7 @@ const accent = computed(() => {
               }"
             >TOP {{ topRank }}</span>
           </div>
-          <p v-if="titleText" class="text-sm font-bold mt-0.5" :class="titleColor">{{ titleText }}</p>
+          <p v-if="titleText" class="text-sm font-bold mt-0.5" :class="titlePremium ? 'title-premium-anim' : titleColor">{{ titleText }}</p>
           <div class="flex items-center gap-2 mt-0.5">
             <img v-if="currentTier?.image" :src="currentTier.image" :alt="currentTier.label" class="w-5 h-5 object-contain" />
             <span class="text-sm font-semibold" :class="accent.text">{{ currentTier?.label }}</span>

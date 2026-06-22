@@ -41,6 +41,10 @@ export default {
       equippedTitleRarity: 'common',
       equippedIconGlyph: '',
       equippedBannerKey: 'default',
+      equippedIconBg: 'emerald',
+      equippedFramePremium: false,
+      equippedTitlePremium: false,
+      equippedBannerPremium: false,
       levelLoading: false,
       achievements: [],
       achLoading: false,
@@ -175,6 +179,10 @@ export default {
         this.equippedTitleRarity = eq.titleRarity
         this.equippedIconGlyph = eq.iconGlyph
         this.equippedBannerKey = eq.bannerKey
+        this.equippedIconBg = eq.iconBg
+        this.equippedFramePremium = eq.framePremium
+        this.equippedTitlePremium = eq.titlePremium
+        this.equippedBannerPremium = eq.bannerPremium
       } catch (e) {
         console.error('[Profile.vue] getPublicProfile exception:', e)
         this.user = { id: userId }
@@ -404,6 +412,10 @@ export default {
       :title-rarity="equippedTitleRarity"
       :icon-glyph="equippedIconGlyph"
       :banner-key="equippedBannerKey"
+      :icon-bg-key="equippedIconBg"
+      :frame-premium="equippedFramePremium"
+      :title-premium="equippedTitlePremium"
+      :banner-premium="equippedBannerPremium"
     />
 
     <!-- Tab bar -->
