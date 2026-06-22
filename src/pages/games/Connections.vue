@@ -33,7 +33,7 @@ const GROUP_GENERATORS = [
     const valid = Object.entries(map).filter(([, a]) => a.length >= 4)
     if (!valid.length) return null
     const [lid, arr] = valid[Math.floor(rng() * valid.length)]
-    return { label: `Juegan en la ${LEAGUE_NAMES[lid]}`, players: [...arr].sort(() => rng() - 0.5).slice(0, 4) }
+    return { label: `Juegan en la ${LEAGUE_NAMES[lid]}`, players: [...arr].sort(() => rng() - 0.5).slice(0, 4), type: 'league', key: Number(lid) }
   }},
   { type: 'country', generate(players, rng) {
     const map = {}
@@ -41,7 +41,7 @@ const GROUP_GENERATORS = [
     const valid = Object.entries(map).filter(([, a]) => a.length >= 4)
     if (!valid.length) return null
     const [country, arr] = valid[Math.floor(rng() * valid.length)]
-    return { label: `Selección de ${country}`, players: [...arr].sort(() => rng() - 0.5).slice(0, 4) }
+    return { label: `Selección de ${country}`, players: [...arr].sort(() => rng() - 0.5).slice(0, 4), type: 'country', key: country }
   }},
   { type: 'team', generate(players, rng) {
     const map = {}
@@ -49,7 +49,7 @@ const GROUP_GENERATORS = [
     const valid = Object.entries(map).filter(([, a]) => a.length >= 4)
     if (!valid.length) return null
     const [team, arr] = valid[Math.floor(rng() * valid.length)]
-    return { label: `Juegan en ${team}`, players: [...arr].sort(() => rng() - 0.5).slice(0, 4) }
+    return { label: `Juegan en ${team}`, players: [...arr].sort(() => rng() - 0.5).slice(0, 4), type: 'team', key: team }
   }},
   { type: 'position', generate(players, rng) {
     const posLabels = { 0: 'Arqueros', 1: 'Defensores', 2: 'Mediocampistas', 3: 'Delanteros' }
@@ -58,29 +58,44 @@ const GROUP_GENERATORS = [
     const valid = Object.entries(byPos).filter(([, a]) => a.length >= 4)
     if (!valid.length) return null
     const [posId, arr] = valid[Math.floor(rng() * valid.length)]
-    return { label: posLabels[posId], players: [...arr].sort(() => rng() - 0.5).slice(0, 4) }
+    return { label: posLabels[posId], players: [...arr].sort(() => rng() - 0.5).slice(0, 4), type: 'position', key: Number(posId) }
   }},
   { type: 'shirtSingleDigit', generate(players, rng) {
     const single = players.filter(p => p.shirtNumber && p.shirtNumber >= 1 && p.shirtNumber <= 9)
     if (single.length < 4) return null
-    return { label: 'Dorsal de un solo dígito', players: [...single].sort(() => rng() - 0.5).slice(0, 4) }
+    return { label: 'Dorsal de un solo dígito', players: [...single].sort(() => rng() - 0.5).slice(0, 4), type: 'shirtSingleDigit', key: null }
   }},
   { type: 'shirtHighNumber', generate(players, rng) {
     const high = players.filter(p => p.shirtNumber && p.shirtNumber >= 20)
     if (high.length < 4) return null
-    return { label: 'Dorsal 20+', players: [...high].sort(() => rng() - 0.5).slice(0, 4) }
+    return { label: 'Dorsal 20+', players: [...high].sort(() => rng() - 0.5).slice(0, 4), type: 'shirtHighNumber', key: null }
   }},
   { type: 'goalScorers', generate(players, rng) {
     const scorers = players.filter(p => p.stats?.goals != null && p.stats.goals >= 10)
     if (scorers.length < 4) return null
-    return { label: 'Goleadores (10+ goles)', players: [...scorers].sort(() => rng() - 0.5).slice(0, 4) }
+    return { label: 'Goleadores (10+ goles)', players: [...scorers].sort(() => rng() - 0.5).slice(0, 4), type: 'goalScorers', key: null }
   }},
   { type: 'assistProviders', generate(players, rng) {
     const assisters = players.filter(p => p.stats?.assists != null && p.stats.assists >= 5)
     if (assisters.length < 4) return null
-    return { label: 'Asistidores (5+ asistencias)', players: [...assisters].sort(() => rng() - 0.5).slice(0, 4) }
+    return { label: 'Asistidores (5+ asistencias)', players: [...assisters].sort(() => rng() - 0.5).slice(0, 4), type: 'assistProviders', key: null }
   }},
 ]
+
+// ¿El jugador p satisface la categoría del grupo g? (para detectar ambigüedad)
+function groupMatches(p, g) {
+  switch (g.type) {
+    case 'league': return p.leagueId === g.key
+    case 'country': return p.cname === g.key
+    case 'team': return p.teamName === g.key
+    case 'position': return p.positionId === g.key
+    case 'shirtSingleDigit': return p.shirtNumber >= 1 && p.shirtNumber <= 9
+    case 'shirtHighNumber': return p.shirtNumber >= 20
+    case 'goalScorers': return (p.stats?.goals ?? 0) >= 10
+    case 'assistProviders': return (p.stats?.assists ?? 0) >= 5
+    default: return false
+  }
+}
 
 function generateGroups(allPlayers, rng) {
   const groups = []
@@ -99,7 +114,15 @@ function generateGroups(allPlayers, rng) {
     usedTypes.add(gen.type)
     groups.push(result)
   }
-  return groups.length === 4 ? groups : null
+  if (groups.length !== 4) return null
+  // Rechazar puzzles ambiguos: ningún jugador puede satisfacer la categoría de OTRO grupo
+  for (const g of groups) {
+    for (const other of groups) {
+      if (other === g) continue
+      if (other.players.some(p => groupMatches(p, g))) return null
+    }
+  }
+  return groups
 }
 
 export default {
@@ -202,7 +225,7 @@ export default {
     setupBoard(rng) {
       let attempts = 0
       let result = null
-      while (!result && attempts < 10) {
+      while (!result && attempts < 40) {
         result = generateGroups(this.allPlayers, rng)
         attempts++
       }
