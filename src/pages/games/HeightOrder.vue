@@ -248,42 +248,42 @@ export default {
 
         <Transition name="board-fade" mode="out-in">
           <div :key="items.map(p=>p.id).join()">
-            <div class="grid gap-2 mb-4" :style="{ gridTemplateColumns: `repeat(${items.length || 5}, minmax(0, 1fr))` }">
+            <!-- Ranking vertical (más visual: foto grande + nombre legible) -->
+            <div class="flex flex-col gap-2 mb-5">
               <button v-for="(slot, i) in slots" :key="'slot'+i" @click="clickSlot(i)" @dragover="onDragOverSlot" @drop="onDropOnSlot($event, i)" @mouseenter="hoveredSlot=i" @mouseleave="hoveredSlot=null"
-                      class="aspect-[3/4] rounded-xl border-2 border-dashed transition-all duration-200 flex items-center justify-center"
+                      class="w-full rounded-xl border-2 transition-all duration-200 flex items-center gap-3 px-3 py-2"
                       :class="[
-                        answered ? (correctness[i] ? 'border-emerald-500 bg-emerald-500/10 slot-correct' : 'border-red-500 bg-red-500/10 shake') : 'border-white/15 bg-white/3 hover:border-white/25',
+                        answered ? (correctness[i] ? 'border-emerald-500 bg-emerald-500/10 slot-correct' : 'border-red-500 bg-red-500/10 shake') : (slot != null ? 'border-white/15 bg-white/5' : 'border-dashed border-white/15 bg-white/[0.03] hover:border-white/25'),
                         (selectedFromSlot===i) ? 'ring-2 ring-sky-400 border-sky-400' : '',
-                        (hoveredSlot===i && (selectedIndex!=null || selectedFromSlot!=null)) ? 'ring-2 ring-amber-400 border-amber-400 scale-[1.03]' : '',
+                        (hoveredSlot===i && (selectedIndex!=null || selectedFromSlot!=null)) ? 'ring-2 ring-amber-400 border-amber-400' : '',
                         locked ? 'cursor-not-allowed' : 'cursor-pointer'
                       ]">
+                <div class="shrink-0 w-8 h-8 rounded-full grid place-items-center font-display font-extrabold text-sm"
+                     :class="slot != null ? 'bg-white/10 text-white' : 'border-2 border-dashed border-white/15 text-slate-500'">{{ i+1 }}</div>
                 <template v-if="slot != null">
-                  <div class="flex flex-col items-center justify-center h-full p-1.5 gap-1">
-                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden ring-2 shadow-lg"
-                         :class="answered ? (correctness[i] ? 'ring-emerald-400/60' : 'ring-red-400/60') : 'ring-white/20'">
-                      <img :src="items[slot].image" :alt="items[slot].name" class="w-full h-full object-cover" :draggable="!locked" @dragstart="onDragStartFromSlot($event, i)" />
-                    </div>
-                    <div class="text-white text-[11px] sm:text-xs font-semibold text-center leading-tight px-0.5 line-clamp-2">{{ items[slot].name }}</div>
-                    <div v-if="answered" class="text-[11px] font-bold px-2 py-0.5 rounded-full" :class="correctness[i] ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'">
-                      {{ items[slot].height }} cm
-                    </div>
+                  <div class="w-12 h-12 rounded-full overflow-hidden ring-2 shrink-0"
+                       :class="answered ? (correctness[i] ? 'ring-emerald-400/60' : 'ring-red-400/60') : 'ring-white/20'">
+                    <img :src="items[slot].image" :alt="items[slot].name" class="w-full h-full object-cover" :draggable="!locked" @dragstart="onDragStartFromSlot($event, i)" />
+                  </div>
+                  <div class="flex-1 min-w-0 font-semibold text-white truncate">{{ items[slot].name }}</div>
+                  <div v-if="answered" class="shrink-0 text-xs font-bold px-2.5 py-1 rounded-full" :class="correctness[i] ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'">
+                    {{ items[slot].height }} cm
                   </div>
                 </template>
                 <template v-else>
-                  <div class="flex flex-col items-center gap-1 text-slate-500">
-                    <div class="w-10 h-10 rounded-full border-2 border-dashed border-white/10 flex items-center justify-center text-xs font-bold">{{ i+1 }}</div>
-                  </div>
+                  <span class="text-slate-500 text-sm">Tocá un jugador para ponerlo en el puesto {{ i+1 }}</span>
                 </template>
               </button>
             </div>
 
-            <div class="grid gap-1.5" :style="{ gridTemplateColumns: `repeat(${items.length || 5}, minmax(0, 1fr))` }">
+            <!-- Pool: chips que envuelven, fotos y nombres más grandes -->
+            <div class="flex flex-wrap justify-center gap-2">
               <button v-for="(p,i) in items" :key="p.id" :disabled="isPlaced(i) || locked" @click="selectCard(i)" :draggable="!locked" @dragstart="onDragStartFromList($event, i)"
-                      class="rounded-xl border p-1.5 transition-all duration-150"
-                      :class="[selectedIndex===i ? 'ring-2 ring-sky-400 border-sky-400/50 bg-sky-500/10 scale-[1.03]' : 'border-white/10 bg-white/5', (isPlaced(i) || locked) ? 'opacity-30 cursor-not-allowed scale-95' : 'hover:bg-white/10 hover:scale-[1.02] active:scale-[0.97] cursor-pointer']">
-                <div class="flex flex-col items-center gap-1">
-                  <img :src="p.image" :alt="p.name" class="h-9 w-9 sm:h-10 sm:w-10 object-cover rounded-full ring-1 ring-white/10" />
-                  <div class="text-slate-200 text-[10px] sm:text-xs leading-tight text-center line-clamp-1 font-medium">{{ p.name }}</div>
+                      class="w-[92px] rounded-xl border p-2 transition-all duration-150"
+                      :class="[selectedIndex===i ? 'ring-2 ring-sky-400 border-sky-400/50 bg-sky-500/10 scale-[1.03]' : 'border-white/10 bg-white/5', (isPlaced(i) || locked) ? 'opacity-30 cursor-not-allowed scale-95' : 'hover:bg-white/10 hover:scale-[1.03] active:scale-[0.97] cursor-pointer']">
+                <div class="flex flex-col items-center gap-1.5">
+                  <img :src="p.image" :alt="p.name" class="h-12 w-12 object-cover rounded-full ring-1 ring-white/10" />
+                  <div class="text-slate-200 text-[11px] leading-tight text-center line-clamp-2 font-medium">{{ p.name }}</div>
                 </div>
               </button>
             </div>
