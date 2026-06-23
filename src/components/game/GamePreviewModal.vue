@@ -1,7 +1,8 @@
 <script>
-import { ref, computed } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
 import { GAME_TYPES } from '@/services/game-celebrations';
 import { DIFFICULTY_LEVELS, getDifficultyConfig } from '@/services/games';
+import { soundManager } from '@/services/sounds';
 
 export default {
   name: 'GamePreviewModal',
@@ -30,17 +31,38 @@ export default {
       return getDifficultyConfig(props.gameType, selectedDifficulty.value);
     });
 
+    // Countdown 3-2-1 antes de arrancar (y resetea el scroll arriba)
+    const countdown = ref(null); // null | 3 | 2 | 1 | 0 (0 = ¡YA!)
+    let cdTimer = null;
+
     function startGame() {
-      // Resetear scroll para que el tablero quede a la vista al arrancar
+      if (countdown.value !== null) return;
       window.scrollTo({ top: 0 });
-      emit('start', { difficulty: selectedDifficulty.value, config: currentConfig.value });
+      countdown.value = 3;
+      try { soundManager.play('tick'); } catch {}
+      cdTimer = setInterval(() => {
+        countdown.value -= 1;
+        if (countdown.value > 0) {
+          try { soundManager.play('tick'); } catch {}
+        } else {
+          clearInterval(cdTimer);
+          try { soundManager.play('combo'); } catch {}
+          setTimeout(() => {
+            countdown.value = null;
+            emit('start', { difficulty: selectedDifficulty.value, config: currentConfig.value });
+          }, 550);
+        }
+      }, 800);
     }
+
+    onUnmounted(() => { if (cdTimer) clearInterval(cdTimer); });
 
     return {
       selectedDifficulty,
       difficultyOptions,
       currentConfig,
       startGame,
+      countdown,
       DIFFICULTY_LEVELS
     };
   }
@@ -192,9 +214,33 @@ export default {
     </div>
   </Transition>
   </Teleport>
+
+  <!-- Countdown 3-2-1 antes de arrancar -->
+  <Teleport to="body">
+    <Transition name="cd-fade">
+      <div v-if="countdown !== null" class="fixed inset-0 z-[60] grid place-items-center bg-slate-950/92 backdrop-blur-sm">
+        <div class="text-center">
+          <div class="text-sm uppercase tracking-[0.3em] text-slate-400 mb-2">Preparate</div>
+          <div :key="countdown" class="cd-pop font-display font-extrabold bg-gradient-to-br from-emerald-400 to-cyan-400 bg-clip-text text-transparent leading-none"
+               :style="{ fontSize: countdown > 0 ? 'clamp(7rem, 32vw, 17rem)' : 'clamp(4rem, 18vw, 9rem)' }">
+            {{ countdown > 0 ? countdown : '¡YA!' }}
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>
+.cd-fade-enter-active, .cd-fade-leave-active { transition: opacity 0.25s ease; }
+.cd-fade-enter-from, .cd-fade-leave-to { opacity: 0; }
+.cd-pop { animation: cd-pop 0.8s var(--ease-out-expo); }
+@keyframes cd-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  30% { transform: scale(1.12); opacity: 1; }
+  70% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.85); opacity: 0.6; }
+}
 .modal-enter-active,
 .modal-leave-active {
   transition: opacity 0.2s ease;
