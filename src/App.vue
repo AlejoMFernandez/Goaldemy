@@ -7,6 +7,7 @@ import AppLoader from './components/common/AppLoader.vue';
 import BrandedBackground from './components/BrandedBackground.vue';
 import AchievementUnlockOverlay from './components/rewards/AchievementUnlockOverlay.vue';
 import LevelUpOverlay from './components/rewards/LevelUpOverlay.vue';
+import CosmeticUnlockOverlay from './components/rewards/CosmeticUnlockOverlay.vue';
 import ClaimNotificationStack from './components/rewards/ClaimNotificationStack.vue';
 import { authReady } from './services/auth';
 import { setSuppressOverlays } from './stores/notifications';
@@ -22,6 +23,7 @@ export default {
     BrandedBackground,
     AchievementUnlockOverlay,
     LevelUpOverlay,
+    CosmeticUnlockOverlay,
     ClaimNotificationStack,
   },
   data() {
@@ -63,6 +65,7 @@ export default {
     <AppToast />
     <AchievementUnlockOverlay />
     <LevelUpOverlay />
+    <CosmeticUnlockOverlay />
     <ClaimNotificationStack />
     <DirectMessagesDock v-if="!isAuthLayout" />
   </div>

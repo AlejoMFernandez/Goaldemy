@@ -2,16 +2,28 @@
     <div class="border border-white/10 rounded-2xl p-8 shadow-xl bg-transparent">
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-bold text-white">Gestión de Usuarios</h2>
-            <button
-                @click="loadUsers"
-                class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-                :disabled="loadingUsers"
-            >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Recargar
-            </button>
+            <div class="flex items-center gap-2">
+                <button
+                    v-if="ghostCount > 0"
+                    @click="handlePurgeGhosts"
+                    class="bg-red-600/90 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-60"
+                    :disabled="purgingGhosts"
+                    title="Borra cuentas sin confirmar de más de 5 días y sin actividad"
+                >
+                    <span>👻</span>
+                    {{ purgingGhosts ? 'Eliminando…' : `Eliminar fantasmas (${ghostCount})` }}
+                </button>
+                <button
+                    @click="loadUsers"
+                    class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                    :disabled="loadingUsers"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Recargar
+                </button>
+            </div>
         </div>
 
         <!-- Search Bar -->
@@ -70,6 +82,8 @@
                                 <div>
                                     <p class="font-semibold text-white">{{ user.display_name }}</p>
                                     <p class="text-xs text-slate-400">ID: {{ user.id.slice(0, 8) }}...</p>
+                                    <span v-if="isGhost(user)" class="mt-1 inline-flex items-center gap-1 rounded-full bg-red-500/15 border border-red-500/40 px-2 py-0.5 text-[10px] font-bold text-red-300">👻 Fantasma</span>
+                                    <span v-else-if="isUnconfirmed(user)" class="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-500/15 border border-amber-500/40 px-2 py-0.5 text-[10px] font-semibold text-amber-300">⏳ Sin confirmar</span>
                                 </div>
                             </div>
                         </td>
@@ -167,10 +181,13 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
-import { getAllUsers, changeUserRole, deleteUser, searchUsers } from '../../services/admin.js';
+import { ref, computed, onMounted } from 'vue';
+import { getAllUsers, changeUserRole, deleteUser, searchUsers, purgeGhostUsers } from '../../services/admin.js';
 import AppLoader from '../common/AppLoader.vue';
 import { pushErrorToast, pushSuccessToast } from '../../stores/notifications.js';
+
+// Días de gracia antes de considerar fantasma a una cuenta sin confirmar (igual al SQL).
+const GHOST_DAYS = 5;
 
 export default {
     name: 'AdminUserManagement',
@@ -185,7 +202,38 @@ export default {
         const processingUserId = ref(null);
         const showDeleteModal = ref(false);
         const userToDelete = ref(null);
+        const purgingGhosts = ref(false);
         let searchTimeout = null;
+
+        // ── Usuarios fantasma ──
+        // email_confirmed_at solo viene del RPC get_users_admin; si no está, no marcamos.
+        function hasConfirmationInfo(user) { return user && 'email_confirmed_at' in user; }
+        function isUnconfirmed(user) { return hasConfirmationInfo(user) && !user.email_confirmed_at; }
+        function ageDays(user) {
+            if (!user?.created_at) return 0;
+            return (Date.now() - new Date(user.created_at).getTime()) / 86400000;
+        }
+        // Fantasma = sin confirmar, viejo (> gracia) y sin actividad (sin XP). Igual criterio que el SQL.
+        function isGhost(user) {
+            return isUnconfirmed(user) && ageDays(user) > GHOST_DAYS && !(user.total_xp > 0);
+        }
+        const ghostCount = computed(() => users.value.filter(isGhost).length);
+
+        async function handlePurgeGhosts() {
+            if (!ghostCount.value || purgingGhosts.value) return;
+            purgingGhosts.value = true;
+            try {
+                const n = await purgeGhostUsers(GHOST_DAYS);
+                pushSuccessToast(`${n} usuario(s) fantasma eliminados`);
+                await loadUsers();
+                emit('user-updated');
+            } catch (error) {
+                console.error('Error purgando fantasmas:', error);
+                pushErrorToast(error.message || 'Error al purgar fantasmas');
+            } finally {
+                purgingGhosts.value = false;
+            }
+        }
 
         async function loadUsers() {
             loadingUsers.value = true;
@@ -297,7 +345,12 @@ export default {
             toggleRole,
             confirmDelete,
             handleDelete,
-            formatDate
+            formatDate,
+            isGhost,
+            isUnconfirmed,
+            ghostCount,
+            purgingGhosts,
+            handlePurgeGhosts
         };
     }
 };

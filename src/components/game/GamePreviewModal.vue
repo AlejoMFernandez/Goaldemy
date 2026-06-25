@@ -35,9 +35,17 @@ export default {
     const countdown = ref(null); // null | 3 | 2 | 1 | 0 (0 = ¡YA!)
     let cdTimer = null;
 
+    // El countdown 3-2-1 solo tiene sentido en juegos con TIMER.
+    // Los juegos sin tiempo (ordenar, vidas, grid, puzzle, cadena, wordle) arrancan directo.
+    const isTimedGame = computed(() => String(props.gameType).toLowerCase() === GAME_TYPES.TIMED);
+
     function startGame() {
       if (countdown.value !== null) return;
       window.scrollTo({ top: 0 });
+      if (!isTimedGame.value) {
+        emit('start', { difficulty: selectedDifficulty.value, config: currentConfig.value });
+        return;
+      }
       countdown.value = 3;
       try { soundManager.play('tick'); } catch {}
       cdTimer = setInterval(() => {

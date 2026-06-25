@@ -40,30 +40,46 @@ export async function awardXp({ amount, reason = 'correct_answer', gameId = null
     p_meta: meta,
   })
   // Fallback: after awarding, verify if level increased and toast if Realtime missed it
+  await detectAndToastLevelUp()
+  return { data, error }
+}
+
+/**
+ * Detector CONFIABLE de level-up del lado del cliente.
+ *
+ * Compara el nivel actual con el último nivel conocido (guardado por usuario en
+ * localStorage, inicializado en el arranque por initLevelUpRealtime) y, si subió,
+ * dispara el overlay de "¡Subiste de nivel!".
+ *
+ * Lo usan awardXp() (juegos) y los RECLAMOS de recompensas (diaria / retos / pase)
+ * cuyo XP se otorga server-side dentro de la RPC y NO pasa por awardXp(): esos
+ * antes dependían solo del Realtime (frágil) y la pantalla no aparecía.
+ *
+ * Es idempotente y la cola de overlays deduplica por nivel (8s), así que no hay
+ * doble pantalla aunque el Realtime también lo detecte.
+ */
+export async function detectAndToastLevelUp() {
   try {
     const { data: me } = await supabase.auth.getUser()
     const userId = me?.user?.id || null
-    if (userId) {
-      const { data: lvlData } = await getUserLevel(null)
-      const info = Array.isArray(lvlData) ? lvlData[0] : lvlData
-      const newLevel = info?.level ?? null
-      if (newLevel != null) {
-        const key = `gl:last_level:${userId}`
-        let prev = null
-        try {
-          const raw = localStorage.getItem(key)
-          prev = raw != null ? Number(raw) : null
-        } catch {}
-        if (prev != null && Number.isFinite(prev) && newLevel > prev) {
-          pushLevelUpToast({ level: newLevel, oldLevel: prev })
-        }
-        try { localStorage.setItem(key, String(newLevel)) } catch {}
-        try { localStorage.setItem('gl:last_known_level', String(newLevel)) } catch {}
-        try { _setKnownLevelRealtime(newLevel) } catch {}
-      }
+    if (!userId) return
+    const { data: lvlData } = await getUserLevel(null)
+    const info = Array.isArray(lvlData) ? lvlData[0] : lvlData
+    const newLevel = info?.level ?? null
+    if (newLevel == null) return
+    const key = `gl:last_level:${userId}`
+    let prev = null
+    try {
+      const raw = localStorage.getItem(key)
+      prev = raw != null ? Number(raw) : null
+    } catch {}
+    if (prev != null && Number.isFinite(prev) && newLevel > prev) {
+      pushLevelUpToast({ level: newLevel, oldLevel: prev })
     }
+    try { localStorage.setItem(key, String(newLevel)) } catch {}
+    try { localStorage.setItem('gl:last_known_level', String(newLevel)) } catch {}
+    try { _setKnownLevelRealtime(newLevel) } catch {}
   } catch {}
-  return { data, error }
 }
 
 /**

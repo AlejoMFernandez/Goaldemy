@@ -6,6 +6,7 @@ const state = reactive({
   items: [],
   achievementQueue: [],
   levelUpQueue: [],
+  cosmeticQueue: [],
   pendingRewards: [],
   suppressOverlays: false,
   claimNotifications: [],
@@ -76,6 +77,19 @@ export function shiftLevelUpQueue() {
   return state.levelUpQueue.shift()
 }
 
+// ── Cosmetic unlock overlay queue ──
+// Escena premium (estilo logro/Forager) SOLO para cosméticos EXCLUSIVOS al reclamarlos.
+// Los cosméticos default (por nivel) NO usan esto: solo la notificación apilada chica.
+export function queueCosmeticOverlay({ code, name, type, rarity, styleKey }) {
+  const id = _genId()
+  state.cosmeticQueue.push({ id, code, name, type, rarity: rarity || 'epic', styleKey: styleKey || '' })
+  return id
+}
+
+export function shiftCosmeticQueue() {
+  return state.cosmeticQueue.shift()
+}
+
 // ── Claim notifications (bottom-right stack) ──
 
 export function pushClaimNotification({ type, title, xp, emoji }) {
@@ -98,26 +112,50 @@ async function _awardBonusXpSilent(amount) {
       p_session_id: null,
       p_meta: { source: 'reward_claim' },
     })
+    // El bonus puede cruzar un umbral de nivel: detectar level-up sin pasar por
+    // awardXp(). Import dinámico para evitar el ciclo notifications<->xp.
+    import('../services/xp').then(m => m.detectAndToastLevelUp?.()).catch(() => {})
   } catch {}
 }
 
-// ── Pending rewards (Reward Center) ──
+// ── Pending rewards (Reward Center) — SCOPEADO POR USUARIO ──
+// Antes la clave era global ('gl:pending_rewards'): en el mismo navegador, una
+// cuenta nueva veía las recompensas/logros de otra cuenta. Ahora se scopea por
+// user id y se recarga al cambiar de sesión.
+let _rewardsUserId = null
+
+function _rewardsKey() {
+  return _rewardsUserId ? `gl:pending_rewards:${_rewardsUserId}` : null
+}
 
 function _loadRewards() {
+  const key = _rewardsKey()
+  if (!key) { state.pendingRewards = []; return }
   try {
-    const raw = localStorage.getItem('gl:pending_rewards')
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) state.pendingRewards = parsed
-    }
-  } catch {}
+    const raw = localStorage.getItem(key)
+    const parsed = raw ? JSON.parse(raw) : []
+    state.pendingRewards = Array.isArray(parsed) ? parsed : []
+  } catch { state.pendingRewards = [] }
 }
 
 function _saveRewards() {
-  localStorage.setItem('gl:pending_rewards', JSON.stringify(state.pendingRewards))
+  const key = _rewardsKey()
+  if (!key) return
+  try { localStorage.setItem(key, JSON.stringify(state.pendingRewards)) } catch {}
 }
 
-_loadRewards()
+function _setRewardsUser(userId) {
+  const next = userId || null
+  if (next === _rewardsUserId) return
+  _rewardsUserId = next
+  _loadRewards()
+}
+
+// Limpiar la clave global vieja (filtraba datos entre cuentas).
+try { localStorage.removeItem('gl:pending_rewards') } catch {}
+
+supabase.auth.getUser().then(({ data }) => _setRewardsUser(data?.user?.id || null)).catch(() => {})
+supabase.auth.onAuthStateChange((_evt, session) => _setRewardsUser(session?.user?.id || null))
 
 export function addPendingReward(type, data) {
   const id = _genId()
@@ -144,13 +182,17 @@ export function claimReward(id) {
   r.claimed = true
   _saveRewards()
 
+  // XP a OTORGAR ahora: solo bonus de nivel/rango (xpBonus). Los logros ya
+  // otorgaron su XP (points) al desbloquearse → no se re-otorga.
   const xpBonus = r.data?.xpBonus || 0
   if (xpBonus > 0) {
     _awardBonusXpSilent(xpBonus)
   }
 
+  // XP a MOSTRAR en la notificación: bonus o, para logros, sus points.
+  const displayXp = xpBonus || r.data?.points || 0
   const { title, emoji } = _rewardNotifMeta(r)
-  pushClaimNotification({ type: r.type, title, xp: xpBonus, emoji })
+  pushClaimNotification({ type: r.type, title, xp: displayXp, emoji })
 }
 
 export function claimAllRewards() {
@@ -161,9 +203,10 @@ export function claimAllRewards() {
     r.claimed = true
     const xpBonus = r.data?.xpBonus || 0
     totalXpBonus += xpBonus
+    const displayXp = xpBonus || r.data?.points || 0
     const { title, emoji } = _rewardNotifMeta(r)
     // Apiladas: una tras otra, pero todas visibles (no unificadas)
-    setTimeout(() => pushClaimNotification({ type: r.type, title, xp: xpBonus, emoji }), i * 150)
+    setTimeout(() => pushClaimNotification({ type: r.type, title, xp: displayXp, emoji }), i * 150)
   })
   _saveRewards()
 

@@ -15,6 +15,7 @@ import { getUserMaxStreakByGame } from '../../services/xp';
 import { checkAndUnlockSpecials } from '../../services/special-badges';
 import ConnectionsCard from '../../components/profile/ConnectionsCard.vue';
 import CommunityCard from '../../components/profile/CommunityCard.vue';
+import LoadoutShowcase from '../../components/profile/LoadoutShowcase.vue';
 import { findTeamByName, findPlayerByName } from '../../services/players';
 import { getEquippedCosmetics } from '../../services/cosmetics';
 import { listConnections } from '../../services/connections';
@@ -24,7 +25,7 @@ let unsubscribeAuth = () => {};
 
 export default {
   name: 'Profile',
-  components: { AppH1, ProfileHeaderCard, AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard },
+  components: { AppH1, ProfileHeaderCard, AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard, LoadoutShowcase },
   data() {
     return {
       user: {
@@ -437,6 +438,19 @@ export default {
 
     <!-- Tab: Resumen -->
     <div v-if="activeTab === 'resumen'" class="mt-6 space-y-6">
+      <LoadoutShowcase
+        :frame-key="equippedFrameKey"
+        :icon-glyph="equippedIconGlyph"
+        :icon-bg="equippedIconBg"
+        :title-text="equippedTitleText"
+        :title-rarity="equippedTitleRarity"
+        :banner-key="equippedBannerKey"
+        :frame-premium="equippedFramePremium"
+        :title-premium="equippedTitlePremium"
+        :banner-premium="equippedBannerPremium"
+        :is-self="isSelf"
+      />
+
       <XpDonutChart
         :items="xpByGame"
         :streaks-by-game="streaksMap"

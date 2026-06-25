@@ -1,6 +1,7 @@
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { soundManager } from '@/services/sounds'
+import { getAuthUser } from '@/services/auth'
 
 export default {
   name: 'DailyStreakCalendar',
@@ -68,10 +69,16 @@ export default {
       timeLeft.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
     }
 
+    // Scopeado por usuario (sin scope, una cuenta veía el "reclamado hoy" de otra).
+    function streakKey() {
+      const { id } = getAuthUser() || {}
+      return id ? `gl:streak_claimed:${id}:${new Date().toDateString()}` : null
+    }
+
     onMounted(() => {
       try {
-        const key = `gl:streak_claimed:${new Date().toDateString()}`
-        if (localStorage.getItem(key)) claimedToday.value = true
+        const key = streakKey()
+        if (key && localStorage.getItem(key)) claimedToday.value = true
       } catch {}
       updateCountdown()
       timer = setInterval(updateCountdown, 1000)
@@ -80,7 +87,7 @@ export default {
     onUnmounted(() => { if (timer) clearInterval(timer) })
 
     function persistClaim() {
-      try { localStorage.setItem(`gl:streak_claimed:${new Date().toDateString()}`, '1') } catch {}
+      try { const key = streakKey(); if (key) localStorage.setItem(key, '1') } catch {}
     }
 
     return { days, streakEmoji, claimedToday, chestOpening, timeLeft, claimToday, persistClaim }

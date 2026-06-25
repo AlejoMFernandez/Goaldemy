@@ -30,6 +30,10 @@ export default {
     const claimed = computed(() => rewards.value.filter(r => r.claimed).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)))
     const unclaimedCount = computed(() => unclaimed.value.length)
 
+    // Retos diarios: ocultar los ya reclamados; si no queda ninguno por hacer, mostrar estado "completado por hoy".
+    const visibleChallenges = computed(() => challenges.value.filter(c => !c.claimed))
+    const allChallengesDone = computed(() => challenges.value.length > 0 && visibleChallenges.value.length === 0)
+
     function powerupIcon(t) { return POWERUP_ICONS[t] || '🎁' }
 
     function handleClaim(id) { claimReward(id); soundManager.play('claim') }
@@ -127,7 +131,7 @@ export default {
     return {
       rewards, unclaimed, claimed, unclaimedCount,
       currentStreak, bestStreak, playedToday,
-      challenges, progressive, dailyReward, loadingDaily, claiming,
+      challenges, visibleChallenges, allChallengesDone, progressive, dailyReward, loadingDaily, claiming,
       handleClaim, handleClaimAll, handleClearClaimed,
       handleClaimDailyReward, handleClaimChallenge, handleClaimProgressive,
       powerupLabel, powerupIcon,
@@ -208,14 +212,12 @@ export default {
         <div v-for="i in 3" :key="i" class="h-20 rounded-2xl bg-white/5 animate-pulse"></div>
       </div>
 
-      <div v-else class="space-y-2">
+      <div v-else-if="visibleChallenges.length" class="space-y-2">
         <div
-          v-for="c in challenges"
+          v-for="c in visibleChallenges"
           :key="c.code"
           class="relative rounded-2xl border p-4 transition-all"
-          :class="c.claimed
-            ? 'border-white/5 bg-white/[0.02] opacity-60'
-            : c.progress >= c.target
+          :class="c.progress >= c.target
             ? 'border-emerald-500/30 bg-emerald-500/[0.06]'
             : 'border-white/10 bg-white/[0.03]'"
         >
@@ -245,19 +247,26 @@ export default {
             </div>
           </div>
 
-          <!-- Claim / state -->
+          <!-- Claim (los reclamados desaparecen de la lista) -->
           <button
-            v-if="!c.claimed && c.progress >= c.target"
+            v-if="c.progress >= c.target"
             @click="handleClaimChallenge(c)"
             :disabled="claiming === c.code"
             class="mt-3 w-full rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-[0.98] text-white py-2 text-sm font-bold transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-60"
           >
             Reclamar recompensa
           </button>
-          <div v-else-if="c.claimed" class="mt-3 flex items-center justify-center gap-1.5 text-emerald-400 text-xs font-semibold">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-            Reclamado
-          </div>
+        </div>
+      </div>
+
+      <!-- Todos los retos del día completados (estilo AFK Journey) -->
+      <div v-else-if="allChallengesDone" class="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.07] to-cyan-500/[0.04] p-8 text-center">
+        <div class="text-4xl mb-3">🎉</div>
+        <p class="font-display font-bold text-white">¡Completaste todos los retos de hoy!</p>
+        <p class="text-sm text-slate-400 mt-1">Volvé mañana para nuevos desafíos.</p>
+        <div class="mt-3 inline-flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          Se reinician a medianoche
         </div>
       </div>
     </div>
@@ -289,7 +298,6 @@ export default {
                   <span v-if="c.reward_powerup && c.reward_powerup_qty > 0" class="text-amber-300">{{ powerupIcon(c.reward_powerup) }} ×{{ c.reward_powerup_qty }}</span>
                 </div>
               </div>
-              <div class="text-[11px] text-slate-400 mt-0.5 truncate">{{ c.description }}</div>
               <div class="mt-2 flex items-center gap-2">
                 <div class="flex-1 h-1.5 rounded-full bg-black/30 overflow-hidden">
                   <div

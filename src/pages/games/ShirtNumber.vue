@@ -319,14 +319,6 @@ export default {
         </div>
         <div v-if="shieldActive" class="absolute right-4 top-4 z-20 text-xl animate-pulse" title="Escudo activo">🛡️</div>
 
-        <!-- Powerup Bar -->
-        <PowerupBar
-          v-if="mode === 'challenge' && !timeOver && !showSummary"
-          :hide="overlayOpen"
-          :disabled-types="answered ? ['fifty_fifty','shield','extra_time','reveal_hint'] : []"
-          @use="handlePowerup"
-        />
-        
         <Transition name="round-fade" mode="out-in">
           <div :key="roundKey">
             <div class="flex flex-col items-center gap-2">
@@ -344,6 +336,14 @@ export default {
             </div>
           </div>
         </Transition>
+
+        <!-- Ayudas (barra integrada, abajo de la tarjeta) -->
+        <PowerupBar
+          v-if="mode === 'challenge' && !timeOver && !showSummary"
+          :hide="overlayOpen"
+          :disabled-types="answered ? ['fifty_fifty','shield','extra_time','reveal_hint'] : []"
+          @use="handlePowerup"
+        />
 
         <!-- Summary Popup -->
         <GameSummaryPopup

@@ -407,6 +407,15 @@ const KNOWN_GAMES = [
   { slug: 'stat-challenge', name: FALLBACK_NAMES['stat-challenge'], description: FALLBACK_DESC['stat-challenge'], cover_url: '/games/stat-challenge.svg' },
 ]
 
+// Juegos pausados: no se muestran en el index ni en filtros.
+// stat-challenge (Duelo de Stats): las stats del dataset son placeholder (apariciones 0/1,
+// goles/asist desactualizados), así que se pausa hasta tener datos reales de temporada.
+const PAUSED_GAMES = new Set(['stat-challenge'])
+
+export function isGamePaused(slug) {
+  return PAUSED_GAMES.has(slug)
+}
+
 function fallbackCoverForSlug(slug) {
   const k = KNOWN_GAMES.find(g => g.slug === slug)
   return k?.cover_url || null
@@ -503,7 +512,7 @@ export async function fetchGames() {
       bySlug.set(kg.slug, normalizeGame({ id: kg.slug, slug: kg.slug, name: kg.name, description: kg.description, cover_url: kg.cover_url ?? null }))
     }
   }
-  return Array.from(bySlug.values())
+  return Array.from(bySlug.values()).filter(g => !PAUSED_GAMES.has(g.slug))
 }
 
 // Optionally fetch a single game by id (useful later)

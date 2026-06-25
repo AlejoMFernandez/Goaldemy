@@ -49,39 +49,39 @@ defineExpose({ reload: load })
 
 <template>
   <Transition name="dock-fade">
-    <div
-      v-if="!hide && powerups.length > 0"
-      class="fixed z-30 flex gap-2 bottom-4 left-1/2 -translate-x-1/2 flex-row
-             lg:bottom-auto lg:left-auto lg:translate-x-0 lg:top-1/2 lg:right-5 lg:-translate-y-1/2 lg:flex-col"
-    >
-      <button
-        v-for="pu in powerups"
-        :key="pu.key"
-        :disabled="pu.count <= 0 || disabledTypes.includes(pu.key) || using === pu.key"
-        class="powerup-tile group relative grid place-items-center rounded-xl ring-1 backdrop-blur-md transition-all duration-200"
-        :class="[
-          pu.count > 0 && !disabledTypes.includes(pu.key)
-            ? `${puColor(pu.key)} hover:bg-white/10 hover:scale-110 active:scale-95 cursor-pointer`
-            : 'bg-white/[0.03] ring-white/10 text-white/40 cursor-not-allowed',
-          using === pu.key ? 'animate-bounce scale-110' : '',
-        ]"
-        :title="pu.description"
-        @click="activate(pu.key)"
-      >
-        <span class="text-lg sm:text-xl">{{ pu.icon }}</span>
-        <span
-          v-if="pu.count > 0"
-          class="absolute -top-1.5 -right-1.5 grid place-items-center min-w-[17px] h-[17px] px-1 rounded-full bg-slate-900/95 ring-1 ring-white/15 text-[10px] font-bold text-white leading-none"
-        >
-          {{ pu.count }}
+    <!-- Barra de ayudas INTEGRADA a la tarjeta del juego (antes flotaba al borde de la pantalla) -->
+    <div v-if="!hide && powerups.length > 0" class="mt-6 pt-4 border-t border-white/10">
+      <div class="flex items-center justify-center gap-2.5 flex-wrap">
+        <span class="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-amber-400/90 font-semibold mr-1">
+          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Ayudas
         </span>
-        <span
-          class="pointer-events-none absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900/95 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-xl ring-1 ring-white/10 transition-opacity group-hover:opacity-100
-                 lg:bottom-auto lg:mb-0 lg:top-1/2 lg:left-auto lg:right-full lg:mr-2 lg:translate-x-0 lg:-translate-y-1/2"
+        <button
+          v-for="pu in powerups"
+          :key="pu.key"
+          :disabled="pu.count <= 0 || disabledTypes.includes(pu.key) || using === pu.key"
+          class="powerup-tile group relative grid place-items-center rounded-xl ring-1 backdrop-blur-md transition-all duration-200"
+          :class="[
+            pu.count > 0 && !disabledTypes.includes(pu.key)
+              ? `${puColor(pu.key)} hover:brightness-110 hover:scale-110 active:scale-95 cursor-pointer`
+              : 'bg-white/[0.03] ring-white/10 text-white/40 cursor-not-allowed',
+            using === pu.key ? 'animate-bounce scale-110' : '',
+          ]"
+          :title="pu.description"
+          @click="activate(pu.key)"
         >
-          {{ pu.name }}
-        </span>
-      </button>
+          <span class="text-lg sm:text-xl">{{ pu.icon }}</span>
+          <span
+            v-if="pu.count > 0"
+            class="absolute -top-1.5 -right-1.5 grid place-items-center min-w-[17px] h-[17px] px-1 rounded-full bg-slate-900/95 ring-1 ring-white/15 text-[10px] font-bold text-white leading-none"
+          >
+            {{ pu.count }}
+          </span>
+          <span class="pointer-events-none absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900/95 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-xl ring-1 ring-white/10 transition-opacity group-hover:opacity-100">
+            {{ pu.name }}
+          </span>
+        </button>
+      </div>
     </div>
   </Transition>
 </template>

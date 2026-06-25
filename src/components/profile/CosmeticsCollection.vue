@@ -6,6 +6,7 @@ import {
   frameStyle, bannerStyle, iconBgStyle, ICON_BG_KEYS, rarity,
 } from '../../services/cosmetics'
 import { pushSuccessToast, pushErrorToast } from '../../stores/notifications'
+import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 
 const props = defineProps({
   avatarUrl: { type: String, default: '' },
@@ -93,7 +94,7 @@ onMounted(load)
         <div class="relative flex items-center gap-4 p-4">
           <div :class="[frameStyle(equippedFrame.style_key).wrap, frameStyle(equippedFrame.style_key).pad, 'rounded-2xl shrink-0', equippedFrame.premium_only ? 'anim-pan' : '']">
             <div class="size-16 rounded-[13px] overflow-hidden grid place-items-center text-white font-extrabold text-2xl" :class="iconBgStyle(iconBg)">
-              <span v-if="equippedIcon && equippedIcon.style_key">{{ equippedIcon.style_key }}</span>
+              <CosmeticIcon v-if="equippedIcon && equippedIcon.style_key" :iconKey="equippedIcon.style_key" :rarity="equippedIcon.rarity" :size="52" />
               <img v-else-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
               <span v-else>{{ initial }}</span>
             </div>
@@ -141,14 +142,17 @@ onMounted(load)
             <div class="text-[11px] uppercase tracking-wider font-semibold mb-2.5" :class="grp.k === 'owned' ? 'text-emerald-400' : 'text-slate-500'">{{ grp.label }} ({{ grp.list.length }})</div>
 
             <!-- Bordes / Íconos -->
-            <div v-if="activeTab === 'frame' || activeTab === 'icon'" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            <div v-if="activeTab === 'frame' || activeTab === 'icon'" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <button v-for="c in grp.list" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
                       class="relative rounded-xl border p-3 flex flex-col items-center gap-2 transition-all"
                       :class="[ c.equipped ? 'border-emerald-400/50 bg-emerald-500/[0.07]' : rarity(c.rarity).border + ' bg-white/[0.02]', c.owned ? 'hover:bg-white/5 cursor-pointer' : 'opacity-50 cursor-not-allowed' ]">
-                <div v-if="activeTab === 'frame'" :class="[frameStyle(c.style_key).wrap, frameStyle(c.style_key).pad, 'rounded-xl', c.premium_only ? 'anim-pan' : '']">
-                  <div class="size-10 rounded-[9px] grid place-items-center text-slate-300 text-[10px]" :class="iconBgStyle(iconBg)">●</div>
+                <div v-if="activeTab === 'frame'" :class="[frameStyle(c.style_key).wrap, frameStyle(c.style_key).pad, 'rounded-2xl', c.premium_only ? 'anim-pan' : '']">
+                  <div class="size-16 rounded-[14px] grid place-items-center text-slate-300 text-xs" :class="iconBgStyle(iconBg)">●</div>
                 </div>
-                <div v-else class="size-10 rounded-lg grid place-items-center text-2xl" :class="iconBgStyle(iconBg)">{{ c.style_key || '—' }}</div>
+                <div v-else class="grid place-items-center py-1">
+                  <CosmeticIcon v-if="c.style_key" :iconKey="c.style_key" :rarity="c.rarity" framed :size="80" />
+                  <div v-else class="size-14 rounded-xl grid place-items-center text-slate-400 text-sm" :class="iconBgStyle(iconBg)">—</div>
+                </div>
                 <span class="text-[11px] font-medium text-white truncate w-full text-center">{{ c.name }}</span>
                 <span v-if="c.premium_only" class="absolute top-1.5 right-1.5 text-[8px] font-bold text-amber-300">PRO</span>
                 <span v-if="!c.owned" class="text-[9px] text-slate-500">{{ lockLabel(c) }}</span>

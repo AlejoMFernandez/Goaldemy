@@ -434,6 +434,7 @@ export default {
                         </div>
                     </li>
                     <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Ranking</RouterLink></li>
+                    <li><RouterLink class="inline-flex items-center gap-1 font-semibold text-amber-300 hover:text-amber-200 transition-colors" to="/pricing"><span>⭐</span> Premium</RouterLink></li>
                     <!-- Ligas dropdown (hover) -->
                     <li class="relative"
                         @mouseenter="onLeaguesEnter"
@@ -727,6 +728,7 @@ export default {
                             </details>
                         </li>
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leaderboards">Ranking</RouterLink></li>
+                        <li><RouterLink @click="isOpen=false" class="flex items-center gap-1.5 font-semibold text-amber-300 hover:text-amber-200" to="/pricing"><span>⭐</span> Premium</RouterLink></li>
                         <li>
                             <details class="group">
                                 <summary class="cursor-pointer hover:text-white">Ligas</summary>

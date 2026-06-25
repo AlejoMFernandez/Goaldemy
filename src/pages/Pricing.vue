@@ -12,6 +12,7 @@ const currentPlan = ref('free')
 const loading = ref(true)
 const checkoutLoading = ref(null)
 const openFaq = ref(null)
+const confirmPlan = ref(null) // plan pendiente de confirmar antes de ir a Mercado Pago
 
 const sortedPlans = computed(() =>
   [...plans.value].sort((a, b) => a.sort_order - b.sort_order)
@@ -47,19 +48,40 @@ function planStyle(slug) {
   }
 }
 
-async function handleSubscribe(slug) {
+// Paso 1: abrir el popup de confirmación (no redirige todavía).
+function askSubscribe(plan) {
   const { id } = getAuthUser() || {}
   if (!id) {
     router.push('/login')
     return
   }
-  checkoutLoading.value = slug
+  confirmPlan.value = plan
+}
+
+// Paso 2: el usuario confirma → recién ahí vamos a Mercado Pago.
+async function confirmCheckout() {
+  const plan = confirmPlan.value
+  if (!plan || checkoutLoading.value) return
+  checkoutLoading.value = plan.slug
   try {
-    await startCheckout(slug, 'mercadopago')
+    await startCheckout(plan.slug, 'mercadopago')
   } catch (e) {
     pushErrorToast(e.message || 'Error al iniciar el pago')
     checkoutLoading.value = null
+    confirmPlan.value = null
   }
+}
+
+// Features clave para mostrar en el popup de confirmación.
+function planPerks(plan) {
+  if (!plan) return []
+  const perks = []
+  if (plan.daily_challenges_per_game) perks.push(`${plan.daily_challenges_per_game} desafíos por día por juego`)
+  if (plan.daily_powerups) perks.push(`${plan.daily_powerups} power-up${plan.daily_powerups === 1 ? '' : 's'} por día`)
+  if (plan.xp_multiplier > 1) perks.push(`Bonus de XP +${Math.round((plan.xp_multiplier - 1) * 100)}%`)
+  if (plan.weekly_streak_protectors > 0) perks.push(`${plan.weekly_streak_protectors} protector${plan.weekly_streak_protectors === 1 ? '' : 'es'} de racha/semana`)
+  if (plan.badge) perks.push(`Badge ${plan.slug === 'legend' ? 'Legend dorado' : 'Pro'} en perfil`)
+  return perks
 }
 
 const COMPARISON = [
@@ -179,20 +201,19 @@ onMounted(async () => {
               <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
               <span class="text-slate-300">Badge {{ plan.slug === 'legend' ? 'Legend dorado' : 'Pro' }} en perfil</span>
             </li>
+            <li v-if="plan.slug !== 'free'" class="flex items-center gap-2 text-sm">
+              <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              <span class="text-slate-300">Cosméticos exclusivos premium</span>
+            </li>
           </ul>
 
           <button
             v-if="plan.slug !== currentPlan && plan.slug !== 'free'"
-            class="w-full py-3 rounded-xl text-sm transition-all duration-200"
+            class="w-full py-3 rounded-xl text-sm font-bold transition-all duration-200"
             :class="planStyle(plan.slug).cta"
-            :disabled="checkoutLoading === plan.slug"
-            @click="handleSubscribe(plan.slug)"
+            @click="askSubscribe(plan)"
           >
-            <span v-if="checkoutLoading === plan.slug" class="flex items-center justify-center gap-2">
-              <span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-              Redirigiendo a Mercado Pago...
-            </span>
-            <span v-else>Suscribirme</span>
+            Suscribirme
           </button>
           <div
             v-else-if="plan.slug === currentPlan"
@@ -300,6 +321,67 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+
+    <!-- ════ Popup de confirmación antes de Mercado Pago ════ -->
+    <Teleport to="body">
+      <Transition name="pay-modal">
+        <div v-if="confirmPlan" class="fixed inset-0 z-[60] overflow-y-auto">
+          <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" @click="confirmPlan = null"></div>
+          <div class="relative min-h-full flex items-center justify-center p-4" @click.self="confirmPlan = null">
+            <div class="relative w-full max-w-md rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 shadow-2xl">
+              <button @click="confirmPlan = null" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+
+              <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-3">Confirmá tu suscripción</div>
+
+              <!-- Plan + precio -->
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-2xl grid place-items-center text-2xl border" :class="planStyle(confirmPlan.slug).badge">{{ planStyle(confirmPlan.slug).icon }}</div>
+                <div>
+                  <div class="font-display font-extrabold text-white text-lg leading-tight">Plan {{ confirmPlan.name }}</div>
+                  <div class="flex items-end gap-1">
+                    <span class="text-2xl font-extrabold text-white">{{ formatPrice(confirmPlan) }}</span>
+                    <span class="text-slate-400 text-xs mb-1">ARS / mes</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Qué incluye -->
+              <ul class="space-y-1.5 mb-4">
+                <li v-for="(perk, i) in planPerks(confirmPlan)" :key="i" class="flex items-center gap-2 text-sm text-slate-300">
+                  <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                  {{ perk }}
+                </li>
+              </ul>
+
+              <!-- Aviso Mercado Pago -->
+              <div class="rounded-xl border border-cyan-500/25 bg-cyan-500/[0.06] p-3 flex gap-2.5 mb-5">
+                <svg class="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                  Al continuar te llevamos a <strong class="text-cyan-300">Mercado Pago</strong> para completar el pago de forma segura. Podés pagar con tarjeta, débito, dinero en cuenta o efectivo. Cancelás cuando quieras.
+                </p>
+              </div>
+
+              <!-- Acciones -->
+              <div class="flex gap-3">
+                <button @click="confirmPlan = null" class="flex-1 rounded-xl border border-white/15 hover:bg-white/5 text-white py-3 text-sm font-semibold transition">
+                  Cancelar
+                </button>
+                <button
+                  @click="confirmCheckout"
+                  :disabled="checkoutLoading"
+                  class="flex-1 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:brightness-110 text-white py-3 text-sm font-bold transition disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  <span v-if="checkoutLoading" class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                  {{ checkoutLoading ? 'Redirigiendo…' : 'Pagar con Mercado Pago' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -308,4 +390,6 @@ onMounted(async () => {
 .faq-expand-leave-active { transition: all 0.15s ease; }
 .faq-expand-enter-from, .faq-expand-leave-to { opacity: 0; max-height: 0; }
 .faq-expand-enter-to, .faq-expand-leave-from { opacity: 1; max-height: 200px; }
+.pay-modal-enter-active, .pay-modal-leave-active { transition: opacity 0.2s ease; }
+.pay-modal-enter-from, .pay-modal-leave-to { opacity: 0; }
 </style>

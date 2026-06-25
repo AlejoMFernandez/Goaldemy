@@ -5,7 +5,7 @@
  */
 import { supabase } from './supabase'
 import { getAuthUser } from './auth'
-import { pushClaimNotification } from '../stores/notifications'
+import { pushClaimNotification, queueCosmeticOverlay } from '../stores/notifications'
 
 /** Catálogo de cosméticos con estado owned/equipped del usuario. */
 export async function getCosmetics() {
@@ -55,6 +55,43 @@ export async function getEquippedCosmetics(userId) {
   return out
 }
 
+/**
+ * Cosméticos equipados de VARIOS usuarios de una (para el ranking).
+ * Hace 1 query al catálogo + 1 a user_profiles. Devuelve un map:
+ *   { [userId]: { frameKey, iconGlyph, iconBg } }
+ * Resiliente: si faltan columnas de fase 4, devuelve defaults.
+ */
+export async function getEquippedCosmeticsBatch(userIds) {
+  const out = {}
+  const ids = Array.from(new Set((userIds || []).filter(Boolean)))
+  if (!ids.length) return out
+
+  let byCode = {}
+  try {
+    const { data: cat } = await supabase.from('cosmetics').select('code, style_key')
+    byCode = Object.fromEntries((cat || []).map(c => [c.code, c]))
+  } catch { return out }
+
+  // Intento con icon_bg (fase 4d); si la columna no existe, sin ella.
+  let profs = null
+  let res = await supabase.from('user_profiles').select('id, equipped_frame, equipped_icon, equipped_icon_bg').in('id', ids)
+  if (res.error) {
+    res = await supabase.from('user_profiles').select('id, equipped_frame, equipped_icon').in('id', ids)
+  }
+  if (!res.error) profs = res.data
+
+  for (const p of profs || []) {
+    const fr = byCode[p.equipped_frame]
+    const ic = byCode[p.equipped_icon]
+    out[p.id] = {
+      frameKey: fr?.style_key || 'none',
+      iconGlyph: ic?.style_key || '',
+      iconBg: p.equipped_icon_bg || 'emerald',
+    }
+  }
+  return out
+}
+
 /** Equipa un cosmético (o desequipa el título pasando ''). */
 export async function equipCosmetic(code) {
   const { data, error } = await supabase.rpc('equip_cosmetic', { p_code: code })
@@ -73,6 +110,12 @@ export const FRAME_STYLES = {
   legend:  { wrap: 'bg-gradient-to-br from-fuchsia-400 via-amber-300 to-cyan-400 shadow-[0_0_18px_rgba(232,121,249,0.45)]', pad: 'p-[3px]' },
   premium: { wrap: 'bg-gradient-to-br from-amber-400 via-yellow-200 to-amber-500 shadow-[0_0_18px_rgba(251,191,36,0.5)]', pad: 'p-[3px]' },
   champion:{ wrap: 'bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 shadow-[0_0_22px_rgba(251,191,36,0.6)]', pad: 'p-[3px]' },
+  diamond: { wrap: 'bg-gradient-to-br from-cyan-200 via-white to-sky-400 shadow-[0_0_22px_rgba(125,211,252,0.7)]', pad: 'p-[3px]' },
+  // Familia "medallón": anillo metálico + remaches (borde punteado) + glow por rareza.
+  medal_bronze:  { wrap: 'bg-gradient-to-br from-amber-300 via-amber-600 to-amber-900 border-2 border-dotted border-amber-200/60 shadow-[0_0_16px_rgba(180,120,60,0.5)]', pad: 'p-[5px]' },
+  medal_silver:  { wrap: 'bg-gradient-to-br from-white via-slate-300 to-slate-500 border-2 border-dotted border-white/70 shadow-[0_0_16px_rgba(203,213,225,0.5)]', pad: 'p-[5px]' },
+  medal_gold:    { wrap: 'bg-gradient-to-br from-yellow-200 via-amber-400 to-amber-700 border-2 border-dotted border-yellow-100/70 shadow-[0_0_18px_rgba(251,191,36,0.6)]', pad: 'p-[5px]' },
+  medal_diamond: { wrap: 'bg-gradient-to-br from-cyan-100 via-sky-300 to-blue-500 border-2 border-dotted border-white/80 shadow-[0_0_20px_rgba(125,211,252,0.65)]', pad: 'p-[5px]' },
 }
 
 export function frameStyle(styleKey) {
@@ -87,6 +130,7 @@ export const BANNER_STYLES = {
   fire:    'bg-gradient-to-br from-orange-700 via-red-800 to-rose-950',
   galaxy:  'bg-gradient-to-br from-fuchsia-800 via-indigo-900 to-slate-950',
   gold:    'bg-gradient-to-br from-amber-600 via-yellow-700 to-amber-900',
+  neon:    'bg-gradient-to-br from-fuchsia-600 via-violet-600 to-cyan-500',
 }
 
 export function bannerStyle(styleKey) {
@@ -130,9 +174,18 @@ export function rarity(r) {
 }
 
 // ── Aviso de cosméticos recién desbloqueados ──
-const SEEN_KEY = 'gl:seen_cosmetics'
+// Scopeado por usuario: sin scope, una cuenta veía/silenciaba los cosméticos de otra.
+const SEEN_KEY_PREFIX = 'gl:seen_cosmetics'
+const seenKeyFor = (id) => `${SEEN_KEY_PREFIX}:${id}`
 const TYPE_LABEL = { frame: 'Borde', title: 'Título', icon: 'Ícono', banner: 'Banner' }
 const RARITY_EMOJI = { common: '✨', rare: '🔷', epic: '🟪', legendary: '🌟' }
+
+// Exclusivo = merece la escena premium (logros difíciles, últimos tiers del pase, premium).
+// Los default por nivel (común/raro) NO lo son → solo notificación chica.
+export function isExclusiveCosmetic(c) {
+  if (!c) return false
+  return c.rarity === 'legendary' || c.rarity === 'epic' || !!c.unlock_achievement || !!c.premium_only
+}
 
 /**
  * Compara los cosméticos que tenés ahora con los ya vistos y avisa los nuevos.
@@ -145,25 +198,35 @@ export async function checkCosmeticUnlocks() {
   try { items = await getCosmetics() } catch { return }
   if (!Array.isArray(items) || items.length === 0) return
 
+  // Limpiar la clave global vieja (filtraba estado entre cuentas).
+  try { localStorage.removeItem(SEEN_KEY_PREFIX) } catch {}
+
+  const seenKey = seenKeyFor(id)
   const owned = items.filter(c => c.owned).map(c => c.code)
   let seen = []
   let hadCache = false
   try {
-    const raw = localStorage.getItem(SEEN_KEY)
+    const raw = localStorage.getItem(seenKey)
     if (raw) { seen = JSON.parse(raw) || []; hadCache = true }
   } catch {}
 
   if (hadCache) {
     const seenSet = new Set(seen)
-    const fresh = items.filter(c => c.owned && !seenSet.has(c.code) && c.code !== 'frame_none')
+    const fresh = items.filter(c => c.owned && !seenSet.has(c.code) && c.code !== 'frame_none' && c.code !== 'icon_none')
     for (const c of fresh) {
-      pushClaimNotification({
-        type: 'cosmetic',
-        title: `${TYPE_LABEL[c.type] || 'Cosmético'}: ${c.name}`,
-        emoji: RARITY_EMOJI[c.rarity] || '🎨',
-      })
+      if (isExclusiveCosmetic(c)) {
+        // Exclusivos (legendarios/épicos, por logro o premium): escena premium tipo logro.
+        queueCosmeticOverlay({ code: c.code, name: c.name, type: c.type, rarity: c.rarity, styleKey: c.style_key })
+      } else {
+        // Default (por nivel, común/raro): solo notificación apilada chica.
+        pushClaimNotification({
+          type: 'cosmetic',
+          title: `${TYPE_LABEL[c.type] || 'Cosmético'}: ${c.name}`,
+          emoji: RARITY_EMOJI[c.rarity] || '🎨',
+        })
+      }
     }
   }
 
-  try { localStorage.setItem(SEEN_KEY, JSON.stringify(owned)) } catch {}
+  try { localStorage.setItem(seenKey, JSON.stringify(owned)) } catch {}
 }

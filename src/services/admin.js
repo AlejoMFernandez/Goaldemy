@@ -56,17 +56,27 @@ export async function getAllUsers() {
         throw new Error('No tienes permisos de administrador');
     }
     
-    // Obtener usuarios básicos de auth.users via user_profiles
-    const { data: profiles, error: profilesError } = await supabase
-        .from('user_profiles')
-        .select('id, email, display_name, avatar_url, role, created_at')
-        .order('created_at', { ascending: false });
-    
-    if (profilesError) {
-        console.error('Error obteniendo usuarios:', profilesError);
-        throw profilesError;
+    // Preferir el RPC get_users_admin: incluye email_confirmed_at + last_sign_in_at
+    // (necesario para detectar usuarios fantasma). Fallback al query directo si el
+    // RPC todavía no está instalado (ver supabase/ghost-users.sql).
+    let profiles = null;
+    try {
+        const { data, error } = await supabase.rpc('get_users_admin');
+        if (!error && Array.isArray(data)) profiles = data;
+    } catch { /* RPC no disponible aún */ }
+
+    if (!profiles) {
+        const { data, error: profilesError } = await supabase
+            .from('user_profiles')
+            .select('id, email, display_name, avatar_url, role, created_at')
+            .order('created_at', { ascending: false });
+        if (profilesError) {
+            console.error('Error obteniendo usuarios:', profilesError);
+            throw profilesError;
+        }
+        profiles = data;
     }
-    
+
     // Enriquecer con nivel y XP usando la función get_user_level
     const usersWithLevels = await Promise.all(
         profiles.map(async (user) => {
@@ -286,6 +296,25 @@ export async function deleteUser(userId) {
         console.error('Error eliminando usuario:', error);
         throw error;
     }
+}
+
+/**
+ * Borra de un saque los usuarios fantasma (mail sin confirmar, viejos y sin
+ * actividad). Requiere correr supabase/ghost-users.sql. Devuelve cuántos borró.
+ * @param {number} days - Días de gracia desde la creación (default 5)
+ * @returns {Promise<number>}
+ */
+export async function purgeGhostUsers(days = 5) {
+    const admin = await isAdmin();
+    if (!admin) {
+        throw new Error('No tienes permisos de administrador');
+    }
+    const { data, error } = await supabase.rpc('purge_ghost_users', { p_days: days });
+    if (error) {
+        console.error('Error purgando usuarios fantasma:', error);
+        throw new Error('No se pudo purgar. ¿Corriste supabase/ghost-users.sql?');
+    }
+    return data || 0;
 }
 
 /**

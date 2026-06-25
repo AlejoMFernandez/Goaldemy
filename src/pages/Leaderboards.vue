@@ -5,6 +5,7 @@ import PeriodTabs from '../components/leaderboard/PeriodTabs.vue'
 import GameFilter from '../components/leaderboard/GameFilter.vue'
 import { getLeaderboard, fetchLevelThresholds, computeLevelFromXp } from '../services/xp'
 import { fetchGames } from '../services/games'
+import { getEquippedCosmeticsBatch } from '../services/cosmetics'
 
 export default {
   name: 'Leaderboards',
@@ -72,6 +73,12 @@ export default {
           total_xp: r.xp_total ?? 0,
         }))
         this.rows = mapped
+
+        // Cosméticos equipados (ícono + color de fondo + borde) para mostrar en el ranking
+        try {
+          const cos = await getEquippedCosmeticsBatch(mapped.map(r => r.user_id))
+          this.rows = this.rows.map(r => ({ ...r, ...(cos[r.user_id] || {}) }))
+        } catch { /* sin cosméticos, se muestran avatares/iniciales */ }
 
         // If any level is missing (older DB without global level), fetch per-user global level as a fallback
         if (this.rows.some(r => r.level == null)) {

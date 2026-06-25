@@ -91,14 +91,24 @@ export async function getAchievementByCode(code) {
  */
 export async function getAchievementUnlockPercentages() {
   try {
-    // Get total registered users count
-    const { count: totalUsers, error: countError } = await supabase
-      .from('user_profiles')
-      .select('id', { count: 'exact', head: true })
-    
-    if (countError || !totalUsers) {
-      console.error('[achievements.js] Error counting users:', countError)
-      return {}
+    // Total de usuarios REALES (confirmados). Los fantasmas (mail sin confirmar)
+    // inflaban el total y bajaban los %. count_real_users los excluye; si el RPC
+    // no está instalado todavía, caemos al conteo de user_profiles.
+    let totalUsers = null
+    try {
+      const { data, error } = await supabase.rpc('count_real_users')
+      if (!error && typeof data === 'number') totalUsers = data
+    } catch { /* RPC no disponible aún */ }
+
+    if (!totalUsers) {
+      const { count, error: countError } = await supabase
+        .from('user_profiles')
+        .select('id', { count: 'exact', head: true })
+      if (countError || !count) {
+        console.error('[achievements.js] Error counting users:', countError)
+        return {}
+      }
+      totalUsers = count
     }
 
     // Get count of users per achievement

@@ -4,6 +4,7 @@ import { getTierForLevel, getNextTier } from '../../services/tiers'
 import countryNames from '../../codeCOUNTRYS.json'
 import LevelProgressionModal from './LevelProgressionModal.vue'
 import { frameStyle, bannerStyle, iconBgStyle, rarity } from '../../services/cosmetics'
+import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 
 const props = defineProps({
   avatarInitial: { type: String, default: '?' },
@@ -140,7 +141,7 @@ const accent = computed(() => {
               class="size-[88px] sm:size-24 overflow-hidden shadow-xl text-white font-extrabold text-2xl sm:text-3xl grid place-items-center"
               :class="[iconBgStyle(iconBgKey), frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl ring-4 ring-slate-900']"
             >
-              <span v-if="iconGlyph" class="leading-none">{{ iconGlyph }}</span>
+              <CosmeticIcon v-if="iconGlyph" :iconKey="iconGlyph" :size="60" />
               <img v-else-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
               <span v-else>{{ avatarInitial }}</span>
             </div>

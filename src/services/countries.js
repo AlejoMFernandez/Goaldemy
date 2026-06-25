@@ -47,7 +47,15 @@ const ALIASES = new Map([
   ['turkiye', 'tr'], ['türkiye', 'tr'], ['turkey', 'tr'],
   ['ivory coast', 'ci'], ["cote d'ivoire", 'ci'], ["cote d’ivoire", 'ci'],
   ['czech republic', 'cz'], ['eswatini', 'sz'], ['swaziland', 'sz'],
-  ['macedonia', 'mk'], ['north macedonia', 'mk']
+  ['macedonia', 'mk'], ['north macedonia', 'mk'],
+  // Estados Unidos: el JSON solo tiene "United States", así que "USA"/español rompían la bandera.
+  ['usa', 'us'], ['u.s.a.', 'us'], ['united states of america', 'us'],
+  ['estados unidos', 'us'], ['ee.uu.', 'us'], ['ee. uu.', 'us'], ['eeuu', 'us'], ['america', 'us'],
+  // Naciones británicas (códigos regionales de flagcdn) + nombres en español.
+  ['england', 'gb-eng'], ['inglaterra', 'gb-eng'],
+  ['scotland', 'gb-sct'], ['escocia', 'gb-sct'],
+  ['wales', 'gb-wls'], ['gales', 'gb-wls'],
+  ['northern ireland', 'gb-nir'], ['irlanda del norte', 'gb-nir'],
 ])
 
 /**

@@ -23,8 +23,8 @@ export default {
           <span class="text-2xl shrink-0">{{ notif.emoji }}</span>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-semibold text-white truncate">{{ notif.title }}</p>
-            <p v-if="notif.xp > 0" class="text-xs text-emerald-400 font-bold">+{{ notif.xp }} XP reclamado</p>
-            <p v-else class="text-xs text-slate-400">Reclamado</p>
+            <p v-if="notif.xp > 0" class="text-xs text-emerald-400 font-bold">+{{ notif.xp }} XP</p>
+            <p v-else class="text-xs text-slate-400">¡Listo!</p>
           </div>
           <svg class="w-5 h-5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
