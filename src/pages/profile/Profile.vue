@@ -80,6 +80,9 @@ export default {
     };
   },
   computed: {
+    bannerClass() {
+      return bannerStyle(this.equippedBannerKey)
+    },
     avatarInitial() {
       const name = this.user?.display_name?.trim()
       if (name) return name[0].toUpperCase()
@@ -398,7 +401,7 @@ export default {
     </div>
 
     <!-- Banner del usuario (estilo Salesforce: full-width, arriba de todo) -->
-    <div class="relative h-32 sm:h-44 w-full rounded-2xl overflow-hidden" :class="[bannerStyle(equippedBannerKey), equippedBannerPremium ? 'anim-pan' : '']">
+    <div class="relative h-32 sm:h-44 w-full rounded-2xl overflow-hidden" :class="[bannerClass, equippedBannerPremium ? 'anim-pan' : '']">
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute top-5 right-12 w-28 h-28 rounded-full border-2 border-white/10 opacity-40"></div>
         <div class="absolute -bottom-6 right-32 w-20 h-20 rounded-full border border-white/10 opacity-30"></div>
