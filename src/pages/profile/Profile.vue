@@ -16,8 +16,9 @@ import { checkAndUnlockSpecials } from '../../services/special-badges';
 import ConnectionsCard from '../../components/profile/ConnectionsCard.vue';
 import CommunityCard from '../../components/profile/CommunityCard.vue';
 import LoadoutShowcase from '../../components/profile/LoadoutShowcase.vue';
+import ProfileIdentityCard from '../../components/profile/ProfileIdentityCard.vue';
 import { findTeamByName, findPlayerByName } from '../../services/players';
-import { getEquippedCosmetics } from '../../services/cosmetics';
+import { getEquippedCosmetics, bannerStyle } from '../../services/cosmetics';
 import { listConnections } from '../../services/connections';
 import { getPublicProfilesByIds } from '../../services/user-profiles';
 
@@ -25,7 +26,7 @@ let unsubscribeAuth = () => {};
 
 export default {
   name: 'Profile',
-  components: { AppH1, ProfileHeaderCard, AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard, LoadoutShowcase },
+  components: { AppH1, ProfileHeaderCard, AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard, LoadoutShowcase, ProfileIdentityCard },
   data() {
     return {
       user: {
@@ -320,6 +321,14 @@ export default {
         this.connectionsLoading = false
       }
     },
+    socialIconSrc(type) {
+      const t = (type || '').toLowerCase()
+      if (t === 'linkedin') return '/social/linkedinmain.png'
+      if (t === 'github') return '/social/githubmain.png'
+      if (t === 'twitter' || t === 'x') return '/social/xmain.png'
+      if (t === 'instagram') return '/social/igmain.png'
+      return ''
+    },
     openFeaturedModal() {
       this.showFeaturedModal = true
     },
@@ -388,152 +397,161 @@ export default {
       </p>
     </div>
 
-    <!-- Hero header with fused progress -->
-    <ProfileHeaderCard
-      :avatar-initial="avatarInitial"
-      :avatar-url="user.avatar_url"
-      :display-name="displayName"
-      :email="user.email"
-      :nationality-code="user.nationality_code"
-      :favorite-team="user.favorite_team"
-      :favorite-player="user.favorite_player"
-      :favorite-team-logo="favTeamLogo"
-      :favorite-player-image="favPlayerImage"
-      :socials="socials"
-      :can-edit="isSelf"
-      :career="user.career"
-      :bio="user.bio"
-      :level-info="levelInfo"
-      :progress-percent="progressPercent"
-      :xp-now="xpNow"
-      :achievements-count="achievements.length"
-      :top-rank="topRank"
-      :frame-style-key="equippedFrameKey"
-      :title-text="equippedTitleText"
-      :title-rarity="equippedTitleRarity"
-      :icon-glyph="equippedIconGlyph"
-      :banner-key="equippedBannerKey"
-      :icon-bg-key="equippedIconBg"
-      :frame-premium="equippedFramePremium"
-      :title-premium="equippedTitlePremium"
-      :banner-premium="equippedBannerPremium"
-    />
-
-    <!-- Tab bar -->
-    <div class="mt-6 flex gap-1 rounded-xl border border-white/10 bg-slate-900/50 p-1">
-      <button
-        v-for="tab in [
-          { key: 'resumen', label: 'Resumen' },
-          { key: 'logros', label: 'Logros' },
-          { key: 'estadisticas', label: 'Estadisticas' },
-        ]"
-        :key="tab.key"
-        @click="activeTab = tab.key"
-        class="flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all"
-        :class="activeTab === tab.key
-          ? 'bg-white/10 text-white shadow-sm'
-          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'"
-      >{{ tab.label }}</button>
+    <!-- Banner del usuario (estilo Salesforce: full-width, arriba de todo) -->
+    <div class="relative h-32 sm:h-44 w-full rounded-2xl overflow-hidden" :class="[bannerStyle(equippedBannerKey), equippedBannerPremium ? 'anim-pan' : '']">
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-5 right-12 w-28 h-28 rounded-full border-2 border-white/10 opacity-40"></div>
+        <div class="absolute -bottom-6 right-32 w-20 h-20 rounded-full border border-white/10 opacity-30"></div>
+        <div class="absolute top-8 left-[38%] w-12 h-12 rounded-full border border-white/5 opacity-20"></div>
+      </div>
     </div>
 
-    <!-- Tab: Resumen -->
-    <div v-if="activeTab === 'resumen'" class="mt-6 space-y-6">
-      <LoadoutShowcase
-        :frame-key="equippedFrameKey"
-        :icon-glyph="equippedIconGlyph"
-        :icon-bg="equippedIconBg"
-        :title-text="equippedTitleText"
-        :title-rarity="equippedTitleRarity"
-        :banner-key="equippedBannerKey"
-        :frame-premium="equippedFramePremium"
-        :title-premium="equippedTitlePremium"
-        :banner-premium="equippedBannerPremium"
-        :is-self="isSelf"
-      />
+    <!-- Dashboard 2 columnas (solapan el banner) -->
+    <div class="-mt-14 relative z-10 grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-5 items-start">
 
-      <XpDonutChart
-        :items="xpByGame"
-        :streaks-by-game="streaksMap"
-        :daily-best-by-name="Object.fromEntries((dailyStreaksItems||[]).map(r => [r.name, r.best]))"
-        :loading="xpByGameLoading || maxStreaksLoading || dailyStreaksLoading"
-      />
+      <!-- Columna izquierda (fija en desktop) -->
+      <div class="space-y-4 lg:sticky lg:top-24">
+        <ProfileIdentityCard
+          :avatar-initial="avatarInitial"
+          :avatar-url="user.avatar_url"
+          :display-name="displayName"
+          :title-text="equippedTitleText"
+          :title-rarity="equippedTitleRarity"
+          :title-premium="equippedTitlePremium"
+          :nationality-code="user.nationality_code"
+          :frame-style-key="equippedFrameKey"
+          :icon-glyph="equippedIconGlyph"
+          :icon-bg-key="equippedIconBg"
+          :frame-premium="equippedFramePremium"
+          :level-info="levelInfo"
+          :progress-percent="progressPercent"
+          :xp-now="xpNow"
+          :achievements-count="achievements.length"
+          :top-rank="topRank"
+          :bio="user.bio"
+          :can-edit="isSelf"
+        />
 
-      <ConnectionsCard
-        v-if="hasConnections || connectionsLoading"
-        :follower-count="followerCount"
-        :following-count="followingCount"
-        :group-count="groupCount"
-        :connections="connectionsList"
-        :loading="connectionsLoading"
-      />
+        <!-- Redes sociales -->
+        <div v-if="socials.length" class="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <p class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">Redes</p>
+          <div class="flex items-center gap-3">
+            <a v-for="so in socials" :key="so.type" :href="so.url" target="_blank" rel="noopener" class="inline-flex hover:scale-110 transition-transform" :title="so.type">
+              <img :src="socialIconSrc(so.type)" :alt="so.type" class="h-7 w-7 object-contain opacity-70 hover:opacity-100 transition-opacity" />
+            </a>
+          </div>
+        </div>
 
-      <CommunityCard
-        v-if="hasCommunityData"
-        :forums-count="forumsCount"
-        :messages-count="messagesCount"
-        :discussions-started-count="discussionsStartedCount"
-      />
-    </div>
+        <!-- Favoritos -->
+        <div v-if="user.favorite_player || user.favorite_team" class="rounded-2xl border border-white/10 bg-slate-900/60 p-4 space-y-2.5">
+          <p class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Favoritos</p>
+          <div v-if="user.favorite_player" class="flex items-center gap-2.5">
+            <div class="h-8 w-8 rounded-lg overflow-hidden bg-slate-800/50 grid place-items-center shrink-0">
+              <img v-if="favPlayerImage" :src="favPlayerImage" alt="" class="h-full w-full object-cover" />
+              <svg v-else class="w-4 h-4 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+            </div>
+            <div class="min-w-0"><p class="text-[9px] uppercase tracking-wider text-slate-500">Jugador</p><p class="text-sm text-slate-200 truncate">{{ user.favorite_player }}</p></div>
+          </div>
+          <div v-if="user.favorite_team" class="flex items-center gap-2.5">
+            <div class="h-8 w-8 rounded-lg overflow-hidden bg-slate-800/50 grid place-items-center shrink-0">
+              <img v-if="favTeamLogo" :src="favTeamLogo" alt="" class="h-full w-full object-contain p-0.5" />
+              <svg v-else class="w-4 h-4 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2L3 7v6c0 3.5 3 6 7 9 4-3 7-5.5 7-9V7l-7-5z" clip-rule="evenodd"/></svg>
+            </div>
+            <div class="min-w-0"><p class="text-[9px] uppercase tracking-wider text-slate-500">Equipo</p><p class="text-sm text-slate-200 truncate">{{ user.favorite_team }}</p></div>
+          </div>
+        </div>
 
-    <!-- Tab: Logros -->
-    <div v-if="activeTab === 'logros'" class="mt-6">
-      <AchievementsCard
-        :achievements="achievements"
-        :loading="achLoading"
-        :featured-codes="featuredAchievements"
-        :is-self="isSelf"
-        @customize="openFeaturedModal"
-      />
-    </div>
+        <!-- Amistades -->
+        <ConnectionsCard
+          v-if="hasConnections || connectionsLoading"
+          :follower-count="followerCount"
+          :following-count="followingCount"
+          :group-count="groupCount"
+          :connections="connectionsList"
+          :loading="connectionsLoading"
+        />
+      </div>
 
-    <!-- Tab: Estadisticas -->
-    <div v-if="activeTab === 'estadisticas'" class="mt-6 space-y-6">
-      <!-- Max streaks by game -->
-      <div v-if="hasStreaks" class="card p-6">
-        <p class="text-xs uppercase tracking-wide text-slate-400 mb-4">Mejores rachas por juego</p>
-        <div class="space-y-3">
-          <div v-for="s in maxStreaks" :key="s.id" class="flex items-center gap-3">
-            <span class="text-sm text-slate-300 w-36 truncate shrink-0">{{ s.name }}</span>
-            <div class="flex-1 h-5 bg-slate-800/50 rounded-full overflow-hidden border border-white/5">
-              <div
-                class="h-full rounded-full bg-gradient-to-r from-amber-500/80 to-orange-500/80 transition-all duration-500 flex items-center justify-end pr-2"
-                :style="{ width: Math.max(12, Math.min(100, (s.streak / Math.max(...maxStreaks.map(x => x.streak || 1))) * 100)) + '%' }"
-              >
-                <span class="text-[10px] font-bold text-white drop-shadow">{{ s.streak }}</span>
+      <!-- Columna derecha (secciones) -->
+      <div class="space-y-5 min-w-0">
+        <!-- 1. Logros destacados -->
+        <AchievementsCard
+          :achievements="achievements"
+          :loading="achLoading"
+          :featured-codes="featuredAchievements"
+          :is-self="isSelf"
+          @customize="openFeaturedModal"
+        />
+
+        <!-- 2. Coleccionables destacados -->
+        <LoadoutShowcase
+          :frame-key="equippedFrameKey"
+          :icon-glyph="equippedIconGlyph"
+          :icon-bg="equippedIconBg"
+          :title-text="equippedTitleText"
+          :title-rarity="equippedTitleRarity"
+          :banner-key="equippedBannerKey"
+          :frame-premium="equippedFramePremium"
+          :title-premium="equippedTitlePremium"
+          :banner-premium="equippedBannerPremium"
+          :is-self="isSelf"
+        />
+
+        <!-- 3. Juego más jugado / XP por juego -->
+        <XpDonutChart
+          :items="xpByGame"
+          :streaks-by-game="streaksMap"
+          :daily-best-by-name="Object.fromEntries((dailyStreaksItems||[]).map(r => [r.name, r.best]))"
+          :loading="xpByGameLoading || maxStreaksLoading || dailyStreaksLoading"
+        />
+
+        <!-- 4. Mejores rachas -->
+        <div v-if="hasStreaks" class="card p-6">
+          <p class="text-xs uppercase tracking-wide text-slate-400 mb-4">Mejores rachas por juego</p>
+          <div class="space-y-3">
+            <div v-for="s in maxStreaks" :key="s.id" class="flex items-center gap-3">
+              <span class="text-sm text-slate-300 w-36 truncate shrink-0">{{ s.name }}</span>
+              <div class="flex-1 h-5 bg-slate-800/50 rounded-full overflow-hidden border border-white/5">
+                <div
+                  class="h-full rounded-full bg-gradient-to-r from-amber-500/80 to-orange-500/80 transition-all duration-500 flex items-center justify-end pr-2"
+                  :style="{ width: Math.max(12, Math.min(100, (s.streak / Math.max(...maxStreaks.map(x => x.streak || 1))) * 100)) + '%' }"
+                >
+                  <span class="text-[10px] font-bold text-white drop-shadow">{{ s.streak }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Daily streaks -->
-      <div v-if="dailyStreaksItems.some(r => r.best > 0)" class="card p-6">
-        <p class="text-xs uppercase tracking-wide text-slate-400 mb-4">Rachas diarias</p>
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <div
-            v-for="d in dailyStreaksItems.filter(r => r.best > 0)"
-            :key="d.slug"
-            class="rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/60 to-slate-700/40 p-3.5"
-          >
-            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1 truncate">{{ d.name }}</p>
-            <div class="flex items-baseline gap-2">
-              <span class="text-xl font-bold text-white">{{ d.current }}</span>
-              <span class="text-[10px] text-slate-500">actual</span>
-            </div>
-            <div class="flex items-baseline gap-2 mt-0.5">
-              <span class="text-sm font-semibold text-amber-400">{{ d.best }}</span>
-              <span class="text-[10px] text-slate-500">mejor</span>
+        <!-- Rachas diarias -->
+        <div v-if="dailyStreaksItems.some(r => r.best > 0)" class="card p-6">
+          <p class="text-xs uppercase tracking-wide text-slate-400 mb-4">Rachas diarias</p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div
+              v-for="d in dailyStreaksItems.filter(r => r.best > 0)"
+              :key="d.slug"
+              class="rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/60 to-slate-700/40 p-3.5"
+            >
+              <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1 truncate">{{ d.name }}</p>
+              <div class="flex items-baseline gap-2">
+                <span class="text-xl font-bold text-white">{{ d.current }}</span>
+                <span class="text-[10px] text-slate-500">actual</span>
+              </div>
+              <div class="flex items-baseline gap-2 mt-0.5">
+                <span class="text-sm font-semibold text-amber-400">{{ d.best }}</span>
+                <span class="text-[10px] text-slate-500">mejor</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Empty state -->
-      <div v-if="!hasStreaks && !dailyStreaksLoading && !maxStreaksLoading" class="card p-8 text-center">
-        <svg class="w-12 h-12 mx-auto text-slate-700 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-        </svg>
-        <p class="text-slate-500 text-sm">Juga partidas para ver tus estadisticas</p>
+        <!-- Comunidad -->
+        <CommunityCard
+          v-if="hasCommunityData"
+          :forums-count="forumsCount"
+          :messages-count="messagesCount"
+          :discussions-started-count="discussionsStartedCount"
+        />
       </div>
     </div>
 
