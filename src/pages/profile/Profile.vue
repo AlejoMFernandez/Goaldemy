@@ -395,7 +395,7 @@ export default {
     </div>
 
     <!-- Banner del usuario full-bleed (100% del ancho de pantalla, estilo Salesforce) -->
-    <div class="relative h-36 sm:h-52 overflow-hidden w-screen left-1/2 -translate-x-1/2" :class="[bannerClass, equippedBannerPremium ? 'anim-pan' : '']">
+    <div class="relative h-36 sm:h-52 overflow-hidden w-screen left-1/2 -translate-x-1/2 -mt-10 lg:-mt-12" :class="[bannerClass, equippedBannerPremium ? 'anim-pan' : '']">
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute top-5 right-12 w-28 h-28 rounded-full border-2 border-white/10 opacity-40"></div>
         <div class="absolute -bottom-6 right-32 w-20 h-20 rounded-full border border-white/10 opacity-30"></div>

@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { getTierForLevel, getNextTier } from '../../services/tiers'
+import { computeLevelProgress } from '../../services/xp'
 import { frameStyle, iconBgStyle, rarity } from '../../services/cosmetics'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 import countryNames from '../../codeCOUNTRYS.json'
@@ -38,6 +39,8 @@ const tierProgress = computed(() => {
   if (span <= 0) return 100
   return Math.min(100, Math.max(0, Math.round(((level.value - (t.minLevel || 0)) / span) * 100)))
 })
+// Progreso al próximo NIVEL (XP), como el dropdown del navbar.
+const levelProgress = computed(() => computeLevelProgress(props.levelInfo))
 const countryName = computed(() => {
   const code = (props.nationalityCode || '').toString().toLowerCase()
   return code ? (countryNames[code] || '') : ''
@@ -85,6 +88,16 @@ const accentText = computed(() => ACCENT[currentTier.value?.color] || 'text-emer
             <div class="text-base font-bold text-white leading-none">{{ achievementsCount }}</div>
             <div class="text-[9px] uppercase tracking-wider text-slate-500 mt-1">Logros</div>
           </div>
+        </div>
+      </div>
+      <!-- Progreso al próximo nivel (XP) -->
+      <div v-if="level < 50" class="mt-3">
+        <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+          <span>Progreso al nivel {{ level + 1 }}</span>
+          <span class="text-slate-300 font-medium tabular-nums">{{ levelProgress.earned }}/{{ levelProgress.range }} XP</span>
+        </div>
+        <div class="h-2 rounded-full bg-black/40 overflow-hidden ring-1 ring-white/5">
+          <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: progressPercent + '%' }"></div>
         </div>
       </div>
       <router-link v-if="topRank" to="/leaderboards" class="mt-3 flex items-center justify-between rounded-lg bg-amber-500/[0.08] border border-amber-500/25 px-3 py-2 hover:bg-amber-500/[0.14] transition">
