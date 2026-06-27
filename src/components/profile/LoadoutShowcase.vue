@@ -52,7 +52,7 @@ function rarLabel(r) { return RARITY_LABEL[r] || 'Común' }
       <div class="flex flex-col items-center text-center gap-2">
         <div class="h-[72px] grid place-items-center">
           <div :class="[frameStyle(frameKey).wrap, frameStyle(frameKey).pad, 'rounded-full', framePremium ? 'anim-pan' : '']">
-            <div class="size-14 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 grid place-items-center text-slate-400 text-lg">⚽</div>
+            <div class="size-14 rounded-full bg-gradient-to-br from-slate-700 to-slate-900"></div>
           </div>
         </div>
         <div>

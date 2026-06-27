@@ -356,14 +356,9 @@ export default {
 </script>
 
 <template>
-  <div class="mx-auto max-w-4xl pb-12 px-4">
-    <!-- Page heading + connect buttons -->
-    <div class="mb-6 flex items-center justify-between gap-4">
-      <div>
-        <AppH1 class="!mb-1">{{ isSelf ? 'Mi Perfil' : 'Perfil' }}</AppH1>
-        <p class="text-sm text-slate-400">{{ isSelf ? 'Tu progreso y logros' : 'Informacion del usuario' }}</p>
-      </div>
-      <div v-if="canConnect" class="flex items-center gap-2">
+  <div class="mx-auto max-w-6xl pb-12 px-4">
+    <!-- Botones de conexión (solo en perfiles ajenos) -->
+    <div v-if="canConnect" class="mb-4 flex items-center justify-end gap-2">
         <template v-if="conn.state==='connected'">
           <button @click="$router.push('/messages/' + user.id)"
             class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-emerald-400/30 text-white bg-emerald-500/20 hover:bg-emerald-500/30 transition-all shadow-lg hover:shadow-emerald-500/20">
@@ -386,7 +381,6 @@ export default {
             Conectar
           </button>
         </template>
-      </div>
     </div>
 
     <!-- Pending connection banner -->
@@ -400,8 +394,8 @@ export default {
       </p>
     </div>
 
-    <!-- Banner del usuario (estilo Salesforce: full-width, arriba de todo) -->
-    <div class="relative h-32 sm:h-44 w-full rounded-2xl overflow-hidden" :class="[bannerClass, equippedBannerPremium ? 'anim-pan' : '']">
+    <!-- Banner del usuario full-bleed (100% del ancho de pantalla, estilo Salesforce) -->
+    <div class="relative h-36 sm:h-52 overflow-hidden w-screen left-1/2 -translate-x-1/2" :class="[bannerClass, equippedBannerPremium ? 'anim-pan' : '']">
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute top-5 right-12 w-28 h-28 rounded-full border-2 border-white/10 opacity-40"></div>
         <div class="absolute -bottom-6 right-32 w-20 h-20 rounded-full border border-white/10 opacity-30"></div>
@@ -410,7 +404,7 @@ export default {
     </div>
 
     <!-- Dashboard 2 columnas (solapan el banner) -->
-    <div class="-mt-14 relative z-10 grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-5 items-start">
+    <div class="-mt-16 relative z-10 grid grid-cols-1 lg:grid-cols-[360px_minmax(0,1fr)] gap-5 items-start">
 
       <!-- Columna izquierda (fija en desktop) -->
       <div class="space-y-4 lg:sticky lg:top-24">
