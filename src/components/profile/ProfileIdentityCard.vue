@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { getTierForLevel, getNextTier } from '../../services/tiers'
 import { computeLevelProgress } from '../../services/xp'
 import { frameStyle, iconBgStyle, rarity } from '../../services/cosmetics'
@@ -59,16 +60,23 @@ const showProgression = ref(false)
 
 <template>
   <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/60 backdrop-blur shadow-2xl px-5 pb-5">
-    <!-- Avatar (solapa el banner) -->
+    <!-- Avatar (solapa el banner). Clickeable para editar (perfil propio) con lápiz al hover. -->
     <div class="flex flex-col items-center -mt-8">
-      <div :class="[frameStyle(frameStyleKey).wrap, frameStyle(frameStyleKey).pad, 'rounded-2xl', framePremium ? 'anim-pan' : '']">
-        <div class="size-24 overflow-hidden grid place-items-center text-white font-extrabold text-3xl"
-             :class="[iconBgStyle(iconBgKey), frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl ring-4 ring-slate-900']">
-          <CosmeticIcon v-if="iconGlyph" :iconKey="iconGlyph" :size="64" />
-          <img v-else-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
-          <span v-else>{{ avatarInitial }}</span>
+      <component :is="canEdit ? RouterLink : 'div'" :to="canEdit ? '/profile-edit' : undefined"
+        class="group relative inline-block" :class="canEdit ? 'cursor-pointer' : ''" :title="canEdit ? 'Editar perfil' : undefined">
+        <div :class="[frameStyle(frameStyleKey).wrap, frameStyle(frameStyleKey).pad, 'rounded-2xl', framePremium ? 'anim-pan' : '']">
+          <div class="relative size-24 overflow-hidden grid place-items-center text-white font-extrabold text-3xl"
+               :class="[iconBgStyle(iconBgKey), frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl ring-4 ring-slate-900']">
+            <CosmeticIcon v-if="iconGlyph" :iconKey="iconGlyph" :size="64" />
+            <img v-else-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
+            <span v-else>{{ avatarInitial }}</span>
+            <!-- Overlay lápiz (solo en perfil propio) -->
+            <div v-if="canEdit" class="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity grid place-items-center">
+              <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" /></svg>
+            </div>
+          </div>
         </div>
-      </div>
+      </component>
       <h2 class="mt-3 text-xl font-bold text-white text-center leading-tight flex items-center gap-2">
         {{ displayName }}
         <img v-if="nationalityCode" :src="`https://flagcdn.com/w20/${nationalityCode}.png`" width="20" height="14" class="rounded ring-1 ring-white/10" :alt="countryName" />
@@ -143,10 +151,6 @@ const showProgression = ref(false)
 
     <!-- Bio -->
     <p v-if="bio" class="mt-3 text-sm text-slate-300 leading-relaxed whitespace-pre-line">{{ bio }}</p>
-
-    <router-link v-if="canEdit" to="/profile-edit" class="mt-3 block w-full text-center rounded-xl border border-white/15 hover:bg-white/5 text-slate-200 py-2 text-sm font-semibold transition">
-      Editar perfil
-    </router-link>
 
     <Teleport to="body">
       <LevelProgressionModal v-if="showProgression" :current-level="level" @close="showProgression = false" />
