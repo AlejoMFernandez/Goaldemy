@@ -430,31 +430,40 @@ export default {
         />
 
         <!-- Redes sociales -->
-        <div v-if="socials.length" class="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-          <p class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">Redes</p>
-          <div class="flex items-center gap-3">
-            <a v-for="so in socials" :key="so.type" :href="so.url" target="_blank" rel="noopener" class="inline-flex hover:scale-110 transition-transform" :title="so.type">
-              <img :src="socialIconSrc(so.type)" :alt="so.type" class="h-7 w-7 object-contain opacity-70 hover:opacity-100 transition-opacity" />
+        <div v-if="socials.length" class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/50 p-4">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="w-1 h-5 rounded-full bg-gradient-to-b from-sky-400 to-blue-500"></span>
+            <h3 class="font-display font-bold text-white">Redes</h3>
+          </div>
+          <div class="grid grid-cols-4 gap-2">
+            <a v-for="so in socials" :key="so.type" :href="so.url" target="_blank" rel="noopener"
+               class="aspect-square rounded-xl border border-white/10 bg-white/[0.03] grid place-items-center hover:bg-white/10 hover:border-white/25 hover:scale-105 transition" :title="so.type">
+              <img :src="socialIconSrc(so.type)" :alt="so.type" class="w-7 h-7 object-contain" />
             </a>
           </div>
         </div>
 
         <!-- Favoritos -->
-        <div v-if="user.favorite_player || user.favorite_team" class="rounded-2xl border border-white/10 bg-slate-900/60 p-4 space-y-2.5">
-          <p class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Favoritos</p>
-          <div v-if="user.favorite_player" class="flex items-center gap-2.5">
-            <div class="h-8 w-8 rounded-lg overflow-hidden bg-slate-800/50 grid place-items-center shrink-0">
-              <img v-if="favPlayerImage" :src="favPlayerImage" alt="" class="h-full w-full object-cover" />
-              <svg v-else class="w-4 h-4 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
-            </div>
-            <div class="min-w-0"><p class="text-[9px] uppercase tracking-wider text-slate-500">Jugador</p><p class="text-sm text-slate-200 truncate">{{ user.favorite_player }}</p></div>
+        <div v-if="user.favorite_player || user.favorite_team" class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/50 p-4">
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="w-1 h-5 rounded-full bg-gradient-to-b from-emerald-400 to-cyan-500"></span>
+            <h3 class="font-display font-bold text-white">Favoritos</h3>
           </div>
-          <div v-if="user.favorite_team" class="flex items-center gap-2.5">
-            <div class="h-8 w-8 rounded-lg overflow-hidden bg-slate-800/50 grid place-items-center shrink-0">
-              <img v-if="favTeamLogo" :src="favTeamLogo" alt="" class="h-full w-full object-contain p-0.5" />
-              <svg v-else class="w-4 h-4 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2L3 7v6c0 3.5 3 6 7 9 4-3 7-5.5 7-9V7l-7-5z" clip-rule="evenodd"/></svg>
+          <div class="grid grid-cols-2 gap-3">
+            <div v-if="user.favorite_player" class="rounded-xl border border-white/10 bg-white/[0.03] p-3 flex flex-col items-center text-center gap-2">
+              <div class="w-16 h-16 rounded-xl overflow-hidden bg-slate-800/50 grid place-items-center ring-1 ring-white/10">
+                <img v-if="favPlayerImage" :src="favPlayerImage" alt="" class="h-full w-full object-cover" />
+                <svg v-else class="w-6 h-6 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+              </div>
+              <div class="min-w-0 w-full"><p class="text-[9px] uppercase tracking-wider text-emerald-400/70 font-semibold">Jugador</p><p class="text-xs text-white font-medium truncate">{{ user.favorite_player }}</p></div>
             </div>
-            <div class="min-w-0"><p class="text-[9px] uppercase tracking-wider text-slate-500">Equipo</p><p class="text-sm text-slate-200 truncate">{{ user.favorite_team }}</p></div>
+            <div v-if="user.favorite_team" class="rounded-xl border border-white/10 bg-white/[0.03] p-3 flex flex-col items-center text-center gap-2">
+              <div class="w-16 h-16 rounded-xl overflow-hidden bg-slate-800/50 grid place-items-center ring-1 ring-white/10">
+                <img v-if="favTeamLogo" :src="favTeamLogo" alt="" class="h-full w-full object-contain p-1.5" />
+                <svg v-else class="w-6 h-6 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2L3 7v6c0 3.5 3 6 7 9 4-3 7-5.5 7-9V7l-7-5z" clip-rule="evenodd"/></svg>
+              </div>
+              <div class="min-w-0 w-full"><p class="text-[9px] uppercase tracking-wider text-cyan-400/70 font-semibold">Equipo</p><p class="text-xs text-white font-medium truncate">{{ user.favorite_team }}</p></div>
+            </div>
           </div>
         </div>
 
@@ -504,7 +513,10 @@ export default {
 
         <!-- 4. Mejores rachas -->
         <div v-if="hasStreaks" class="card p-6">
-          <p class="text-xs uppercase tracking-wide text-slate-400 mb-4">Mejores rachas por juego</p>
+          <div class="flex items-center gap-2.5 mb-4">
+            <span class="w-1 h-5 rounded-full bg-gradient-to-b from-amber-400 to-orange-500"></span>
+            <h3 class="font-display font-bold text-white">Mejores rachas</h3>
+          </div>
           <div class="space-y-3">
             <div v-for="s in maxStreaks" :key="s.id" class="flex items-center gap-3">
               <span class="text-sm text-slate-300 w-36 truncate shrink-0">{{ s.name }}</span>
@@ -520,23 +532,31 @@ export default {
           </div>
         </div>
 
-        <!-- Rachas diarias -->
+        <!-- Rachas diarias (visual: imagen del juego + 🔥 + números) -->
         <div v-if="dailyStreaksItems.some(r => r.best > 0)" class="card p-6">
-          <p class="text-xs uppercase tracking-wide text-slate-400 mb-4">Rachas diarias</p>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div class="flex items-center gap-2.5 mb-4">
+            <span class="w-1 h-5 rounded-full bg-gradient-to-b from-orange-400 to-red-500"></span>
+            <h3 class="font-display font-bold text-white">Rachas diarias</h3>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div
               v-for="d in dailyStreaksItems.filter(r => r.best > 0)"
               :key="d.slug"
-              class="rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/60 to-slate-700/40 p-3.5"
+              class="flex items-center gap-3 rounded-xl border border-white/10 bg-gradient-to-br from-orange-500/[0.06] to-slate-900/40 p-3"
             >
-              <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1 truncate">{{ d.name }}</p>
-              <div class="flex items-baseline gap-2">
-                <span class="text-xl font-bold text-white">{{ d.current }}</span>
-                <span class="text-[10px] text-slate-500">actual</span>
+              <div class="relative w-11 h-11 rounded-lg overflow-hidden bg-slate-800/60 grid place-items-center shrink-0 text-lg">
+                🔥
+                <img :src="`/games/${d.slug}.svg`" :alt="d.name" class="absolute inset-0 w-full h-full object-contain p-1 bg-slate-800/70" @error="$event.target.remove()" />
               </div>
-              <div class="flex items-baseline gap-2 mt-0.5">
-                <span class="text-sm font-semibold text-amber-400">{{ d.best }}</span>
-                <span class="text-[10px] text-slate-500">mejor</span>
+              <div class="min-w-0 flex-1">
+                <p class="text-xs text-slate-300 truncate font-medium mb-0.5">{{ d.name }}</p>
+                <div class="flex items-center gap-2.5">
+                  <span class="inline-flex items-baseline gap-1 text-orange-300">
+                    <span class="text-base">🔥</span>
+                    <span class="font-display font-extrabold text-xl leading-none">{{ d.current }}</span>
+                  </span>
+                  <span class="text-[10px] text-slate-500">mejor <span class="text-amber-400 font-bold">{{ d.best }}</span></span>
+                </div>
               </div>
             </div>
           </div>

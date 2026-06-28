@@ -1,138 +1,102 @@
-<script>
-import { Doughnut } from 'vue-chartjs'
-import {
-  Chart as ChartJS,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-} from 'chart.js'
+<script setup>
+import { ref, computed } from 'vue'
 
-ChartJS.register(Title, Tooltip, Legend, ArcElement)
+const props = defineProps({
+  items: { type: Array, required: true },        // [{ id, name, cover_url, xp }]
+  streaksByGame: { type: Object, default: () => ({}) },
+  dailyBestByName: { type: Object, default: () => ({}) },
+  loading: { type: Boolean, default: false },
+})
 
-export default {
-  name: 'XpDonutChart',
-  components: { Doughnut },
-  props: {
-    items: { type: Array, required: true }, // [{ id, name, xp }]
-    streaksByGame: { type: Object, default: () => ({}) }, // { [gameId]: maxStreak }
-    dailyBestByName: { type: Object, default: () => ({}) }, // { [gameName]: bestDailyStreak }
-    loading: { type: Boolean, default: false },
-  },
-  data() {
-    return { chartRef: null }
-  },
-  computed: {
-    chartData() {
-      const labels = this.items.map(i => i.name)
-      const data = this.items.map(i => i.xp)
-      const palette = [
-        '#60a5fa', '#a78bfa', '#34d399', '#fbbf24', '#f87171', '#f472b6', '#22d3ee', '#93c5fd'
-      ]
-      const bg = labels.map((_, idx) => palette[idx % palette.length] + '88')
-      const border = labels.map((_, idx) => palette[idx % palette.length])
-      return {
-        labels,
-        datasets: [{
-          data,
-          backgroundColor: bg,
-          borderColor: border,
-          borderWidth: 1,
-        }]
-      }
-    },
-    chartOptions() {
-      return {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          // Legend below the chart with extra spacing to separate from the donut
-          legend: {
-            position: 'bottom',
-            labels: { color: '#cbd5e1', boxWidth: 12, padding: 16 },
-            padding: 16,
-          },
-          tooltip: {
-            callbacks: {
-              label: (ctx) => {
-                const v = ctx.parsed ?? ctx.raw ?? 0
-                const nf = new Intl.NumberFormat('es-AR')
-                return ` ${nf.format(v)} XP`
-              }
-            }
-          }
-        },
-        // Extra bottom padding creates a clearer gap between the chart area and the legend
-        layout: { padding: { top: 8, right: 8, bottom: 16, left: 8 } },
-      }
-    }
-  },
-  methods: {
-    onChartMounted(el) {
-      this.chartRef = el
-    },
-    highlightIndex(i) {
-      const c = this.chartRef?.chart
-      if (!c) return
-      c.setActiveElements([{ datasetIndex: 0, index: i }])
-      c.tooltip?.setActiveElements?.([{ datasetIndex: 0, index: i }], { x: 0, y: 0 })
-      c.update()
-    },
-    clearHighlight() {
-      const c = this.chartRef?.chart
-      if (!c) return
-      c.setActiveElements([])
-      c.tooltip?.setActiveElements?.([], { x: 0, y: 0 })
-      c.update()
-    }
-  }
-}
+const showAll = ref(false)
+const sorted = computed(() => [...(props.items || [])].filter(g => (g.xp || 0) > 0).sort((a, b) => (b.xp || 0) - (a.xp || 0)))
+const maxXp = computed(() => Math.max(1, ...sorted.value.map(g => g.xp || 0)))
+const topItems = computed(() => sorted.value.slice(0, 5))
+const totalXp = computed(() => sorted.value.reduce((s, g) => s + (g.xp || 0), 0))
+const nf = new Intl.NumberFormat('es-AR')
+function pct(xp) { return Math.max(4, Math.round(((xp || 0) / maxXp.value) * 100)) }
 </script>
 
 <template>
-  <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur p-6 w-full shadow-xl">
-    <p class="text-xs uppercase tracking-wide text-slate-400 mb-4">XP por juego</p>
-    <div class="min-h-56">
-      <div v-if="loading" class="text-center py-12 text-slate-400">
-        <div class="animate-pulse">Cargando estadísticas...</div>
+  <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur p-5 sm:p-6 w-full shadow-xl">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2.5">
+        <span class="w-1 h-5 rounded-full bg-gradient-to-b from-emerald-400 to-cyan-500"></span>
+        <h3 class="font-display font-bold text-white leading-tight">XP por juego</h3>
       </div>
-      <div v-else-if="!items.length" class="text-center py-12 rounded-xl bg-slate-800/30 border border-white/5">
-        <div class="text-3xl mb-2">📊</div>
-        <p class="text-slate-400">Aún no hay XP para graficar</p>
-      </div>
-      <div v-else>
-        <div style="height: 240px;" class="mb-4">
-          <Doughnut ref="chart" :data="chartData" :options="chartOptions" :height="240" :width="240" v-slot="{ chart }" >
-          </Doughnut>
-        </div>
-        <div class="rounded-xl bg-slate-800/40 border border-white/10 p-4">
-          <p class="text-[10px] uppercase tracking-wider text-slate-400 mb-3">Detalle por juego</p>
-          <ul class="space-y-1">
-            <li v-for="(g,idx) in items" :key="g.id" 
-              class="flex items-center gap-2 text-sm rounded-lg px-2 py-1 hover:bg-white/5 transition-all">
-              <span class="truncate text-slate-200">{{ g.name }}</span>
-              <span class="ml-auto flex items-center gap-2">
-                <span v-if="streaksByGame[g.id]" 
-                  class="hidden sm:inline-flex items-center rounded-lg px-2 py-0.5 border border-emerald-400/30 bg-emerald-500/10 text-emerald-200 text-xs font-semibold" 
-                  title="Mejor racha en juego">
-                  ×{{ streaksByGame[g.id] }}
-                </span>
-                <span v-if="dailyBestByName[g.name]" 
-                  class="hidden sm:inline-flex items-center rounded-lg px-2 py-0.5 border border-orange-400/30 bg-orange-500/10 text-orange-200 text-xs font-semibold" 
-                  title="Mejor racha diaria">
-                  🔥{{ dailyBestByName[g.name] }}
-                </span>
-                <span class="text-slate-100 font-medium">{{ new Intl.NumberFormat('es-AR').format(g.xp) }} XP</span>
-              </span>
-            </li>
-          </ul>
-        </div>
-      </div>
+      <span v-if="!loading && sorted.length" class="text-[11px] text-slate-400 tabular-nums">{{ nf.format(totalXp) }} XP</span>
     </div>
+
+    <div v-if="loading" class="text-center py-10 text-slate-400 animate-pulse">Cargando estadísticas...</div>
+    <div v-else-if="!sorted.length" class="text-center py-10 rounded-xl bg-slate-800/30 border border-white/5">
+      <div class="text-3xl mb-2">📊</div>
+      <p class="text-slate-400">Aún no hay XP para graficar</p>
+    </div>
+
+    <template v-else>
+      <div class="space-y-3">
+        <div v-for="g in topItems" :key="g.id" class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg overflow-hidden bg-slate-800/60 border border-white/10 grid place-items-center shrink-0">
+            <img v-if="g.cover_url" :src="g.cover_url" :alt="g.name" class="w-full h-full object-cover" />
+            <span v-else class="text-sm">⚽</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <span class="truncate text-sm text-slate-200">{{ g.name }}</span>
+              <span class="text-sm text-white font-semibold tabular-nums shrink-0">{{ nf.format(g.xp) }} XP</span>
+            </div>
+            <div class="h-2 rounded-full bg-black/40 overflow-hidden ring-1 ring-white/5">
+              <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-700" :style="{ width: pct(g.xp) + '%' }"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button v-if="sorted.length > 5" @click="showAll = true"
+        class="mt-4 w-full rounded-xl border border-white/10 bg-slate-800/40 text-slate-300 hover:bg-slate-700/40 hover:text-white py-2 text-sm font-semibold transition">
+        Ver todos los juegos ({{ sorted.length }}) →
+      </button>
+    </template>
+
+    <!-- Popup: todos los juegos -->
+    <Teleport to="body">
+      <Transition name="xp-modal">
+        <div v-if="showAll" class="fixed inset-0 z-[60] overflow-y-auto">
+          <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" @click="showAll = false"></div>
+          <div class="relative min-h-full flex items-start sm:items-center justify-center p-3 sm:p-4" @click.self="showAll = false">
+            <div class="relative w-full max-w-lg rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl my-4">
+              <div class="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                <h3 class="font-display font-extrabold text-white text-lg">XP por juego</h3>
+                <button @click="showAll = false" class="text-slate-400 hover:text-white transition">
+                  <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div class="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
+                <div v-for="g in sorted" :key="g.id" class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-lg overflow-hidden bg-slate-800/60 border border-white/10 grid place-items-center shrink-0">
+                    <img v-if="g.cover_url" :src="g.cover_url" :alt="g.name" class="w-full h-full object-cover" />
+                    <span v-else class="text-sm">⚽</span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                      <span class="truncate text-sm text-slate-200">{{ g.name }}</span>
+                      <span class="text-sm text-white font-semibold tabular-nums shrink-0">{{ nf.format(g.xp) }} XP</span>
+                    </div>
+                    <div class="h-2 rounded-full bg-black/40 overflow-hidden ring-1 ring-white/5">
+                      <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400" :style="{ width: pct(g.xp) + '%' }"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <style scoped>
-canvas { cursor: pointer; }
+.xp-modal-enter-active, .xp-modal-leave-active { transition: opacity 0.2s ease; }
+.xp-modal-enter-from, .xp-modal-leave-to { opacity: 0; }
 </style>
-
