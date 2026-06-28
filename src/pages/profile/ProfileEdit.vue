@@ -92,6 +92,13 @@ export default {
 
 <template>
   <div class="mx-auto max-w-3xl">
+    <button type="button" @click="$router.push('/profile')"
+            class="group inline-flex items-center gap-2 mb-4 text-sm font-semibold text-slate-300 hover:text-white transition">
+      <span class="grid place-items-center h-8 w-8 rounded-lg border border-white/10 bg-white/5 group-hover:bg-white/10 group-hover:border-white/20 transition">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M15 18l-6-6 6-6" /></svg>
+      </span>
+      Volver al perfil
+    </button>
     <AppH1>Editar mi Perfil</AppH1>
 
     <CosmeticsCollection class="mt-4 block" :avatar-url="user?.avatar_url || ''" :name="formData.display_name" :initial="avatarInitial">

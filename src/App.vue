@@ -1,7 +1,7 @@
 <script>
 import AppNavBar from './components/AppNavBar.vue';
 import AppFooter from './components/AppFooter.vue';
-import DirectMessagesDock from './components/DirectMessagesDock.vue';
+import FriendsDock from './components/FriendsDock.vue';
 import AppToast from './components/AppToast.vue';
 import AppLoader from './components/common/AppLoader.vue';
 import BrandedBackground from './components/BrandedBackground.vue';
@@ -11,6 +11,7 @@ import CosmeticUnlockOverlay from './components/rewards/CosmeticUnlockOverlay.vu
 import ClaimNotificationStack from './components/rewards/ClaimNotificationStack.vue';
 import { authReady } from './services/auth';
 import { setSuppressOverlays } from './stores/notifications';
+import { installPresence, setPresenceGame } from './services/presence';
 
 export default {
   name: 'App',
@@ -19,7 +20,7 @@ export default {
     AppFooter,
     AppToast,
     AppLoader,
-    DirectMessagesDock,
+    FriendsDock,
     BrandedBackground,
     AchievementUnlockOverlay,
     LevelUpOverlay,
@@ -40,9 +41,12 @@ export default {
     try { await authReady; } finally { this.authBooting = false }
     import('./services/players').then(m => m.initializePlayers?.()).catch(() => {})
     import('./services/cosmetics').then(m => m.checkCosmeticUnlocks?.()).catch(() => {})
-    this.$watch(() => this.$route?.path, () => {
+    installPresence()
+    this.$watch(() => this.$route?.path, (path) => {
       setSuppressOverlays(false)
-    })
+      const m = (path || '').match(/^\/games\/([^/?#]+)/)
+      setPresenceGame(m ? m[1] : null)
+    }, { immediate: true })
   }
 }
 </script>
@@ -67,6 +71,6 @@ export default {
     <LevelUpOverlay />
     <CosmeticUnlockOverlay />
     <ClaimNotificationStack />
-    <DirectMessagesDock v-if="!isAuthLayout" />
+    <FriendsDock v-if="!isAuthLayout" />
   </div>
 </template>
