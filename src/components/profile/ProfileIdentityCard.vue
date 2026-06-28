@@ -1,9 +1,10 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { getTierForLevel, getNextTier } from '../../services/tiers'
 import { computeLevelProgress } from '../../services/xp'
 import { frameStyle, iconBgStyle, rarity } from '../../services/cosmetics'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
+import LevelProgressionModal from './LevelProgressionModal.vue'
 import countryNames from '../../codeCOUNTRYS.json'
 
 const props = defineProps({
@@ -51,6 +52,9 @@ const ACCENT = {
   red: 'text-red-400', sky: 'text-sky-400', violet: 'text-violet-400',
 }
 const accentText = computed(() => ACCENT[currentTier.value?.color] || 'text-emerald-400')
+
+// Popup con la progresión completa de rangos/niveles + insignias.
+const showProgression = ref(false)
 </script>
 
 <template>
@@ -109,8 +113,9 @@ const accentText = computed(() => ACCENT[currentTier.value?.color] || 'text-emer
       </router-link>
     </div>
 
-    <!-- Rango: escudo actual ——barra—— escudo siguiente (estilo Trailhead) -->
-    <div class="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+    <!-- Rango: escudo actual ——barra—— escudo siguiente (Trailhead). Clickeable → popup de rangos. -->
+    <button type="button" @click="showProgression = true"
+      class="mt-3 w-full text-left rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition p-4 group">
       <div class="flex items-center gap-2.5">
         <div class="flex flex-col items-center shrink-0 w-[58px]">
           <img v-if="currentTier?.image" :src="currentTier.image" :alt="currentTier.label" class="w-14 h-14 object-contain drop-shadow-lg" />
@@ -130,7 +135,11 @@ const accentText = computed(() => ACCENT[currentTier.value?.color] || 'text-emer
           <span class="text-[10px] font-semibold mt-1 text-center leading-tight text-slate-400">{{ nextTier.label }}</span>
         </div>
       </div>
-    </div>
+      <div class="mt-2.5 pt-2.5 border-t border-white/5 flex items-center justify-center gap-1.5 text-[10px] font-semibold text-slate-500 group-hover:text-emerald-300 transition">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+        Ver todos los rangos
+      </div>
+    </button>
 
     <!-- Bio -->
     <p v-if="bio" class="mt-3 text-sm text-slate-300 leading-relaxed whitespace-pre-line">{{ bio }}</p>
@@ -138,5 +147,9 @@ const accentText = computed(() => ACCENT[currentTier.value?.color] || 'text-emer
     <router-link v-if="canEdit" to="/profile-edit" class="mt-3 block w-full text-center rounded-xl border border-white/15 hover:bg-white/5 text-slate-200 py-2 text-sm font-semibold transition">
       Editar perfil
     </router-link>
+
+    <Teleport to="body">
+      <LevelProgressionModal v-if="showProgression" :current-level="level" @close="showProgression = false" />
+    </Teleport>
   </div>
 </template>
