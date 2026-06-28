@@ -22,6 +22,7 @@ import {
 import { formatShortDate } from '../services/formatters'
 import { supabase } from '../services/supabase'
 import { pushErrorToast } from '../stores/notifications'
+import { playNotifySound } from '../services/sounds'
 import CosmeticIcon from './rewards/CosmeticIcon.vue'
 
 let unsubscribeAuth = () => {}
@@ -246,7 +247,7 @@ export default {
       if (!this.user?.id) return
       try { this._rtChannel?.unsubscribe?.() } catch {}
       const ch = supabase.channel(`friends-dm:${this.user.id}`)
-      ch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `recipient_id=eq.${this.user.id}` }, () => this.loadThreads())
+      ch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `recipient_id=eq.${this.user.id}` }, () => { try { playNotifySound() } catch {}; this.loadThreads() })
       ch.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'direct_messages', filter: `recipient_id=eq.${this.user.id}` }, () => this.loadThreads())
       ch.subscribe()
       this._rtChannel = ch
@@ -283,7 +284,7 @@ export default {
     </button>
 
     <!-- ───────── Desktop: riel (semi-oculto) ───────── -->
-    <div v-show="!expanded" class="hidden sm:flex fixed top-24 right-0 bottom-6 z-40 w-[60px] flex-col items-center rounded-l-2xl border border-r-0 border-white/12 bg-gradient-to-b from-slate-900/95 to-slate-950/95 backdrop-blur-xl shadow-2xl">
+    <div v-show="!expanded" class="hidden sm:flex fixed top-24 right-0 bottom-6 z-40 w-[64px] flex-col items-center rounded-l-2xl border border-r-0 border-white/12 bg-gradient-to-b from-slate-900/95 to-slate-950/95 backdrop-blur-xl shadow-2xl">
       <button @click="toggleExpand" title="Amigos" class="relative w-full py-3 grid place-items-center text-slate-300 hover:text-white border-b border-white/10 transition">
         <svg viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         <span v-if="totalUnread > 0" class="absolute top-1.5 right-1.5 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold grid place-items-center">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
@@ -293,10 +294,12 @@ export default {
         <button v-for="r in railRows" :key="r.id" @click="openChat(r.id)"
                 :title="r.status === 'playing' ? ('Jugando · ' + r.gameName) : (r.status === 'online' ? 'En línea' : 'Desconectado')"
                 class="relative group" :class="r.status === 'offline' ? 'opacity-50 hover:opacity-100 transition' : ''">
-          <div class="size-9 rounded-[11px] overflow-hidden grid place-items-center text-[11px] font-bold text-white transition-transform group-hover:scale-110" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
-            <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="22" />
-            <img v-else-if="r.avatar_url" :src="r.avatar_url" class="w-full h-full object-cover" alt="" />
-            <span v-else>{{ initial(r) }}</span>
+          <div class="size-11 rounded-[14px] transition-transform group-hover:scale-110" :class="[frameStyle(cos[r.id]?.frameKey || 'none').wrap, frameStyle(cos[r.id]?.frameKey || 'none').pad]">
+            <div class="w-full h-full rounded-[11px] overflow-hidden grid place-items-center text-[11px] font-bold text-white" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
+              <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="28" />
+              <img v-else-if="r.avatar_url" :src="r.avatar_url" class="w-full h-full object-cover" alt="" />
+              <span v-else>{{ initial(r) }}</span>
+            </div>
           </div>
           <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-950" :class="statusDot(r.status)"></span>
           <span v-if="r.unread > 0" class="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold grid place-items-center">{{ r.unread > 9 ? '9+' : r.unread }}</span>
@@ -344,9 +347,9 @@ export default {
               <div v-if="onlineRows.length" class="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-emerald-400/80">En línea</div>
               <button v-for="r in onlineRows" :key="r.id" @click="openChat(r.id)" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition text-left">
                 <div class="relative shrink-0">
-                  <div :class="[frameStyle(cos[r.id]?.frameKey || 'none').wrap, frameStyle(cos[r.id]?.frameKey || 'none').pad, 'rounded-[14px]']">
-                    <div class="size-10 rounded-[11px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
-                      <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="26" />
+                  <div class="size-11 rounded-[14px]" :class="[frameStyle(cos[r.id]?.frameKey || 'none').wrap, frameStyle(cos[r.id]?.frameKey || 'none').pad]">
+                    <div class="w-full h-full rounded-[11px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
+                      <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="28" />
                       <img v-else-if="r.avatar_url" :src="r.avatar_url" class="w-full h-full object-cover" alt="" />
                       <span v-else>{{ initial(r) }}</span>
                     </div>
@@ -365,9 +368,9 @@ export default {
               <div v-if="offlineRows.length" class="px-3 pt-4 pb-1 text-[10px] uppercase tracking-wider font-bold text-slate-500">Desconectados</div>
               <button v-for="r in offlineRows" :key="r.id" @click="openChat(r.id)" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition text-left opacity-60 hover:opacity-100">
                 <div class="relative shrink-0">
-                  <div :class="[frameStyle(cos[r.id]?.frameKey || 'none').wrap, frameStyle(cos[r.id]?.frameKey || 'none').pad, 'rounded-[14px]']">
-                    <div class="size-10 rounded-[11px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
-                      <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="26" />
+                  <div class="size-11 rounded-[14px]" :class="[frameStyle(cos[r.id]?.frameKey || 'none').wrap, frameStyle(cos[r.id]?.frameKey || 'none').pad]">
+                    <div class="w-full h-full rounded-[11px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
+                      <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="28" />
                       <img v-else-if="r.avatar_url" :src="r.avatar_url" class="w-full h-full object-cover" alt="" />
                       <span v-else>{{ initial(r) }}</span>
                     </div>
@@ -391,9 +394,9 @@ export default {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
             <router-link :to="`/u/${activePeer.id}`" class="relative shrink-0">
-              <div :class="[frameStyle(cos[activePeerId]?.frameKey || 'none').wrap, frameStyle(cos[activePeerId]?.frameKey || 'none').pad, 'rounded-[12px]']">
-                <div class="size-9 rounded-[9px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[activePeerId]?.iconBg || 'emerald')">
-                  <CosmeticIcon v-if="cos[activePeerId]?.iconGlyph" :iconKey="cos[activePeerId].iconGlyph" :size="24" />
+              <div class="size-10 rounded-[12px]" :class="[frameStyle(cos[activePeerId]?.frameKey || 'none').wrap, frameStyle(cos[activePeerId]?.frameKey || 'none').pad]">
+                <div class="w-full h-full rounded-[9px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[activePeerId]?.iconBg || 'emerald')">
+                  <CosmeticIcon v-if="cos[activePeerId]?.iconGlyph" :iconKey="cos[activePeerId].iconGlyph" :size="26" />
                   <img v-else-if="activePeer.avatar_url" :src="activePeer.avatar_url" class="w-full h-full object-cover" alt="" />
                   <span v-else>{{ initial({ name: activePeer.display_name || activePeer.email }) }}</span>
                 </div>

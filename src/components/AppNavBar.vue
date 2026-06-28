@@ -11,6 +11,7 @@ import { getPublicProfilesByIds } from '../services/user-profiles';
 import { isAdmin } from '../services/admin';
 import GoaldemyLogo from './GoaldemyLogo.vue';
 import { getUnclaimedCount } from '../stores/notifications';
+import { playNotifySound } from '../services/sounds';
 
 export default {
   name: 'AppNavBar',
@@ -169,6 +170,7 @@ export default {
             const cch = supabase.channel(`connections:${this.user.id}`)
             // New incoming pending request
             cch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'connections', filter: `user_b=eq.${this.user.id}` }, () => {
+                try { playNotifySound() } catch {}
                 this.loadNotifCount(); if (this.notifOpen) this.loadNotifMenu()
             })
             // Status changes (pending -> accepted/blocked) should also refresh

@@ -11,6 +11,7 @@ const SOUND_FILES = {
   claim: '/sounds/reward-claim.mp3',
   starReveal: '/sounds/star-reveal.mp3',
   timeUp: '/sounds/time-up.mp3',
+  notify: '/sounds/notify.mp3',
 }
 
 class SoundManager {
@@ -144,6 +145,11 @@ class SoundManager {
         makeOsc(3200, 'sine', 0.5, 0.18)
         makeOsc(3200, 'sine', 0.6, 0.25, 0.22)
         break
+      case 'notify':
+        // Ding suave de dos notas (mensaje nuevo / solicitud de amistad)
+        makeOsc(659.25, 'sine', 0.5, 0.12)
+        makeOsc(987.77, 'sine', 0.55, 0.20, 0.08)
+        break
     }
   }
 
@@ -186,4 +192,5 @@ export const playComboSound = () => soundManager.play('combo')
 export const playClaimSound = () => soundManager.play('claim')
 export const playStarRevealSound = () => soundManager.play('starReveal')
 export const playTimeUpSound = () => soundManager.play('timeUp')
+export const playNotifySound = () => soundManager.play('notify')
 export const toggleSound = () => soundManager.toggle()
