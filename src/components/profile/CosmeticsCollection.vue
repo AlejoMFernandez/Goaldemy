@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getAuthUser } from '../../services/auth'
 import {
   getCosmetics, getEquippedCosmetics, equipCosmetic, setIconBg,
-  frameStyle, bannerStyle, iconBgStyle, ICON_BG_KEYS, rarity,
+  frameStyle, bannerStyle, iconBgStyle, iconThemeBg, ICON_BG_KEYS, rarity,
 } from '../../services/cosmetics'
 import { pushSuccessToast, pushErrorToast } from '../../stores/notifications'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
@@ -95,7 +95,7 @@ onMounted(load)
         <div class="absolute inset-0 opacity-90" :class="[bannerStyle(equippedBanner.style_key), equippedBanner.premium_only ? 'anim-pan' : '']"></div>
         <div class="relative flex items-center gap-4 p-4">
           <div :class="[frameStyle(equippedFrame.style_key).wrap, frameStyle(equippedFrame.style_key).pad, 'rounded-2xl shrink-0', equippedFrame.premium_only ? 'anim-pan' : '']">
-            <div class="size-16 rounded-[13px] overflow-hidden grid place-items-center text-white font-extrabold text-2xl" :class="iconBgStyle(iconBg)">
+            <div class="size-16 rounded-[13px] overflow-hidden grid place-items-center text-white font-extrabold text-2xl" :class="(equippedIcon && equippedIcon.style_key) ? iconThemeBg(equippedIcon.style_key) : iconBgStyle(iconBg)">
               <CosmeticIcon v-if="equippedIcon && equippedIcon.style_key" :iconKey="equippedIcon.style_key" :rarity="equippedIcon.rarity" :size="52" />
               <img v-else-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
               <span v-else>{{ initial }}</span>
@@ -152,8 +152,10 @@ onMounted(load)
                   <div class="size-16 rounded-[14px] grid place-items-center text-slate-300 text-xs" :class="iconBgStyle(iconBg)">●</div>
                 </div>
                 <div v-else class="grid place-items-center py-1">
-                  <CosmeticIcon v-if="c.style_key" :iconKey="c.style_key" :rarity="c.rarity" framed :size="80" />
-                  <div v-else class="size-14 rounded-xl grid place-items-center text-slate-400 text-sm" :class="iconBgStyle(iconBg)">—</div>
+                  <div v-if="c.style_key" class="size-16 rounded-2xl overflow-hidden grid place-items-center shadow-lg shadow-black/30" :class="iconThemeBg(c.style_key)">
+                    <CosmeticIcon :iconKey="c.style_key" :rarity="c.rarity" :size="52" />
+                  </div>
+                  <div v-else class="size-16 rounded-2xl grid place-items-center text-slate-400 text-sm" :class="iconBgStyle(iconBg)">—</div>
                 </div>
                 <span class="text-[11px] font-medium text-white truncate w-full text-center">{{ c.name }}</span>
                 <span v-if="c.premium_only" class="absolute top-1.5 right-1.5 text-[8px] font-bold text-amber-300">PRO</span>

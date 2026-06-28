@@ -12,7 +12,7 @@
 import { subscribeToAuthStateChanges } from '../services/auth'
 import { listConnections } from '../services/connections'
 import { getPublicProfilesByIds, getPublicProfile } from '../services/user-profiles'
-import { getEquippedCosmeticsBatch, frameStyle, iconBgStyle } from '../services/cosmetics'
+import { getEquippedCosmeticsBatch, frameStyle, iconBgStyle, iconThemeBg } from '../services/cosmetics'
 import { presenceState } from '../services/presence'
 import { friendlyNameForSlug } from '../services/games'
 import {
@@ -103,6 +103,7 @@ export default {
     formatShortDate,
     frameStyle,
     iconBgStyle,
+    iconThemeBg,
     initial(r) { return ((r?.name || r?.display_name || r?.email || '?').trim()[0] || '?').toUpperCase() },
     statusDot(status) {
       if (status === 'playing') return 'bg-cyan-400'
@@ -295,7 +296,7 @@ export default {
                 :title="r.status === 'playing' ? ('Jugando · ' + r.gameName) : (r.status === 'online' ? 'En línea' : 'Desconectado')"
                 class="relative group" :class="r.status === 'offline' ? 'opacity-50 hover:opacity-100 transition' : ''">
           <div class="size-11 rounded-[14px] transition-transform group-hover:scale-110" :class="[frameStyle(cos[r.id]?.frameKey || 'none').wrap, frameStyle(cos[r.id]?.frameKey || 'none').pad]">
-            <div class="w-full h-full rounded-[11px] overflow-hidden grid place-items-center text-[11px] font-bold text-white" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
+            <div class="w-full h-full rounded-[11px] overflow-hidden grid place-items-center text-[11px] font-bold text-white" :class="cos[r.id]?.iconGlyph ? iconThemeBg(cos[r.id].iconGlyph) : iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
               <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="28" />
               <img v-else-if="r.avatar_url" :src="r.avatar_url" class="w-full h-full object-cover" alt="" />
               <span v-else>{{ initial(r) }}</span>
@@ -348,7 +349,7 @@ export default {
               <button v-for="r in onlineRows" :key="r.id" @click="openChat(r.id)" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition text-left">
                 <div class="relative shrink-0">
                   <div class="size-11 rounded-[14px]" :class="[frameStyle(cos[r.id]?.frameKey || 'none').wrap, frameStyle(cos[r.id]?.frameKey || 'none').pad]">
-                    <div class="w-full h-full rounded-[11px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
+                    <div class="w-full h-full rounded-[11px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="cos[r.id]?.iconGlyph ? iconThemeBg(cos[r.id].iconGlyph) : iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
                       <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="28" />
                       <img v-else-if="r.avatar_url" :src="r.avatar_url" class="w-full h-full object-cover" alt="" />
                       <span v-else>{{ initial(r) }}</span>
@@ -369,7 +370,7 @@ export default {
               <button v-for="r in offlineRows" :key="r.id" @click="openChat(r.id)" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition text-left opacity-60 hover:opacity-100">
                 <div class="relative shrink-0">
                   <div class="size-11 rounded-[14px]" :class="[frameStyle(cos[r.id]?.frameKey || 'none').wrap, frameStyle(cos[r.id]?.frameKey || 'none').pad]">
-                    <div class="w-full h-full rounded-[11px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
+                    <div class="w-full h-full rounded-[11px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="cos[r.id]?.iconGlyph ? iconThemeBg(cos[r.id].iconGlyph) : iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
                       <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="28" />
                       <img v-else-if="r.avatar_url" :src="r.avatar_url" class="w-full h-full object-cover" alt="" />
                       <span v-else>{{ initial(r) }}</span>
@@ -395,7 +396,7 @@ export default {
             </button>
             <router-link :to="`/u/${activePeer.id}`" class="relative shrink-0">
               <div class="size-10 rounded-[12px]" :class="[frameStyle(cos[activePeerId]?.frameKey || 'none').wrap, frameStyle(cos[activePeerId]?.frameKey || 'none').pad]">
-                <div class="w-full h-full rounded-[9px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[activePeerId]?.iconBg || 'emerald')">
+                <div class="w-full h-full rounded-[9px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="cos[activePeerId]?.iconGlyph ? iconThemeBg(cos[activePeerId].iconGlyph) : iconBgStyle(cos[activePeerId]?.iconBg || 'emerald')">
                   <CosmeticIcon v-if="cos[activePeerId]?.iconGlyph" :iconKey="cos[activePeerId].iconGlyph" :size="26" />
                   <img v-else-if="activePeer.avatar_url" :src="activePeer.avatar_url" class="w-full h-full object-cover" alt="" />
                   <span v-else>{{ initial({ name: activePeer.display_name || activePeer.email }) }}</span>

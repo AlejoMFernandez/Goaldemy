@@ -154,6 +154,35 @@ export function iconBgStyle(key) {
   return ICON_BG_STYLES[key] || ICON_BG_STYLES.emerald
 }
 
+// ── Fondo TEMÁTICO por ícono (estilo LoL) ──
+// Cada ícono trae su propia escena. Se usa como fondo del avatar CUANDO hay un
+// ícono equipado; si no hay ícono, se usa el color elegido (iconBgStyle).
+// Clave = style_key del cosmético (emoji legacy) o clave semántica.
+export const ICON_THEME_BG = {
+  '⚽': 'bg-gradient-to-b from-emerald-600 to-emerald-950',
+  '👟': 'bg-gradient-to-b from-orange-600 to-orange-950',
+  '🧤': 'bg-gradient-to-b from-sky-600 to-blue-950',
+  '🏅': 'bg-gradient-to-b from-amber-500 to-amber-900',
+  '🏆': 'bg-gradient-to-b from-violet-600 to-violet-950',
+  '⭐': 'bg-gradient-to-b from-amber-400 to-orange-800',
+  '🛡️': 'bg-gradient-to-b from-slate-500 to-slate-800',
+  '🛡': 'bg-gradient-to-b from-slate-500 to-slate-800',
+  '👑': 'bg-gradient-to-b from-fuchsia-600 to-indigo-950',
+  '🐐': 'bg-gradient-to-b from-amber-500 to-yellow-950',
+  ball: 'bg-gradient-to-b from-emerald-600 to-emerald-950',
+  boot: 'bg-gradient-to-b from-orange-600 to-orange-950',
+  gloves: 'bg-gradient-to-b from-sky-600 to-blue-950',
+  medal: 'bg-gradient-to-b from-amber-500 to-amber-900',
+  trophy: 'bg-gradient-to-b from-violet-600 to-violet-950',
+  star: 'bg-gradient-to-b from-amber-400 to-orange-800',
+  shield: 'bg-gradient-to-b from-slate-500 to-slate-800',
+  crown: 'bg-gradient-to-b from-fuchsia-600 to-indigo-950',
+  goat: 'bg-gradient-to-b from-amber-500 to-yellow-950',
+}
+export function iconThemeBg(styleKey) {
+  return ICON_THEME_BG[styleKey] || 'bg-gradient-to-b from-emerald-600 to-cyan-900'
+}
+
 /** Guarda el color de fondo del ícono del usuario. */
 export async function setIconBg(color) {
   const { data, error } = await supabase.rpc('set_icon_bg', { p_color: color })
