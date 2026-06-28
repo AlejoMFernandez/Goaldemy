@@ -406,8 +406,8 @@ export default {
     <!-- Dashboard 2 columnas (solapan el banner) -->
     <div class="-mt-16 relative z-10 grid grid-cols-1 lg:grid-cols-[360px_minmax(0,1fr)] gap-5 items-start">
 
-      <!-- Columna izquierda (fija en desktop) -->
-      <div class="space-y-4 lg:sticky lg:top-24">
+      <!-- Columna izquierda (fija en desktop; top alto para que el avatar saliente no quede bajo el navbar) -->
+      <div class="space-y-4 lg:sticky lg:top-28">
         <ProfileIdentityCard
           :avatar-initial="avatarInitial"
           :avatar-url="user.avatar_url"

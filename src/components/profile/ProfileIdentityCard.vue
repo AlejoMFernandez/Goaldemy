@@ -60,7 +60,7 @@ const showProgression = ref(false)
 <template>
   <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/60 backdrop-blur shadow-2xl px-5 pb-5">
     <!-- Avatar (solapa el banner) -->
-    <div class="flex flex-col items-center -mt-12">
+    <div class="flex flex-col items-center -mt-8">
       <div :class="[frameStyle(frameStyleKey).wrap, frameStyle(frameStyleKey).pad, 'rounded-2xl', framePremium ? 'anim-pan' : '']">
         <div class="size-24 overflow-hidden grid place-items-center text-white font-extrabold text-3xl"
              :class="[iconBgStyle(iconBgKey), frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl ring-4 ring-slate-900']">

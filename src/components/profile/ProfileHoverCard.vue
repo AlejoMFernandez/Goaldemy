@@ -32,7 +32,7 @@ const initial = computed(() => (props.name || '?').trim()[0]?.toUpperCase() || '
   <div class="w-60 rounded-xl border border-white/15 bg-slate-900 shadow-2xl shadow-black/50 overflow-hidden">
     <!-- Banner de fondo -->
     <div class="h-14 relative" :class="[bannerStyle(eq?.bannerKey || 'default'), eq?.bannerPremium ? 'anim-pan' : '']"></div>
-    <div class="px-3 pb-3 -mt-7">
+    <div class="relative z-10 px-3 pb-3 -mt-7">
       <!-- Avatar (ícono + borde) -->
       <div class="inline-block" :class="[frameStyle(eq?.frameKey || 'none').wrap, frameStyle(eq?.frameKey || 'none').pad, 'rounded-xl', eq?.framePremium ? 'anim-pan' : '']">
         <div class="size-12 rounded-[10px] overflow-hidden grid place-items-center text-white font-bold ring-2 ring-slate-900" :class="iconBgStyle(eq?.iconBg || 'emerald')">
@@ -41,9 +41,8 @@ const initial = computed(() => (props.name || '?').trim()[0]?.toUpperCase() || '
           <span v-else>{{ initial }}</span>
         </div>
       </div>
-      <!-- Nombre + título + rango -->
+      <!-- Nombre + rango -->
       <p class="mt-1.5 text-sm font-bold text-white truncate">{{ name }}</p>
-      <p v-if="eq?.titleText" class="text-[11px] font-semibold truncate" :class="eq.titlePremium ? 'title-premium-anim' : rarity(eq.titleRarity).text">{{ eq.titleText }}</p>
       <div class="mt-1.5 flex items-center gap-1.5">
         <img v-if="tier?.image" :src="tier.image" :alt="tier.label" class="w-4 h-4 object-contain" />
         <span class="text-[11px] text-slate-400">{{ tier?.label }} · Nivel {{ level }}</span>
