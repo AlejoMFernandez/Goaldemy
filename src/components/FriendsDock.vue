@@ -3,10 +3,11 @@
  * FRIENDS DOCK — barra de amigos estilo LoL (presencia + chat integrado).
  *
  * Reemplaza al viejo DirectMessagesDock: unifica todo a la derecha.
- *  - Riel angosto (semi-oculto) en el borde derecho con los amigos en línea.
+ *  - Riel angosto (semi-oculto) en el borde derecho: TODOS los amigos (online y offline),
+ *    avatar cuadrado chico + puntito de estado (gris si está desconectado).
  *  - Panel expandido con la lista completa (en línea arriba, desconectados abajo).
  *  - Chat 1-a-1 integrado (mismo flujo de DMs que tenía el dock).
- *  - Estado en vivo vía services/presence.js: 🎮 jugando [juego] / 🟢 en línea / ⚫ offline.
+ *  - Estado en vivo vía services/presence.js: jugando [juego] / en línea / desconectado.
  */
 import { subscribeToAuthStateChanges } from '../services/auth'
 import { listConnections } from '../services/connections'
@@ -80,17 +81,15 @@ export default {
       const rows = this.baseRows
       return q ? rows.filter(r => r.name.toLowerCase().includes(q)) : rows
     },
-    onlineRows() {
-      const rank = { playing: 0, online: 1 }
-      return this.filteredRows.filter(r => r.status !== 'offline')
-        .sort((a, b) => (rank[a.status] - rank[b.status]) || (b.unread - a.unread) || a.name.localeCompare(b.name))
+    // Orden por prioridad: jugando → en línea → desconectado.
+    sortedRows() {
+      const rank = { playing: 0, online: 1, offline: 2 }
+      return this.filteredRows.slice().sort((a, b) =>
+        (rank[a.status] - rank[b.status]) || (b.unread - a.unread) || a.name.localeCompare(b.name))
     },
-    offlineRows() {
-      return this.filteredRows.filter(r => r.status === 'offline')
-        .sort((a, b) => (b.unread - a.unread) || a.name.localeCompare(b.name))
-    },
-    railRows() { return this.onlineRows.slice(0, 30) },
-    onlineCount() { return this.baseRows.filter(r => r.status !== 'offline').length },
+    onlineRows() { return this.sortedRows.filter(r => r.status !== 'offline') },
+    offlineRows() { return this.sortedRows.filter(r => r.status === 'offline') },
+    railRows() { return this.sortedRows.slice(0, 50) },
     totalUnread() { return this.baseRows.reduce((s, r) => s + (r.unread || 0), 0) },
     activePresence() {
       const p = this.presence[this.activePeerId]
@@ -104,16 +103,10 @@ export default {
     frameStyle,
     iconBgStyle,
     initial(r) { return ((r?.name || r?.display_name || r?.email || '?').trim()[0] || '?').toUpperCase() },
-    gameCover(slug) { return slug ? `/games/${slug}.svg` : '' },
     statusDot(status) {
       if (status === 'playing') return 'bg-cyan-400'
       if (status === 'online') return 'bg-emerald-400'
       return 'bg-slate-500'
-    },
-    statusRing(status) {
-      if (status === 'playing') return 'ring-cyan-400/70'
-      if (status === 'online') return 'ring-emerald-400/70'
-      return 'ring-white/10'
     },
     // ── UI toggles ──
     toggleExpand() {
@@ -290,25 +283,22 @@ export default {
     </button>
 
     <!-- ───────── Desktop: riel (semi-oculto) ───────── -->
-    <div v-show="!expanded" class="hidden sm:flex fixed top-24 right-0 bottom-6 z-40 w-[68px] flex-col items-center rounded-l-2xl border border-r-0 border-white/12 bg-gradient-to-b from-slate-900/95 to-slate-950/95 backdrop-blur-xl shadow-2xl">
+    <div v-show="!expanded" class="hidden sm:flex fixed top-24 right-0 bottom-6 z-40 w-[60px] flex-col items-center rounded-l-2xl border border-r-0 border-white/12 bg-gradient-to-b from-slate-900/95 to-slate-950/95 backdrop-blur-xl shadow-2xl">
       <button @click="toggleExpand" title="Amigos" class="relative w-full py-3 grid place-items-center text-slate-300 hover:text-white border-b border-white/10 transition">
         <svg viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-        <span class="absolute top-1.5 right-2 text-[10px] font-bold text-emerald-400 tabular-nums">{{ onlineCount }}</span>
-        <span v-if="totalUnread > 0" class="absolute bottom-1.5 right-2 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold grid place-items-center">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
+        <span v-if="totalUnread > 0" class="absolute top-1.5 right-1.5 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold grid place-items-center">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
       </button>
 
-      <div class="flex-1 w-full overflow-y-auto py-2 flex flex-col items-center gap-2.5 rail-scroll">
-        <button v-for="r in railRows" :key="r.id" @click="openChat(r.id)" :title="r.status === 'playing' ? ('Jugando · ' + r.gameName) : (r.status === 'online' ? 'En línea' : 'Desconectado')" class="relative group">
-          <div :class="['rounded-full ring-2 transition-transform group-hover:scale-110', statusRing(r.status)]">
-            <div :class="[frameStyle(cos[r.id]?.frameKey || 'none').wrap, frameStyle(cos[r.id]?.frameKey || 'none').pad, 'rounded-full']">
-              <div class="size-10 rounded-full overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
-                <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="26" />
-                <img v-else-if="r.avatar_url" :src="r.avatar_url" class="w-full h-full object-cover" alt="" />
-                <span v-else>{{ initial(r) }}</span>
-              </div>
-            </div>
+      <div class="flex-1 w-full overflow-y-auto py-2 flex flex-col items-center gap-2 rail-scroll">
+        <button v-for="r in railRows" :key="r.id" @click="openChat(r.id)"
+                :title="r.status === 'playing' ? ('Jugando · ' + r.gameName) : (r.status === 'online' ? 'En línea' : 'Desconectado')"
+                class="relative group" :class="r.status === 'offline' ? 'opacity-50 hover:opacity-100 transition' : ''">
+          <div class="size-9 rounded-[11px] overflow-hidden grid place-items-center text-[11px] font-bold text-white transition-transform group-hover:scale-110" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
+            <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="22" />
+            <img v-else-if="r.avatar_url" :src="r.avatar_url" class="w-full h-full object-cover" alt="" />
+            <span v-else>{{ initial(r) }}</span>
           </div>
-          <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-slate-950" :class="statusDot(r.status)"></span>
+          <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-950" :class="statusDot(r.status)"></span>
           <span v-if="r.unread > 0" class="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold grid place-items-center">{{ r.unread > 9 ? '9+' : r.unread }}</span>
         </button>
       </div>
@@ -326,11 +316,10 @@ export default {
         <template v-if="view === 'list'">
           <div class="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-white/[0.03]">
             <span class="grid place-items-center h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-400/20">
-              <svg viewBox="0 0 24 24" fill="currentColor" class="h-4.5 w-4.5 text-emerald-300"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 text-emerald-300"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
             </span>
             <div class="flex-1 min-w-0">
               <div class="font-display font-bold text-white leading-tight">Amigos</div>
-              <div class="text-[11px] text-emerald-400 font-medium">{{ onlineCount }} en línea</div>
             </div>
             <button @click="closePanel" class="h-8 w-8 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition" title="Ocultar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M9 6l6 6-6 6"/></svg>
@@ -340,24 +329,23 @@ export default {
           <div class="px-3 py-2.5 border-b border-white/10">
             <div class="relative">
               <input v-model="query" type="text" placeholder="Buscar amigo…" class="w-full text-sm pl-9 pr-3 py-2 rounded-xl bg-black/30 border border-white/10 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400/30 transition" />
-              <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-500" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+              <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
             </div>
           </div>
 
           <div class="flex-1 overflow-y-auto rail-scroll">
             <div v-if="loading && !loaded" class="p-6 text-center text-slate-400 text-sm">Cargando…</div>
             <div v-else-if="!baseRows.length" class="p-8 text-center">
-              <div class="text-3xl mb-2">🤝</div>
               <p class="text-slate-300 text-sm font-medium">Todavía no tenés amigos</p>
               <p class="text-slate-500 text-xs mt-1">Conectá con jugadores desde sus perfiles</p>
             </div>
             <template v-else>
-              <!-- En línea -->
-              <div v-if="onlineRows.length" class="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-emerald-400/80">En línea — {{ onlineRows.length }}</div>
-              <button v-for="r in onlineRows" :key="r.id" @click="openChat(r.id)" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition text-left group">
+              <!-- En línea (jugando primero, luego online) -->
+              <div v-if="onlineRows.length" class="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-emerald-400/80">En línea</div>
+              <button v-for="r in onlineRows" :key="r.id" @click="openChat(r.id)" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition text-left">
                 <div class="relative shrink-0">
-                  <div :class="[frameStyle(cos[r.id]?.frameKey || 'none').wrap, frameStyle(cos[r.id]?.frameKey || 'none').pad, 'rounded-full']">
-                    <div class="size-10 rounded-full overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
+                  <div :class="[frameStyle(cos[r.id]?.frameKey || 'none').wrap, frameStyle(cos[r.id]?.frameKey || 'none').pad, 'rounded-[14px]']">
+                    <div class="size-10 rounded-[11px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
                       <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="26" />
                       <img v-else-if="r.avatar_url" :src="r.avatar_url" class="w-full h-full object-cover" alt="" />
                       <span v-else>{{ initial(r) }}</span>
@@ -367,23 +355,22 @@ export default {
                 </div>
                 <div class="min-w-0 flex-1">
                   <div class="text-sm font-semibold text-white truncate">{{ r.name }}</div>
-                  <div v-if="r.status === 'playing'" class="flex items-center gap-1.5 text-[11px] text-cyan-300 truncate">
-                    <img :src="gameCover(r.game)" class="h-3.5 w-3.5 rounded-sm" alt="" />
-                    <span class="truncate">Jugando · {{ r.gameName }}</span>
-                  </div>
+                  <div v-if="r.status === 'playing'" class="text-[11px] text-cyan-300 truncate">Jugando · {{ r.gameName }}</div>
                   <div v-else class="text-[11px] text-emerald-400/90">En línea</div>
                 </div>
                 <span v-if="r.unread > 0" class="shrink-0 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold grid place-items-center">{{ r.unread > 9 ? '9+' : r.unread }}</span>
               </button>
 
               <!-- Desconectados -->
-              <div v-if="offlineRows.length" class="px-3 pt-4 pb-1 text-[10px] uppercase tracking-wider font-bold text-slate-500">Desconectados — {{ offlineRows.length }}</div>
+              <div v-if="offlineRows.length" class="px-3 pt-4 pb-1 text-[10px] uppercase tracking-wider font-bold text-slate-500">Desconectados</div>
               <button v-for="r in offlineRows" :key="r.id" @click="openChat(r.id)" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition text-left opacity-60 hover:opacity-100">
                 <div class="relative shrink-0">
-                  <div class="size-10 rounded-full overflow-hidden grid place-items-center text-xs font-bold text-white grayscale" :class="iconBgStyle(cos[r.id]?.iconBg || 'slate')">
-                    <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="26" />
-                    <img v-else-if="r.avatar_url" :src="r.avatar_url" class="w-full h-full object-cover" alt="" />
-                    <span v-else>{{ initial(r) }}</span>
+                  <div :class="[frameStyle(cos[r.id]?.frameKey || 'none').wrap, frameStyle(cos[r.id]?.frameKey || 'none').pad, 'rounded-[14px]']">
+                    <div class="size-10 rounded-[11px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[r.id]?.iconBg || 'emerald')">
+                      <CosmeticIcon v-if="cos[r.id]?.iconGlyph" :iconKey="cos[r.id].iconGlyph" :size="26" />
+                      <img v-else-if="r.avatar_url" :src="r.avatar_url" class="w-full h-full object-cover" alt="" />
+                      <span v-else>{{ initial(r) }}</span>
+                    </div>
                   </div>
                   <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-slate-900 bg-slate-500"></span>
                 </div>
@@ -404,10 +391,12 @@ export default {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
             <router-link :to="`/u/${activePeer.id}`" class="relative shrink-0">
-              <div class="size-9 rounded-full overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[activePeerId]?.iconBg || 'emerald')">
-                <CosmeticIcon v-if="cos[activePeerId]?.iconGlyph" :iconKey="cos[activePeerId].iconGlyph" :size="24" />
-                <img v-else-if="activePeer.avatar_url" :src="activePeer.avatar_url" class="w-full h-full object-cover" alt="" />
-                <span v-else>{{ initial({ name: activePeer.display_name || activePeer.email }) }}</span>
+              <div :class="[frameStyle(cos[activePeerId]?.frameKey || 'none').wrap, frameStyle(cos[activePeerId]?.frameKey || 'none').pad, 'rounded-[12px]']">
+                <div class="size-9 rounded-[9px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[activePeerId]?.iconBg || 'emerald')">
+                  <CosmeticIcon v-if="cos[activePeerId]?.iconGlyph" :iconKey="cos[activePeerId].iconGlyph" :size="24" />
+                  <img v-else-if="activePeer.avatar_url" :src="activePeer.avatar_url" class="w-full h-full object-cover" alt="" />
+                  <span v-else>{{ initial({ name: activePeer.display_name || activePeer.email }) }}</span>
+                </div>
               </div>
               <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-900" :class="activePresence.dot"></span>
             </router-link>
@@ -440,7 +429,7 @@ export default {
             <div class="flex items-center gap-2 rounded-full border border-white/15 bg-black/30 pl-4 pr-1.5 py-1.5 focus-within:ring-2 focus-within:ring-emerald-400/30 focus-within:border-emerald-400/30 transition">
               <input v-model="newMessage.content" type="text" placeholder="Escribí un mensaje…" class="flex-1 bg-transparent outline-none text-slate-100 placeholder-slate-500 text-sm" @keydown.enter.exact.prevent="handleSubmit" />
               <button type="submit" class="shrink-0 h-8 w-8 grid place-items-center rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:brightness-110 transition active:scale-95">
-                <svg viewBox="0 0 24 24" fill="currentColor" class="h-4.5 w-4.5"><path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/></svg>
               </button>
             </div>
           </form>
