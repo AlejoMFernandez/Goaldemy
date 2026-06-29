@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getEquippedCosmetics, frameStyle, bannerStyle, iconBgStyle, rarity } from '../../services/cosmetics'
+import { getEquippedCosmetics, frameStyle, bannerStyle, iconBgStyle, iconThemeBg, rarity } from '../../services/cosmetics'
 import { getUserLevel } from '../../services/xp'
 import { getTierForLevel } from '../../services/tiers'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
@@ -34,8 +34,8 @@ const initial = computed(() => (props.name || '?').trim()[0]?.toUpperCase() || '
     <div class="h-14 relative" :class="[bannerStyle(eq?.bannerKey || 'default'), eq?.bannerPremium ? 'anim-pan' : '']"></div>
     <div class="relative z-10 px-3 pb-3 -mt-7">
       <!-- Avatar (ícono + borde) -->
-      <div class="inline-block" :class="[frameStyle(eq?.frameKey || 'none').wrap, frameStyle(eq?.frameKey || 'none').pad, 'rounded-xl', eq?.framePremium ? 'anim-pan' : '']">
-        <div class="size-12 rounded-[10px] overflow-hidden grid place-items-center text-white font-bold ring-2 ring-slate-900" :class="iconBgStyle(eq?.iconBg || 'emerald')">
+      <div class="inline-block size-12 rounded-xl" :class="[frameStyle(eq?.frameKey || 'none').wrap, frameStyle(eq?.frameKey || 'none').pad, eq?.framePremium ? 'anim-pan' : '']">
+        <div class="w-full h-full rounded-[9px] overflow-hidden grid place-items-center text-white font-bold ring-2 ring-slate-900" :class="eq?.iconGlyph ? iconThemeBg(eq.iconGlyph) : iconBgStyle(eq?.iconBg || 'emerald')">
           <CosmeticIcon v-if="eq?.iconGlyph" :iconKey="eq.iconGlyph" :size="34" />
           <img v-else-if="avatarUrl" :src="avatarUrl" class="w-full h-full object-cover" alt="" />
           <span v-else>{{ initial }}</span>

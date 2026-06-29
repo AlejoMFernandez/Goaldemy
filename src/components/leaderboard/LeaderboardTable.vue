@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { frameStyle, iconBgStyle } from '../../services/cosmetics'
+import { frameStyle, iconBgStyle, iconThemeBg } from '../../services/cosmetics'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 const props = defineProps({
   rows: { type: Array, default: () => [] }, // [{rank, user_id, display_name, total_xp, level?, frameKey?, iconGlyph?, iconBg?}]
@@ -51,8 +51,8 @@ const props = defineProps({
             </td>
             <td class="px-2 sm:px-3 py-2" style="max-width: 140px;">
               <div class="flex items-center gap-1.5 min-w-0">
-                <div :class="['flex-shrink-0 rounded-full', frameStyle(r.frameKey).wrap, frameStyle(r.frameKey).pad]">
-                  <div :class="['h-6 w-6 sm:h-7 sm:w-7 rounded-full overflow-hidden grid place-items-center text-[11px] sm:text-sm', iconBgStyle(r.iconBg)]">
+                <div :class="['flex-shrink-0 rounded-[9px]', frameStyle(r.frameKey).wrap, frameStyle(r.frameKey).pad]">
+                  <div :class="['h-6 w-6 sm:h-7 sm:w-7 rounded-[7px] overflow-hidden grid place-items-center text-[11px] sm:text-sm', r.iconGlyph ? iconThemeBg(r.iconGlyph) : iconBgStyle(r.iconBg)]">
                     <img v-if="r.avatar_url" :src="r.avatar_url" alt="avatar" class="w-full h-full object-cover" />
                     <CosmeticIcon v-else-if="r.iconGlyph" :iconKey="r.iconGlyph" :size="24" />
                     <span v-else class="font-bold text-white">{{ (r.display_name || r.email || '?')?.[0]?.toUpperCase() ?? '?' }}</span>

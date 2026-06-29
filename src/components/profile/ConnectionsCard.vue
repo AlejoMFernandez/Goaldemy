@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { getEquippedCosmeticsBatch, frameStyle, iconBgStyle } from '../../services/cosmetics'
+import { getEquippedCosmeticsBatch, frameStyle, iconBgStyle, iconThemeBg } from '../../services/cosmetics'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 import ProfileHoverCard from './ProfileHoverCard.vue'
 
@@ -44,8 +44,8 @@ function initial(c) { return ((c.display_name || c.email || '?').trim()[0] || '?
         @mouseleave="hoveredId = null"
       >
         <router-link :to="`/u/${c.id}`" class="block">
-          <div :class="[frameStyle(cos[c.id]?.frameKey || 'none').wrap, frameStyle(cos[c.id]?.frameKey || 'none').pad, 'rounded-full transition-transform hover:scale-110']">
-            <div class="size-11 rounded-full overflow-hidden grid place-items-center text-xs font-bold text-white" :class="iconBgStyle(cos[c.id]?.iconBg || 'emerald')">
+          <div class="size-11 rounded-[14px] transition-transform hover:scale-110" :class="[frameStyle(cos[c.id]?.frameKey || 'none').wrap, frameStyle(cos[c.id]?.frameKey || 'none').pad]">
+            <div class="w-full h-full rounded-[11px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="cos[c.id]?.iconGlyph ? iconThemeBg(cos[c.id].iconGlyph) : iconBgStyle(cos[c.id]?.iconBg || 'emerald')">
               <CosmeticIcon v-if="cos[c.id]?.iconGlyph" :iconKey="cos[c.id].iconGlyph" :size="28" />
               <img v-else-if="c.avatar_url" :src="c.avatar_url" class="w-full h-full object-cover" alt="" />
               <span v-else>{{ initial(c) }}</span>

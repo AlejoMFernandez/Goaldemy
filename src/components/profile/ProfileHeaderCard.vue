@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { getTierForLevel, getNextTier } from '../../services/tiers'
 import countryNames from '../../codeCOUNTRYS.json'
 import LevelProgressionModal from './LevelProgressionModal.vue'
-import { frameStyle, bannerStyle, iconBgStyle, rarity } from '../../services/cosmetics'
+import { frameStyle, bannerStyle, iconBgStyle, iconThemeBg, rarity } from '../../services/cosmetics'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 
 const props = defineProps({
@@ -136,10 +136,10 @@ const accent = computed(() => {
     <div class="px-5 sm:px-6 -mt-11 relative z-10">
       <div class="flex items-end gap-4">
         <div class="relative shrink-0">
-          <div :class="[frame.wrap, frame.pad, 'rounded-2xl', framePremium ? 'anim-pan' : '']">
+          <div class="size-[88px] sm:size-24 rounded-2xl" :class="[frame.wrap, frame.pad, framePremium ? 'anim-pan' : '']">
             <div
-              class="size-[88px] sm:size-24 overflow-hidden shadow-xl text-white font-extrabold text-2xl sm:text-3xl grid place-items-center"
-              :class="[iconBgStyle(iconBgKey), frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl ring-4 ring-slate-900']"
+              class="w-full h-full overflow-hidden shadow-xl text-white font-extrabold text-2xl sm:text-3xl grid place-items-center"
+              :class="[iconGlyph ? iconThemeBg(iconGlyph) : iconBgStyle(iconBgKey), frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl ring-4 ring-slate-900']"
             >
               <CosmeticIcon v-if="iconGlyph" :iconKey="iconGlyph" :size="60" />
               <img v-else-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />

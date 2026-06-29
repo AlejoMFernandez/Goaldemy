@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getTierForLevel, getNextTier } from '../../services/tiers'
 import { computeLevelProgress } from '../../services/xp'
-import { frameStyle, iconBgStyle, rarity } from '../../services/cosmetics'
+import { frameStyle, iconBgStyle, iconThemeBg, rarity } from '../../services/cosmetics'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 import LevelProgressionModal from './LevelProgressionModal.vue'
 import countryNames from '../../codeCOUNTRYS.json'
@@ -64,9 +64,9 @@ const showProgression = ref(false)
     <div class="flex flex-col items-center -mt-8">
       <component :is="canEdit ? RouterLink : 'div'" :to="canEdit ? '/profile-edit' : undefined"
         class="group relative inline-block" :class="canEdit ? 'cursor-pointer' : ''" :title="canEdit ? 'Editar perfil' : undefined">
-        <div :class="[frameStyle(frameStyleKey).wrap, frameStyle(frameStyleKey).pad, 'rounded-2xl', framePremium ? 'anim-pan' : '']">
-          <div class="relative size-24 overflow-hidden grid place-items-center text-white font-extrabold text-3xl"
-               :class="[iconBgStyle(iconBgKey), frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl ring-4 ring-slate-900']">
+        <div class="size-24 rounded-2xl" :class="[frameStyle(frameStyleKey).wrap, frameStyle(frameStyleKey).pad, framePremium ? 'anim-pan' : '']">
+          <div class="relative w-full h-full overflow-hidden grid place-items-center text-white font-extrabold text-3xl"
+               :class="[iconGlyph ? iconThemeBg(iconGlyph) : iconBgStyle(iconBgKey), frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl ring-4 ring-slate-900']">
             <CosmeticIcon v-if="iconGlyph" :iconKey="iconGlyph" :size="64" />
             <img v-else-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
             <span v-else>{{ avatarInitial }}</span>

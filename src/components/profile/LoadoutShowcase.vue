@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getCosmetics, frameStyle, bannerStyle, iconBgStyle, rarity } from '../../services/cosmetics'
+import { getCosmetics, frameStyle, bannerStyle, iconBgStyle, iconThemeBg, rarity } from '../../services/cosmetics'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 
 const props = defineProps({
@@ -51,8 +51,8 @@ function rarLabel(r) { return RARITY_LABEL[r] || 'Común' }
       <!-- Borde -->
       <div class="flex flex-col items-center text-center gap-2">
         <div class="h-[72px] grid place-items-center">
-          <div :class="[frameStyle(frameKey).wrap, frameStyle(frameKey).pad, 'rounded-full', framePremium ? 'anim-pan' : '']">
-            <div class="size-14 rounded-full bg-gradient-to-br from-slate-700 to-slate-900"></div>
+          <div class="size-14 rounded-2xl" :class="[frameStyle(frameKey).wrap, frameStyle(frameKey).pad, framePremium ? 'anim-pan' : '']">
+            <div class="w-full h-full rounded-[12px] bg-gradient-to-br from-slate-700 to-slate-900"></div>
           </div>
         </div>
         <div>
@@ -65,8 +65,10 @@ function rarLabel(r) { return RARITY_LABEL[r] || 'Común' }
       <!-- Ícono -->
       <div class="flex flex-col items-center text-center gap-2">
         <div class="h-[72px] grid place-items-center">
-          <CosmeticIcon v-if="iconGlyph" :iconKey="iconGlyph" :rarity="iconCos?.rarity || 'common'" framed :size="68" />
-          <div v-else class="size-14 rounded-full grid place-items-center text-slate-500 text-lg" :class="iconBgStyle(iconBg)">—</div>
+          <div v-if="iconGlyph" class="size-14 rounded-2xl overflow-hidden grid place-items-center shadow-lg shadow-black/30" :class="iconThemeBg(iconGlyph)">
+            <CosmeticIcon :iconKey="iconGlyph" :rarity="iconCos?.rarity || 'common'" :size="46" />
+          </div>
+          <div v-else class="size-14 rounded-2xl grid place-items-center text-slate-500 text-lg" :class="iconBgStyle(iconBg)">—</div>
         </div>
         <div>
           <div class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Ícono</div>
