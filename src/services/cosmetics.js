@@ -107,10 +107,10 @@ export const FRAME_STYLES = {
   silver:  { wrap: 'bg-gradient-to-br from-slate-200 to-slate-500', pad: 'p-[3px]' },
   gold:    { wrap: 'bg-gradient-to-br from-amber-300 to-yellow-600 shadow-[0_0_14px_rgba(251,191,36,0.45)]', pad: 'p-[3px]' },
   emerald: { wrap: 'bg-gradient-to-br from-emerald-300 to-cyan-500 shadow-[0_0_14px_rgba(16,185,129,0.45)]', pad: 'p-[3px]' },
-  legend:  { wrap: 'bg-gradient-to-br from-fuchsia-400 via-amber-300 to-cyan-400 shadow-[0_0_18px_rgba(232,121,249,0.45)]', pad: 'p-[3px]' },
+  legend:  { wrap: 'frm-prismatic shadow-[0_0_18px_rgba(232,121,249,0.5)]', pad: 'p-[3px]' },
   premium: { wrap: 'bg-gradient-to-br from-amber-400 via-yellow-200 to-amber-500 shadow-[0_0_18px_rgba(251,191,36,0.5)]', pad: 'p-[3px]' },
-  champion:{ wrap: 'bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 shadow-[0_0_22px_rgba(251,191,36,0.6)]', pad: 'p-[3px]' },
-  diamond: { wrap: 'bg-gradient-to-br from-cyan-200 via-white to-sky-400 shadow-[0_0_22px_rgba(125,211,252,0.7)]', pad: 'p-[3px]' },
+  champion:{ wrap: 'frm-champion shadow-[0_0_22px_rgba(251,191,36,0.6)]', pad: 'p-[3px]' },
+  diamond: { wrap: 'frm-diamond shadow-[0_0_22px_rgba(125,211,252,0.7)]', pad: 'p-[3px]' },
   // Familia "medallón": anillo metálico + remaches (borde punteado) + glow por rareza.
   medal_bronze:  { wrap: 'bg-gradient-to-br from-amber-300 via-amber-600 to-amber-900 border-2 border-dotted border-amber-200/60 shadow-[0_0_16px_rgba(180,120,60,0.5)]', pad: 'p-[5px]' },
   medal_silver:  { wrap: 'bg-gradient-to-br from-white via-slate-300 to-slate-500 border-2 border-dotted border-white/70 shadow-[0_0_16px_rgba(203,213,225,0.5)]', pad: 'p-[5px]' },
@@ -123,14 +123,15 @@ export function frameStyle(styleKey) {
 }
 
 // ── Estilos de banners (fondo del header) por style_key ──
+// style_key → clase CSS con PATRÓN (definidas en style.css: .bnr-*).
 export const BANNER_STYLES = {
-  default: 'bg-gradient-to-br from-slate-800 to-slate-900',
-  pitch:   'bg-gradient-to-br from-emerald-800 via-emerald-900 to-green-950',
-  night:   'bg-gradient-to-br from-slate-800 via-indigo-950 to-slate-950',
-  fire:    'bg-gradient-to-br from-orange-700 via-red-800 to-rose-950',
-  galaxy:  'bg-gradient-to-br from-fuchsia-800 via-indigo-900 to-slate-950',
-  gold:    'bg-gradient-to-br from-amber-600 via-yellow-700 to-amber-900',
-  neon:    'bg-gradient-to-br from-fuchsia-600 via-violet-600 to-cyan-500',
+  default: 'bnr-default',
+  pitch:   'bnr-pitch',
+  night:   'bnr-night',
+  fire:    'bnr-fire',
+  galaxy:  'bnr-galaxy',
+  gold:    'bnr-gold',
+  neon:    'bnr-neon',
 }
 
 export function bannerStyle(styleKey) {
