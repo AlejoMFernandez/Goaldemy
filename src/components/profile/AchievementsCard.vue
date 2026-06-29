@@ -36,6 +36,22 @@ function pctClass(code) {
   return 'bg-slate-600/30 border-slate-500/40 text-slate-300'
 }
 
+// Dificultad del logro por puntos → medallón con anillo coloreado.
+function diffOf(a) {
+  const p = Number(a?.achievements?.points) || 0
+  if (p > 100) return 'diamond'
+  if (p > 50) return 'gold'
+  if (p > 25) return 'silver'
+  return 'bronze'
+}
+const MEDAL = {
+  bronze:  { ring: 'bg-gradient-to-br from-amber-300 via-amber-600 to-amber-900', glow: 'shadow-[0_0_10px_rgba(180,120,60,0.45)]' },
+  silver:  { ring: 'bg-gradient-to-br from-white via-slate-300 to-slate-500', glow: 'shadow-[0_0_10px_rgba(203,213,225,0.45)]' },
+  gold:    { ring: 'bg-gradient-to-br from-yellow-200 via-amber-400 to-amber-700', glow: 'shadow-[0_0_12px_rgba(251,191,36,0.5)]' },
+  diamond: { ring: 'bg-gradient-to-br from-cyan-100 via-sky-300 to-blue-500', glow: 'shadow-[0_0_14px_rgba(125,211,252,0.55)]' },
+}
+function medal(a) { return MEDAL[diffOf(a)] }
+
 const showAll = ref(false)
 const selected = ref('all')
 
@@ -141,8 +157,12 @@ const groupedAchievements = computed(() => {
       <div v-for="(a, idx) in featuredList" :key="idx"
         class="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/80 to-slate-800/40 p-4 flex flex-col items-center text-center transition-all hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10">
         <div class="relative">
-          <img v-if="iconFor(a)" :src="iconFor(a)" class="w-16 h-16 rounded-2xl shadow-lg transition-transform group-hover:scale-110" alt="" />
-          <div v-else class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-slate-700/60 grid place-items-center text-3xl shadow-lg transition-transform group-hover:scale-110">🏆</div>
+          <div class="size-16 rounded-full p-[3px] transition-transform group-hover:scale-110" :class="[medal(a).ring, medal(a).glow]">
+            <div class="w-full h-full rounded-full bg-slate-900 grid place-items-center overflow-hidden">
+              <img v-if="iconFor(a)" :src="iconFor(a)" class="w-[80%] h-[80%] object-contain" alt="" />
+              <span v-else class="text-2xl">🏆</span>
+            </div>
+          </div>
           <div v-if="percentages[a.achievements?.code]" class="absolute -bottom-1.5 -right-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold backdrop-blur border" :class="pctClass(a.achievements?.code)">
             {{ percentages[a.achievements?.code] }}%
           </div>
@@ -193,8 +213,12 @@ const groupedAchievements = computed(() => {
                         :class="a._missing ? 'border-white/5 bg-slate-900/40' : 'border-white/10 bg-slate-800/70'">
                         <div class="flex items-start gap-3">
                           <div class="relative flex-none">
-                            <img v-if="iconFor(a)" :src="iconFor(a)" class="w-12 h-12 rounded-lg" :class="a._missing ? 'opacity-40 grayscale' : ''" alt="" />
-                            <div v-else class="w-12 h-12 rounded-lg bg-slate-700/60 grid place-items-center text-2xl" :class="a._missing ? 'opacity-40 grayscale' : ''">🏆</div>
+                            <div class="size-12 rounded-full p-[2px]" :class="[medal(a).ring, medal(a).glow, a._missing ? 'opacity-40 grayscale' : '']">
+                              <div class="w-full h-full rounded-full bg-slate-900 grid place-items-center overflow-hidden">
+                                <img v-if="iconFor(a)" :src="iconFor(a)" class="w-[80%] h-[80%] object-contain" alt="" />
+                                <span v-else class="text-xl">🏆</span>
+                              </div>
+                            </div>
                             <div v-if="percentages[a.achievements?.code]" class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold backdrop-blur border" :class="pctClass(a.achievements?.code)">{{ percentages[a.achievements?.code] }}%</div>
                           </div>
                           <div class="min-w-0 flex-1">
@@ -222,8 +246,12 @@ const groupedAchievements = computed(() => {
                       :class="a._missing ? 'border-white/5 bg-slate-900/40' : 'border-white/10 bg-slate-800/70'">
                       <div class="flex items-start gap-3">
                         <div class="relative flex-none">
-                          <img v-if="iconFor(a)" :src="iconFor(a)" class="w-12 h-12 rounded-lg" :class="a._missing ? 'opacity-40 grayscale' : ''" alt="" />
-                          <div v-else class="w-12 h-12 rounded-lg bg-slate-700/60 grid place-items-center text-2xl" :class="a._missing ? 'opacity-40 grayscale' : ''">🏆</div>
+                          <div class="size-12 rounded-full p-[2px]" :class="[medal(a).ring, medal(a).glow, a._missing ? 'opacity-40 grayscale' : '']">
+                            <div class="w-full h-full rounded-full bg-slate-900 grid place-items-center overflow-hidden">
+                              <img v-if="iconFor(a)" :src="iconFor(a)" class="w-[80%] h-[80%] object-contain" alt="" />
+                              <span v-else class="text-xl">🏆</span>
+                            </div>
+                          </div>
                           <div v-if="percentages[a.achievements?.code]" class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold backdrop-blur border" :class="pctClass(a.achievements?.code)">{{ percentages[a.achievements?.code] }}%</div>
                         </div>
                         <div class="min-w-0 flex-1">
