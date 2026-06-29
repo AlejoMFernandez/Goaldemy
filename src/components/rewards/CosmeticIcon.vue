@@ -1,5 +1,10 @@
+<script>
+// Compartido entre instancias: claves de íconos cuyo .webp ya 404-eó (no reintentar → sin spam de 404).
+const RASTER_FAILED = new Set()
+</script>
+
 <script setup>
-import { computed, useId } from 'vue'
+import { computed, useId, ref } from 'vue'
 
 const props = defineProps({
   // Acepta clave semántica ('ball') o el emoji legacy ('⚽'); cae al glyph si no matchea.
@@ -45,10 +50,20 @@ const frame = computed(() => FRAME[props.rarity] || FRAME.common)
 // El check del escudo y los detalles usan un acento por rareza.
 const ACCENT = { common: '#10b981', rare: '#2563eb', epic: '#9333ea', legendary: '#b45309' }
 const accent = computed(() => ACCENT[props.rarity] || ACCENT.common)
+
+// Arte raster opcional (DROP-IN): si existe /cosmetics/icons/<key>.webp se usa como
+// imagen full-bleed; si el archivo no existe (404) @error cae al SVG. Solo íconos cuadrados
+// (no framed). Para sumar un ícono raster: pegá el .webp y agregá su clave al set.
+const RASTER_ICONS = new Set(['goat', 'crown', 'trophy'])
+const rasterFailed = ref(false)
+const useRaster = computed(() => !props.framed && RASTER_ICONS.has(key.value) && !RASTER_FAILED.has(key.value) && !rasterFailed.value)
+const rasterSrc = computed(() => `/cosmetics/icons/${key.value}.webp`)
+function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = true }
 </script>
 
 <template>
-  <svg :width="size" :height="size" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="cosmetic-icon">
+  <img v-if="useRaster" :src="rasterSrc" @error="onRasterError" class="cosmetic-icon w-full h-full object-cover" alt="" />
+  <svg v-else :width="size" :height="size" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="cosmetic-icon">
     <defs>
       <linearGradient :id="gid('silver')" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#94a3b8"/></linearGradient>
       <linearGradient :id="gid('gold')" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
@@ -126,12 +141,27 @@ const accent = computed(() => ACCENT[props.rarity] || ACCENT.common)
         <rect x="27" y="66" width="46" height="9" rx="2" :fill="gold" stroke="#b45309" stroke-width="1.5"/>
         <circle cx="34" cy="40" r="3.5" fill="#e11d48"/><circle cx="50" cy="34" r="4" fill="#06b6d4"/><circle cx="66" cy="40" r="3.5" fill="#e11d48"/>
       </template>
-      <!-- GOAT -->
+      <!-- GOAT (legendario, dorado) -->
       <template v-else-if="key === 'goat'">
-        <path d="M34 36 c-7 -5 -9 -15 -5 -23 c1 9 6 14 12 17 M66 36 c7 -5 9 -15 5 -23 c-1 9 -6 14 -12 17" fill="none" :stroke="silver" stroke-width="6" stroke-linecap="round"/>
-        <path d="M38 38 q12 -9 24 0 q7 9 4 21 q-3 11 -16 13 q-13 -2 -16 -13 q-3 -12 4 -21 z" :fill="silver"/>
-        <circle cx="44" cy="50" r="2.6" fill="#1e293b"/><circle cx="56" cy="50" r="2.6" fill="#1e293b"/>
-        <path d="M50 58 v8 M47 74 l3 6 3 -6" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- cuernos curvos con estrías -->
+        <path d="M38 35 c-10 -3 -15 -14 -10 -25 c2 11 8 17 16 19 z" :fill="gold" stroke="#b45309" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M62 35 c10 -3 15 -14 10 -25 c-2 11 -8 17 -16 19 z" :fill="gold" stroke="#b45309" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M31 14 q3 8 10 14 M69 14 q-3 8 -10 14" fill="none" stroke="#b45309" stroke-opacity="0.5" stroke-width="1.3" stroke-linecap="round"/>
+        <!-- orejas -->
+        <path d="M35 41 q-10 -1 -13 6 q8 3 13 -1 z" :fill="gold" stroke="#b45309" stroke-width="1"/>
+        <path d="M65 41 q10 -1 13 6 q-8 3 -13 -1 z" :fill="gold" stroke="#b45309" stroke-width="1"/>
+        <!-- cara -->
+        <path d="M38 39 q12 -7 24 0 q6 10 3 23 q-3 13 -15 16 q-12 -3 -15 -16 q-3 -13 3 -23 z" :fill="gold" stroke="#b45309" stroke-width="1.4"/>
+        <!-- brillo de frente -->
+        <path d="M44 41 q6 -3 12 0 q2 4 1 9 q-7 -4 -14 0 q-1 -5 1 -9 z" fill="#fff7d6" fill-opacity="0.45"/>
+        <!-- ojos con destello -->
+        <circle cx="44" cy="51" r="3.2" fill="#3b1d04"/><circle cx="56" cy="51" r="3.2" fill="#3b1d04"/>
+        <circle cx="45.3" cy="49.8" r="1" fill="#ffe9a8"/><circle cx="57.3" cy="49.8" r="1" fill="#ffe9a8"/>
+        <!-- hocico -->
+        <path d="M44 63 q6 4 12 0 q-2 6 -6 7 q-4 -1 -6 -7 z" fill="#7a4a12"/>
+        <path d="M47 64 h6" stroke="#3b1d04" stroke-width="1.3" stroke-linecap="round"/>
+        <!-- barba -->
+        <path d="M50 70 q-3 8 -1 13 M50 70 q3 8 1 13" fill="none" stroke="#b45309" stroke-width="2.3" stroke-linecap="round"/>
       </template>
     </g>
 
