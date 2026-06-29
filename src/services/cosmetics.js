@@ -132,6 +132,13 @@ export const BANNER_STYLES = {
   galaxy:  'bnr-galaxy',
   gold:    'bnr-gold',
   neon:    'bnr-neon',
+  // Banners de categoría (desbloqueables por nivel del tier)
+  tier_aficionado:  'bnr-tier-aficionado',
+  tier_juvenil:     'bnr-tier-juvenil',
+  tier_amateur:     'bnr-tier-amateur',
+  tier_reserva:     'bnr-tier-reserva',
+  tier_profesional: 'bnr-tier-profesional',
+  tier_crack:       'bnr-tier-crack',
 }
 
 export function bannerStyle(styleKey) {

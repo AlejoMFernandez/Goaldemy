@@ -402,3 +402,11 @@ option:disabled { color: #64748b; }
 .frm-prismatic { background: conic-gradient(from 0deg, #f0abfc, #fcd34d, #6ee7b7, #67e8f9, #a78bfa, #f0abfc); }
 .frm-champion  { background: repeating-linear-gradient(45deg, rgba(255,255,255,0.28) 0 2px, transparent 2px 7px), linear-gradient(to bottom right, #fde047, #f59e0b, #ea580c); }
 .frm-diamond   { background: repeating-linear-gradient(135deg, rgba(255,255,255,0.32) 0 1.5px, transparent 1.5px 8px), linear-gradient(to bottom right, #cffafe, #7dd3fc, #38bdf8); }
+
+/* ─── BANNERS de CATEGORÍA (desbloqueables por nivel; familia de chevrons por tier) ─── */
+.bnr-tier-aficionado  { background: repeating-linear-gradient(135deg, rgba(16,185,129,0.18) 0 12px, transparent 12px 28px), linear-gradient(to bottom right, #065f46, #064e3b, #022c22); }
+.bnr-tier-juvenil     { background: repeating-linear-gradient(135deg, rgba(251,191,36,0.18) 0 12px, transparent 12px 28px), linear-gradient(to bottom right, #b45309, #92400e, #451a03); }
+.bnr-tier-amateur     { background: repeating-linear-gradient(135deg, rgba(249,115,22,0.18) 0 12px, transparent 12px 28px), linear-gradient(to bottom right, #c2410c, #9a3412, #431407); }
+.bnr-tier-reserva     { background: repeating-linear-gradient(135deg, rgba(239,68,68,0.18) 0 12px, transparent 12px 28px), linear-gradient(to bottom right, #b91c1c, #991b1b, #450a0a); }
+.bnr-tier-profesional { background: repeating-linear-gradient(135deg, rgba(56,189,248,0.18) 0 12px, transparent 12px 28px), linear-gradient(to bottom right, #0369a1, #075985, #082f49); }
+.bnr-tier-crack       { background: radial-gradient(circle at 75% 25%, rgba(216,180,254,0.35), transparent 45%), repeating-linear-gradient(135deg, rgba(167,139,250,0.20) 0 12px, transparent 12px 28px), linear-gradient(to bottom right, #6d28d9, #5b21b6, #2e1065); }
