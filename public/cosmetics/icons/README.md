@@ -1,28 +1,25 @@
-# Íconos raster (arte IA) — drop-in
+# Íconos raster (arte IA)
 
-Acá van los PNG/WEBP de arte para los íconos de usuario **top-tier**.
+Acá viven los `.webp` optimizados que usa el front para los íconos de usuario top.
+`CosmeticIcon.vue` los renderiza full-bleed; si falta el archivo, cae al emblema SVG.
 
-## Cómo agregar arte a un ícono
+## Activos hoy
+`ball` · `boot` · `crown` · `goat` · `trophy` (todos en `RASTER_ICONS` de `CosmeticIcon.vue`).
 
-1. Generá la imagen **cuadrada (1:1)** con su fondo temático horneado (no hace falta transparencia).
-   Recomendado: WEBP, ~256×256 o 512×512, < 60 KB.
-2. Guardala acá con el nombre = **clave semántica** del ícono + `.webp`:
-   - `goat.webp` → ícono GOAT (legendario)
-   - `crown.webp` → ícono Corona (legendario)
-   - `trophy.webp` → ícono Trofeo (épico)
-   - (otros: `ball`, `boot`, `gloves`, `medal`, `star`, `shield`)
-3. Listo. `CosmeticIcon.vue` la usa automáticamente (full-bleed) y, si el archivo no existe,
-   cae al emblema SVG de fallback. No hay que tocar código.
+## Agregar / actualizar un ícono
 
-## Para habilitar una clave nueva
+1. Generá el PNG **cuadrado (1:1)** con su fondo temático (sin transparencia).
+2. Pegá el PNG acá (`public/cosmetics/icons/`) — el nombre = **clave semántica**
+   (`goat.png`, `crown.png`, `trophy.png`, `ball.png`, `boot.png`, `medal`, `star`, `shield`, `gloves`).
+3. Corré desde la raíz: `node scripts/build-icons.mjs`
+   - genera `<nombre>.webp` (512px) acá,
+   - y mueve el PNG master a `icon-sources/` (fuera de /public, no se deploya, queda de backup).
+4. Si la clave es nueva (no está en la lista de arriba), agregala al set `RASTER_ICONS`
+   en `src/components/rewards/CosmeticIcon.vue`.
 
-Las claves que intentan cargar raster están en `RASTER_ICONS` dentro de
-`src/components/rewards/CosmeticIcon.vue`. Hoy: `goat`, `crown`, `trophy`.
-Para sumar otra (p.ej. `star`), agregá `'star'` a ese set y pegá `star.webp` acá.
-
-## Brief de estilo (para el generador IA)
+## Brief de estilo (para ChatGPT / Midjourney)
 
 Estilo ícono de invocador de **League of Legends** / ítem de **Rocket League**:
-sujeto centrado, render rico, luz de borde (rim light), pulido nivel videojuego AAA,
-legible en chico, fondo temático según el ícono. Marca Goaldemy: esmeralda→cian con
-acentos oro/rojo. Sin texto.
+sujeto centrado que llena el cuadro, render rico, luz de borde (rim light), pulido AAA,
+legible en chico, fondo temático según el ícono, acentos de marca esmeralda→cian + oro.
+Cuadrado 1:1. **Sin texto, sin marco** (el borde lo agrega la app).

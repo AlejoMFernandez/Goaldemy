@@ -34,6 +34,9 @@ dist-ssr
 # Supabase CLI temp
 supabase/.temp/
 
+# Masters PNG de los íconos (pesados). El front usa los .webp de public/. Backup local.
+icon-sources/
+
 # Database backups / dumps (NUNCA subir — pueden tener datos de usuarios)
 *.backup.gz
 db_cluster-*
