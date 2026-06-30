@@ -143,39 +143,53 @@ onMounted(load)
           <div v-if="grp.list.length" class="mb-5">
             <div class="text-[11px] uppercase tracking-wider font-semibold mb-2.5" :class="grp.k === 'owned' ? 'text-emerald-400' : 'text-slate-500'">{{ grp.label }} ({{ grp.list.length }})</div>
 
-            <!-- Bordes / Íconos -->
-            <div v-if="activeTab === 'frame' || activeTab === 'icon'" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <!-- Bordes / Íconos (grilla densa estilo LoL, info en hover) -->
+            <div v-if="activeTab === 'frame' || activeTab === 'icon'" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
               <button v-for="c in grp.list" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
-                      class="relative rounded-xl border p-3 flex flex-col items-center gap-2 transition-all"
-                      :class="[ c.equipped ? 'border-emerald-400/50 bg-emerald-500/[0.07]' : rarity(c.rarity).border + ' bg-white/[0.02]', c.owned ? 'hover:bg-white/5 cursor-pointer' : 'opacity-50 cursor-not-allowed' ]">
-                <div v-if="activeTab === 'frame'" :class="[frameStyle(c.style_key).wrap, frameStyle(c.style_key).pad, 'rounded-2xl', c.premium_only ? 'anim-pan' : '']">
-                  <div class="size-16 rounded-[14px] grid place-items-center text-slate-300 text-xs" :class="iconBgStyle(iconBg)">●</div>
-                </div>
-                <div v-else class="grid place-items-center py-1">
-                  <div v-if="c.style_key" class="size-16 rounded-2xl overflow-hidden grid place-items-center shadow-lg shadow-black/30" :class="iconThemeBg(c.style_key)">
-                    <CosmeticIcon :iconKey="c.style_key" :rarity="c.rarity" :size="52" />
+                      class="relative group aspect-square rounded-xl transition-transform"
+                      :class="[ c.owned ? 'cursor-pointer hover:scale-105' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : '' ]">
+                <div class="absolute inset-0 rounded-xl overflow-hidden border-2 grid place-items-center"
+                     :class="[ rarity(c.rarity).border, !c.owned ? 'grayscale opacity-50' : '', activeTab === 'icon' ? (c.style_key ? iconThemeBg(c.style_key) : iconBgStyle(iconBg)) : 'bg-slate-900/50' ]">
+                  <CosmeticIcon v-if="activeTab === 'icon' && c.style_key" :iconKey="c.style_key" :rarity="c.rarity" :size="72" />
+                  <span v-else-if="activeTab === 'icon'" class="text-slate-400 text-lg">—</span>
+                  <div v-else class="size-[62%] rounded-2xl" :class="[frameStyle(c.style_key).wrap, frameStyle(c.style_key).pad, c.premium_only ? 'anim-pan' : '']">
+                    <div class="w-full h-full rounded-xl bg-gradient-to-br from-slate-600 to-slate-800"></div>
                   </div>
-                  <div v-else class="size-16 rounded-2xl grid place-items-center text-slate-400 text-sm" :class="iconBgStyle(iconBg)">—</div>
+                  <!-- Info en hover -->
+                  <div class="absolute inset-x-0 bottom-0 px-1.5 pt-5 pb-1 bg-gradient-to-t from-black/95 via-black/75 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div class="text-[10px] font-bold text-white truncate leading-tight">{{ c.name }}</div>
+                    <div class="text-[9px] truncate font-medium" :class="!c.owned ? 'text-slate-300' : (c.equipped ? 'text-emerald-300' : rarity(c.rarity).text)">{{ !c.owned ? lockLabel(c) : (c.equipped ? 'Equipado' : rarity(c.rarity).label) }}</div>
+                  </div>
                 </div>
-                <span class="text-[11px] font-medium text-white truncate w-full text-center">{{ c.name }}</span>
-                <span v-if="c.premium_only" class="absolute top-1.5 right-1.5 text-[8px] font-bold text-amber-300">PRO</span>
-                <span v-if="!c.owned" class="text-[9px] text-slate-500">{{ lockLabel(c) }}</span>
-                <span v-else-if="c.equipped" class="text-[9px] text-emerald-400 font-bold">Equipado</span>
+                <span v-if="c.premium_only" class="absolute top-1 right-1 z-10 px-1 rounded bg-amber-400 text-[8px] font-extrabold text-amber-950">PRO</span>
+                <span v-if="!c.owned" class="absolute top-1 left-1 z-10 grid place-items-center size-5 rounded-full bg-slate-950/85 text-slate-200">
+                  <svg viewBox="0 0 24 24" fill="currentColor" class="size-3"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 1 1 6 0v3z"/></svg>
+                </span>
+                <span v-else-if="c.equipped" class="absolute bottom-1 right-1 z-10 grid place-items-center size-5 rounded-full bg-emerald-500 text-white shadow-lg">
+                  <svg viewBox="0 0 24 24" fill="currentColor" class="size-3.5"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </span>
               </button>
             </div>
 
-            <!-- Banners -->
-            <div v-else-if="activeTab === 'banner'" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <!-- Banners (más grandes, info en hover) -->
+            <div v-else-if="activeTab === 'banner'" class="grid grid-cols-2 gap-2.5">
               <button v-for="c in grp.list" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
-                      class="relative rounded-xl border overflow-hidden transition-all"
-                      :class="[ c.equipped ? 'border-emerald-400/60' : c.owned ? 'border-white/10 hover:border-white/25 cursor-pointer' : 'border-white/10 opacity-50 cursor-not-allowed' ]">
-                <div class="h-12" :class="[bannerStyle(c.style_key), c.premium_only ? 'anim-pan' : '']"></div>
-                <div class="flex items-center justify-between px-2.5 py-1.5 bg-slate-900/80">
-                  <span class="text-[11px] font-medium text-white truncate">{{ c.name }}</span>
-                  <span v-if="c.premium_only" class="text-[8px] font-bold text-amber-300">PRO</span>
-                  <span v-else-if="!c.owned" class="text-[9px] text-slate-500">{{ lockLabel(c) }}</span>
-                  <span v-else-if="c.equipped" class="text-[9px] text-emerald-400 font-bold">✓</span>
+                      class="relative group rounded-xl transition-transform"
+                      :class="[ c.owned ? 'cursor-pointer hover:scale-[1.03]' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : '' ]">
+                <div class="relative h-16 rounded-xl overflow-hidden border-2"
+                     :class="[ rarity(c.rarity).border, bannerStyle(c.style_key), c.premium_only ? 'anim-pan' : '', !c.owned ? 'grayscale opacity-50' : '' ]">
+                  <div class="absolute inset-x-0 bottom-0 px-2 pt-5 pb-1 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div class="text-[10px] font-bold text-white truncate leading-tight">{{ c.name }}</div>
+                    <div class="text-[9px] truncate font-medium" :class="!c.owned ? 'text-slate-300' : (c.equipped ? 'text-emerald-300' : rarity(c.rarity).text)">{{ !c.owned ? lockLabel(c) : (c.equipped ? 'Equipado' : rarity(c.rarity).label) }}</div>
+                  </div>
                 </div>
+                <span v-if="c.premium_only" class="absolute top-1 right-1 z-10 px-1 rounded bg-amber-400 text-[8px] font-extrabold text-amber-950">PRO</span>
+                <span v-if="!c.owned" class="absolute top-1 left-1 z-10 grid place-items-center size-5 rounded-full bg-slate-950/85 text-slate-200">
+                  <svg viewBox="0 0 24 24" fill="currentColor" class="size-3"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 1 1 6 0v3z"/></svg>
+                </span>
+                <span v-else-if="c.equipped" class="absolute bottom-1 right-1 z-10 grid place-items-center size-5 rounded-full bg-emerald-500 text-white shadow-lg">
+                  <svg viewBox="0 0 24 24" fill="currentColor" class="size-3.5"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </span>
               </button>
             </div>
 
