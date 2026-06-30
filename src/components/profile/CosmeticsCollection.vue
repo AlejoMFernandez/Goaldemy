@@ -78,8 +78,19 @@ async function chooseBg(color) {
   busy.value = null
 }
 
+// Pista de qué hacer para desbloquear un cosmético secreto (por logro).
+const ACHIEVEMENT_HINTS = {
+  streak_15: 'Conseguí 15 aciertos seguidos en un juego',
+  daily_streak_30: 'Jugá 30 días seguidos',
+  perfectionist: 'Completá un juego sin ningún error',
+  night_owl: 'Jugá entre las 00:00 y las 05:00',
+  daily_wins_all: 'Ganá todos los juegos del día',
+  centurion: 'Acumulá 100 victorias totales',
+  guess_master: 'Ganá 20 partidas de "Adivina el jugador"',
+}
+function hintFor(c) { return ACHIEVEMENT_HINTS[c.unlock_achievement] || 'Conseguí un logro secreto' }
 function lockLabel(c) {
-  if (c.unlock_achievement) return '🏆 Logro'
+  if (c.unlock_achievement) return hintFor(c)
   if (c.unlock_level > 100) return 'Pase'
   return 'Nivel ' + c.unlock_level
 }
@@ -148,7 +159,15 @@ onMounted(load)
               <button v-for="c in grp.list" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
                       class="relative group aspect-square rounded-xl transition-transform"
                       :class="[ c.owned ? 'cursor-pointer hover:scale-105' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : '' ]">
-                <div class="absolute inset-0 rounded-xl overflow-hidden border-2 grid place-items-center"
+                <!-- Secreto: bloqueado por logro → "?" + pista en hover -->
+                <div v-if="!c.owned && c.unlock_achievement" class="absolute inset-0 rounded-xl overflow-hidden border-2 border-amber-500/25 grid place-items-center bg-gradient-to-br from-slate-800 to-slate-950">
+                  <span class="text-4xl font-black text-slate-600 group-hover:text-amber-400/70 transition-colors">?</span>
+                  <div class="absolute inset-x-0 bottom-0 px-1.5 pt-5 pb-1 bg-gradient-to-t from-black/95 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div class="text-[8px] font-bold text-amber-300 uppercase tracking-wide leading-tight">Secreto</div>
+                    <div class="text-[9px] text-slate-200 leading-snug line-clamp-2">{{ hintFor(c) }}</div>
+                  </div>
+                </div>
+                <div v-else class="absolute inset-0 rounded-xl overflow-hidden border-2 grid place-items-center"
                      :class="[ rarity(c.rarity).border, !c.owned ? 'grayscale opacity-50' : '', activeTab === 'icon' ? (c.style_key ? iconThemeBg(c.style_key) : iconBgStyle(iconBg)) : 'bg-slate-900/50' ]">
                   <CosmeticIcon v-if="activeTab === 'icon' && c.style_key" :iconKey="c.style_key" :rarity="c.rarity" :size="72" />
                   <span v-else-if="activeTab === 'icon'" class="text-slate-400 text-lg">—</span>

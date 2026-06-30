@@ -186,6 +186,12 @@ export const ICON_THEME_BG = {
   shield: 'bg-gradient-to-b from-slate-500 to-slate-800',
   crown: 'bg-gradient-to-b from-fuchsia-600 to-indigo-950',
   goat: 'bg-gradient-to-b from-amber-500 to-yellow-950',
+  // íconos secretos (por logro)
+  bolt: 'bg-gradient-to-b from-yellow-400 to-amber-950',
+  flame: 'bg-gradient-to-b from-orange-500 to-red-950',
+  gem: 'bg-gradient-to-b from-cyan-400 to-blue-950',
+  owl: 'bg-gradient-to-b from-indigo-500 to-slate-950',
+  broom: 'bg-gradient-to-b from-emerald-500 to-emerald-950',
 }
 export function iconThemeBg(styleKey) {
   return ICON_THEME_BG[styleKey] || 'bg-gradient-to-b from-emerald-600 to-cyan-900'

@@ -27,7 +27,7 @@ const EMOJI_MAP = {
   '⚽': 'ball', '👟': 'boot', '🧤': 'gloves', '🏅': 'medal',
   '🏆': 'trophy', '🐐': 'goat', '👑': 'crown', '⭐': 'star', '🛡️': 'shield', '🛡': 'shield',
 }
-const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield'])
+const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom'])
 
 const key = computed(() => {
   const k = (props.iconKey || '').trim()
@@ -162,6 +162,39 @@ function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = tr
         <path d="M47 64 h6" stroke="#3b1d04" stroke-width="1.3" stroke-linecap="round"/>
         <!-- barba -->
         <path d="M50 70 q-3 8 -1 13 M50 70 q3 8 1 13" fill="none" stroke="#b45309" stroke-width="2.3" stroke-linecap="round"/>
+      </template>
+      <!-- RAYO -->
+      <template v-else-if="key === 'bolt'">
+        <path d="M56 16 L28 54 h16 l-5 30 l33 -42 h-18 z" :fill="gold" stroke="#a16207" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M49 30 l-11 22" fill="none" stroke="#fff7d6" stroke-opacity="0.7" stroke-width="2.5" stroke-linecap="round"/>
+      </template>
+      <!-- LLAMA -->
+      <template v-else-if="key === 'flame'">
+        <path d="M50 18 c10 14 19 21 15 39 c-3 14 -11 23 -15 23 c-4 0 -12 -9 -15 -23 c-2 -10 4 -15 7 -22 c2 7 6 7 7 3 c2 -8 -4 -16 1 -20 z" fill="#ea580c"/>
+        <path d="M50 42 c5 7 9 11 7 20 c-1 7 -5 12 -7 12 c-2 0 -6 -5 -7 -12 c-1 -5 3 -8 5 -13 c1 4 2 4 2 0 z" fill="#fde047"/>
+      </template>
+      <!-- GEMA -->
+      <template v-else-if="key === 'gem'">
+        <path d="M32 42 l10 -18 h16 l10 18 -18 38 z" fill="#a5f3fc" stroke="#0891b2" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M32 42 h36 M46 42 l4 38 M54 42 l-4 38 M42 24 l4 18 M58 24 l-4 18" fill="none" stroke="#0891b2" stroke-width="1.1" stroke-opacity="0.8"/>
+        <path d="M42 24 h16 l-4 18 h-8 z" fill="#cffafe"/>
+      </template>
+      <!-- BÚHO -->
+      <template v-else-if="key === 'owl'">
+        <path d="M30 30 q3 -12 11 -12 q-1 8 -3 13 z M70 30 q-3 -12 -11 -12 q1 8 3 13 z" :fill="silver"/>
+        <path d="M50 26 c-15 0 -24 12 -24 27 c0 17 11 29 24 29 c13 0 24 -12 24 -29 c0 -15 -9 -27 -24 -27 z" :fill="silver" stroke="#94a3b8" stroke-width="1"/>
+        <circle cx="40" cy="46" r="9.5" fill="#0f172a"/><circle cx="60" cy="46" r="9.5" fill="#0f172a"/>
+        <circle cx="40" cy="46" r="6.5" fill="#fbbf24"/><circle cx="60" cy="46" r="6.5" fill="#fbbf24"/>
+        <circle cx="40" cy="46" r="3" fill="#0f172a"/><circle cx="60" cy="46" r="3" fill="#0f172a"/>
+        <path d="M50 52 l5 7 -5 5 -5 -5 z" fill="#f59e0b"/>
+        <path d="M37 66 q13 9 26 0" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+      </template>
+      <!-- ESCOBA -->
+      <template v-else-if="key === 'broom'">
+        <path d="M64 20 L44 48" :stroke="gold" stroke-width="5" stroke-linecap="round"/>
+        <path d="M30 50 l20 -8 l8 18 q-16 12 -28 6 z" fill="#ca8a04"/>
+        <path d="M30 50 l20 -8 l3 9 l-20 8 z" fill="#a16207"/>
+        <path d="M33 62 l-2 18 M40 64 l0 18 M47 64 l2 17 M54 61 l4 17" fill="none" stroke="#854d0e" stroke-width="2.5" stroke-linecap="round"/>
       </template>
     </g>
 
