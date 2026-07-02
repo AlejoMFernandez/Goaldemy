@@ -1,5 +1,5 @@
 <script>
-import AppH1 from '../components/common/AppH1.vue'
+import { getAuthUser } from '../services/auth'
 import LeaderboardTable from '../components/leaderboard/LeaderboardTable.vue'
 import PeriodTabs from '../components/leaderboard/PeriodTabs.vue'
 import GameFilter from '../components/leaderboard/GameFilter.vue'
@@ -9,7 +9,7 @@ import { getEquippedCosmeticsBatch } from '../services/cosmetics'
 
 export default {
   name: 'Leaderboards',
-  components: { AppH1, LeaderboardTable, PeriodTabs, GameFilter },
+  components: { LeaderboardTable, PeriodTabs, GameFilter },
   data() {
     return {
       limit: 10,
@@ -19,10 +19,12 @@ export default {
       games: [],
       rows: [],
       loading: false,
+      meId: '',
       _loadingLeaderboard: false,
     }
   },
   async mounted() {
+    this.meId = getAuthUser()?.id || ''
     await this.loadGames()
     this.load()
   },
@@ -119,16 +121,22 @@ export default {
 </script>
 
 <template>
-  <section class="mx-auto max-w-4xl px-0 sm:px-4">
-    <div class="mb-4 px-4 sm:px-0">
-      <AppH1>Top Global</AppH1>
+  <section class="mx-auto max-w-3xl px-0 sm:px-4">
+    <div class="mb-4 px-4 sm:px-0 flex items-center gap-2.5">
+      <span class="grid place-items-center size-9 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-400/25 shrink-0">
+        <svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3z"/></svg>
+      </span>
+      <div>
+        <h1 class="font-display font-bold text-white text-lg leading-tight">Ranking global</h1>
+        <p class="text-xs text-slate-500">Los mejores de Goaldemy</p>
+      </div>
     </div>
     <div class="mb-3 flex justify-between flex-col sm:flex-row gap-3 px-4 sm:px-0">
       <PeriodTabs v-model="period" @update:modelValue="page=0; load()" />
       <GameFilter v-model="gameId" :games="games" @update:modelValue="page=0; load()" />
     </div>
     <div class="px-4 sm:px-0">
-      <LeaderboardTable :rows="rows" :loading="loading" />
+      <LeaderboardTable :rows="rows" :loading="loading" :podium="page === 0" :me-id="meId" />
     </div>
     <div class="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-0">
       <div class="flex items-center gap-2 text-xs sm:text-sm text-slate-300 flex-wrap">
