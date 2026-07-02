@@ -54,7 +54,7 @@ const accent = computed(() => ACCENT[props.rarity] || ACCENT.common)
 // Arte raster opcional (DROP-IN): si existe /cosmetics/icons/<key>.webp se usa como
 // imagen full-bleed; si el archivo no existe (404) @error cae al SVG. Solo íconos cuadrados
 // (no framed). Para sumar un ícono raster: pegá el .webp y agregá su clave al set.
-const RASTER_ICONS = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield'])
+const RASTER_ICONS = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'sun', 'clover', 'sword', 'hat', 'laurel'])
 const rasterFailed = ref(false)
 const useRaster = computed(() => !props.framed && RASTER_ICONS.has(key.value) && !RASTER_FAILED.has(key.value) && !rasterFailed.value)
 const rasterSrc = computed(() => `/cosmetics/icons/${key.value}.webp`)
