@@ -197,6 +197,11 @@ export const ICON_THEME_BG = {
   sword: 'bg-gradient-to-b from-rose-600 to-slate-950',
   hat: 'bg-gradient-to-b from-violet-500 to-slate-950',
   laurel: 'bg-gradient-to-b from-amber-500 to-yellow-950',
+  chat: 'bg-gradient-to-b from-sky-500 to-blue-950',
+  butterfly: 'bg-gradient-to-b from-fuchsia-500 to-purple-950',
+  globe: 'bg-gradient-to-b from-teal-500 to-blue-950',
+  comet: 'bg-gradient-to-b from-indigo-500 to-slate-950',
+  phoenix: 'bg-gradient-to-b from-orange-500 to-rose-950',
 }
 export function iconThemeBg(styleKey) {
   return ICON_THEME_BG[styleKey] || 'bg-gradient-to-b from-emerald-600 to-cyan-900'
@@ -236,6 +241,10 @@ export const ACHIEVEMENT_HINTS = {
   lucky_first: 'Acertá al primer intento 10 veces',
   weekend_warrior: 'Ganá 10 juegos un sábado o domingo',
   hat_trick: 'Ganá 3 juegos distintos el mismo día',
+  chat_master: 'Enviá 100 mensajes en el chat',
+  social_butterfly: 'Conectá con 10 usuarios',
+  nationality_expert: 'Acertá 50 nacionalidades correctas',
+  grand_slam: 'Ganá todos los juegos en una semana',
 }
 export function hintFor(c) { return ACHIEVEMENT_HINTS[c?.unlock_achievement] || 'Conseguí un logro secreto' }
 // Por qué se desbloqueó un cosmético (para la escena de reclamo).

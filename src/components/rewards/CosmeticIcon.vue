@@ -27,7 +27,7 @@ const EMOJI_MAP = {
   '⚽': 'ball', '👟': 'boot', '🧤': 'gloves', '🏅': 'medal',
   '🏆': 'trophy', '🐐': 'goat', '👑': 'crown', '⭐': 'star', '🛡️': 'shield', '🛡': 'shield',
 }
-const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel'])
+const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel', 'chat', 'butterfly', 'globe', 'comet', 'phoenix'])
 
 const key = computed(() => {
   const k = (props.iconKey || '').trim()
@@ -234,6 +234,53 @@ function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = tr
           <ellipse cx="73" cy="47" rx="5.5" ry="3" transform="rotate(45 73 47)"/><ellipse cx="70" cy="60" rx="5.5" ry="3" transform="rotate(28 70 60)"/><ellipse cx="64" cy="72" rx="5.5" ry="3" transform="rotate(12 64 72)"/>
         </g>
         <path d="M50 34 l3.2 7.5 8.3 0.6 -6.3 5.4 2 8.1 -7.2 -4.4 -7.2 4.4 2 -8.1 -6.3 -5.4 8.3 -0.6 z" :fill="gold" stroke="#b45309" stroke-width="1"/>
+      </template>
+      <!-- BOCADILLO (chat) -->
+      <template v-else-if="key === 'chat'">
+        <path d="M20 28 h60 a10 10 0 0 1 10 10 v20 a10 10 0 0 1 -10 10 h-32 l-16 13 v-13 h-12 a10 10 0 0 1 -10 -10 v-20 a10 10 0 0 1 10 -10 z" :fill="silver" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round"/>
+        <g fill="#475569"><circle cx="36" cy="48" r="4"/><circle cx="50" cy="48" r="4"/><circle cx="64" cy="48" r="4"/></g>
+      </template>
+      <!-- MARIPOSA -->
+      <template v-else-if="key === 'butterfly'">
+        <g fill="#e879f9" stroke="#a21caf" stroke-width="1">
+          <path d="M49 46 q-20 -20 -30 -8 q-8 12 4 20 q14 8 26 -6 z"/>
+          <path d="M51 46 q20 -20 30 -8 q8 12 -4 20 q-14 8 -26 -6 z"/>
+        </g>
+        <g fill="#c026d3" stroke="#a21caf" stroke-width="1">
+          <path d="M49 54 q-14 6 -18 18 q-2 10 8 10 q10 0 12 -14 z"/>
+          <path d="M51 54 q14 6 18 18 q2 10 -8 10 q-10 0 -12 -14 z"/>
+        </g>
+        <ellipse cx="50" cy="52" rx="2.6" ry="15" fill="#3b1d04"/>
+        <path d="M50 38 q-5 -7 -10 -8 M50 38 q5 -7 10 -8" fill="none" stroke="#3b1d04" stroke-width="2" stroke-linecap="round"/>
+      </template>
+      <!-- GLOBO -->
+      <template v-else-if="key === 'globe'">
+        <circle cx="50" cy="50" r="30" fill="#0ea5e9" stroke="#075985" stroke-width="1.5"/>
+        <g fill="#22c55e" stroke="#15803d" stroke-width="0.6">
+          <path d="M28 42 q10 -6 18 1 q-3 8 -13 8 q-9 -2 -5 -9 z"/>
+          <path d="M54 56 q12 -5 17 5 q-5 9 -17 5 q-4 -6 0 -10 z"/>
+          <path d="M38 64 q9 1 9 8 q-9 4 -13 -3 q0 -3 4 -5 z"/>
+        </g>
+        <g fill="none" stroke="#e0f2fe" stroke-opacity="0.45" stroke-width="1">
+          <ellipse cx="50" cy="50" rx="13" ry="30"/><path d="M20 50 h60 M24 38 h52 M24 62 h52"/>
+        </g>
+      </template>
+      <!-- COMETA -->
+      <template v-else-if="key === 'comet'">
+        <path d="M22 72 L58 36" stroke="#a5b4fc" stroke-width="7" stroke-linecap="round" stroke-opacity="0.45"/>
+        <path d="M30 74 L60 44" stroke="#c7d2fe" stroke-width="3.5" stroke-linecap="round" stroke-opacity="0.4"/>
+        <path d="M67 28 l4.5 11 12 1 -9 8 3 12 -10.5 -6.5 -10.5 6.5 3 -12 -9 -8 12 -1 z" :fill="gold" stroke="#b45309" stroke-width="1.2" stroke-linejoin="round"/>
+      </template>
+      <!-- FÉNIX -->
+      <template v-else-if="key === 'phoenix'">
+        <path d="M50 44 c-16 -14 -30 -6 -34 6 c14 -4 20 4 18 14 c8 -8 14 -3 16 5 z" fill="#ea580c"/>
+        <path d="M50 44 c16 -14 30 -6 34 6 c-14 -4 -20 4 -18 14 c-8 -8 -14 -3 -16 5 z" fill="#ea580c"/>
+        <path d="M50 46 c-9 -7 -15 -3 -17 3 c8 -2 10 4 8 9 c6 -5 8 -1 9 4 z" fill="#fbbf24"/>
+        <path d="M50 46 c9 -7 15 -3 17 3 c-8 -2 -10 4 -8 9 c-6 -5 -8 -1 -9 4 z" fill="#fbbf24"/>
+        <path d="M50 62 c-3 10 -7 15 -3 22 c3 -4 3 -9 3 -13 c0 4 0 9 3 13 c4 -7 0 -12 -3 -22 z" fill="#dc2626"/>
+        <circle cx="50" cy="34" r="7" fill="#f97316" stroke="#c2410c" stroke-width="1"/>
+        <circle cx="52.5" cy="32" r="1.6" fill="#1e293b"/>
+        <path d="M56 34 l8 -1 -5 5 z" fill="#facc15"/>
       </template>
     </g>
 
