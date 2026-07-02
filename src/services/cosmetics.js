@@ -192,6 +192,11 @@ export const ICON_THEME_BG = {
   gem: 'bg-gradient-to-b from-cyan-400 to-blue-950',
   owl: 'bg-gradient-to-b from-indigo-500 to-slate-950',
   broom: 'bg-gradient-to-b from-emerald-500 to-emerald-950',
+  sun: 'bg-gradient-to-b from-amber-400 to-orange-950',
+  clover: 'bg-gradient-to-b from-green-500 to-green-950',
+  sword: 'bg-gradient-to-b from-rose-600 to-slate-950',
+  hat: 'bg-gradient-to-b from-violet-500 to-slate-950',
+  laurel: 'bg-gradient-to-b from-amber-500 to-yellow-950',
 }
 export function iconThemeBg(styleKey) {
   return ICON_THEME_BG[styleKey] || 'bg-gradient-to-b from-emerald-600 to-cyan-900'

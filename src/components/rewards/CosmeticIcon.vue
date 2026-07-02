@@ -27,7 +27,7 @@ const EMOJI_MAP = {
   '⚽': 'ball', '👟': 'boot', '🧤': 'gloves', '🏅': 'medal',
   '🏆': 'trophy', '🐐': 'goat', '👑': 'crown', '⭐': 'star', '🛡️': 'shield', '🛡': 'shield',
 }
-const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom'])
+const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel'])
 
 const key = computed(() => {
   const k = (props.iconKey || '').trim()
@@ -195,6 +195,45 @@ function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = tr
         <path d="M30 50 l20 -8 l8 18 q-16 12 -28 6 z" fill="#ca8a04"/>
         <path d="M30 50 l20 -8 l3 9 l-20 8 z" fill="#a16207"/>
         <path d="M33 62 l-2 18 M40 64 l0 18 M47 64 l2 17 M54 61 l4 17" fill="none" stroke="#854d0e" stroke-width="2.5" stroke-linecap="round"/>
+      </template>
+      <!-- SOL / AMANECER -->
+      <template v-else-if="key === 'sun'">
+        <g :stroke="gold" stroke-width="5" stroke-linecap="round"><path d="M50 14 v10 M50 76 v10 M14 50 h10 M76 50 h10 M25 25 l7 7 M68 68 l7 7 M75 25 l-7 7 M32 68 l-7 7"/></g>
+        <circle cx="50" cy="50" r="18" :fill="gold" stroke="#b45309" stroke-width="1.5"/>
+        <path d="M40 46 a12 12 0 0 1 16 -4" fill="none" stroke="#fff7d6" stroke-opacity="0.7" stroke-width="2.5" stroke-linecap="round"/>
+      </template>
+      <!-- TRÉBOL -->
+      <template v-else-if="key === 'clover'">
+        <path d="M50 66 q3 10 -5 18" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round"/>
+        <g fill="#22c55e" stroke="#15803d" stroke-width="1.2">
+          <circle cx="50" cy="36" r="13"/><circle cx="64" cy="50" r="13"/><circle cx="50" cy="64" r="13"/><circle cx="36" cy="50" r="13"/>
+        </g>
+        <circle cx="50" cy="50" r="5" fill="#166534"/>
+        <path d="M44 32 a10 10 0 0 1 8 -4" fill="none" stroke="#dcfce7" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round"/>
+      </template>
+      <!-- ESPADA -->
+      <template v-else-if="key === 'sword'">
+        <path d="M50 14 l6 8 -3 40 h-6 l-3 -40 z" :fill="silver" stroke="#64748b" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M50 16 v44" stroke="#e2e8f0" stroke-opacity="0.6" stroke-width="1.5"/>
+        <rect x="34" y="60" width="32" height="6" rx="2" :fill="gold" stroke="#b45309" stroke-width="0.8"/>
+        <rect x="46" y="65" width="8" height="15" rx="2" fill="#78350f"/>
+        <circle cx="50" cy="82" r="4.5" :fill="gold" stroke="#b45309" stroke-width="0.8"/>
+      </template>
+      <!-- HAT-TRICK (galera) -->
+      <template v-else-if="key === 'hat'">
+        <ellipse cx="50" cy="72" rx="30" ry="7" :fill="silver" stroke="#64748b" stroke-width="1"/>
+        <path d="M36 72 v-34 q0 -4 4 -4 h20 q4 0 4 4 v34 z" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+        <rect x="36" y="58" width="28" height="8" fill="#e11d48"/>
+        <ellipse cx="50" cy="38" rx="14" ry="4" fill="#334155"/>
+      </template>
+      <!-- LAUREL (centurión) -->
+      <template v-else-if="key === 'laurel'">
+        <path d="M48 84 C30 80 22 62 27 42 M52 84 C70 80 78 62 73 42" fill="none" :stroke="gold" stroke-width="3.5" stroke-linecap="round"/>
+        <g fill="#ca8a04">
+          <ellipse cx="27" cy="47" rx="5.5" ry="3" transform="rotate(-45 27 47)"/><ellipse cx="30" cy="60" rx="5.5" ry="3" transform="rotate(-28 30 60)"/><ellipse cx="36" cy="72" rx="5.5" ry="3" transform="rotate(-12 36 72)"/>
+          <ellipse cx="73" cy="47" rx="5.5" ry="3" transform="rotate(45 73 47)"/><ellipse cx="70" cy="60" rx="5.5" ry="3" transform="rotate(28 70 60)"/><ellipse cx="64" cy="72" rx="5.5" ry="3" transform="rotate(12 64 72)"/>
+        </g>
+        <path d="M50 34 l3.2 7.5 8.3 0.6 -6.3 5.4 2 8.1 -7.2 -4.4 -7.2 4.4 2 -8.1 -6.3 -5.4 8.3 -0.6 z" :fill="gold" stroke="#b45309" stroke-width="1"/>
       </template>
     </g>
 
