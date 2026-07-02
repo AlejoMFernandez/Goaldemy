@@ -1,5 +1,4 @@
 <script>
-import AppH1 from '../../components/common/AppH1.vue';
 import AppButton from '../../components/common/AppButton.vue';
 import { subscribeToAuthStateChanges, updateAuthUserData } from '../../services/auth';
 import { supabase } from '../../services/supabase';
@@ -13,7 +12,7 @@ let unsubscribeAuth = () => {};
 
 export default {
   name: 'ProfileEdit',
-  components: { AppH1, AppButton, SearchSelect, CosmeticsCollection },
+  components: { AppButton, SearchSelect, CosmeticsCollection },
   data() {
     return {
       user: null,
@@ -91,17 +90,14 @@ export default {
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl">
+  <div class="mx-auto max-w-5xl">
     <button type="button" @click="$router.push('/profile')"
-            class="group inline-flex items-center gap-2 mb-4 text-sm font-semibold text-slate-300 hover:text-white transition">
-      <span class="grid place-items-center h-8 w-8 rounded-lg border border-white/10 bg-white/5 group-hover:bg-white/10 group-hover:border-white/20 transition">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M15 18l-6-6 6-6" /></svg>
-      </span>
-      Volver al perfil
+            class="group inline-flex items-center gap-1.5 mb-3 text-slate-400 hover:text-white transition">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 group-hover:-translate-x-0.5 transition-transform"><path d="M15 18l-6-6 6-6" /></svg>
+      <span class="text-sm">Perfil</span>
     </button>
-    <AppH1>Editar mi Perfil</AppH1>
 
-    <CosmeticsCollection class="mt-4 block" :avatar-url="user?.avatar_url || ''" :name="formData.display_name" :initial="avatarInitial">
+    <CosmeticsCollection class="block" :avatar-url="user?.avatar_url || ''" :name="formData.display_name" :initial="avatarInitial">
       <template #datos>
         <form @submit.prevent="handleSubmit" class="space-y-4">
       <!-- Avatar upload removed intentionally to keep visual style consistent -->
