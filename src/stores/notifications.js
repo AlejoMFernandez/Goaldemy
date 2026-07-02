@@ -80,9 +80,9 @@ export function shiftLevelUpQueue() {
 // ── Cosmetic unlock overlay queue ──
 // Escena premium (estilo logro/Forager) SOLO para cosméticos EXCLUSIVOS al reclamarlos.
 // Los cosméticos default (por nivel) NO usan esto: solo la notificación apilada chica.
-export function queueCosmeticOverlay({ code, name, type, rarity, styleKey }) {
+export function queueCosmeticOverlay({ code, name, type, rarity, styleKey, reason }) {
   const id = _genId()
-  state.cosmeticQueue.push({ id, code, name, type, rarity: rarity || 'epic', styleKey: styleKey || '' })
+  state.cosmeticQueue.push({ id, code, name, type, rarity: rarity || 'epic', styleKey: styleKey || '', reason: reason || '' })
   return id
 }
 

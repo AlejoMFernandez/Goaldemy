@@ -134,6 +134,11 @@ export default {
             </span>
           </div>
 
+          <!-- Cómo lo conseguiste -->
+          <div v-if="current.reason" class="mb-5 -mt-1 max-w-xs transition-all duration-400" :class="phase >= 3 ? 'opacity-100' : 'opacity-0'">
+            <p class="text-sm text-slate-300"><span class="text-slate-500">Lo conseguiste por:</span> <span class="font-semibold text-white">{{ current.reason }}</span></p>
+          </div>
+
           <!-- Botón reclamar -->
           <div class="relative transition-all duration-400" :class="phase >= 4 ? 'opacity-100' : 'opacity-0'">
             <button
@@ -143,7 +148,7 @@ export default {
               :class="claimed ? 'bg-slate-700/50 scale-95' : 'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-95 shadow-lg shadow-emerald-500/25'"
               :style="!claimed ? 'animation: claim-pulse 2s ease-in-out infinite' : ''"
             >
-              <span v-if="!claimed">Equipar después · Reclamar</span>
+              <span v-if="!claimed">Reclamar</span>
               <span v-else class="flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                 ¡Reclamado!

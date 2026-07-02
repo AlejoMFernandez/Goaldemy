@@ -1,9 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getAuthUser } from '../../services/auth'
 import {
-  getCosmetics, getEquippedCosmetics, equipCosmetic, setIconBg,
-  frameStyle, bannerStyle, iconBgStyle, iconThemeBg, ICON_BG_KEYS, rarity,
+  getCosmetics, equipCosmetic,
+  frameStyle, bannerStyle, iconBgStyle, iconThemeBg, rarity, hintFor,
 } from '../../services/cosmetics'
 import { pushSuccessToast, pushErrorToast } from '../../stores/notifications'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
@@ -14,10 +13,13 @@ const props = defineProps({
   initial: { type: String, default: '?' },
 })
 
+// Color de fondo único para avatares SIN ícono (marca esmeralda→cian).
+const DEFAULT_BG = 'emerald'
+
 const items = ref([])
 const loading = ref(true)
 const busy = ref(null)
-const iconBg = ref('emerald')
+const hovered = ref(null)
 // Abre en la estética; "Detalles" (datos de cuenta) queda al final.
 const activeTab = ref('icon')
 
@@ -33,7 +35,11 @@ const isCosmeticTab = computed(() => activeTab.value !== 'datos')
 
 function byType(t) { return items.value.filter(c => c.type === t) }
 function ownedOf(t) { return byType(t).filter(c => c.owned) }
-function lockedOf(t) { return byType(t).filter(c => !c.owned) }
+// Bloqueados: primero los previsualizables (por nivel/premium), después los secretos (por logro).
+function lockedOf(t) {
+  return byType(t).filter(c => !c.owned)
+    .sort((a, b) => (a.unlock_achievement ? 1 : 0) - (b.unlock_achievement ? 1 : 0))
+}
 
 const equippedFrame = computed(() => byType('frame').find(f => f.equipped) || byType('frame').find(f => f.style_key === 'none') || {})
 const equippedTitle = computed(() => byType('title').find(t => t.equipped) || null)
@@ -42,12 +48,7 @@ const equippedBanner = computed(() => byType('banner').find(b => b.equipped) || 
 
 async function load() {
   loading.value = true
-  const [cos, eq] = await Promise.all([
-    getCosmetics(),
-    getEquippedCosmetics(getAuthUser()?.id),
-  ])
-  items.value = cos
-  iconBg.value = eq.iconBg || 'emerald'
+  items.value = await getCosmetics()
   loading.value = false
 }
 
@@ -70,53 +71,54 @@ async function unequipTitle() {
   busy.value = null
 }
 
-async function chooseBg(color) {
-  if (busy.value === 'bg' || color === iconBg.value) { iconBg.value = color; }
-  busy.value = 'bg'
-  const res = await setIconBg(color)
-  if (res.ok) iconBg.value = color
-  busy.value = null
-}
-
-// Pista de qué hacer para desbloquear un cosmético secreto (por logro).
-const ACHIEVEMENT_HINTS = {
-  streak_15: 'Conseguí 15 aciertos seguidos en un juego',
-  daily_streak_30: 'Jugá 30 días seguidos',
-  perfectionist: 'Completá un juego sin ningún error',
-  night_owl: 'Jugá entre las 00:00 y las 05:00',
-  daily_wins_all: 'Ganá todos los juegos del día',
-  centurion: 'Acumulá 100 victorias totales',
-  guess_master: 'Ganá 20 partidas de "Adivina el jugador"',
-}
-function hintFor(c) { return ACHIEVEMENT_HINTS[c.unlock_achievement] || 'Conseguí un logro secreto' }
-function lockLabel(c) {
+// Detalle para el panel de hover (nombre + rareza + cómo conseguir).
+function requirementText(c) {
+  if (c.owned) return c.equipped ? '✓ Equipado' : 'Desbloqueado'
   if (c.unlock_achievement) return hintFor(c)
-  if (c.unlock_level > 100) return 'Pase'
+  if (c.premium_only) return 'Suscripción Premium'
+  if (c.unlock_level > 100) return 'Pase mensual'
   return 'Nivel ' + c.unlock_level
 }
+function displayName(c) { return (!c.owned && c.unlock_achievement) ? 'Ícono secreto' : c.name }
 
 onMounted(load)
 </script>
 
 <template>
   <div class="card p-5 sm:p-6">
-    <!-- Preview fija -->
-    <div class="sticky top-2 z-10 mb-5">
-      <div class="relative overflow-hidden rounded-2xl border border-white/10 shadow-lg shadow-black/30">
-        <div class="absolute inset-0 opacity-90" :class="[bannerStyle(equippedBanner.style_key), equippedBanner.premium_only ? 'anim-pan' : '']"></div>
-        <div class="relative flex items-center gap-4 p-4">
-          <div :class="[frameStyle(equippedFrame.style_key).wrap, frameStyle(equippedFrame.style_key).pad, 'rounded-2xl shrink-0', equippedFrame.premium_only ? 'anim-pan' : '']">
-            <div class="size-16 rounded-[13px] overflow-hidden grid place-items-center text-white font-extrabold text-2xl" :class="(equippedIcon && equippedIcon.style_key) ? iconThemeBg(equippedIcon.style_key) : iconBgStyle(iconBg)">
-              <CosmeticIcon v-if="equippedIcon && equippedIcon.style_key" :iconKey="equippedIcon.style_key" :rarity="equippedIcon.rarity" :size="52" />
-              <img v-else-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
-              <span v-else>{{ initial }}</span>
+    <!-- Preview fija (queda debajo del navbar) + detalle en hover -->
+    <div class="sticky top-20 z-20 mb-5">
+      <div class="rounded-2xl border border-white/10 shadow-lg shadow-black/30 overflow-hidden">
+        <div class="relative">
+          <div class="absolute inset-0 opacity-90" :class="[bannerStyle(equippedBanner.style_key), equippedBanner.premium_only ? 'anim-pan' : '']"></div>
+          <div class="relative flex items-center gap-4 p-4">
+            <div :class="[frameStyle(equippedFrame.style_key).wrap, frameStyle(equippedFrame.style_key).pad, 'rounded-2xl shrink-0', equippedFrame.premium_only ? 'anim-pan' : '']">
+              <div class="size-16 rounded-[13px] overflow-hidden grid place-items-center text-white font-extrabold text-2xl" :class="(equippedIcon && equippedIcon.style_key) ? iconThemeBg(equippedIcon.style_key) : iconBgStyle(DEFAULT_BG)">
+                <CosmeticIcon v-if="equippedIcon && equippedIcon.style_key" :iconKey="equippedIcon.style_key" :rarity="equippedIcon.rarity" :size="52" />
+                <img v-else-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
+                <span v-else>{{ initial }}</span>
+              </div>
+            </div>
+            <div class="min-w-0">
+              <p class="text-white font-bold text-lg truncate drop-shadow">{{ name || 'Tu nombre' }}</p>
+              <p v-if="equippedTitle" class="text-sm font-semibold" :class="equippedTitle.premium_only ? 'title-premium-anim' : rarity(equippedTitle.rarity).text">{{ equippedTitle.name }}</p>
+              <p v-else class="text-sm text-slate-300/80">Sin título</p>
             </div>
           </div>
-          <div class="min-w-0">
-            <p class="text-white font-bold text-lg truncate drop-shadow">{{ name || 'Tu nombre' }}</p>
-            <p v-if="equippedTitle" class="text-sm font-semibold" :class="equippedTitle.premium_only ? 'title-premium-anim' : rarity(equippedTitle.rarity).text">{{ equippedTitle.name }}</p>
-            <p v-else class="text-sm text-slate-300/80">Sin título</p>
+        </div>
+        <!-- Detalle del cosmético al pasar el mouse (estilo LoL, por fuera del ícono) -->
+        <div class="border-t border-white/10 bg-slate-950/70 px-4 py-2.5 min-h-[54px] flex items-center">
+          <div v-if="hovered" class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-white text-sm truncate">{{ displayName(hovered) }}</span>
+              <span class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded border" :class="[rarity(hovered.rarity).text, rarity(hovered.rarity).border]">{{ rarity(hovered.rarity).label }}</span>
+              <span v-if="hovered.premium_only" class="shrink-0 text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-400 text-amber-950">PRO</span>
+            </div>
+            <div class="text-xs mt-0.5 truncate" :class="hovered.owned ? 'text-emerald-300' : 'text-slate-300'">
+              <span v-if="!hovered.owned" class="text-slate-500">Cómo conseguirlo: </span>{{ requirementText(hovered) }}
+            </div>
           </div>
+          <span v-else class="text-xs text-slate-500">Pasá el mouse por un cosmético para ver el detalle</span>
         </div>
       </div>
     </div>
@@ -138,70 +140,49 @@ onMounted(load)
         <slot name="datos" />
       </div>
 
-      <!-- Íconos: picker de color de fondo -->
-      <div v-if="activeTab === 'icon'" class="mb-5">
-        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-2">Color de fondo</div>
-        <div class="flex flex-wrap gap-2">
-          <button v-for="c in ICON_BG_KEYS" :key="c" @click="chooseBg(c)"
-                  class="w-9 h-9 rounded-lg transition-transform hover:scale-110 ring-2"
-                  :class="[iconBgStyle(c), iconBg === c ? 'ring-white' : 'ring-transparent']" :aria-label="c"></button>
-        </div>
-      </div>
-
       <!-- Grilla de cosméticos (owned arriba / locked abajo) -->
       <template v-if="isCosmeticTab">
         <template v-for="grp in [{ k:'owned', label:'Tenés', list: ownedOf(activeTab) }, { k:'locked', label:'Bloqueados', list: lockedOf(activeTab) }]" :key="grp.k">
           <div v-if="grp.list.length" class="mb-5">
             <div class="text-[11px] uppercase tracking-wider font-semibold mb-2.5" :class="grp.k === 'owned' ? 'text-emerald-400' : 'text-slate-500'">{{ grp.label }} ({{ grp.list.length }})</div>
 
-            <!-- Bordes / Íconos (grilla densa estilo LoL, info en hover) -->
-            <div v-if="activeTab === 'frame' || activeTab === 'icon'" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            <!-- Bordes / Íconos (grilla densa 5 col estilo LoL; detalle en el panel de arriba) -->
+            <div v-if="activeTab === 'frame' || activeTab === 'icon'" class="grid grid-cols-4 sm:grid-cols-5 gap-2">
               <button v-for="c in grp.list" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
-                      class="relative group aspect-square rounded-xl transition-transform"
-                      :class="[ c.owned ? 'cursor-pointer hover:scale-105' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : '' ]">
-                <!-- Secreto: bloqueado por logro → "?" + pista en hover -->
-                <div v-if="!c.owned && c.unlock_achievement" class="absolute inset-0 rounded-xl overflow-hidden border-2 border-amber-500/25 grid place-items-center bg-gradient-to-br from-slate-800 to-slate-950">
-                  <span class="text-4xl font-black text-slate-600 group-hover:text-amber-400/70 transition-colors">?</span>
-                  <div class="absolute inset-x-0 bottom-0 px-1.5 pt-5 pb-1 bg-gradient-to-t from-black/95 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div class="text-[8px] font-bold text-amber-300 uppercase tracking-wide leading-tight">Secreto</div>
-                    <div class="text-[9px] text-slate-200 leading-snug line-clamp-2">{{ hintFor(c) }}</div>
-                  </div>
+                      @mouseenter="hovered = c" @mouseleave="hovered = null" @focus="hovered = c"
+                      class="relative group aspect-square rounded-lg transition-transform"
+                      :class="[ c.owned ? 'cursor-pointer hover:scale-105' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : (c.premium_only ? 'ring-2 ring-amber-400/80 shadow-[0_0_10px_rgba(251,191,36,0.4)]' : '') ]">
+                <!-- Secreto: bloqueado por logro → "?" -->
+                <div v-if="!c.owned && c.unlock_achievement" class="absolute inset-0 rounded-lg overflow-hidden border-2 border-amber-500/25 grid place-items-center bg-gradient-to-br from-slate-800 to-slate-950">
+                  <span class="text-3xl font-black text-slate-600 group-hover:text-amber-400/80 transition-colors">?</span>
                 </div>
-                <div v-else class="absolute inset-0 rounded-xl overflow-hidden border-2 grid place-items-center"
-                     :class="[ rarity(c.rarity).border, !c.owned ? 'grayscale opacity-50' : '', activeTab === 'icon' ? (c.style_key ? iconThemeBg(c.style_key) : iconBgStyle(iconBg)) : 'bg-slate-900/50' ]">
-                  <CosmeticIcon v-if="activeTab === 'icon' && c.style_key" :iconKey="c.style_key" :rarity="c.rarity" :size="72" />
-                  <span v-else-if="activeTab === 'icon'" class="text-slate-400 text-lg">—</span>
+                <!-- Normal -->
+                <div v-else class="absolute inset-0 rounded-lg overflow-hidden border-2 grid place-items-center"
+                     :class="[ c.premium_only ? 'border-amber-400/60' : rarity(c.rarity).border, !c.owned ? 'grayscale opacity-50' : '', activeTab === 'icon' ? (c.style_key ? iconThemeBg(c.style_key) : iconBgStyle(DEFAULT_BG)) : 'bg-slate-900/50' ]">
+                  <CosmeticIcon v-if="activeTab === 'icon' && c.style_key" :iconKey="c.style_key" :rarity="c.rarity" :size="64" />
+                  <span v-else-if="activeTab === 'icon'" class="text-slate-400">—</span>
                   <div v-else class="size-[62%] rounded-2xl" :class="[frameStyle(c.style_key).wrap, frameStyle(c.style_key).pad, c.premium_only ? 'anim-pan' : '']">
                     <div class="w-full h-full rounded-xl bg-gradient-to-br from-slate-600 to-slate-800"></div>
                   </div>
-                  <!-- Info en hover -->
-                  <div class="absolute inset-x-0 bottom-0 px-1.5 pt-5 pb-1 bg-gradient-to-t from-black/95 via-black/75 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div class="text-[10px] font-bold text-white truncate leading-tight">{{ c.name }}</div>
-                    <div class="text-[9px] truncate font-medium" :class="!c.owned ? 'text-slate-300' : (c.equipped ? 'text-emerald-300' : rarity(c.rarity).text)">{{ !c.owned ? lockLabel(c) : (c.equipped ? 'Equipado' : rarity(c.rarity).label) }}</div>
-                  </div>
                 </div>
-                <span v-if="c.premium_only" class="absolute top-1 right-1 z-10 px-1 rounded bg-amber-400 text-[8px] font-extrabold text-amber-950">PRO</span>
-                <span v-if="!c.owned" class="absolute top-1 left-1 z-10 grid place-items-center size-5 rounded-full bg-slate-950/85 text-slate-200">
-                  <svg viewBox="0 0 24 24" fill="currentColor" class="size-3"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 1 1 6 0v3z"/></svg>
+                <span v-if="c.premium_only" class="absolute top-0.5 right-0.5 z-10 px-1 rounded bg-amber-400 text-[7px] font-extrabold text-amber-950">PRO</span>
+                <span v-if="!c.owned" class="absolute top-0.5 left-0.5 z-10 grid place-items-center size-4 rounded-full bg-slate-950/85 text-slate-200">
+                  <svg viewBox="0 0 24 24" fill="currentColor" class="size-2.5"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 1 1 6 0v3z"/></svg>
                 </span>
-                <span v-else-if="c.equipped" class="absolute bottom-1 right-1 z-10 grid place-items-center size-5 rounded-full bg-emerald-500 text-white shadow-lg">
-                  <svg viewBox="0 0 24 24" fill="currentColor" class="size-3.5"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                <span v-else-if="c.equipped" class="absolute bottom-0.5 right-0.5 z-10 grid place-items-center size-4 rounded-full bg-emerald-500 text-white shadow">
+                  <svg viewBox="0 0 24 24" fill="currentColor" class="size-2.5"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                 </span>
               </button>
             </div>
 
-            <!-- Banners (más grandes, info en hover) -->
+            <!-- Banners -->
             <div v-else-if="activeTab === 'banner'" class="grid grid-cols-2 gap-2.5">
               <button v-for="c in grp.list" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
+                      @mouseenter="hovered = c" @mouseleave="hovered = null" @focus="hovered = c"
                       class="relative group rounded-xl transition-transform"
-                      :class="[ c.owned ? 'cursor-pointer hover:scale-[1.03]' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : '' ]">
-                <div class="relative h-16 rounded-xl overflow-hidden border-2"
-                     :class="[ rarity(c.rarity).border, bannerStyle(c.style_key), c.premium_only ? 'anim-pan' : '', !c.owned ? 'grayscale opacity-50' : '' ]">
-                  <div class="absolute inset-x-0 bottom-0 px-2 pt-5 pb-1 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div class="text-[10px] font-bold text-white truncate leading-tight">{{ c.name }}</div>
-                    <div class="text-[9px] truncate font-medium" :class="!c.owned ? 'text-slate-300' : (c.equipped ? 'text-emerald-300' : rarity(c.rarity).text)">{{ !c.owned ? lockLabel(c) : (c.equipped ? 'Equipado' : rarity(c.rarity).label) }}</div>
-                  </div>
-                </div>
+                      :class="[ c.owned ? 'cursor-pointer hover:scale-[1.03]' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : (c.premium_only ? 'ring-2 ring-amber-400/80' : '') ]">
+                <div class="h-16 rounded-xl overflow-hidden border-2"
+                     :class="[ c.premium_only ? 'border-amber-400/60' : rarity(c.rarity).border, bannerStyle(c.style_key), c.premium_only ? 'anim-pan' : '', !c.owned ? 'grayscale opacity-50' : '' ]"></div>
                 <span v-if="c.premium_only" class="absolute top-1 right-1 z-10 px-1 rounded bg-amber-400 text-[8px] font-extrabold text-amber-950">PRO</span>
                 <span v-if="!c.owned" class="absolute top-1 left-1 z-10 grid place-items-center size-5 rounded-full bg-slate-950/85 text-slate-200">
                   <svg viewBox="0 0 24 24" fill="currentColor" class="size-3"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 1 1 6 0v3z"/></svg>
@@ -215,12 +196,13 @@ onMounted(load)
             <!-- Títulos -->
             <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
               <button v-for="c in grp.list" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
+                      @mouseenter="hovered = c" @mouseleave="hovered = null" @focus="hovered = c"
                       class="relative rounded-xl border px-3 py-2.5 text-left transition-all"
-                      :class="[ c.equipped ? 'border-emerald-400/50 bg-emerald-500/[0.07]' : rarity(c.rarity).border + ' ' + rarity(c.rarity).bg, c.owned ? 'hover:brightness-110 cursor-pointer' : 'opacity-50 cursor-not-allowed' ]">
+                      :class="[ c.equipped ? 'border-emerald-400/50 bg-emerald-500/[0.07]' : (c.premium_only ? 'border-amber-400/50 bg-amber-500/[0.05]' : rarity(c.rarity).border + ' ' + rarity(c.rarity).bg), c.owned ? 'hover:brightness-110 cursor-pointer' : 'opacity-50 cursor-not-allowed' ]">
                 <div class="text-sm font-bold truncate" :class="c.premium_only ? 'title-premium-anim' : rarity(c.rarity).text">{{ c.name }}</div>
                 <div class="text-[9px] mt-0.5" :class="c.owned ? 'text-slate-500' : 'text-slate-600'">
                   <span v-if="c.premium_only" class="text-amber-300 font-bold">PREMIUM</span>
-                  <span v-else-if="!c.owned">{{ lockLabel(c) }}</span>
+                  <span v-else-if="!c.owned">{{ requirementText(c) }}</span>
                   <span v-else-if="c.equipped" class="text-emerald-400 font-bold">Equipado</span>
                   <span v-else>{{ rarity(c.rarity).label }}</span>
                 </div>

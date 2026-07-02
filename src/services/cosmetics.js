@@ -216,6 +216,33 @@ export function rarity(r) {
   return RARITY[r] || RARITY.common
 }
 
+// ── Pistas de cómo conseguir cosméticos por LOGRO (secretos) ──
+// Clave = código del logro. Se usa para el hover del editor y el "por qué" de la escena de reclamo.
+export const ACHIEVEMENT_HINTS = {
+  streak_15: 'Conseguí 15 aciertos seguidos en un juego',
+  daily_streak_30: 'Jugá 30 días seguidos',
+  perfectionist: 'Completá un juego sin ningún error',
+  night_owl: 'Jugá entre las 00:00 y las 05:00',
+  daily_wins_all: 'Ganá todos los juegos del día',
+  centurion: 'Acumulá 100 victorias totales',
+  guess_master: 'Ganá 20 partidas de "Adivina el jugador"',
+  comeback_king: 'Ganá después de 3 errores seguidos',
+  early_bird: 'Jugá antes de las 07:00',
+  lucky_first: 'Acertá al primer intento 10 veces',
+  weekend_warrior: 'Ganá 10 juegos un sábado o domingo',
+  hat_trick: 'Ganá 3 juegos distintos el mismo día',
+}
+export function hintFor(c) { return ACHIEVEMENT_HINTS[c?.unlock_achievement] || 'Conseguí un logro secreto' }
+// Por qué se desbloqueó un cosmético (para la escena de reclamo).
+export function unlockReason(c) {
+  if (!c) return ''
+  if (c.unlock_achievement) return ACHIEVEMENT_HINTS[c.unlock_achievement] || 'Conseguiste un logro secreto'
+  if (c.premium_only) return 'Recompensa Premium'
+  if (c.unlock_level > 100) return 'Completar el Pase mensual'
+  if (c.unlock_level > 1) return 'Alcanzaste el nivel ' + c.unlock_level
+  return 'Recompensa desbloqueada'
+}
+
 // ── Aviso de cosméticos recién desbloqueados ──
 // Scopeado por usuario: sin scope, una cuenta veía/silenciaba los cosméticos de otra.
 const SEEN_KEY_PREFIX = 'gl:seen_cosmetics'
@@ -259,7 +286,7 @@ export async function checkCosmeticUnlocks() {
     for (const c of fresh) {
       if (isExclusiveCosmetic(c)) {
         // Exclusivos (legendarios/épicos, por logro o premium): escena premium tipo logro.
-        queueCosmeticOverlay({ code: c.code, name: c.name, type: c.type, rarity: c.rarity, styleKey: c.style_key })
+        queueCosmeticOverlay({ code: c.code, name: c.name, type: c.type, rarity: c.rarity, styleKey: c.style_key, reason: unlockReason(c) })
       } else {
         // Default (por nivel, común/raro): solo notificación apilada chica.
         pushClaimNotification({
