@@ -6,6 +6,7 @@ import {
 } from '../../services/cosmetics'
 import { pushSuccessToast, pushErrorToast } from '../../stores/notifications'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
+import RarityGem from '../rewards/RarityGem.vue'
 
 const props = defineProps({
   avatarUrl: { type: String, default: '' },
@@ -141,23 +142,21 @@ onMounted(load)
             </div>
           </div>
 
-          <!-- Colección: contador + rarezas (clickeables para filtrar) -->
+          <!-- Colección: contador + gemas de rareza (tocá la gema para filtrar) -->
           <div class="rounded-xl border border-white/10 bg-slate-900/40 p-3">
-            <div class="flex items-baseline gap-1.5 mb-2 px-1">
+            <div class="flex items-baseline gap-1.5 mb-3 px-1">
               <span class="text-2xl font-display font-extrabold text-white leading-none">{{ ownedCount }}</span>
               <span class="text-xs text-slate-500">de {{ totalCount }}</span>
             </div>
-            <div class="space-y-0.5">
-              <button v-for="r in RARITY_ORDER" :key="r" @click="toggleRarity(r)"
-                      class="w-full flex items-center justify-between rounded-lg px-2 py-1.5 text-xs transition border"
-                      :class="filterRarity === r ? [rarity(r).border, rarity(r).bg] : 'border-transparent hover:bg-white/5'">
-                <span class="font-semibold flex items-center gap-1.5" :class="rarity(r).text">
-                  <span class="size-2 rounded-full" :class="rarity(r).bg.replace('/10','')"></span>{{ rarity(r).label }}
-                </span>
-                <span class="text-slate-400 tabular-nums">{{ rarityCounts[r] || 0 }}</span>
+            <div class="grid grid-cols-4 gap-1">
+              <button v-for="r in RARITY_ORDER" :key="r" @click="toggleRarity(r)" :title="rarity(r).label"
+                      class="flex flex-col items-center gap-1 rounded-lg py-1.5 transition"
+                      :class="filterRarity === r ? 'bg-white/10 ring-1 ring-white/20' : 'hover:bg-white/5'">
+                <RarityGem :rarity="r" :size="22" :class="filterRarity && filterRarity !== r ? 'opacity-30' : ''" />
+                <span class="text-[11px] font-bold tabular-nums" :class="rarity(r).text">{{ rarityCounts[r] || 0 }}</span>
               </button>
             </div>
-            <button v-if="filterRarity" @click="filterRarity = null" class="mt-1.5 w-full text-[11px] text-slate-500 hover:text-slate-300 transition">Quitar filtro</button>
+            <button v-if="filterRarity" @click="filterRarity = null" class="mt-2 w-full text-[11px] text-slate-500 hover:text-slate-300 transition">Ver todas</button>
           </div>
 
           <!-- Buscador -->
@@ -176,8 +175,8 @@ onMounted(load)
               <!-- Íconos / Bordes -->
               <div v-if="activeTab === 'frame' || activeTab === 'icon'" class="grid grid-cols-4 sm:grid-cols-5 gap-2">
                 <button v-for="c in grp.list" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
-                        class="relative group aspect-square rounded-lg transition"
-                        :class="[ c.owned ? 'cursor-pointer hover:brightness-110' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400 z-10' : (c.premium_only ? 'ring-2 ring-amber-400/80 shadow-[0_0_10px_rgba(251,191,36,0.4)]' : '') ]">
+                        class="relative group aspect-square rounded-lg transition hover:z-30"
+                        :class="[ c.owned ? 'cursor-pointer hover:brightness-110' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : (c.premium_only ? 'ring-2 ring-amber-400/80 shadow-[0_0_10px_rgba(251,191,36,0.4)]' : '') ]">
                   <div v-if="!c.owned && c.unlock_achievement" class="absolute inset-0 rounded-lg overflow-hidden border-2 border-amber-500/20 grid place-items-center bg-gradient-to-br from-slate-800 to-slate-950">
                     <span class="text-3xl font-black text-slate-500 group-hover:text-slate-300 transition-colors">?</span>
                   </div>
@@ -196,6 +195,7 @@ onMounted(load)
                   <span v-else-if="c.equipped" class="absolute bottom-0.5 right-0.5 z-10 grid place-items-center size-4 rounded-full bg-emerald-500 text-white shadow">
                     <svg viewBox="0 0 24 24" fill="currentColor" class="size-2.5"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                   </span>
+                  <span class="absolute bottom-0.5 left-0.5 z-10 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"><RarityGem :rarity="c.rarity" :size="15" /></span>
                   <!-- Popup (sale del ícono, arriba) -->
                   <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 w-40 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                     <div class="rounded-lg bg-slate-950/95 border border-white/15 shadow-xl px-3 py-2 text-center">
@@ -211,8 +211,8 @@ onMounted(load)
               <!-- Banners -->
               <div v-else-if="activeTab === 'banner'" class="grid grid-cols-2 gap-2.5">
                 <button v-for="c in grp.list" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
-                        class="relative group rounded-xl transition"
-                        :class="[ c.owned ? 'cursor-pointer hover:brightness-110' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400 z-10' : (c.premium_only ? 'ring-2 ring-amber-400/80' : '') ]">
+                        class="relative group rounded-xl transition hover:z-30"
+                        :class="[ c.owned ? 'cursor-pointer hover:brightness-110' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : (c.premium_only ? 'ring-2 ring-amber-400/80' : '') ]">
                   <div class="h-16 rounded-xl overflow-hidden border-2"
                        :class="[ c.premium_only ? 'border-amber-400/60' : rarity(c.rarity).border, bannerStyle(c.style_key), c.premium_only ? 'anim-pan' : '', !c.owned ? 'grayscale opacity-50' : '' ]"></div>
                   <span v-if="c.premium_only" class="absolute top-1 right-1 z-10 px-1 rounded bg-amber-400 text-[8px] font-extrabold text-amber-950">PRO</span>
@@ -222,6 +222,7 @@ onMounted(load)
                   <span v-else-if="c.equipped" class="absolute bottom-1 right-1 z-10 grid place-items-center size-5 rounded-full bg-emerald-500 text-white shadow-lg">
                     <svg viewBox="0 0 24 24" fill="currentColor" class="size-3.5"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                   </span>
+                  <span class="absolute bottom-1 left-1 z-10 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"><RarityGem :rarity="c.rarity" :size="16" /></span>
                   <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 w-44 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                     <div class="rounded-lg bg-slate-950/95 border border-white/15 shadow-xl px-3 py-2 text-center">
                       <div class="font-bold text-white text-xs leading-tight truncate">{{ displayName(c) }}</div>
