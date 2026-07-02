@@ -1,5 +1,4 @@
 <script>
-import AppH1 from '../../components/common/AppH1.vue';
 import { subscribeToAuthStateChanges } from '../../services/auth';
 import { getUserLevel, computeProgressPercentSync } from '../../services/xp';
 import { getUserAchievements } from '../../services/achievements';
@@ -26,7 +25,7 @@ let unsubscribeAuth = () => {};
 
 export default {
   name: 'Profile',
-  components: { AppH1, ProfileHeaderCard, AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard, LoadoutShowcase, ProfileIdentityCard },
+  components: { ProfileHeaderCard, AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard, LoadoutShowcase, ProfileIdentityCard },
   data() {
     return {
       user: {
@@ -207,10 +206,10 @@ export default {
 
       try {
         const { getLeaderboard } = await import('../../services/xp')
-        const { data: topData } = await getLeaderboard({ period: 'all_time', gameId: null, limit: 3, offset: 0 })
+        const { data: topData } = await getLeaderboard({ period: 'all_time', gameId: null, limit: 100, offset: 0 })
         const top = Array.isArray(topData) ? topData : (topData ? [topData] : [])
-        const myRank = top.find(r => r.user_id === userId)
-        this.topRank = myRank ? (myRank.rank ?? null) : null
+        const idx = top.findIndex(r => r.user_id === userId)
+        this.topRank = idx >= 0 ? (top[idx].rank ?? (idx + 1)) : null
       } catch {
         this.topRank = null
       }
@@ -357,43 +356,6 @@ export default {
 
 <template>
   <div class="mx-auto max-w-6xl pb-12 px-4">
-    <!-- Botones de conexión (solo en perfiles ajenos) -->
-    <div v-if="canConnect" class="mb-4 flex items-center justify-end gap-2">
-        <template v-if="conn.state==='connected'">
-          <button @click="$router.push('/messages/' + user.id)"
-            class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-emerald-400/30 text-white bg-emerald-500/20 hover:bg-emerald-500/30 transition-all shadow-lg hover:shadow-emerald-500/20">
-            Mensaje
-          </button>
-          <button @click="onDisconnect" :disabled="connBusy"
-            class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-red-400/30 text-red-200 bg-red-500/10 hover:bg-red-500/20 transition-all">
-            Desconectar
-          </button>
-        </template>
-        <template v-else-if="conn.state==='pending_out'">
-          <button @click="onDisconnect" :disabled="connBusy"
-            class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-amber-400/30 text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 transition-all">
-            Cancelar solicitud
-          </button>
-        </template>
-        <template v-else>
-          <button @click="onConnect" :disabled="connectDisabled"
-            class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-emerald-400/30 bg-emerald-500/20 text-white hover:bg-emerald-500/30 transition-all shadow-lg hover:shadow-emerald-500/20">
-            Conectar
-          </button>
-        </template>
-    </div>
-
-    <!-- Pending connection banner -->
-    <div v-if="canConnect && conn.state==='pending_in'"
-      class="rounded-xl border border-amber-400/30 bg-amber-500/10 backdrop-blur p-4 mb-6">
-      <p class="text-sm text-amber-200 flex items-center gap-2">
-        <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-        </svg>
-        Tenes una solicitud de esta persona. Respondela desde Notificaciones.
-      </p>
-    </div>
-
     <!-- Banner del usuario full-bleed (100% del ancho de pantalla, estilo Salesforce) -->
     <div class="relative h-36 sm:h-52 overflow-hidden w-screen left-1/2 -translate-x-1/2 -mt-10 lg:-mt-12" :class="[bannerClass, equippedBannerPremium ? 'anim-pan' : '']">
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -480,6 +442,29 @@ export default {
 
       <!-- Columna derecha (secciones) -->
       <div class="space-y-5 min-w-0">
+        <!-- Acciones de conexión (solo en perfiles ajenos) -->
+        <div v-if="canConnect" class="card p-4 flex flex-wrap items-center justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Conexión</p>
+            <p class="text-sm font-bold text-white truncate">{{ connectLabel }}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <template v-if="conn.state==='connected'">
+              <button @click="$router.push('/messages/' + user.id)" class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-emerald-400/30 text-white bg-emerald-500/20 hover:bg-emerald-500/30 transition">Mensaje</button>
+              <button @click="onDisconnect" :disabled="connBusy" class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-red-400/30 text-red-200 bg-red-500/10 hover:bg-red-500/20 transition">Desconectar</button>
+            </template>
+            <template v-else-if="conn.state==='pending_out'">
+              <button @click="onDisconnect" :disabled="connBusy" class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-amber-400/30 text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 transition">Cancelar solicitud</button>
+            </template>
+            <template v-else-if="conn.state==='pending_in'">
+              <button @click="$router.push('/notifications')" class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-amber-400/30 text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 transition">Responder</button>
+            </template>
+            <template v-else>
+              <button @click="onConnect" :disabled="connectDisabled" class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-emerald-400/30 bg-emerald-500/20 text-white hover:bg-emerald-500/30 transition shadow-lg hover:shadow-emerald-500/20">Conectar</button>
+            </template>
+          </div>
+        </div>
+
         <!-- 1. Logros destacados -->
         <AchievementsCard
           :achievements="achievements"

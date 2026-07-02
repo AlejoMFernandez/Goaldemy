@@ -54,6 +54,14 @@ const ACCENT = {
 }
 const accentText = computed(() => ACCENT[currentTier.value?.color] || 'text-emerald-400')
 
+// Color del badge de ranking por puesto: 1 oro, 2 plata, 3 bronce, 4+ neutral (todos iguales).
+const RANK_STYLE = {
+  1: { box: 'bg-amber-500/[0.08] border-amber-500/25 hover:bg-amber-500/[0.14]',   icon: 'text-amber-400',  num: 'text-amber-300' },
+  2: { box: 'bg-slate-300/[0.08] border-slate-300/25 hover:bg-slate-300/[0.14]',   icon: 'text-slate-200',  num: 'text-slate-100' },
+  3: { box: 'bg-orange-600/[0.08] border-orange-600/30 hover:bg-orange-600/[0.16]', icon: 'text-orange-400', num: 'text-orange-300' },
+}
+const rankStyle = computed(() => RANK_STYLE[props.topRank] || { box: 'bg-white/[0.04] border-white/10 hover:bg-white/[0.08]', icon: 'text-slate-400', num: 'text-slate-100' })
+
 // Popup con la progresión completa de rangos/niveles + insignias.
 const showProgression = ref(false)
 </script>
@@ -112,12 +120,12 @@ const showProgression = ref(false)
           <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: progressPercent + '%' }"></div>
         </div>
       </div>
-      <router-link v-if="topRank" to="/leaderboards" class="mt-3 flex items-center justify-between rounded-lg bg-amber-500/[0.08] border border-amber-500/25 px-3 py-2 hover:bg-amber-500/[0.14] transition">
+      <router-link v-if="topRank" to="/leaderboards" class="mt-3 flex items-center justify-between rounded-lg border px-3 py-2 transition" :class="rankStyle.box">
         <span class="inline-flex items-center gap-1.5 text-xs text-slate-300">
-          <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3z"/></svg>
+          <svg class="w-4 h-4" :class="rankStyle.icon" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3z"/></svg>
           Ranking global
         </span>
-        <span class="font-display font-extrabold text-amber-300">#{{ topRank }}</span>
+        <span class="font-display font-extrabold" :class="rankStyle.num">#{{ topRank }}</span>
       </router-link>
     </div>
 
