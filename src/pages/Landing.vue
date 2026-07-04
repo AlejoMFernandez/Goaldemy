@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, computed, ref } from 'vue'
+import { onMounted, onUnmounted, reactive, computed, ref, defineAsyncComponent } from 'vue'
 import { RouterLink } from 'vue-router'
 import { supabase } from '../services/supabase'
 import { getAuthUser } from '../services/auth'
@@ -9,11 +9,12 @@ import { getDailyChallenges, getDailyReward, getMonthlyPass } from '../services/
 import { getUserLevel } from '../services/xp'
 import { getEquippedCosmetics } from '../services/cosmetics'
 import { getTierForLevel, tierAccentText } from '../services/tiers'
-import { isChallengeAvailable, fetchDailyWinStreak } from '../services/game-modes'
 import { getGameUnlockLevel, isGameUnlocked } from '../services/level-rewards'
-import MatchDetailModal from '../components/match/MatchDetailModal.vue'
-import MonthlyPass from '../components/rewards/MonthlyPass.vue'
 import UserAvatar from '../components/common/UserAvatar.vue'
+// Async: sólo se montan al interactuar (modal de partido / pase). Así su
+// dependencia pesada (game-modes, etc.) NO entra al bundle inicial de la home.
+const MatchDetailModal = defineAsyncComponent(() => import('../components/match/MatchDetailModal.vue'))
+const MonthlyPass = defineAsyncComponent(() => import('../components/rewards/MonthlyPass.vue'))
 
 const state = reactive({
   isAuthenticated: !!(getAuthUser()?.id),
@@ -117,6 +118,9 @@ async function load() {
 // EXACTAMENTE como el índice de juegos (PlayPoints): ✓/✕ de hoy y racha 🔥.
 async function loadFeaturedStates() {
   try {
+    // Import diferido: game-modes arrastra un grafo pesado (achievement-triggers,
+    // premium…) que no queremos en el chunk inicial de la home.
+    const { isChallengeAvailable, fetchDailyWinStreak } = await import('../services/game-modes')
     const list = state.featuredGames
     const [av, st] = await Promise.all([
       Promise.all(list.map(async g => [g.slug, await isChallengeAvailable(g.slug)])),
@@ -311,7 +315,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
     <div class="relative z-10 max-w-5xl mx-auto px-6 mb-16">
       <div class="flex items-center gap-3 mb-5">
         <div class="flex items-center gap-2.5">
-          <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/77.png" alt="Copa del Mundo 2026" class="w-7 h-7 object-contain" @error="$event.target.style.display='none'" />
+          <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/77.png" alt="Copa del Mundo 2026" width="28" height="28" loading="lazy" decoding="async" class="w-7 h-7 object-contain" @error="$event.target.style.display='none'" />
           <h2 class="text-2xl font-bold text-white tracking-tight">Copa del Mundo 2026</h2>
         </div>
         <div class="flex-1 h-px bg-white/10"></div>
@@ -344,6 +348,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
                 <span class="font-semibold text-sm text-white truncate text-right">{{ match.home?.name }}</span>
                 <img
                   :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.home?.id}_xsmall.png`"
+                  width="28" height="28" loading="lazy" decoding="async"
                   class="w-7 h-7 object-contain flex-shrink-0"
                   :alt="match.home?.name"
                 />
@@ -371,6 +376,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
               <div class="flex items-center gap-2.5 min-w-0 pl-3">
                 <img
                   :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${match.away?.id}_xsmall.png`"
+                  width="28" height="28" loading="lazy" decoding="async"
                   class="w-7 h-7 object-contain flex-shrink-0"
                   :alt="match.away?.name"
                 />
@@ -470,7 +476,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
             class="relative flex flex-col rounded-2xl overflow-hidden border border-white/5 bg-gradient-to-b from-slate-800/40 to-slate-900/60 opacity-60 cursor-not-allowed select-none"
           >
             <div class="relative flex items-center justify-center h-36 bg-slate-800/40">
-              <img v-if="g.cover_url" :src="g.cover_url" :alt="g.name" class="w-24 h-24 object-contain opacity-20 grayscale" />
+              <img v-if="g.cover_url" :src="g.cover_url" :alt="g.name" width="96" height="96" loading="lazy" decoding="async" class="w-24 h-24 object-contain opacity-20 grayscale" />
               <div class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/40">
                 <svg class="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
@@ -513,6 +519,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
                 v-if="g.cover_url"
                 :src="g.cover_url"
                 :alt="g.name"
+                width="96" height="96" loading="lazy" decoding="async"
                 class="relative w-24 h-24 object-contain transition-transform duration-300 group-hover:scale-110"
                 :class="state.availability[g.slug]?.available === false ? 'opacity-30' : 'opacity-90'"
               />
@@ -560,7 +567,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
             </div>
             <div class="flex flex-col flex-1 pointer-events-none">
               <div class="relative h-36 bg-gradient-to-br from-slate-800/60 to-slate-900 flex items-center justify-center overflow-hidden">
-                <img v-if="game.cover_url" :src="game.cover_url" :alt="game.name" class="relative z-10 w-20 h-20 object-contain" />
+                <img v-if="game.cover_url" :src="game.cover_url" :alt="game.name" width="80" height="80" loading="lazy" decoding="async" class="relative z-10 w-20 h-20 object-contain" />
                 <svg v-else class="relative z-10 w-16 h-16 text-emerald-400/80" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
                 </svg>
