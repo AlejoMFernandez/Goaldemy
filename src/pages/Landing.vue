@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, onUnmounted, reactive, computed, ref, defineAsyncComponent } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { supabase } from '../services/supabase'
 import { getAuthUser } from '../services/auth'
 import { fetchGames, gameRouteForSlug } from '../services/games'
@@ -10,11 +10,15 @@ import { getUserLevel } from '../services/xp'
 import { getEquippedCosmetics } from '../services/cosmetics'
 import { getTierForLevel, tierAccentText } from '../services/tiers'
 import { getGameUnlockLevel, isGameUnlocked } from '../services/level-rewards'
+import { fetchPlans, getUserPlan } from '../services/premium'
 import UserAvatar from '../components/common/UserAvatar.vue'
-// Async: sólo se montan al interactuar (modal de partido / pase). Así su
-// dependencia pesada (game-modes, etc.) NO entra al bundle inicial de la home.
+// Async: pase, planes y modal de partido bajan en su propio chunk (deps pesadas
+// fuera del bundle inicial de la home). MonthlyPass trae su card + modal + datos.
 const MatchDetailModal = defineAsyncComponent(() => import('../components/match/MatchDetailModal.vue'))
 const MonthlyPass = defineAsyncComponent(() => import('../components/rewards/MonthlyPass.vue'))
+const PlanCard = defineAsyncComponent(() => import('../components/pricing/PlanCard.vue'))
+
+const router = useRouter()
 
 const state = reactive({
   isAuthenticated: !!(getAuthUser()?.id),
@@ -38,7 +42,11 @@ const home = reactive({
   rewardsToClaim: 0,
   passPoints: 0, passPercent: 0, passNextLabel: '', isPremium: false,
 })
-const showPassModal = ref(false)
+// Planes para la sección de precios (compartida invitado/logueado). Data real de la DB.
+const plans = ref([])
+const currentPlan = ref('')
+const sortedPlans = computed(() => [...plans.value].sort((a, b) => a.sort_order - b.sort_order))
+function goToPricing() { router.push('/pricing') }
 
 const selectedMatch = ref(null)
 const matchModalOpen = ref(false)
@@ -112,6 +120,20 @@ async function load() {
     state.loading = false
   }
   loadTodayByLeague()
+  loadPlans()
+}
+
+// Planes reales (Free/Pro/Legend) para la sección de precios, en ambos estados.
+async function loadPlans() {
+  try {
+    plans.value = await fetchPlans() || []
+    if (state.isAuthenticated) {
+      const up = await getUserPlan().catch(() => null)
+      currentPlan.value = up?.plan || ''
+    }
+  } catch (e) {
+    console.warn('[Landing] plans load error', e)
+  }
 }
 
 // Estado de desafío + racha por juego destacado, para renderizar las cards
@@ -591,28 +613,10 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
       </div>
     </div>
 
-    <!-- ══════════════════ Pase mensual (solo logueado) ══════════════════ -->
-    <div v-if="state.isAuthenticated" class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 mb-16">
-      <div class="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.06] via-slate-900/40 to-cyan-500/[0.04] p-4 sm:p-5">
-        <div class="flex items-center gap-2.5 mb-3">
-          <span class="grid place-items-center size-9 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-400/25 shrink-0">
-            <svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5h14a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2H5a2 2 0 01-2-2v-3a2 2 0 000-4V7a2 2 0 012-2z"/></svg>
-          </span>
-          <div class="flex-1 min-w-0">
-            <h3 class="font-display font-bold text-white text-base leading-tight">Pase mensual</h3>
-            <p class="text-xs text-slate-500 truncate">{{ home.passNextLabel || `${home.passPoints} pts` }}</p>
-          </div>
-          <span class="shrink-0 text-[11px] rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-amber-300 font-bold">
-            {{ home.isPremium ? '⭐ Premium' : 'Premium 🔒' }}
-          </span>
-        </div>
-        <div class="h-2.5 rounded-full bg-black/30 overflow-hidden mb-3 border border-white/5">
-          <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: home.passPercent + '%' }"></div>
-        </div>
-        <button @click="showPassModal = true" class="w-full sm:w-auto rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 active:scale-95 text-black font-bold px-5 py-2.5 text-sm transition">
-          Ver pase completo
-        </button>
-      </div>
+    <!-- ══════════════════ Pase de Batalla (solo logueado) ══════════════════ -->
+    <!-- Card real del pase (teaser + modal + datos propios). min-h reserva espacio (CLS) -->
+    <div v-if="state.isAuthenticated" class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 mb-16 min-h-[240px]">
+      <MonthlyPass />
     </div>
 
     <!-- ══════════════════ Planes (compartido) ══════════════════ -->
@@ -621,100 +625,21 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
         <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3">{{ state.isAuthenticated ? 'Mejorá tu plan' : 'Elegí tu plan' }}</h2>
         <p class="text-slate-400 text-sm max-w-md mx-auto">Más desafíos, power-ups y bonus de XP para dominar Goaldemy</p>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Free -->
-        <div class="rounded-2xl border border-white/10 bg-slate-900/50 p-6 flex flex-col">
-          <div class="mb-5">
-            <div class="inline-flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 px-3 py-1 text-xs font-semibold text-slate-300 mb-3">
-              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-              Gratis
-            </div>
-            <div class="text-3xl font-extrabold text-white">$0 <span class="text-sm font-normal text-slate-500">/mes</span></div>
-          </div>
-          <ul class="space-y-2.5 text-sm text-slate-300 mb-6 flex-1">
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>9 modos de juego</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>1 desafío por día por juego</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>1 power-up por día</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Sistema de XP y niveles</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Ranking global</li>
-          </ul>
-          <RouterLink to="/register" class="block text-center rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/5 transition">
-            Empezar gratis
-          </RouterLink>
-        </div>
-
-        <!-- Pro (highlighted) -->
-        <div class="relative rounded-2xl border-2 border-cyan-500/50 bg-gradient-to-b from-cyan-500/10 to-slate-900/80 p-6 flex flex-col shadow-lg shadow-cyan-500/10">
-          <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-            <span class="rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-1 text-xs font-bold text-white shadow-lg">Popular</span>
-          </div>
-          <div class="mb-5">
-            <div class="inline-flex items-center gap-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 px-3 py-1 text-xs font-semibold text-cyan-300 mb-3">
-              <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-              Pro
-            </div>
-            <div class="text-3xl font-extrabold text-white">$11.990 <span class="text-sm font-normal text-slate-500">ARS/mes</span></div>
-          </div>
-          <ul class="space-y-2.5 text-sm text-slate-300 mb-6 flex-1">
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>3 desafíos por día por juego</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>5 power-ups por día</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Bonus de XP +25%</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>1 protector de racha por semana</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Badge Pro en perfil</li>
-          </ul>
-          <RouterLink to="/pricing" class="block w-full text-center rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-bold text-white hover:opacity-90 transition">
-            Suscribirme
-          </RouterLink>
-        </div>
-
-        <!-- Legend -->
-        <div class="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/5 to-slate-900/50 p-6 flex flex-col">
-          <div class="mb-5">
-            <div class="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-3 py-1 text-xs font-semibold text-amber-300 mb-3">
-              <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              Legend
-            </div>
-            <div class="text-3xl font-extrabold text-white">$14.990 <span class="text-sm font-normal text-slate-500">ARS/mes</span></div>
-          </div>
-          <ul class="space-y-2.5 text-sm text-slate-300 mb-6 flex-1">
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>5 desafíos por día por juego</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>15 power-ups por día</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Bonus de XP +50%</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>3 protectores de racha por semana</li>
-            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Badge Legend dorado en perfil</li>
-          </ul>
-          <RouterLink to="/pricing" class="block w-full text-center rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-300 hover:bg-amber-500/20 transition">
-            Suscribirme
-          </RouterLink>
-        </div>
+      <div v-if="sortedPlans.length" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <PlanCard
+          v-for="plan in sortedPlans"
+          :key="plan.slug"
+          :plan="plan"
+          :current-plan="currentPlan"
+          @subscribe="goToPricing"
+        />
+      </div>
+      <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div v-for="i in 3" :key="i" class="rounded-2xl border border-white/10 bg-white/[0.02] h-[420px] animate-pulse"></div>
       </div>
     </div>
 
     <!-- Match Detail Modal -->
     <MatchDetailModal :match="selectedMatch" :open="matchModalOpen" @close="matchModalOpen = false" />
-
-    <!-- Pase mensual completo (modal) -->
-    <Teleport to="body">
-      <Transition name="pass-fade">
-        <div v-if="showPassModal" class="fixed inset-0 z-[60] overflow-y-auto bg-black/80 backdrop-blur-sm">
-          <div class="min-h-full flex items-start justify-center p-4 pt-10 pb-10" @click.self="showPassModal = false">
-            <div class="relative w-full max-w-2xl">
-              <div class="flex items-center justify-between mb-3">
-                <h2 class="font-display text-xl font-extrabold text-white">Pase mensual</h2>
-                <button @click="showPassModal = false" class="rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-slate-300 w-9 h-9 grid place-items-center transition" aria-label="Cerrar">
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-              </div>
-              <MonthlyPass />
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
   </section>
 </template>
-
-<style scoped>
-.pass-fade-enter-active, .pass-fade-leave-active { transition: opacity 0.2s ease; }
-.pass-fade-enter-from, .pass-fade-leave-to { opacity: 0; }
-</style>
