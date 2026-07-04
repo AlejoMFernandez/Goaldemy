@@ -347,7 +347,7 @@ export default {
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="text-sm font-semibold text-white truncate">{{ ach.title }}</div>
-                    <div v-if="ach.description" class="text-[10px] text-slate-400 truncate">{{ ach.description }}</div>
+                    <div v-if="ach.description" class="text-[10px] text-slate-400 leading-snug">{{ ach.description }}</div>
                   </div>
                   <div v-if="ach.points" class="shrink-0 text-xs font-bold text-yellow-400">+{{ ach.points }}</div>
                 </div>

@@ -7,6 +7,7 @@ import {
 import { pushSuccessToast, pushErrorToast } from '../../stores/notifications'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 import RarityGem from '../rewards/RarityGem.vue'
+import UserAvatar from '../common/UserAvatar.vue'
 
 const props = defineProps({
   avatarUrl: { type: String, default: '' },
@@ -62,6 +63,16 @@ const equippedFrame = computed(() => byType('frame').find(f => f.equipped) || by
 const equippedTitle = computed(() => byType('title').find(t => t.equipped) || null)
 const equippedIcon = computed(() => byType('icon').find(i => i.equipped) || null)
 const equippedBanner = computed(() => byType('banner').find(b => b.equipped) || byType('banner').find(b => b.style_key === 'default') || {})
+
+// Atajos del loadout equipado (para el preview cruzado y el modal "Preview").
+const eqFrameKey = computed(() => equippedFrame.value?.style_key || 'none')
+const eqFramePremium = computed(() => !!equippedFrame.value?.premium_only)
+const eqIconGlyph = computed(() => equippedIcon.value?.style_key || '')
+const eqBannerKey = computed(() => equippedBanner.value?.style_key || 'default')
+const eqBannerPremium = computed(() => !!equippedBanner.value?.premium_only)
+
+// Modal "Preview": ver el perfil completo como quedaría con lo equipado.
+const showPreview = ref(false)
 
 async function load() {
   loading.value = true
@@ -122,25 +133,36 @@ onMounted(load)
       <div v-if="isCosmeticTab" class="grid grid-cols-1 lg:grid-cols-[210px_1fr] gap-4">
         <!-- ── Columna izquierda: colección + filtros ── -->
         <aside class="space-y-3">
-          <!-- Preview del equipado -->
+          <!-- Preview del equipado (CRUZADO: siempre muestra ícono DENTRO de tu borde;
+               en banner, la miniatura real del perfil) -->
           <div class="rounded-xl border border-white/10 bg-slate-900/40 p-4 flex flex-col items-center gap-2.5">
-            <div v-if="activeTab === 'icon'" class="size-24 rounded-2xl overflow-hidden grid place-items-center text-white text-3xl font-extrabold" :class="(equippedIcon && equippedIcon.style_key) ? iconThemeBg(equippedIcon.style_key) : iconBgStyle(DEFAULT_BG)">
-              <CosmeticIcon v-if="equippedIcon && equippedIcon.style_key" :iconKey="equippedIcon.style_key" :rarity="equippedIcon.rarity" :size="88" />
-              <span v-else>{{ initial }}</span>
+            <!-- Banner: miniatura real (banner + avatar encima + nombre) -->
+            <div v-if="activeTab === 'banner'" class="w-full">
+              <div class="h-20 rounded-xl border border-white/10" :class="[bannerStyle(eqBannerKey), eqBannerPremium ? 'anim-pan' : '']"></div>
+              <div class="flex flex-col items-center -mt-7">
+                <UserAvatar :size="52" :avatar-url="avatarUrl" :initial="initial" :frame-key="eqFrameKey" :icon-glyph="eqIconGlyph" :frame-premium="eqFramePremium" />
+                <span v-if="name" class="mt-1 text-xs font-bold text-white truncate max-w-[160px]">{{ name }}</span>
+              </div>
             </div>
-            <div v-else-if="activeTab === 'frame'" class="size-24 rounded-2xl" :class="[frameStyle(equippedFrame.style_key).wrap, frameStyle(equippedFrame.style_key).pad, equippedFrame.premium_only ? 'anim-pan' : '']">
-              <div class="w-full h-full rounded-xl bg-gradient-to-br from-slate-600 to-slate-800"></div>
-            </div>
-            <div v-else-if="activeTab === 'banner'" class="w-full h-20 rounded-xl border border-white/10" :class="[bannerStyle(equippedBanner.style_key), equippedBanner.premium_only ? 'anim-pan' : '']"></div>
-            <div v-else class="py-6 text-center">
-              <span v-if="equippedTitle" class="font-display font-bold text-lg" :class="equippedTitle.premium_only ? 'title-premium-anim' : rarity(equippedTitle.rarity).text">{{ equippedTitle.name }}</span>
+            <!-- Título: avatar combinado + el título debajo -->
+            <template v-else-if="activeTab === 'title'">
+              <UserAvatar :size="72" :avatar-url="avatarUrl" :initial="initial" :frame-key="eqFrameKey" :icon-glyph="eqIconGlyph" :frame-premium="eqFramePremium" />
+              <span v-if="equippedTitle" class="font-display font-bold text-base text-center" :class="equippedTitle.premium_only ? 'title-premium-anim' : rarity(equippedTitle.rarity).text">{{ equippedTitle.name }}</span>
               <span v-else class="text-slate-500 text-sm">Sin título</span>
-            </div>
+            </template>
+            <!-- Íconos / Bordes: avatar combinado (ícono dentro del borde equipado) -->
+            <UserAvatar v-else :size="96" :avatar-url="avatarUrl" :initial="initial" :frame-key="eqFrameKey" :icon-glyph="eqIconGlyph" :frame-premium="eqFramePremium" />
             <div class="text-center">
               <div class="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">Equipado</div>
               <div class="text-sm font-bold text-white">{{ currentTabLabel }}</div>
             </div>
           </div>
+
+          <!-- Botón Preview: ver el perfil completo como quedaría -->
+          <button @click="showPreview = true" class="w-full flex items-center justify-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-sm font-bold py-2.5 transition active:scale-[0.98]">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            Preview del perfil
+          </button>
 
           <!-- Colección: contador + gemas de rareza (tocá la gema para filtrar) -->
           <div class="rounded-xl border border-white/10 bg-slate-900/40 p-3">
@@ -258,5 +280,28 @@ onMounted(load)
         </div>
       </div>
     </template>
+
+    <!-- Modal PREVIEW: el perfil completo como quedaría con lo equipado -->
+    <Teleport to="body">
+      <div v-if="showPreview" class="fixed inset-0 z-[60] overflow-y-auto bg-black/80 backdrop-blur-sm" @click.self="showPreview = false">
+        <div class="min-h-full flex items-center justify-center p-4">
+          <div class="w-full max-w-sm rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl overflow-hidden">
+            <!-- Banner -->
+            <div class="h-24 relative" :class="[bannerStyle(eqBannerKey), eqBannerPremium ? 'anim-pan' : '']">
+              <button @click="showPreview = false" class="absolute top-2 right-2 grid place-items-center size-8 rounded-full bg-black/40 hover:bg-black/60 text-white/80 hover:text-white transition">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <!-- Identidad -->
+            <div class="px-5 pb-6 -mt-10 flex flex-col items-center text-center">
+              <UserAvatar :size="88" :avatar-url="avatarUrl" :initial="initial" :frame-key="eqFrameKey" :icon-glyph="eqIconGlyph" :frame-premium="eqFramePremium" />
+              <h3 class="mt-3 text-lg font-bold text-white leading-tight">{{ name || 'Tu perfil' }}</h3>
+              <p v-if="equippedTitle" class="text-sm font-bold mt-0.5" :class="equippedTitle.premium_only ? 'title-premium-anim' : rarity(equippedTitle.rarity).text">{{ equippedTitle.name }}</p>
+              <div class="mt-4 w-full text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Vista previa · así te ven los demás</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

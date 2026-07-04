@@ -9,6 +9,7 @@ const state = reactive({
   cosmeticQueue: [],
   pendingRewards: [],
   suppressOverlays: false,
+  levelUpActive: false,   // hay una escena de nivel/rango en pantalla (la escena de cosmético espera a que termine)
   claimNotifications: [],
 })
 
@@ -37,7 +38,7 @@ function push(item, ttlMs = 5000) {
 export function queueAchievementOverlay({ title, iconUrl, earnedAt, points = 0, description = '', unlockPercent = null }) {
   const id = _genId()
   state.achievementQueue.push({ id, title, iconUrl, earnedAt, points, description, unlockPercent })
-  addPendingReward('achievement', { title, iconUrl, points, id })
+  addPendingReward('achievement', { title, iconUrl, points, description, id })
   return id
 }
 
@@ -226,8 +227,8 @@ export function clearClaimedRewards() {
 
 // ── Legacy toast API (still used for errors, success, info) ──
 
-export function pushAchievementToast({ title, iconUrl, earnedAt, points = null }) {
-  return queueAchievementOverlay({ title, iconUrl, earnedAt, points: points || 0 })
+export function pushAchievementToast({ title, iconUrl, earnedAt, points = null, description = '' }) {
+  return queueAchievementOverlay({ title, iconUrl, earnedAt, points: points || 0, description })
 }
 
 export function pushLevelUpToast({ level, oldLevel }) {
@@ -236,6 +237,7 @@ export function pushLevelUpToast({ level, oldLevel }) {
 }
 
 export function setSuppressOverlays(val) { state.suppressOverlays = !!val }
+export function setLevelUpActive(val) { state.levelUpActive = !!val }
 
 export { state as notificationsState, remove as removeNotification }
 

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { getTierForLevel, getNextTier } from '../../services/tiers'
+import { getTierForLevel, getNextTier, tierAccentText } from '../../services/tiers'
 import { computeLevelProgress } from '../../services/xp'
 import { frameStyle, iconBgStyle, iconThemeBg, rarity } from '../../services/cosmetics'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
@@ -48,17 +48,13 @@ const countryName = computed(() => {
   return code ? (countryNames[code] || '') : ''
 })
 
-const ACCENT = {
-  emerald: 'text-emerald-400', amber: 'text-amber-400', orange: 'text-orange-400',
-  red: 'text-red-400', sky: 'text-sky-400', violet: 'text-violet-400',
-}
-const accentText = computed(() => ACCENT[currentTier.value?.color] || 'text-emerald-400')
+const accentText = computed(() => tierAccentText(currentTier.value?.color))
 
 // Color del badge de ranking por puesto: 1 oro, 2 plata, 3 bronce, 4+ neutral (todos iguales).
 const RANK_STYLE = {
-  1: { box: 'bg-amber-500/[0.08] border-amber-500/25 hover:bg-amber-500/[0.14]',   icon: 'text-amber-400',  num: 'text-amber-300' },
-  2: { box: 'bg-slate-300/[0.08] border-slate-300/25 hover:bg-slate-300/[0.14]',   icon: 'text-slate-200',  num: 'text-slate-100' },
-  3: { box: 'bg-orange-600/[0.08] border-orange-600/30 hover:bg-orange-600/[0.16]', icon: 'text-orange-400', num: 'text-orange-300' },
+  1: { box: 'bg-amber-500/15 border-amber-400/40 hover:bg-amber-500/25',     icon: 'text-amber-300',  num: 'text-amber-200' },
+  2: { box: 'bg-slate-300/[0.14] border-slate-300/40 hover:bg-slate-300/25', icon: 'text-slate-100',  num: 'text-white' },
+  3: { box: 'bg-orange-800/25 border-orange-600/45 hover:bg-orange-800/35',  icon: 'text-orange-300', num: 'text-orange-200' },
 }
 const rankStyle = computed(() => RANK_STYLE[props.topRank] || { box: 'bg-white/[0.04] border-white/10 hover:bg-white/[0.08]', icon: 'text-slate-400', num: 'text-slate-100' })
 

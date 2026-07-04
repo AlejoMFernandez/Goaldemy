@@ -35,13 +35,13 @@ values
   ('lucky_first', 'Suertudo', 'Acierta en el primer intento 10 veces', 'https://img.icons8.com/color/48/horseshoe.png', 40),
   ('comeback_king', 'Rey del comeback', 'Ganá después de 3 errores consecutivos', 'https://img.icons8.com/color/48/restart--v1.png', 30),
   ('night_owl', 'Ave nocturna', 'Jugá entre las 00:00 y las 05:00', 'https://img.icons8.com/fluency/48/owl.png', 25),
-  ('early_bird', 'Madrugador', 'Jugá antes de las 07:00', 'https://img.icons8.com/fluency/48/sun.png', 25),
+  ('early_bird', 'Madrugador', 'Jugá entre las 05:00 y las 08:00 (madrugador)', 'https://img.icons8.com/fluency/48/sun.png', 25),
   ('weekend_warrior', 'Guerrero del finde', 'Ganá 10 juegos en sábado o domingo', 'https://img.icons8.com/fluency/48/beach.png', 40),
   
   -- 🏆 Logros épicos y desafiantes
   ('perfectionist', 'Perfeccionista', 'Completá un juego sin errores', 'https://img.icons8.com/fluency/48/star-half-empty.png', 60),
   ('hat_trick', 'Hat-trick', 'Ganá 3 juegos distintos el mismo día', 'https://img.icons8.com/color/48/football2--v1.png', 50),
-  ('grand_slam', 'Grand Slam', 'Ganá todos los juegos disponibles en una semana', 'https://img.icons8.com/fluency/48/trophy.png', 150),
+  ('grand_slam', 'Grand Slam', 'Ganá TODOS los juegos disponibles dentro de la misma semana (7 días)', 'https://img.icons8.com/fluency/48/trophy.png', 150),
   ('centurion', 'Centurión', 'Acumula 100 victorias totales', 'https://img.icons8.com/fluency/48/medal.png', 100),
   
   -- 🌟 Logros sociales

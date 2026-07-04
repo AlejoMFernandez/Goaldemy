@@ -7,8 +7,10 @@ import { fetchGames, gameRouteForSlug } from '../services/games'
 import { ACTIVE_LEAGUES, getTodayMatches, getUpcomingMatches } from '../services/fotmob'
 import { getDailyChallenges, getDailyReward, getMonthlyPass } from '../services/rewards'
 import { getUserLevel } from '../services/xp'
+import { getEquippedCosmetics } from '../services/cosmetics'
 import MatchDetailModal from '../components/match/MatchDetailModal.vue'
 import MonthlyPass from '../components/rewards/MonthlyPass.vue'
+import UserAvatar from '../components/common/UserAvatar.vue'
 
 const state = reactive({
   isAuthenticated: !!(getAuthUser()?.id),
@@ -24,7 +26,9 @@ const state = reactive({
 const home = reactive({
   loading: true,
   name: '', avatarUrl: '', level: 1, dailyStreak: 0,
+  frameKey: 'none', iconGlyph: '', iconBg: 'emerald', framePremium: false,
   playedToday: 0,
+  playedGameIds: [],   // ids de juegos con desafío TERMINADO hoy (para marcar "jugado" en los tiles)
   rewardsToClaim: 0,
   passPoints: 0, passPercent: 0, passNextLabel: '', isPremium: false,
 })
@@ -103,19 +107,30 @@ async function loadUserHome() {
   if (!id) { home.loading = false; return }
   try {
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
-    const [profileRes, lvlRes, challenges, daily, pass, sessionsRes] = await Promise.all([
+    const [profileRes, lvlRes, challenges, daily, pass, sessionsRes, equipped] = await Promise.all([
       supabase.from('user_profiles').select('display_name, avatar_url, daily_streak').eq('id', id).single(),
       getUserLevel(null),
       getDailyChallenges(),
       getDailyReward(),
       getMonthlyPass(),
-      supabase.from('game_sessions').select('game_id').eq('user_id', id).gte('started_at', todayStart.toISOString()),
+      supabase.from('game_sessions').select('game_id, ended_at, metadata').eq('user_id', id).gte('started_at', todayStart.toISOString()),
+      getEquippedCosmetics(id).catch(() => null),
     ])
-    home.playedToday = new Set((sessionsRes?.data || []).map(s => s.game_id)).size
+    // "Jugado hoy" = desafío TERMINADO (ended_at + mode challenge). Así el tile no
+    // manda a arrancar un desafío ya usado (que se rompía) sino a ver el resultado.
+    const finished = (sessionsRes?.data || []).filter(s => s.ended_at && (s.metadata || {}).mode === 'challenge')
+    home.playedGameIds = [...new Set(finished.map(s => s.game_id).filter(Boolean))]
+    home.playedToday = home.playedGameIds.length
     if (profileRes.data) {
       home.name = profileRes.data.display_name || ''
       home.avatarUrl = profileRes.data.avatar_url || ''
       home.dailyStreak = profileRes.data.daily_streak || 0
+    }
+    if (equipped) {
+      home.frameKey = equipped.frameKey || 'none'
+      home.iconGlyph = equipped.iconGlyph || ''
+      home.iconBg = equipped.iconBg || 'emerald'
+      home.framePremium = !!equipped.framePremium
     }
     const lvlInfo = Array.isArray(lvlRes?.data) ? lvlRes.data[0] : lvlRes?.data
     home.level = Number(lvlInfo?.level) || 1
@@ -161,8 +176,15 @@ onMounted(() => {
 })
 onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 
+function isPlayed(game) {
+  return !!game?.id && home.playedGameIds.includes(game.id)
+}
 function getGameRoute(slug) {
   return `${gameRouteForSlug(slug)}?mode=challenge`
+}
+// Jugado hoy → review (ver resultado). Sin jugar → arrancar el desafío.
+function tileRoute(game) {
+  return isPlayed(game) ? `${gameRouteForSlug(game.slug)}?mode=review` : getGameRoute(game.slug)
 }
 </script>
 
@@ -197,10 +219,15 @@ function getGameRoute(slug) {
         <!-- Status bar -->
         <div class="flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/40 p-4 sm:p-5">
           <div class="relative shrink-0">
-            <div class="size-14 rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-500 to-cyan-500 grid place-items-center text-white font-extrabold text-xl ring-2 ring-white/10">
-              <img v-if="home.avatarUrl" :src="home.avatarUrl" alt="" class="w-full h-full object-cover" />
-              <span v-else>{{ (home.name || '?')[0]?.toUpperCase() }}</span>
-            </div>
+            <UserAvatar
+              :size="56"
+              :avatar-url="home.avatarUrl"
+              :initial="(home.name || '?')[0]?.toUpperCase()"
+              :frame-key="home.frameKey"
+              :icon-glyph="home.iconGlyph"
+              :icon-bg="home.iconBg"
+              :frame-premium="home.framePremium"
+            />
             <div class="absolute -bottom-1 -right-1 rounded-full bg-slate-900 border border-emerald-400/60 px-1.5 py-0.5 text-[11px] font-extrabold text-emerald-400 leading-none">{{ home.level }}</div>
           </div>
           <div class="flex-1 min-w-0">
@@ -406,13 +433,17 @@ function getGameRoute(slug) {
               </RouterLink>
             </div>
             <RouterLink
-              :to="state.isAuthenticated ? getGameRoute(game.slug) : '#'"
+              :to="state.isAuthenticated ? tileRoute(game) : '#'"
               :class="state.isAuthenticated ? '' : 'pointer-events-none'"
               class="flex flex-col flex-1"
             >
               <div class="relative h-36 bg-gradient-to-br from-slate-800/60 to-slate-900 flex items-center justify-center overflow-hidden">
                 <div class="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="background: radial-gradient(60% 60% at 50% 45%, rgba(16,185,129,0.18), transparent 70%);"></div>
-                <img v-if="game.cover_url" :src="game.cover_url" :alt="game.name" class="relative z-10 w-20 h-20 object-contain group-hover:scale-110 transition-transform duration-300" />
+                <span v-if="state.isAuthenticated && isPlayed(game)" class="absolute top-2 right-2 z-20 inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 px-2 py-0.5 text-[10px] font-bold text-emerald-300 backdrop-blur">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  Jugado
+                </span>
+                <img v-if="game.cover_url" :src="game.cover_url" :alt="game.name" class="relative z-10 w-20 h-20 object-contain group-hover:scale-110 transition-transform duration-300" :class="isPlayed(game) ? 'opacity-70' : ''" />
                 <svg v-else class="relative z-10 w-16 h-16 text-emerald-400/80" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
                 </svg>
@@ -420,7 +451,11 @@ function getGameRoute(slug) {
               <div class="p-4 flex flex-col flex-1">
                 <h3 class="text-base font-bold text-white mb-1 line-clamp-1">{{ game.name }}</h3>
                 <p class="text-xs text-slate-400 line-clamp-2 mb-3">{{ game.description || 'Desafío diario disponible' }}</p>
-                <div v-if="state.isAuthenticated" class="mt-auto flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-white transition-all group-hover:shadow-lg group-hover:shadow-emerald-500/40">
+                <div v-if="state.isAuthenticated && isPlayed(game)" class="mt-auto flex items-center justify-center gap-2 rounded-lg bg-white/[0.06] border border-white/10 px-4 py-2 text-sm font-semibold text-slate-300 transition-all group-hover:bg-white/10">
+                  <span>Ver resultado</span>
+                  <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </div>
+                <div v-else-if="state.isAuthenticated" class="mt-auto flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-white transition-all group-hover:shadow-lg group-hover:shadow-emerald-500/40">
                   <span>Jugar</span>
                   <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />

@@ -32,9 +32,17 @@ export default {
     const theme = computed(() => RARITY_THEME[current.value?.rarity] || RARITY_THEME.epic)
     const typeLabel = computed(() => TYPE_LABEL[current.value?.type] || 'Cosmético')
 
+    function canShow() {
+      // Orden de escenas: logro → rango → nivel → cosmético.
+      return !notificationsState.suppressOverlays
+        && notificationsState.achievementQueue.length === 0
+        && !notificationsState.levelUpActive
+        && notificationsState.levelUpQueue.length === 0
+    }
+
     function showNext() {
       clearTimers()
-      if (notificationsState.suppressOverlays) return
+      if (!canShow()) return
       const item = shiftCosmeticQueue()
       if (!item) { current.value = null; phase.value = 0; return }
 
@@ -65,13 +73,19 @@ export default {
     }
 
     watch(() => notificationsState.cosmeticQueue.length, (len) => {
-      // No pisar la escena de logro: esperá si hay logros en cola.
-      if (len > 0 && !current.value && notificationsState.achievementQueue.length === 0) showNext()
+      if (len > 0 && !current.value && canShow()) showNext()
     })
 
     watch(() => notificationsState.suppressOverlays, (suppressed) => {
       if (!suppressed && notificationsState.cosmeticQueue.length > 0 && !current.value) {
-        setTimeout(showNext, 700)
+        setTimeout(() => { if (canShow()) showNext() }, 700)
+      }
+    })
+
+    // La escena de nivel/rango terminó → recién ahí mostrar los cosméticos.
+    watch(() => notificationsState.levelUpActive, (active) => {
+      if (!active && notificationsState.cosmeticQueue.length > 0 && !current.value) {
+        setTimeout(() => { if (canShow()) showNext() }, 500)
       }
     })
 

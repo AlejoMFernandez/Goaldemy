@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getAvailablePowerups, usePowerup } from '../../services/powerups'
+import PowerupIcon from '../rewards/PowerupIcon.vue'
 
 const props = defineProps({
   disabledTypes: { type: Array, default: () => [] },
@@ -70,7 +71,7 @@ defineExpose({ reload: load })
           :title="pu.description"
           @click="activate(pu.key)"
         >
-          <span class="text-lg sm:text-xl">{{ pu.icon }}</span>
+          <PowerupIcon :type="pu.key" :size="38" />
           <span
             v-if="pu.count > 0"
             class="absolute -top-1.5 -right-1.5 grid place-items-center min-w-[17px] h-[17px] px-1 rounded-full bg-slate-900/95 ring-1 ring-white/15 text-[10px] font-bold text-white leading-none"

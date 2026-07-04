@@ -443,7 +443,7 @@ export default {
       <!-- Columna derecha (secciones) -->
       <div class="space-y-5 min-w-0">
         <!-- Acciones de conexión (solo en perfiles ajenos) -->
-        <div v-if="canConnect" class="card p-4 flex flex-wrap items-center justify-between gap-3">
+        <div v-if="canConnect" class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-800/85 backdrop-blur shadow-xl p-4 flex flex-wrap items-center justify-between gap-3">
           <div class="min-w-0">
             <p class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Conexión</p>
             <p class="text-sm font-bold text-white truncate">{{ connectLabel }}</p>

@@ -126,41 +126,44 @@ export function getLevelUnlocks(level) {
   return unlocks
 }
 
-// ── Mapa de cosméticos por nivel (espejo del seed SQL, solo para mostrar) ──
+// ── Mapa de cosméticos por nivel (espejo del seed SQL) ──
+// styleKey/rarity permiten RENDERIZAR el cosmético real (no solo texto):
+//   frame/banner → clase CSS por styleKey; icon → glyph/raster; title → texto.
 const COSMETIC_BY_LEVEL = [
-  { level: 2,  kind: 'title',  name: 'Promesa' },
-  { level: 3,  kind: 'frame',  name: 'Bronce' },
-  { level: 5,  kind: 'title',  name: 'Hincha' },
-  { level: 6,  kind: 'icon',   name: 'Botín' },
-  { level: 8,  kind: 'frame',  name: 'Plata' },
-  { level: 8,  kind: 'banner', name: 'Cancha' },
-  { level: 12, kind: 'title',  name: 'Crack' },
-  { level: 14, kind: 'icon',   name: 'Guantes' },
-  { level: 18, kind: 'banner', name: 'Nocturno' },
-  { level: 22, kind: 'icon',   name: 'Medalla' },
-  { level: 25, kind: 'frame',  name: 'Oro' },
-  { level: 30, kind: 'title',  name: 'Maestro del fútbol' },
-  { level: 35, kind: 'frame',  name: 'Esmeralda' },
-  { level: 35, kind: 'icon',   name: 'Trofeo' },
-  { level: 40, kind: 'banner', name: 'Fuego' },
-  { level: 50, kind: 'frame',  name: 'Leyenda' },
-  { level: 50, kind: 'title',  name: 'Leyenda Mundial' },
-  { level: 55, kind: 'icon',   name: 'GOAT' },
-  { level: 60, kind: 'banner', name: 'Galaxia' },
+  { level: 2,  kind: 'title',  name: 'Promesa',            rarity: 'common' },
+  { level: 3,  kind: 'frame',  name: 'Bronce',   styleKey: 'bronze',  rarity: 'common' },
+  { level: 5,  kind: 'title',  name: 'Hincha',             rarity: 'common' },
+  { level: 6,  kind: 'icon',   name: 'Botín',    styleKey: 'boot',    rarity: 'common' },
+  { level: 8,  kind: 'frame',  name: 'Plata',    styleKey: 'silver',  rarity: 'rare' },
+  { level: 8,  kind: 'banner', name: 'Cancha',   styleKey: 'pitch',   rarity: 'common' },
+  { level: 12, kind: 'title',  name: 'Crack',              rarity: 'rare' },
+  { level: 14, kind: 'icon',   name: 'Guantes',  styleKey: 'gloves',  rarity: 'rare' },
+  { level: 18, kind: 'banner', name: 'Nocturno', styleKey: 'night',   rarity: 'rare' },
+  { level: 22, kind: 'icon',   name: 'Medalla',  styleKey: 'medal',   rarity: 'rare' },
+  { level: 25, kind: 'frame',  name: 'Oro',      styleKey: 'gold',    rarity: 'epic' },
+  { level: 30, kind: 'title',  name: 'Maestro del fútbol', rarity: 'epic' },
+  { level: 35, kind: 'frame',  name: 'Esmeralda',styleKey: 'emerald', rarity: 'epic' },
+  { level: 35, kind: 'icon',   name: 'Trofeo',   styleKey: 'trophy',  rarity: 'epic' },
+  { level: 40, kind: 'banner', name: 'Fuego',    styleKey: 'fire',    rarity: 'epic' },
+  { level: 50, kind: 'frame',  name: 'Leyenda',  styleKey: 'legend',  rarity: 'legendary' },
+  { level: 50, kind: 'title',  name: 'Leyenda Mundial',    rarity: 'legendary' },
+  { level: 55, kind: 'icon',   name: 'GOAT',     styleKey: 'goat',    rarity: 'legendary' },
+  { level: 60, kind: 'banner', name: 'Galaxia',  styleKey: 'galaxy',  rarity: 'legendary' },
 ]
 const COSMETIC_KIND_LABEL = { frame: 'Borde', title: 'Título', icon: 'Ícono', banner: 'Banner' }
 
-/** Recompensas otorgadas EN un nivel (XP bonus + juegos + rango + cosméticos). */
+/** Recompensas otorgadas EN un nivel (XP bonus + juegos + rango + cosméticos).
+ *  Cada item cosmético trae name/styleKey/rarity para renderizarlo de verdad. */
 export function getLevelRewards(level) {
   const lvl = Number(level) || 1
   const rewards = [{ kind: 'xp', label: `+${getLevelUpXpBonus(lvl)} XP bonus` }]
   for (const [slug, req] of Object.entries(GAME_UNLOCK_LEVELS)) {
-    if (req === lvl && req > 1) rewards.push({ kind: 'game', label: `Juego: ${GAME_NAMES[slug] || slug}` })
+    if (req === lvl && req > 1) rewards.push({ kind: 'game', label: `Juego: ${GAME_NAMES[slug] || slug}`, name: GAME_NAMES[slug] || slug, slug })
   }
   const tier = TIERS.find(t => t.minLevel === lvl)
-  if (tier) rewards.push({ kind: 'tier', label: `Rango: ${tier.label}`, image: tier.image })
+  if (tier) rewards.push({ kind: 'tier', label: `Rango: ${tier.label}`, name: tier.label, image: tier.image })
   for (const c of COSMETIC_BY_LEVEL) {
-    if (c.level === lvl) rewards.push({ kind: c.kind, label: `${COSMETIC_KIND_LABEL[c.kind]}: ${c.name}` })
+    if (c.level === lvl) rewards.push({ kind: c.kind, label: `${COSMETIC_KIND_LABEL[c.kind]}: ${c.name}`, name: c.name, styleKey: c.styleKey, rarity: c.rarity, typeLabel: COSMETIC_KIND_LABEL[c.kind] })
   }
   return rewards
 }

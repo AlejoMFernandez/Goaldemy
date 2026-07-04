@@ -1,27 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" fill="none">
   <defs>
-    <linearGradient id="am-bg" x1="60" y1="0" x2="60" y2="140" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#9a3412"/>
-      <stop offset="100%" stop-color="#431407"/>
-    </linearGradient>
-    <linearGradient id="am-shine" x1="30" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#fb923c" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#ea580c" stop-opacity="0"/>
-    </linearGradient>
+    <linearGradient id="am-bg" x1="60" y1="0" x2="60" y2="140" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#854d0e"/><stop offset="1" stop-color="#422006"/></linearGradient>
+    <linearGradient id="am-met" x1="30" y1="20" x2="90" y2="120" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fef9c3"/><stop offset=".5" stop-color="#facc15"/><stop offset="1" stop-color="#b45309"/></linearGradient>
+    <linearGradient id="am-shine" x1="30" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fde047" stop-opacity=".3"/><stop offset="1" stop-color="#facc15" stop-opacity="0"/></linearGradient>
   </defs>
-  <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#am-bg)" stroke="#fb923c" stroke-width="2.5"/>
+  <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#am-bg)" stroke="url(#am-met)" stroke-width="3.5"/>
   <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#am-shine)"/>
-  <path d="M60 16L100 32V72C100 94 80 116 60 125C40 116 20 94 20 72V32L60 16Z" fill="none" stroke="#fb923c" stroke-width="0.8" opacity="0.3"/>
-  <!-- Jersey/shirt -->
-  <path d="M42 42L36 48L36 56L42 54L42 82L60 86L78 82L78 54L84 56L84 48L78 42L70 38L60 36L50 38Z" fill="none" stroke="#fb923c" stroke-width="2.2" stroke-linejoin="round"/>
-  <!-- Collar -->
-  <path d="M50 38L56 42L60 42L64 42L70 38" fill="none" stroke="#fb923c" stroke-width="1.5" opacity="0.6"/>
-  <!-- Number 10 on jersey -->
-  <text x="53" y="68" font-family="system-ui,sans-serif" font-size="18" font-weight="800" fill="#fb923c" opacity="0.7">10</text>
-  <!-- Sleeves detail -->
-  <line x1="39" y1="50" x2="42" y2="49" stroke="#fb923c" stroke-width="1" opacity="0.4"/>
-  <line x1="81" y1="50" x2="78" y2="49" stroke="#fb923c" stroke-width="1" opacity="0.4"/>
-  <!-- Two stars -->
-  <polygon points="52,96 54,101 59,101 55,104 56,109 52,106 48,109 49,104 45,101 50,101" fill="#fb923c" opacity="0.5"/>
-  <polygon points="68,96 70,101 75,101 71,104 72,109 68,106 64,109 65,104 61,101 66,101" fill="#fb923c" opacity="0.5"/>
+  <path d="M60 15L99 32V72C99 95 79 115 60 124C41 115 21 95 21 72V32L60 15Z" fill="none" stroke="#fde047" stroke-width="0.8" opacity=".4"/>
+  <path d="M60 40 l7 16 18 1.5 -13.5 11 4 18 -15.5 -9.5 -15.5 9.5 4 -18 -13.5 -11 18 -1.5 z" fill="url(#am-met)" stroke="#b45309" stroke-width="1.4"/>
+  <path d="M60 47 l4 10 11 1" fill="none" stroke="#fffbeb" stroke-opacity=".8" stroke-width="2" stroke-linecap="round"/>
+  <polygon points="60,100 62,105 67,105 63,108 65,113 60,110 55,113 57,108 53,105 58,105" fill="#fde047" opacity=".5"/>
 </svg>

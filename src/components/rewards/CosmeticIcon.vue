@@ -27,7 +27,7 @@ const EMOJI_MAP = {
   '⚽': 'ball', '👟': 'boot', '🧤': 'gloves', '🏅': 'medal',
   '🏆': 'trophy', '🐐': 'goat', '👑': 'crown', '⭐': 'star', '🛡️': 'shield', '🛡': 'shield',
 }
-const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel', 'chat', 'butterfly', 'globe', 'comet', 'phoenix'])
+const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel', 'chat', 'butterfly', 'globe', 'comet', 'phoenix', 'rank_bronze', 'rank_silver', 'rank_gold', 'rank_emerald', 'rank_cyan', 'rank_champion'])
 
 const key = computed(() => {
   const k = (props.iconKey || '').trim()
@@ -54,9 +54,15 @@ const accent = computed(() => ACCENT[props.rarity] || ACCENT.common)
 // Arte raster opcional (DROP-IN): si existe /cosmetics/icons/<key>.webp se usa como
 // imagen full-bleed; si el archivo no existe (404) @error cae al SVG. Solo íconos cuadrados
 // (no framed). Para sumar un ícono raster: pegá el .webp y agregá su clave al set.
-const RASTER_ICONS = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'sun', 'clover', 'sword', 'hat', 'laurel', 'bolt', 'flame', 'gem', 'owl', 'broom'])
+const RASTER_ICONS = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'sun', 'clover', 'sword', 'hat', 'laurel', 'bolt', 'flame', 'gem', 'owl', 'broom', 'chat', 'butterfly', 'globe', 'comet', 'phoenix'])
 const rasterFailed = ref(false)
-const useRaster = computed(() => !props.framed && RASTER_ICONS.has(key.value) && !RASTER_FAILED.has(key.value) && !rasterFailed.value)
+// ¿Hay arte raster para esta clave? (independiente de framed)
+const rasterAvailable = computed(() => RASTER_ICONS.has(key.value) && !RASTER_FAILED.has(key.value) && !rasterFailed.value)
+// Ícono suelto (no framed) → <img> full-bleed.
+const useRaster = computed(() => !props.framed && rasterAvailable.value)
+// Medallón (framed) → el raster va DENTRO del disco vía <image> recortado (antes se ignoraba
+// y siempre salía el SVG viejo, ej. escoba/cometa en la escena de desbloqueo).
+const useRasterFramed = computed(() => props.framed && rasterAvailable.value)
 const rasterSrc = computed(() => `/cosmetics/icons/${key.value}.webp`)
 function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = true }
 </script>
@@ -77,6 +83,7 @@ function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = tr
         <radialGradient :id="gid('DiscEpic')" cx="0.4" cy="0.32" r="0.85"><stop offset="0" stop-color="#6b21a8"/><stop offset="1" stop-color="#23073f"/></radialGradient>
         <radialGradient :id="gid('DiscLeg')" cx="0.4" cy="0.32" r="0.85"><stop offset="0" stop-color="#a8590a"/><stop offset="1" stop-color="#2c1705"/></radialGradient>
       </template>
+      <clipPath :id="gid('discClip')"><circle cx="50" cy="50" r="35"/></clipPath>
     </defs>
 
     <!-- Marco medallón (solo framed) -->
@@ -87,8 +94,18 @@ function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = tr
       <circle cx="50" cy="50" r="37" :fill="`url(#${gid(frame.disc)})`" :stroke="frame.rimDark" stroke-width="1.5"/>
     </g>
 
-    <!-- Ícono. Framed → encogido al disco; suelto → casi full. -->
-    <g :transform="framed ? 'translate(50,51) scale(0.58) translate(-50,-50)' : ''">
+    <!-- Framed + arte raster: la imagen real va DENTRO del disco (recortada). -->
+    <image
+      v-if="useRasterFramed"
+      :href="rasterSrc"
+      x="15" y="15" width="70" height="70"
+      :clip-path="`url(#${gid('discClip')})`"
+      preserveAspectRatio="xMidYMid slice"
+      @error="onRasterError"
+    />
+
+    <!-- Ícono SVG. Framed → encogido al disco; suelto → casi full. (oculto si el raster va en el medallón) -->
+    <g v-if="!useRasterFramed" :transform="framed ? 'translate(50,51) scale(0.58) translate(-50,-50)' : ''">
       <!-- PELOTA -->
       <template v-if="key === 'ball'">
         <circle cx="50" cy="50" r="30" :fill="silver"/>
@@ -281,6 +298,43 @@ function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = tr
         <circle cx="50" cy="34" r="7" fill="#f97316" stroke="#c2410c" stroke-width="1"/>
         <circle cx="52.5" cy="32" r="1.6" fill="#1e293b"/>
         <path d="M56 34 l8 -1 -5 5 z" fill="#facc15"/>
+      </template>
+
+      <!-- ══ INSIGNIAS DE RANGO (escudo metálico + emblema) ══ -->
+      <!-- BRONCE: escudo + pelota -->
+      <template v-else-if="key === 'rank_bronze'">
+        <path d="M50 20 l24 9 v20 c0 19 -13 28 -24 33 c-11 -5 -24 -14 -24 -33 v-20 z" fill="#7c2d12" stroke="#f59e0b" stroke-width="3.5" stroke-linejoin="round"/>
+        <circle cx="50" cy="50" r="11" fill="none" stroke="#fbbf24" stroke-width="2.6"/>
+        <path d="M50 42 l7 5 -3 8 h-8 l-3 -8 z" fill="#fbbf24"/>
+      </template>
+      <!-- PLATA: escudo + botín -->
+      <template v-else-if="key === 'rank_silver'">
+        <path d="M50 20 l24 9 v20 c0 19 -13 28 -24 33 c-11 -5 -24 -14 -24 -33 v-20 z" fill="#334155" stroke="#e2e8f0" stroke-width="3.5" stroke-linejoin="round"/>
+        <path d="M36 52 c0 8 2 12 5 14 h20 c5 0 6 -3 6 -6 c0 -3 -2 -4 -5 -5 c-8 -2 -13 -5 -18 -10 c-3 -3 -8 -1 -8 6 z" fill="#e2e8f0"/>
+        <path d="M40 51 q8 5 17 8" fill="none" stroke="#334155" stroke-width="2.2" stroke-linecap="round"/>
+      </template>
+      <!-- ORO: escudo + estrella -->
+      <template v-else-if="key === 'rank_gold'">
+        <path d="M50 20 l24 9 v20 c0 19 -13 28 -24 33 c-11 -5 -24 -14 -24 -33 v-20 z" fill="#854d0e" stroke="#facc15" stroke-width="3.5" stroke-linejoin="round"/>
+        <path d="M50 36 l5 12 13 1 -10 8 3 13 -11 -7 -11 7 3 -13 -10 -8 13 -1 z" fill="#facc15" stroke="#b45309" stroke-width="1.2"/>
+      </template>
+      <!-- ESMERALDA: escudo + check -->
+      <template v-else-if="key === 'rank_emerald'">
+        <path d="M50 20 l24 9 v20 c0 19 -13 28 -24 33 c-11 -5 -24 -14 -24 -33 v-20 z" fill="#065f46" stroke="#34d399" stroke-width="3.5" stroke-linejoin="round"/>
+        <path d="M39 51 l8 9 16 -18" fill="none" stroke="#6ee7b7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </template>
+      <!-- CIAN: escudo + gema -->
+      <template v-else-if="key === 'rank_cyan'">
+        <path d="M50 20 l24 9 v20 c0 19 -13 28 -24 33 c-11 -5 -24 -14 -24 -33 v-20 z" fill="#0e7490" stroke="#22d3ee" stroke-width="3.5" stroke-linejoin="round"/>
+        <path d="M36 46 l7 -12 14 0 7 12 -14 22 z" fill="#67e8f9" stroke="#0891b2" stroke-width="1.4" stroke-linejoin="round"/>
+        <path d="M36 46 h28 M47 46 l3 22 M57 46 l-3 22" fill="none" stroke="#083344" stroke-width="1.1" opacity=".7"/>
+      </template>
+      <!-- CAMPEÓN: escudo + corona -->
+      <template v-else-if="key === 'rank_champion'">
+        <path d="M50 20 l24 9 v20 c0 19 -13 28 -24 33 c-11 -5 -24 -14 -24 -33 v-20 z" fill="#134e4a" stroke="#facc15" stroke-width="3.5" stroke-linejoin="round"/>
+        <path d="M34 60 L34 42 L44 50 L50 34 L56 50 L66 42 L66 60 Z" fill="none" stroke="#fde68a" stroke-width="2.6" stroke-linejoin="round"/>
+        <rect x="34" y="60" width="32" height="6" rx="1" fill="none" stroke="#fde68a" stroke-width="2.2"/>
+        <circle cx="44" cy="50" r="2.4" fill="#22d3ee"/><circle cx="50" cy="45" r="2.8" fill="#fde047"/><circle cx="56" cy="50" r="2.4" fill="#34d399"/>
       </template>
     </g>
 

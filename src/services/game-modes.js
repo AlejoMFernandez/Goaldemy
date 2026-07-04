@@ -62,7 +62,7 @@ function todayStartIso() {
 
 /**
  * Cuenta cuántas victorias de desafíos diarios logró el usuario hoy
- * @returns {number} Cantidad de desafíos ganados hoy (max: 8, uno por juego)
+ * @returns {number} Cantidad de JUEGOS DISTINTOS ganados hoy
  */
 export async function countTodayDailyWins() {
   const { id: userId } = getAuthUser() || {}
@@ -74,8 +74,33 @@ export async function countTodayDailyWins() {
     .gte('started_at', todayStartIso())
     .contains('metadata', { result: 'win' })
   if (error) return 0
-  // Dado que el desafío diario por juego se limita a 1, un simple conteo sirve
-  return (data || []).length
+  // Contar JUEGOS DISTINTOS ganados (no sesiones): un mismo juego con varios
+  // intentos premium no debe contar doble para "todos los juegos del día".
+  const uniqueGames = new Set()
+  for (const row of (data || [])) {
+    if (row.game_id) uniqueGames.add(row.game_id)
+  }
+  return uniqueGames.size
+}
+
+// Cantidad total de juegos jugables (no pausados). Dinámico: al agregar juegos
+// nuevos, "todos los juegos" (Pleno diario / Grand Slam) se ajusta solo.
+let _playableCountCache = null
+let _playableCountAt = 0
+export async function getPlayableGameCount() {
+  const now = Date.now()
+  if (_playableCountCache != null && (now - _playableCountAt < 5 * 60 * 1000)) {
+    return _playableCountCache
+  }
+  try {
+    const { fetchGames } = await import('./games')
+    const games = await fetchGames()
+    const n = Array.isArray(games) ? games.length : 0
+    if (n > 0) { _playableCountCache = n; _playableCountAt = now }
+    return n > 0 ? n : (_playableCountCache ?? DAILY_GAMES.length)
+  } catch {
+    return _playableCountCache ?? DAILY_GAMES.length
+  }
 }
 
 /**
@@ -85,40 +110,65 @@ export async function countTodayDailyWins() {
  * @param {boolean} won - Si el usuario ganó o perdió
  * @param {Object} metadata - Metadata del juego (score, corrects, etc.)
  */
-export async function checkAndUnlockDailyWins(slugJustPlayed, won = true, metadata = {}) {
+export async function checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
   try {
     // Verificar logros basados en tiempo (ej: jugar de madrugada)
     await checkTimeBasedAchievements()
-    
+
+    // FUENTE DE VERDAD: la sesión recién terminada. Antes los juegos llamaban
+    // sin `won`/`metadata` (quedaban en true/{}), por lo que perfectionist/comeback/
+    // lucky_first nunca podían dispararse y `won` era siempre true. Ahora derivamos
+    // el resultado real y la metadata guardada, y mezclamos lo que pase el caller.
+    let won = wonArg
+    let metadata = metaArg && typeof metaArg === 'object' ? { ...metaArg } : {}
+    try {
+      const last = await fetchTodayLastSession(slugJustPlayed)
+      const savedMeta = last?.metadata || {}
+      metadata = { ...savedMeta, ...metadata }
+      if (won == null) won = metadata.result === 'win'
+    } catch {}
+    if (won == null) won = true
+
     // Solo verificar logros de victoria si el usuario ganó
     if (!won) return
-    
-    const wins = await countTodayDailyWins()
-    // LOGROS POR VICTORIAS DIARIAS:
-    if (wins >= 3) await unlockAchievementWithToast('daily_wins_3')  // 3 desafíos ganados hoy
-    if (wins >= 5) await unlockAchievementWithToast('daily_wins_5')  // 5 desafíos ganados hoy
-    if (wins >= 10) await unlockAchievementWithToast('daily_wins_10') // 10 desafíos ganados hoy
-    // PLENO: Ganaste todos los juegos con desafío diario (8 juegos)
-    if (wins >= DAILY_GAMES.length) await unlockAchievementWithToast('daily_wins_all')
 
-    // RACHAS: Días consecutivos ganando este juego específico
+    const wins = await countTodayDailyWins()           // juegos distintos ganados hoy
+    const totalGames = await getPlayableGameCount()    // todos los juegos jugables (dinámico)
+    // LOGROS POR VICTORIAS DIARIAS:
+    if (wins >= 3) await unlockAchievementWithToast('daily_wins_3')  // 3 juegos ganados hoy
+    if (wins >= 5) await unlockAchievementWithToast('daily_wins_5')  // 5 juegos ganados hoy
+    if (wins >= 10) await unlockAchievementWithToast('daily_wins_10') // 10 juegos ganados hoy
+    // PLENO: Ganaste TODOS los juegos disponibles hoy
+    if (totalGames > 0 && wins >= totalGames) await unlockAchievementWithToast('daily_wins_all')
+
+    // RACHAS DE ACIERTOS: aciertos SEGUIDOS dentro de este juego (no días).
+    // Los logros de constancia por días son daily_streak_* (otro sistema).
     try {
-      const streak = await fetchDailyWinStreak(slugJustPlayed)
-      if (streak >= 3) await unlockAchievementWithToast('streak_3', { game: slugJustPlayed })
-      if (streak >= 5) await unlockAchievementWithToast('streak_5', { game: slugJustPlayed })
-      if (streak >= 10) await unlockAchievementWithToast('streak_10', { game: slugJustPlayed })
-      if (streak >= 15) await unlockAchievementWithToast('streak_15', { game: slugJustPlayed })
+      const inStreak = Number(metadata.maxStreak || 0)
+      if (inStreak >= 3) await unlockAchievementWithToast('streak_3', { game: slugJustPlayed, streak: inStreak })
+      if (inStreak >= 5) await unlockAchievementWithToast('streak_5', { game: slugJustPlayed, streak: inStreak })
+      if (inStreak >= 10) await unlockAchievementWithToast('streak_10', { game: slugJustPlayed, streak: inStreak })
+      if (inStreak >= 15) await unlockAchievementWithToast('streak_15', { game: slugJustPlayed, streak: inStreak })
     } catch {}
 
-    // SUPERLOGRO: 5 días seguidos en 3 juegos distintos simultáneamente
+    // SUPERLOGRO: 5 días seguidos ganando en 3 juegos distintos simultáneamente
     try {
       const values = await Promise.all(DAILY_GAMES.map(s => fetchDailyWinStreak(s).catch(()=>0)))
       const count5 = values.filter(v => (v || 0) >= 5).length
       if (count5 >= 3) await unlockAchievementWithToast('daily_super_5x3')
     } catch {}
-    
+
     // Verificar todos los demás logros (puntaje, tiempo, etc.)
     await checkAllAchievementsAfterChallenge(slugJustPlayed, won, metadata)
+
+    // ESCENA DE COSMÉTICO: los logros recién desbloqueados pueden otorgar cosméticos
+    // (get_cosmetics los marca owned al tener el logro). Detectarlos AHORA y encolarlos.
+    // Como suppressOverlays está activo mientras se muestra el popup final, la escena
+    // espera y se reproduce recién al cerrarlo (después de rango/nivel si los hubo).
+    try {
+      const { checkCosmeticUnlocks } = await import('./cosmetics')
+      await checkCosmeticUnlocks()
+    } catch {}
   } catch {}
 }
 

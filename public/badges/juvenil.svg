@@ -1,29 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" fill="none">
   <defs>
-    <linearGradient id="jv-bg" x1="60" y1="0" x2="60" y2="140" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#92400e"/>
-      <stop offset="100%" stop-color="#451a03"/>
-    </linearGradient>
-    <linearGradient id="jv-shine" x1="30" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
-    </linearGradient>
+    <linearGradient id="jv-bg" x1="60" y1="0" x2="60" y2="140" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#475569"/><stop offset="1" stop-color="#1e293b"/></linearGradient>
+    <linearGradient id="jv-met" x1="30" y1="20" x2="90" y2="120" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f8fafc"/><stop offset=".5" stop-color="#cbd5e1"/><stop offset="1" stop-color="#64748b"/></linearGradient>
+    <linearGradient id="jv-shine" x1="30" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f1f5f9" stop-opacity=".3"/><stop offset="1" stop-color="#cbd5e1" stop-opacity="0"/></linearGradient>
   </defs>
-  <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#jv-bg)" stroke="#fbbf24" stroke-width="2.5"/>
+  <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#jv-bg)" stroke="url(#jv-met)" stroke-width="3.5"/>
   <path d="M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z" fill="url(#jv-shine)"/>
-  <path d="M60 16L100 32V72C100 94 80 116 60 125C40 116 20 94 20 72V32L60 16Z" fill="none" stroke="#fbbf24" stroke-width="0.8" opacity="0.3"/>
-  <!-- Football boot -->
-  <path d="M38 72L42 52L56 44L64 44L72 48L78 56L82 68L80 76L72 80L38 80Z" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linejoin="round"/>
-  <path d="M38 76L38 80L72 80L80 76" fill="none" stroke="#fbbf24" stroke-width="1.8" opacity="0.7"/>
-  <!-- Studs -->
-  <line x1="44" y1="80" x2="44" y2="85" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-  <line x1="54" y1="80" x2="54" y2="85" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-  <line x1="64" y1="80" x2="64" y2="85" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-  <!-- Boot lace details -->
-  <line x1="48" y1="54" x2="62" y2="48" stroke="#fbbf24" stroke-width="1" opacity="0.4"/>
-  <line x1="46" y1="60" x2="66" y2="52" stroke="#fbbf24" stroke-width="1" opacity="0.4"/>
-  <!-- Star -->
-  <polygon points="60,96 62,101 67,101 63,104 64,109 60,106 56,109 57,104 53,101 58,101" fill="#fbbf24" opacity="0.6"/>
-  <circle cx="42" cy="36" r="2" fill="#fbbf24" opacity="0.3"/>
-  <circle cx="78" cy="36" r="1.5" fill="#fbbf24" opacity="0.25"/>
+  <path d="M60 15L99 32V72C99 95 79 115 60 124C41 115 21 95 21 72V32L60 15Z" fill="none" stroke="#e2e8f0" stroke-width="0.8" opacity=".35"/>
+  <path d="M40 58 c0 12 3 19 7 22 h30 c7 0 9 -4 9 -9 c0 -4 -3 -6 -8 -7 c-12 -3 -20 -8 -27 -15 c-4 -4 -13 -1 -11 9 z" fill="url(#jv-met)"/>
+  <path d="M46 56 q12 8 26 12" fill="none" stroke="#475569" stroke-width="2.4" stroke-linecap="round"/>
+  <rect x="46" y="82" width="6" height="6" rx="1.5" fill="#94a3b8"/><rect x="58" y="82" width="6" height="6" rx="1.5" fill="#94a3b8"/><rect x="70" y="82" width="6" height="6" rx="1.5" fill="#94a3b8"/>
+  <polygon points="60,95 62,100 67,100 63,103 65,108 60,105 55,108 57,103 53,100 58,100" fill="#e2e8f0" opacity=".5"/>
 </svg>

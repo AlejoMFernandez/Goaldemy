@@ -116,6 +116,8 @@ export const FRAME_STYLES = {
   medal_silver:  { wrap: 'bg-gradient-to-br from-white via-slate-300 to-slate-500 border-2 border-dotted border-white/70 shadow-[0_0_16px_rgba(203,213,225,0.5)]', pad: 'p-[5px]' },
   medal_gold:    { wrap: 'bg-gradient-to-br from-yellow-200 via-amber-400 to-amber-700 border-2 border-dotted border-yellow-100/70 shadow-[0_0_18px_rgba(251,191,36,0.6)]', pad: 'p-[5px]' },
   medal_diamond: { wrap: 'bg-gradient-to-br from-cyan-100 via-sky-300 to-blue-500 border-2 border-dotted border-white/80 shadow-[0_0_20px_rgba(125,211,252,0.65)]', pad: 'p-[5px]' },
+  medal_emerald: { wrap: 'bg-gradient-to-br from-emerald-200 via-emerald-400 to-teal-700 border-2 border-dotted border-emerald-100/70 shadow-[0_0_18px_rgba(16,185,129,0.6)]', pad: 'p-[5px]' },
+  medal_champion:{ wrap: 'bg-gradient-to-br from-amber-200 via-yellow-400 to-cyan-500 border-2 border-dotted border-amber-100/80 shadow-[0_0_22px_rgba(251,191,36,0.65)] anim-pan', pad: 'p-[5px]' },
 }
 
 export function frameStyle(styleKey) {
@@ -202,6 +204,13 @@ export const ICON_THEME_BG = {
   globe: 'bg-gradient-to-b from-teal-500 to-blue-950',
   comet: 'bg-gradient-to-b from-indigo-500 to-slate-950',
   phoenix: 'bg-gradient-to-b from-orange-500 to-rose-950',
+  // insignias de rango (fondo temático por metal/marca)
+  rank_bronze: 'bg-gradient-to-b from-amber-700 to-amber-950',
+  rank_silver: 'bg-gradient-to-b from-slate-500 to-slate-900',
+  rank_gold: 'bg-gradient-to-b from-yellow-600 to-amber-950',
+  rank_emerald: 'bg-gradient-to-b from-emerald-600 to-emerald-950',
+  rank_cyan: 'bg-gradient-to-b from-cyan-600 to-cyan-950',
+  rank_champion: 'bg-gradient-to-b from-teal-700 to-slate-950',
 }
 export function iconThemeBg(styleKey) {
   return ICON_THEME_BG[styleKey] || 'bg-gradient-to-b from-emerald-600 to-cyan-900'
@@ -237,7 +246,7 @@ export const ACHIEVEMENT_HINTS = {
   centurion: 'Acumulá 100 victorias totales',
   guess_master: 'Ganá 20 partidas de "Adivina el jugador"',
   comeback_king: 'Ganá después de 3 errores seguidos',
-  early_bird: 'Jugá antes de las 07:00',
+  early_bird: 'Jugá entre las 05:00 y las 08:00',
   lucky_first: 'Acertá al primer intento 10 veces',
   weekend_warrior: 'Ganá 10 juegos un sábado o domingo',
   hat_trick: 'Ganá 3 juegos distintos el mismo día',

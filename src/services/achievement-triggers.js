@@ -47,13 +47,13 @@ export async function checkTimeBasedAchievements() {
     const now = new Date()
     const hour = now.getHours()
     
-    // Night owl: 00:00 - 05:00
+    // Night owl: 00:00 - 04:59 (madrugada)
     if (hour >= 0 && hour < 5) {
       await unlockAchievementWithToast('night_owl')
     }
-    
-    // Early bird: Before 07:00
-    if (hour < 7) {
+
+    // Early bird: 05:00 - 07:59 (madrugador, sin solaparse con night_owl)
+    if (hour >= 5 && hour < 8) {
       await unlockAchievementWithToast('early_bird')
     }
     
@@ -221,8 +221,10 @@ export async function checkGrandSlamAchievement() {
       if (session.game_id) uniqueGames.add(session.game_id)
     }
 
-    // Need to win all daily games in a week
-    if (uniqueGames.size >= DAILY_GAMES.length) {
+    // Need to win ALL playable games within the week (dynamic: crece con juegos nuevos)
+    const { getPlayableGameCount } = await import('./game-modes')
+    const totalGames = await getPlayableGameCount()
+    if (totalGames > 0 && uniqueGames.size >= totalGames) {
       await unlockAchievementWithToast('grand_slam')
     }
   } catch {}
@@ -417,14 +419,17 @@ export async function checkAllAchievementsAfterChallenge(slug, won, metadata = {
       checkCenturionAchievement(),
     ])
 
-    // Check perfectionist if no errors
-    if (metadata.errors === 0) {
+    // Check perfectionist if no errors (requiere haber contestado algo)
+    const errors = Number(metadata.errors ?? NaN)
+    const answered = Number(metadata.attempts ?? metadata.corrects ?? NaN)
+    if (Number.isFinite(errors) && errors === 0 && Number.isFinite(answered) && answered > 0) {
       await checkPerfectionistAchievement(won, 0)
     }
 
-    // Check comeback if had 3+ consecutive errors
-    if (metadata.consecutiveErrors >= 3) {
-      await checkComebackKingAchievement(won, metadata.consecutiveErrors)
+    // Check comeback if had 3+ consecutive errors (maxWrongStreak; alias consecutiveErrors)
+    const wrongStreak = Number(metadata.maxWrongStreak ?? metadata.consecutiveErrors ?? 0)
+    if (wrongStreak >= 3) {
+      await checkComebackKingAchievement(won, wrongStreak)
     }
 
     // Check lucky first if first attempt correct

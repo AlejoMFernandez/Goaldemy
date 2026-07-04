@@ -10,6 +10,7 @@ import { listIncomingRequests, acceptRequest, blockRequest } from '../services/c
 import { getPublicProfilesByIds } from '../services/user-profiles';
 import { isAdmin } from '../services/admin';
 import GoaldemyLogo from './GoaldemyLogo.vue';
+import UserAvatar from './common/UserAvatar.vue';
 import { getUnclaimedCount } from '../stores/notifications';
 import { playNotifySound } from '../services/sounds';
 
@@ -17,7 +18,8 @@ export default {
   name: 'AppNavBar',
   components: {
     RouterLink,
-    GoaldemyLogo
+    GoaldemyLogo,
+    UserAvatar
   },
     data() {
         return {
@@ -26,6 +28,7 @@ export default {
                 email: null,
                 avatar_url: null,
             },
+            equipped: { frameKey: 'none', iconGlyph: '', iconBg: 'emerald', framePremium: false },
             isOpen: false,
             infoOpen: false,
             playOpen: false,
@@ -104,6 +107,15 @@ export default {
             const name = this.user?.display_name || this.user?.email || '?'
             const letter = name.trim()[0] || '?'
             return letter.toUpperCase()
+        },
+        async loadEquipped() {
+            const id = this.user?.id
+            if (!id) { this.equipped = { frameKey: 'none', iconGlyph: '', iconBg: 'emerald', framePremium: false }; return }
+            try {
+                const { getEquippedCosmetics } = await import('../services/cosmetics')
+                const e = await getEquippedCosmetics(id)
+                if (e) this.equipped = { frameKey: e.frameKey || 'none', iconGlyph: e.iconGlyph || '', iconBg: e.iconBg || 'emerald', framePremium: !!e.framePremium }
+            } catch { /* sin cosméticos: queda el default */ }
         },
         // Dropdown controls (less sensitive hover)
         onInfoEnter() {
@@ -297,7 +309,7 @@ export default {
         }
     },
     mounted() {
-                    subscribeToAuthStateChanges(userState => this.user = userState);
+                    subscribeToAuthStateChanges(userState => { this.user = userState; this.loadEquipped(); });
                     // Close menus on outside click
                     this._onDocClick = (e) => {
                         const menu = this.$el.querySelector('[data-user-menu]')
@@ -596,8 +608,7 @@ export default {
                         <!-- User menu -->
                         <li class="relative">
                             <button data-user-button @click="menuOpen = !menuOpen; if(menuOpen) notifOpen = false" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-2 py-1.5 text-sm text-slate-200 hover:border-white/20">
-                                <img v-if="user.avatar_url" :src="user.avatar_url" class="w-7 h-7 rounded-full object-cover" alt="avatar" />
-                                <div v-else class="w-7 h-7 rounded-full bg-slate-700 grid place-items-center text-xs">{{ avatarInitial() }}</div>
+                                <UserAvatar :size="28" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" />
                                 <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
                             </button>
                             <div v-if="menuOpen" data-user-menu class="absolute right-0 mt-2 w-64 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl overflow-hidden">
@@ -675,8 +686,7 @@ export default {
                                     </template>
                                     <template v-else>
                                         <button data-user-button @click.stop="menuOpen = !menuOpen" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-2 py-1.5 text-sm text-slate-200 hover:border-white/20">
-                                            <img v-if="user.avatar_url" :src="user.avatar_url" class="w-7 h-7 rounded-full object-cover" alt="avatar" />
-                                            <div v-else class="w-7 h-7 rounded-full bg-slate-700 grid place-items-center text-xs">{{ avatarInitial() }}</div>
+                                            <UserAvatar :size="28" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" />
                                             <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
                                         </button>
                                         <div v-if="menuOpen" data-user-menu class="absolute right-0 mt-2 w-64 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl overflow-hidden z-50">

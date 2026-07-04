@@ -4,14 +4,14 @@ import { useRouter } from 'vue-router'
 import { getMonthlyPass, claimPassTier, powerupLabel } from '../../services/rewards'
 import { pushClaimNotification } from '../../stores/notifications'
 import { soundManager } from '../../services/sounds'
-import { frameStyle } from '../../services/cosmetics'
+import PassCosmetic from './PassCosmetic.vue'
+import PowerupIcon from './PowerupIcon.vue'
 
 const router = useRouter()
 const pass = ref({ points: 0, tiers: [], is_premium: false })
 const loading = ref(true)
 const claiming = ref(null)
 const detailOpen = ref(false)
-const activeTrack = ref('free') // 'free' | 'premium'
 const trackEl = ref(null)
 
 const POWERUP_ICONS = { fifty_fifty: '✂️', shield: '🛡️', extra_time: '⏱️', reveal_hint: '💡' }
@@ -23,6 +23,9 @@ const monthLabel = computed(() => {
     return new Date(pass.value.month + 'T00:00:00').toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
   } catch { return '' }
 })
+
+const seasonName = computed(() => pass.value.season?.name || 'Pase Mensual')
+const daysLeft = computed(() => Math.max(0, pass.value.days_left ?? 0))
 
 const tiers = computed(() => pass.value.tiers || [])
 const points = computed(() => pass.value.points || 0)
@@ -52,25 +55,27 @@ const claimableCount = computed(() =>
   tiers.value.filter(t => canClaim(t, 'free') || canClaim(t, 'premium')).length
 )
 
-// Próxima recompensa gratis sin reclamar (para el teaser).
-const nextFreeReward = computed(() => {
-  const t = tiers.value.find(x => x.unlocked && !x.free_claimed && (x.free_xp > 0 || x.free_powerup))
-    || tiers.value.find(x => !x.unlocked && (x.free_xp > 0 || x.free_powerup))
-  return t || null
-})
+// Gran premio FREE = el cosmético del último tier del track gratis (teaser).
+const grandPrize = computed(() => finalTier.value?.free_cosmetic || null)
+// Cuántos cosméticos reparte cada track (para el resumen comparativo).
+const freeCosmeticsCount = computed(() => tiers.value.filter(t => t.free_cosmetic).length)
+const premiumCosmeticsCount = computed(() => tiers.value.filter(t => t.premium_cosmetic).length)
 
 function rewardFor(tier, track) {
-  if (track === 'free') return { xp: tier.free_xp, powerup: tier.free_powerup, qty: tier.free_powerup_qty }
-  return { xp: tier.premium_xp, powerup: tier.premium_powerup, qty: tier.premium_powerup_qty }
+  if (track === 'free') return { xp: tier.free_xp, powerup: tier.free_powerup, qty: tier.free_powerup_qty, cos: tier.free_cosmetic }
+  return { xp: tier.premium_xp, powerup: tier.premium_powerup, qty: tier.premium_powerup_qty, cos: tier.premium_cosmetic }
+}
+
+function hasReward(tier, track) {
+  const r = rewardFor(tier, track)
+  return !!r.cos || !!r.powerup || r.xp > 0
 }
 
 function canClaim(tier, track) {
   if (!tier.unlocked) return false
   if (track === 'premium' && !pass.value.is_premium) return false
-  const r = rewardFor(tier, track)
-  const has = r.xp > 0 || r.powerup
   const claimed = track === 'free' ? tier.free_claimed : tier.premium_claimed
-  return has && !claimed
+  return hasReward(tier, track) && !claimed
 }
 
 function tierState(tier, track) {
@@ -106,8 +111,10 @@ async function handleClaim(tier, track) {
         }
       }
       soundManager.play('claim')
-      const title = `Pase · Nivel ${tier.tier}`
-      if (res.powerup) pushClaimNotification({ type: 'powerup', title, emoji: powerupIcon(res.powerup) })
+      const title = `${seasonName.value} · Nivel ${tier.tier}`
+      const cos = rewardFor(tier, track).cos
+      if (cos) pushClaimNotification({ type: 'cosmetic', title: `${title} — ${cos.name}`, emoji: '🎁' })
+      else if (res.powerup) pushClaimNotification({ type: 'powerup', title, emoji: powerupIcon(res.powerup) })
       else pushClaimNotification({ type: 'xp', title, xp: res.xp, emoji: '🎟️' })
     }
   } finally {
@@ -126,8 +133,6 @@ function scrollToCurrent() {
   const node = el.querySelector('[data-current="1"]')
   if (node) el.scrollTo({ left: node.offsetLeft - 80, behavior: 'smooth' })
 }
-
-watch(activeTrack, () => nextTick(scrollToCurrent))
 
 onMounted(load)
 defineExpose({ reload: load })
@@ -148,14 +153,22 @@ defineExpose({ reload: load })
         <div class="w-11 h-11 rounded-2xl grid place-items-center text-2xl bg-amber-500/15 border border-amber-400/30 shadow-lg shadow-amber-500/10">🎟️</div>
         <div>
           <div class="flex items-center gap-2">
-            <h2 class="font-display font-extrabold text-white text-lg leading-tight">Pase Mensual</h2>
-            <span v-if="pass.is_premium" class="rounded-full bg-amber-500/15 border border-amber-500/40 px-2 py-0.5 text-[10px] font-bold text-amber-300">⭐ PREMIUM</span>
+            <h2 class="font-display font-extrabold text-white text-lg leading-tight">{{ seasonName }}</h2>
+            <span v-if="pass.is_premium" class="rounded-full bg-amber-500/15 border border-amber-500/40 px-2 py-0.5 text-[10px] font-bold text-amber-300">⭐ PRO</span>
           </div>
           <div class="text-[11px] text-slate-400 capitalize mt-0.5">{{ monthLabel }}</div>
         </div>
       </div>
-      <div v-if="claimableCount > 0" class="shrink-0 flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 px-2.5 py-1 text-[11px] font-bold text-emerald-300" style="animation: claim-pulse 2s ease-in-out infinite">
-        {{ claimableCount }} para reclamar
+
+      <!-- Días restantes (arriba a la derecha) -->
+      <div class="shrink-0 flex flex-col items-end gap-1">
+        <div class="inline-flex items-center gap-1.5 rounded-full bg-black/30 border border-white/10 px-2.5 py-1 text-[11px] font-bold text-slate-200">
+          <svg class="w-3.5 h-3.5 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span class="tabular-nums">{{ daysLeft }}</span> {{ daysLeft === 1 ? 'día' : 'días' }}
+        </div>
+        <div v-if="claimableCount > 0" class="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 px-2.5 py-1 text-[11px] font-bold text-emerald-300" style="animation: claim-pulse 2s ease-in-out infinite">
+          {{ claimableCount }} para reclamar
+        </div>
       </div>
     </div>
 
@@ -190,15 +203,18 @@ defineExpose({ reload: load })
         <span class="inline-flex items-center gap-1 rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-[11px] font-semibold text-slate-300">🎮 +1 jugar</span>
       </div>
 
-      <!-- Footer: ver pase + gran premio -->
+      <!-- Footer: ver pase + gran premio real -->
       <div class="relative mt-4 flex items-center justify-between gap-3">
         <span class="inline-flex items-center gap-1.5 text-sm font-bold text-amber-300 group-hover:gap-2.5 transition-all">
           Ver pase completo
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" /></svg>
         </span>
-        <div v-if="finalTier" class="flex items-center gap-1.5 text-[10px] text-slate-400">
-          <span class="uppercase tracking-wider">Gran premio</span>
-          <span class="inline-grid place-items-center w-6 h-6 rounded-full text-[11px]" :class="frameStyle('champion').wrap">🏅</span>
+        <div v-if="grandPrize" class="flex items-center gap-2 text-[10px] text-slate-400">
+          <div class="text-right leading-tight">
+            <div class="uppercase tracking-wider">Premio final gratis</div>
+            <div class="text-amber-200 font-bold text-[11px]">{{ grandPrize.name }}</div>
+          </div>
+          <PassCosmetic :cos="grandPrize" :size="34" />
         </div>
       </div>
     </template>
@@ -210,7 +226,7 @@ defineExpose({ reload: load })
       <div v-if="detailOpen" class="fixed inset-0 z-[60] overflow-y-auto">
         <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" @click="detailOpen = false"></div>
         <div class="relative min-h-full flex items-center justify-center p-3 sm:p-4" @click.self="detailOpen = false">
-          <div class="relative w-full max-w-4xl rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl">
+          <div class="relative w-full max-w-5xl rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl">
 
             <!-- Header -->
             <div class="relative overflow-hidden rounded-t-2xl border-b border-white/10 bg-gradient-to-r from-amber-500/[0.12] to-cyan-500/[0.06] p-5">
@@ -218,11 +234,16 @@ defineExpose({ reload: load })
               <button @click="detailOpen = false" class="absolute top-4 right-4 text-slate-400 hover:text-white transition z-10">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
-              <div class="relative flex items-center gap-3">
+              <div class="relative flex items-center gap-3 pr-10">
                 <div class="w-12 h-12 rounded-2xl grid place-items-center text-2xl bg-amber-500/15 border border-amber-400/30">🎟️</div>
-                <div>
-                  <h2 class="font-display font-extrabold text-white text-xl leading-tight">Pase Mensual</h2>
+                <div class="flex-1 min-w-0">
+                  <h2 class="font-display font-extrabold text-white text-xl leading-tight">{{ seasonName }}</h2>
                   <div class="text-xs text-slate-400 capitalize">{{ monthLabel }} · <span class="text-amber-300 font-bold">{{ points }} puntos</span></div>
+                </div>
+                <!-- Días restantes -->
+                <div class="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-black/30 border border-white/10 px-3 py-1.5 text-xs font-bold text-slate-200">
+                  <svg class="w-4 h-4 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Quedan <span class="tabular-nums text-amber-200">{{ daysLeft }}</span> {{ daysLeft === 1 ? 'día' : 'días' }}
                 </div>
               </div>
 
@@ -241,109 +262,119 @@ defineExpose({ reload: load })
               </div>
             </div>
 
-            <!-- Tabs Gratis / Premium -->
-            <div class="px-5 pt-4">
-              <div class="inline-flex rounded-xl border border-white/10 bg-black/20 p-1">
-                <button
-                  @click="activeTrack = 'free'"
-                  class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all"
-                  :class="activeTrack === 'free' ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-400/30' : 'text-slate-400 hover:text-slate-200'"
-                >Gratis</button>
-                <button
-                  @click="activeTrack = 'premium'"
-                  class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all inline-flex items-center gap-1.5"
-                  :class="activeTrack === 'premium' ? 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-400/30' : 'text-slate-400 hover:text-slate-200'"
-                >
-                  <span>Premium</span>
-                  <svg v-if="!pass.is_premium" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
-                </button>
+            <!-- Comparativa Gratis vs PRO (leyenda + CTA) -->
+            <div class="px-5 pt-4 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-4 text-xs">
+                <span class="inline-flex items-center gap-1.5 font-bold text-emerald-300">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Gratis
+                  <span class="text-slate-500 font-normal">· {{ freeCosmeticsCount }} cosmético{{ freeCosmeticsCount === 1 ? '' : 's' }}</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5 font-bold text-amber-300">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> PRO
+                  <span class="text-slate-500 font-normal">· {{ premiumCosmeticsCount }} cosméticos + más XP</span>
+                </span>
               </div>
-              <!-- Aviso premium -->
-              <div v-if="activeTrack === 'premium' && !pass.is_premium" class="mt-3 flex items-center justify-between gap-3 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] px-4 py-2.5">
-                <span class="text-xs text-amber-200/90">Desbloqueá el track premium para recompensas mucho mejores.</span>
-                <button @click="router.push('/pricing')" class="shrink-0 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black px-3 py-1.5 text-xs font-bold hover:brightness-110 transition">Hacerme premium</button>
-              </div>
+              <button
+                v-if="!pass.is_premium"
+                @click="router.push('/pricing')"
+                class="shrink-0 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black px-3 py-1.5 text-xs font-bold hover:brightness-110 transition"
+              >Desbloquear PRO</button>
             </div>
 
-            <!-- Track horizontal -->
+            <!-- Track horizontal: DOS VÍAS (Gratis arriba / PRO abajo) -->
             <div ref="trackEl" class="overflow-x-auto px-5 py-4 pass-track">
               <div class="flex gap-3 min-w-min">
                 <div
                   v-for="tier in tiers"
                   :key="tier.tier"
                   :data-current="tier.tier === currentTierNum ? '1' : '0'"
-                  class="w-[116px] shrink-0"
+                  class="w-[120px] shrink-0 flex flex-col gap-2"
                 >
-                  <!-- GRAN PREMIO (último tier) -->
-                  <div v-if="tier.tier === finalTier?.tier" class="relative rounded-2xl border-2 border-amber-400/50 bg-gradient-to-b from-amber-500/15 to-slate-900/60 p-3 shadow-lg shadow-amber-500/10">
-                    <div class="text-[9px] uppercase tracking-wider text-amber-300 font-bold text-center mb-2">★ Gran Premio ★</div>
-                    <div class="grid place-items-center">
-                      <div class="w-16 h-16 rounded-2xl grid place-items-center text-3xl" :class="frameStyle('champion').wrap">🏅</div>
-                    </div>
-                    <div class="text-center mt-2">
-                      <div class="text-[11px] font-bold text-amber-200 leading-tight">Borde Campeón</div>
-                      <div class="text-[9px] text-slate-400">exclusivo del pase</div>
-                    </div>
-                    <button
-                      v-if="canClaim(tier, activeTrack)"
-                      @click="handleClaim(tier, activeTrack)"
-                      :disabled="claiming === tier.tier + '_' + activeTrack"
-                      class="mt-2 w-full rounded-lg bg-gradient-to-r from-amber-400 to-yellow-500 text-black py-1.5 text-xs font-bold hover:brightness-110 transition disabled:opacity-60"
-                    >Reclamar</button>
-                    <div v-else class="mt-2 text-center text-[10px] font-semibold" :class="tierState(tier, activeTrack) === 'claimed' ? 'text-amber-400' : 'text-slate-500'">
-                      {{ tierState(tier, activeTrack) === 'claimed' ? '✓ Reclamado' : 'Nivel ' + tier.tier }}
-                    </div>
-                  </div>
-
-                  <!-- Tier normal -->
+                  <!-- ── Vía GRATIS ── -->
                   <div
-                    v-else
-                    class="relative rounded-2xl border p-3 transition-all"
+                    class="relative rounded-xl border p-2 transition-all"
                     :class="[
-                      tier.tier === currentTierNum ? 'border-amber-400/40 bg-amber-500/[0.05]' : 'border-white/10 bg-white/[0.02]',
+                      tierState(tier, 'free') === 'claimable' ? 'border-emerald-400/50 bg-emerald-500/[0.08]' : 'border-emerald-500/15 bg-emerald-500/[0.03]',
                       !tier.unlocked ? 'opacity-70' : '',
                     ]"
                   >
-                    <!-- Nodo nivel -->
-                    <div class="flex justify-center">
-                      <div
-                        class="w-9 h-9 rounded-full grid place-items-center text-sm font-bold border-2"
-                        :class="tier.unlocked ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300' : 'bg-slate-800 border-white/10 text-slate-500'"
-                      >{{ tier.tier }}</div>
-                    </div>
-                    <div class="text-center text-[9px] text-slate-500 mt-1 tabular-nums">{{ tier.points_required }} pts</div>
-
-                    <!-- Recompensa del track activo -->
-                    <div class="mt-2 h-[60px] rounded-xl grid place-items-center text-center"
-                      :class="activeTrack === 'free' ? 'bg-emerald-500/[0.07] border border-emerald-500/15' : 'bg-amber-500/[0.07] border border-amber-500/15'">
-                      <div v-if="rewardFor(tier, activeTrack).powerup">
-                        <div class="text-2xl leading-none">{{ powerupIcon(rewardFor(tier, activeTrack).powerup) }}</div>
-                        <div class="text-[9px] font-bold mt-0.5" :class="activeTrack === 'free' ? 'text-emerald-300' : 'text-amber-300'">×{{ rewardFor(tier, activeTrack).qty }}</div>
+                    <div class="h-[62px] grid place-items-center text-center">
+                      <div v-if="rewardFor(tier, 'free').cos" class="flex flex-col items-center gap-1">
+                        <PassCosmetic :cos="rewardFor(tier, 'free').cos" :size="40" />
+                        <div class="text-[8px] font-bold text-emerald-200 leading-none truncate max-w-[104px]">{{ rewardFor(tier, 'free').cos.name }}</div>
                       </div>
-                      <div v-else-if="rewardFor(tier, activeTrack).xp > 0">
-                        <div class="font-display font-extrabold text-lg leading-none" :class="activeTrack === 'free' ? 'text-emerald-300' : 'text-amber-300'">+{{ rewardFor(tier, activeTrack).xp }}</div>
+                      <div v-else-if="rewardFor(tier, 'free').powerup">
+                        <PowerupIcon :type="rewardFor(tier, 'free').powerup" :size="40" />
+                        <div class="text-[9px] font-bold text-emerald-300 mt-0.5">×{{ rewardFor(tier, 'free').qty }}</div>
+                      </div>
+                      <div v-else-if="rewardFor(tier, 'free').xp > 0">
+                        <div class="font-display font-extrabold text-lg leading-none text-emerald-300">+{{ rewardFor(tier, 'free').xp }}</div>
                         <div class="text-[9px] text-slate-400 uppercase tracking-wider mt-0.5">XP</div>
                       </div>
                       <div v-else class="text-slate-600 text-lg">—</div>
                     </div>
-
-                    <!-- Estado / claim -->
                     <button
-                      v-if="canClaim(tier, activeTrack)"
-                      @click="handleClaim(tier, activeTrack)"
-                      :disabled="claiming === tier.tier + '_' + activeTrack"
-                      class="mt-2 w-full rounded-lg py-1.5 text-xs font-bold transition disabled:opacity-60"
-                      :class="activeTrack === 'free' ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:brightness-110' : 'bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:brightness-110'"
+                      v-if="canClaim(tier, 'free')"
+                      @click="handleClaim(tier, 'free')"
+                      :disabled="claiming === tier.tier + '_free'"
+                      class="mt-1 w-full rounded-lg py-1 text-[11px] font-bold bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:brightness-110 transition disabled:opacity-60"
                     >Reclamar</button>
-                    <div v-else class="mt-2 text-center text-[10px] font-semibold py-1.5"
-                      :class="{
-                        'text-emerald-400': tierState(tier, activeTrack) === 'claimed' && activeTrack === 'free',
-                        'text-amber-400': tierState(tier, activeTrack) === 'claimed' && activeTrack === 'premium',
-                        'text-slate-500': tierState(tier, activeTrack) !== 'claimed',
-                      }">
-                      <span v-if="tierState(tier, activeTrack) === 'claimed'">✓ Reclamado</span>
-                      <span v-else-if="tierState(tier, activeTrack) === 'locked-premium'">🔒 Premium</span>
-                      <span v-else-if="tierState(tier, activeTrack) === 'locked'">🔒 Bloqueado</span>
+                    <div v-else class="mt-1 text-center text-[10px] font-semibold py-1"
+                      :class="tierState(tier, 'free') === 'claimed' ? 'text-emerald-400' : 'text-slate-600'">
+                      <span v-if="tierState(tier, 'free') === 'claimed'">✓</span>
+                      <span v-else-if="tierState(tier, 'free') === 'locked'">🔒</span>
+                      <span v-else>—</span>
+                    </div>
+                  </div>
+
+                  <!-- ── Nodo del nivel ── -->
+                  <div class="flex flex-col items-center py-0.5">
+                    <div
+                      class="w-8 h-8 rounded-full grid place-items-center text-xs font-bold border-2"
+                      :class="tier.unlocked ? 'bg-amber-500/20 border-amber-400/50 text-amber-200' : 'bg-slate-800 border-white/10 text-slate-500'"
+                    >{{ tier.tier }}</div>
+                    <div class="text-[8px] text-slate-500 mt-0.5 tabular-nums">{{ tier.points_required }} pts</div>
+                  </div>
+
+                  <!-- ── Vía PRO ── -->
+                  <div
+                    class="relative rounded-xl border p-2 transition-all"
+                    :class="[
+                      tierState(tier, 'premium') === 'claimable' ? 'border-amber-400/50 bg-amber-500/[0.08]' : 'border-amber-500/15 bg-amber-500/[0.03]',
+                      (!tier.unlocked || (!pass.is_premium)) ? 'opacity-80' : '',
+                    ]"
+                  >
+                    <div class="absolute top-1 right-1 text-[8px] font-bold uppercase tracking-wide text-amber-400/70">PRO</div>
+                    <div class="h-[62px] grid place-items-center text-center">
+                      <div v-if="rewardFor(tier, 'premium').cos" class="flex flex-col items-center gap-1">
+                        <PassCosmetic :cos="rewardFor(tier, 'premium').cos" :size="40" />
+                        <div class="text-[8px] font-bold text-amber-200 leading-none truncate max-w-[104px]">{{ rewardFor(tier, 'premium').cos.name }}</div>
+                      </div>
+                      <div v-else-if="rewardFor(tier, 'premium').powerup">
+                        <PowerupIcon :type="rewardFor(tier, 'premium').powerup" :size="40" />
+                        <div class="text-[9px] font-bold text-amber-300 mt-0.5">×{{ rewardFor(tier, 'premium').qty }}</div>
+                      </div>
+                      <div v-else-if="rewardFor(tier, 'premium').xp > 0">
+                        <div class="font-display font-extrabold text-lg leading-none text-amber-300">+{{ rewardFor(tier, 'premium').xp }}</div>
+                        <div class="text-[9px] text-slate-400 uppercase tracking-wider mt-0.5">XP</div>
+                      </div>
+                      <div v-else class="text-slate-600 text-lg">—</div>
+                    </div>
+                    <button
+                      v-if="canClaim(tier, 'premium')"
+                      @click="handleClaim(tier, 'premium')"
+                      :disabled="claiming === tier.tier + '_premium'"
+                      class="mt-1 w-full rounded-lg py-1 text-[11px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:brightness-110 transition disabled:opacity-60"
+                    >Reclamar</button>
+                    <button
+                      v-else-if="tierState(tier, 'premium') === 'locked-premium'"
+                      @click="router.push('/pricing')"
+                      class="mt-1 w-full rounded-lg py-1 text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition"
+                    >🔒 PRO</button>
+                    <div v-else class="mt-1 text-center text-[10px] font-semibold py-1"
+                      :class="tierState(tier, 'premium') === 'claimed' ? 'text-amber-400' : 'text-slate-600'">
+                      <span v-if="tierState(tier, 'premium') === 'claimed'">✓</span>
+                      <span v-else-if="tierState(tier, 'premium') === 'locked'">🔒</span>
                       <span v-else>—</span>
                     </div>
                   </div>
@@ -352,7 +383,7 @@ defineExpose({ reload: load })
             </div>
 
             <div class="px-5 pb-5 text-center text-[11px] text-slate-500">
-              Deslizá para ver todos los niveles · el último te da un borde exclusivo
+              Deslizá para ver todos los niveles · <span class="text-emerald-300">Gratis</span> arriba, <span class="text-amber-300">PRO</span> abajo
             </div>
           </div>
         </div>
