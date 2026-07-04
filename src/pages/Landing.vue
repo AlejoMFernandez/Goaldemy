@@ -312,7 +312,8 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
     </div>
 
     <!-- ══════════════════ Partidos del Mundial (compartido, full-width) ══════════════════ -->
-    <div class="relative z-10 max-w-5xl mx-auto px-6 mb-16">
+    <!-- min-h reserva espacio para que el footer no salte cuando cargan los partidos (CLS) -->
+    <div class="relative z-10 max-w-5xl mx-auto px-6 mb-16 min-h-[340px]">
       <div class="flex items-center gap-3 mb-5">
         <div class="flex items-center gap-2.5">
           <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/77.png" alt="Copa del Mundo 2026" width="28" height="28" loading="lazy" decoding="async" class="w-7 h-7 object-contain" @error="$event.target.style.display='none'" />
