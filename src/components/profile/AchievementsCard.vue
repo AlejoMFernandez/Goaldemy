@@ -157,7 +157,7 @@ const groupedAchievements = computed(() => {
       <div v-for="(a, idx) in featuredList" :key="idx"
         class="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/80 to-slate-800/40 p-4 flex flex-col items-center text-center transition-all hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10">
         <div class="relative">
-          <div class="size-16 rounded-full p-[3px] transition-transform group-hover:scale-110" :class="[medal(a).ring, medal(a).glow]">
+          <div class="size-14 rounded-full p-[3px] transition-transform group-hover:scale-110" :class="[medal(a).ring, medal(a).glow]">
             <div class="w-full h-full rounded-full bg-slate-900 grid place-items-center overflow-hidden">
               <img v-if="iconFor(a)" :src="iconFor(a)" class="w-[80%] h-[80%] object-contain" alt="" />
               <span v-else class="text-2xl">🏆</span>
@@ -213,7 +213,7 @@ const groupedAchievements = computed(() => {
                         :class="a._missing ? 'border-white/5 bg-slate-900/40' : 'border-white/10 bg-slate-800/70'">
                         <div class="flex items-start gap-3">
                           <div class="relative flex-none">
-                            <div class="size-12 rounded-full p-[2px]" :class="[medal(a).ring, medal(a).glow, a._missing ? 'opacity-40 grayscale' : '']">
+                            <div class="size-11 rounded-full p-[2px]" :class="[medal(a).ring, medal(a).glow, a._missing ? 'opacity-40 grayscale' : '']">
                               <div class="w-full h-full rounded-full bg-slate-900 grid place-items-center overflow-hidden">
                                 <img v-if="iconFor(a)" :src="iconFor(a)" class="w-[80%] h-[80%] object-contain" alt="" />
                                 <span v-else class="text-xl">🏆</span>

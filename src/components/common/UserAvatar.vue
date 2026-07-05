@@ -17,6 +17,7 @@ const props = defineProps({
   iconBg: { type: String, default: 'emerald' },
   framePremium: { type: Boolean, default: false },
   size: { type: Number, default: 40 }, // px
+  ring: { type: Boolean, default: true }, // false = ícono pelado, sin aro/borde
 })
 
 const fr = computed(() => frameStyle(props.frameKey))
@@ -36,7 +37,7 @@ const innerBg = computed(() => (props.iconGlyph ? iconThemeBg(props.iconGlyph) :
   >
     <div
       class="relative w-full h-full overflow-hidden grid place-items-center text-white font-extrabold leading-none"
-      :class="[innerBg, framed ? '' : 'ring-2 ring-white/10']"
+      :class="[innerBg, (framed || !ring) ? '' : 'ring-2 ring-white/10']"
       :style="{ borderRadius: innerRadius + 'px', fontSize: fontSize + 'px' }"
     >
       <CosmeticIcon v-if="iconGlyph" :iconKey="iconGlyph" :size="iconSize" />

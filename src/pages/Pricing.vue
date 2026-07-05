@@ -15,6 +15,11 @@ const loading = ref(true)
 const checkoutLoading = ref(null)
 const openFaq = ref(null)
 const confirmPlan = ref(null) // plan pendiente de confirmar antes de ir a Mercado Pago
+const accountEmail = computed(() => getAuthUser()?.email || '')
+const useOtherEmail = ref(false)     // ¿paga con otra cuenta de Mercado Pago?
+const billingEmail = ref('')         // mail de MP alternativo
+const emailError = ref('')
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const sortedPlans = computed(() =>
   [...plans.value].sort((a, b) => a.sort_order - b.sort_order)
@@ -27,6 +32,10 @@ function askSubscribe(plan) {
     router.push('/login')
     return
   }
+  // Reset del campo de mail de facturación en cada apertura.
+  useOtherEmail.value = false
+  billingEmail.value = ''
+  emailError.value = ''
   confirmPlan.value = plan
 }
 
@@ -34,9 +43,22 @@ function askSubscribe(plan) {
 async function confirmCheckout() {
   const plan = confirmPlan.value
   if (!plan || checkoutLoading.value) return
+
+  // Si eligió pagar con otra cuenta, validamos el mail antes de redirigir.
+  let payerEmail = null
+  if (useOtherEmail.value) {
+    const val = billingEmail.value.trim()
+    if (!EMAIL_RE.test(val)) {
+      emailError.value = 'Ingresá un e-mail válido'
+      return
+    }
+    emailError.value = ''
+    payerEmail = val
+  }
+
   checkoutLoading.value = plan.slug
   try {
-    await startCheckout(plan.slug, 'mercadopago')
+    await startCheckout(plan.slug, 'mercadopago', payerEmail)
   } catch (e) {
     pushErrorToast(e.message || 'Error al iniciar el pago')
     checkoutLoading.value = null
@@ -263,11 +285,42 @@ onMounted(async () => {
               </ul>
 
               <!-- Aviso Mercado Pago -->
-              <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3 flex gap-2.5 mb-5">
+              <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3 flex gap-2.5 mb-4">
                 <svg class="w-5 h-5 text-slate-300 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                 <p class="text-xs text-slate-300 leading-relaxed">
                   Al continuar te llevamos a <strong class="text-white">Mercado Pago</strong> para completar el pago de forma segura. Podés pagar con tarjeta, débito, dinero en cuenta o efectivo. Cancelás cuando quieras.
                 </p>
+              </div>
+
+              <!-- E-mail de facturación (opcional) -->
+              <div class="mb-5">
+                <p class="text-xs text-slate-400 leading-relaxed mb-2">
+                  La suscripción se cobra a tu cuenta de Mercado Pago con el e-mail
+                  <strong class="text-slate-200">{{ accountEmail }}</strong>.
+                </p>
+                <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                  <input type="checkbox" v-model="useOtherEmail" class="accent-emerald-500 w-4 h-4 rounded" />
+                  Mi cuenta de Mercado Pago usa otro e-mail
+                </label>
+
+                <Transition name="faq-expand">
+                  <div v-if="useOtherEmail" class="mt-3">
+                    <input
+                      v-model="billingEmail"
+                      type="email"
+                      inputmode="email"
+                      autocomplete="email"
+                      placeholder="tu-email-de-mercadopago@ejemplo.com"
+                      class="w-full rounded-xl border bg-slate-900/60 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-emerald-400/60"
+                      :class="emailError ? 'border-red-500/60' : 'border-white/15'"
+                      @keyup.enter="confirmCheckout"
+                    />
+                    <p v-if="emailError" class="text-xs text-red-400 mt-1.5">{{ emailError }}</p>
+                    <p v-else class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+                      Usá el e-mail con el que iniciás sesión en Mercado Pago. Tu plan de Goaldemy se activa igual en <strong class="text-slate-400">{{ accountEmail }}</strong>.
+                    </p>
+                  </div>
+                </Transition>
               </div>
 
               <!-- Acciones -->

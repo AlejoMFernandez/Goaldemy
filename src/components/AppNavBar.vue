@@ -8,6 +8,7 @@ import { fetchUnreadCount, listNotifications, markAsRead } from '../services/not
 import { supabase } from '../services/supabase';
 import { listIncomingRequests, acceptRequest, blockRequest } from '../services/connections';
 import { getPublicProfilesByIds } from '../services/user-profiles';
+import { getEquippedCosmeticsBatch } from '../services/cosmetics';
 import { isAdmin } from '../services/admin';
 import GoaldemyLogo from './GoaldemyLogo.vue';
 import UserAvatar from './common/UserAvatar.vue';
@@ -40,6 +41,7 @@ export default {
             searchOpen: false,
             searching: false,
             results: [],
+            resultCos: {},   // cosméticos equipados por id (para el ícono en resultados)
             menuOpen: false,
             levelInfo: null,
             levelLoading: false,
@@ -51,6 +53,7 @@ export default {
             notifItems: [],
             notifLoading: false,
             notifProfiles: {},
+            notifCos: {},    // cosméticos equipados por id (para el ícono del emisor)
             _notifCountDebounce: null,
             _notifMenuDebounce: null,
             isAdminUser: false,
@@ -90,12 +93,30 @@ export default {
                     const me = this.user?.id
                     const filtered = (data || []).filter(u => u.id !== me)
                     this.results = filtered
+                    // Íconos reales de cada resultado (borde + ícono equipado)
+                    try {
+                        const ids = filtered.map(u => u.id).filter(Boolean)
+                        this.resultCos = ids.length ? await getEquippedCosmeticsBatch(ids) : {}
+                    } catch { this.resultCos = {} }
                 }
             } finally {
                 this.searching = false
                 this.searchOpen = true
             }
         },
+        // Props de avatar (ícono/borde equipado) para un usuario dado, listo para <UserAvatar>.
+        avatarPropsFor(u, cosMap) {
+            const c = (cosMap || {})[u?.id] || {}
+            const name = u?.display_name || u?.username || u?.email || '?'
+            return {
+                avatarUrl: u?.avatar_url || '',
+                initial: (name.trim()[0] || '?').toUpperCase(),
+                frameKey: c.frameKey || 'none',
+                iconGlyph: c.iconGlyph || '',
+                iconBg: c.iconBg || 'emerald',
+            }
+        },
+        userLabel(u) { return u?.display_name || u?.username || u?.email || 'Usuario' },
         goUser(u) {
             if (!u?.id) return
             this.q = ''
@@ -222,40 +243,56 @@ export default {
                     // Fetch sender profiles for better text
                     const ids = Array.from(new Set(items.map(i => i.from).filter(Boolean)))
                     if (ids.length) {
-                        const { data: profiles } = await getPublicProfilesByIds(ids)
+                        const [{ data: profiles }, cos] = await Promise.all([
+                            getPublicProfilesByIds(ids),
+                            getEquippedCosmeticsBatch(ids).catch(() => ({})),
+                        ])
                         const map = {}
                         for (const p of profiles || []) map[p.id] = p
                         this.notifProfiles = map
+                        this.notifCos = cos || {}
                     } else {
                         this.notifProfiles = {}
+                        this.notifCos = {}
                     }
                 } finally {
                     this.notifLoading = false
                 }
             }, 200)
         },
+        // Al abrir el panel, marcar como leídas las notificaciones (no las solicitudes),
+        // así el contador baja solo sin tener que pasar el cursor por cada una.
+        async markVisibleRead() {
+            const unread = (this.notifItems || []).filter(n => n.kind === 'log' && n.id && !n.read)
+            if (!unread.length) return
+            for (const n of unread) n.read = true
+            try { await Promise.all(unread.map(n => markAsRead(n.id))) } catch {}
+            this.loadNotifCount()
+        },
         toggleNotif() {
             this.notifOpen = !this.notifOpen
             if (this.notifOpen) {
                 this.menuOpen = false
                 this.loadNotifMenu()
+                // esperar a que cargue el menú y recién ahí marcar leídas
+                setTimeout(() => { if (this.notifOpen) this.markVisibleRead() }, 500)
             }
         },
         nameFor(id) { const p = this.notifProfiles?.[id] || {}; return p.display_name || p.email || 'Usuario' },
+        notifSender(n) { return this.notifProfiles?.[n?.from] || { id: n?.from } },
         fmtNotifLine(n) {
             // For request items
             const who = this.nameFor(n.from)
             return `${who} quiere conectarse con vos`
         },
         fmtLogSuffix(n) {
-            const who = this.nameFor(n.from)
-            if (n.type === 'friend_accepted') return `aceptó tu solicitud y ahora son amigos`
-            if (n.type === 'friend_added') return `fue agregado como amigo`
+            if (n.type === 'friend_accepted') return `y vos ya son amigos 🎉`
+            if (n.type === 'friend_added') return `te agregó como amigo 🤝`
             if (n.type === 'friend_removed') {
                 const initiator = n?.payload?.initiator_id
-                return initiator && initiator === this.user?.id ? `Cancelaste la conexión` : `canceló la conexión`
+                return initiator && initiator === this.user?.id ? `— cancelaste la conexión` : `dejó de seguirte`
             }
-            return 'actividad'
+            return 'tuvo actividad'
         },
         fmtNotifWhen(ts) {
             const d = new Date(ts)
@@ -352,14 +389,16 @@ export default {
                     document.addEventListener('keydown', this._onKeyDown)
                     // Watch menu open to fetch level lazily
                     this.$watch('menuOpen', (open) => { if (open) this.loadLevelIfNeeded() })
-                    // Notifications: load and subscribe when auth ready
-                    this.$watch(() => this.user?.id, async (id) => { 
-                        if (id) { 
-                            await this.loadNotifCount(); 
+                    // Notifications: load and subscribe when auth ready.
+                    // immediate:true → si el usuario ya estaba logueado al montar (sin F5),
+                    // igual carga el contador y se suscribe (antes solo corría tras un cambio).
+                    this.$watch(() => this.user?.id, async (id) => {
+                        if (id) {
+                            await this.loadNotifCount();
                             this.setupNotifRealtime();
                             this.checkAdmin();
                         }
-                    })
+                    }, { immediate: true })
                     // Clear search box when navigating to a user profile
                     this.$watch(() => this.$route.fullPath, (p) => {
                         if (p?.startsWith?.('/u/')) {
@@ -522,13 +561,9 @@ export default {
                         </div>
                         <div v-if="searchOpen" data-search-dropdown class="absolute z-30 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl">
                             <ul>
-                                <li v-for="u in results" :key="u.id" @click="goUser(u)" class="px-3 py-2 hover:bg-white/5 cursor-pointer text-sm flex items-center gap-2">
-                                    <img v-if="u.avatar_url" :src="u.avatar_url" class="w-8 h-8 rounded-lg object-cover flex-none" alt="avatar" />
-                                    <div v-else class="w-8 h-8 rounded-lg bg-slate-700 text-[11px] grid place-items-center flex-none">{{ (u.email||'?')[0]?.toUpperCase() }}</div>
-                                    <div class="truncate">
-                                        <span class="text-slate-100">{{ u.display_name || u.username || (u.email || u.id) }}</span>
-                                        <span class="ml-1 text-slate-400">· {{ u.email }}</span>
-                                    </div>
+                                <li v-for="u in results" :key="u.id" @click="goUser(u)" class="px-2.5 py-2 hover:bg-white/5 cursor-pointer text-sm flex items-center gap-2.5 rounded-lg">
+                                    <UserAvatar :size="34" v-bind="avatarPropsFor(u, resultCos)" />
+                                    <span class="truncate text-slate-100 font-medium">{{ userLabel(u) }}</span>
                                 </li>
                                 <li v-if="!results.length && !searching" class="px-3 py-2 text-slate-400 text-sm">Sin resultados</li>
                                 <li v-if="searching" class="px-3 py-2 text-slate-400 text-sm">Buscando…</li>
@@ -551,6 +586,12 @@ export default {
                                 <span v-if="rewardCount>0" class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 text-white text-[11px] grid place-items-center">{{ rewardCount>9?'9+':rewardCount }}</span>
                             </RouterLink>
                         </li>
+                        <!-- Shop icon -->
+                        <li>
+                            <RouterLink to="/tienda" class="relative inline-flex items-center justify-center rounded-full border border-white/10 px-2 py-1.5 hover:border-amber-400/40 text-slate-200" aria-label="Tienda">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+                            </RouterLink>
+                        </li>
                         <!-- Notifications dropdown -->
                         <li class="relative">
                             <button data-notif-button aria-label="Notificaciones" @click.stop="toggleNotif" class="relative inline-flex items-center justify-center rounded-full border border-white/10 px-2 py-1.5 hover:border-white/20">
@@ -562,25 +603,27 @@ export default {
                                     <h4 class="text-slate-400 text-xs uppercase tracking-wider mb-2">Notificaciones</h4>
                                     <div v-if="notifLoading" class="text-slate-400 text-sm">Cargando…</div>
                                     <div v-else-if="!notifItems.length" class="text-slate-400 text-sm">Sin notificaciones</div>
-                                    <ul v-else class="flex flex-col gap-2 max-h-72 overflow-auto pr-1">
+                                    <ul v-else class="flex flex-col gap-1.5 max-h-80 overflow-auto pr-1">
                                         <li v-for="n in notifItems" :key="n.id"
-                                            class="relative rounded-lg border border-white/10 p-2 flex items-center gap-2"
-                                            @mouseenter="markNotif(n)">
-                                            <div class="w-8 h-8 rounded bg-sky-500/20 border border-sky-400/30 grid place-items-center text-sky-200"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
+                                            class="relative rounded-xl border p-2.5 flex items-center gap-2.5 transition-colors"
+                                            :class="(n.kind==='request' || !n.read) ? 'border-emerald-400/25 bg-emerald-500/[0.06]' : 'border-white/10 bg-white/[0.02]'">
+                                            <router-link :to="`/u/${n.from}`" @click="notifOpen=false" class="shrink-0">
+                                                <UserAvatar :size="40" v-bind="avatarPropsFor(notifSender(n), notifCos)" />
+                                            </router-link>
                                             <!-- Requests -->
                                             <template v-if="n.kind==='request'">
                                                 <div class="min-w-0 flex-1">
-                                                    <div class="text-slate-100 text-[12px] leading-snug truncate">
-                                                        <router-link :to="`/u/${n.from}`" class="hover:underline">{{ nameFor(n.from) }}</router-link>
-                                                        <span> quiere conectarse con vos</span>
+                                                    <div class="text-slate-100 text-[13px] leading-snug">
+                                                        <router-link :to="`/u/${n.from}`" @click="notifOpen=false" class="font-bold text-white hover:underline">{{ nameFor(n.from) }}</router-link>
+                                                        <span class="text-slate-300">&nbsp;quiere ser tu amigo</span>
                                                     </div>
-                                                    <div class="text-[11px] text-slate-400">{{ fmtNotifWhen(n.created_at) }}</div>
+                                                    <div class="text-[11px] text-slate-500 mt-0.5">{{ fmtNotifWhen(n.created_at) }}</div>
                                                 </div>
-                                                <div class="flex items-center gap-1">
-                                                    <button @click.stop="acceptConn(n.id)" title="Aceptar" class="inline-flex items-center justify-center rounded-full border border-emerald-400/40 text-emerald-300 hover:bg-emerald-400/10 w-7 h-7">
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                                <div class="flex items-center gap-1 shrink-0">
+                                                    <button @click.stop="acceptConn(n.id)" title="Aceptar" class="inline-flex items-center justify-center rounded-full bg-emerald-500 text-white hover:brightness-110 w-8 h-8 shadow-lg shadow-emerald-500/25 transition active:scale-95">
+                                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                                                     </button>
-                                                    <button @click.stop="rejectConn(n.id)" title="Rechazar" class="inline-flex items-center justify-center rounded-full border border-red-400/40 text-red-300 hover:bg-red-400/10 w-7 h-7">
+                                                    <button @click.stop="rejectConn(n.id)" title="Rechazar" class="inline-flex items-center justify-center rounded-full border border-white/15 text-slate-400 hover:text-white hover:border-white/30 w-8 h-8 transition active:scale-95">
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                                                     </button>
                                                 </div>
@@ -588,14 +631,13 @@ export default {
                                             <!-- Logs -->
                                             <template v-else>
                                                 <div class="min-w-0 flex-1">
-                                                    <div class="text-slate-100 text-[12px] leading-snug">
-                                                        <router-link :to="`/u/${n.from}`" class="hover:underline">{{ nameFor(n.from) }}</router-link>
-                                                        <span>&nbsp;{{ fmtLogSuffix(n) }}</span>
+                                                    <div class="text-slate-100 text-[13px] leading-snug">
+                                                        <router-link :to="`/u/${n.from}`" @click="notifOpen=false" class="font-bold text-white hover:underline">{{ nameFor(n.from) }}</router-link>
+                                                        <span class="text-slate-300">&nbsp;{{ fmtLogSuffix(n) }}</span>
                                                     </div>
-                                                    <div class="text-[11px] text-slate-400">{{ fmtNotifWhen(n.created_at) }}</div>
+                                                    <div class="text-[11px] text-slate-500 mt-0.5">{{ fmtNotifWhen(n.created_at) }}</div>
                                                 </div>
-                                                <!-- Right stripe for unread -->
-                                                <div v-if="!n.read" class="absolute right-0 top-0 h-full w-1 bg-sky-400 rounded-r"></div>
+                                                <span v-if="!n.read" class="shrink-0 h-2 w-2 rounded-full bg-emerald-400"></span>
                                             </template>
                                         </li>
                                     </ul>
@@ -603,52 +645,6 @@ export default {
                                         <router-link @click="notifOpen=false" to="/notifications" class="text-slate-300 hover:text-white text-sm">Ver todas</router-link>
                                     </div>
                                 </div>
-                            </div>
-                        </li>
-                        <!-- User menu -->
-                        <li class="relative">
-                            <button data-user-button aria-label="Menú de usuario" @click="menuOpen = !menuOpen; if(menuOpen) notifOpen = false" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-2 py-1.5 text-sm text-slate-200 hover:border-white/20">
-                                <UserAvatar :size="28" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" />
-                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
-                            </button>
-                            <div v-if="menuOpen" data-user-menu class="absolute right-0 mt-2 w-64 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl overflow-hidden">
-                                <div class="px-3 py-3 border-b border-white/10">
-                                    <div v-if="!levelInfo && levelLoading" class="mt-1 h-2 rounded bg-white/10 overflow-hidden">
-                                        <div class="h-full w-1/3 bg-emerald-500 animate-pulse"></div>
-                                    </div>
-                                    <div v-else-if="levelInfo">
-                                        <div class="mt-1 flex items-center justify-between text-xs text-slate-300">
-                                            <span>Nivel {{ levelInfo.level ?? 1 }}</span>
-                                            <span class="text-slate-200 font-medium">{{ xpNow }} XP</span>
-                                        </div>
-                                        <div class="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
-                                            <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (progressPercent||0) + '%' }"></div>
-                                        </div>
-                                        <div class="mt-1 text-[11px] text-slate-400">
-                                            <template v-if="levelInfo.level >= 30">
-                                                Nivel máximo alcanzado
-                                            </template>
-                                            <template v-else>
-                                                {{ levelProgress.earned }}/{{ levelProgress.range }} XP
-                                            </template>
-                                        </div>
-                                    </div>
-                                    <div v-else>
-                                        <div class="mt-1 flex items-center justify-between text-xs text-slate-300">
-                                            <span>Nivel 1</span>
-                                            <span class="text-slate-200 font-medium">0 XP</span>
-                                        </div>
-                                        <div class="mt-1 h-2 rounded-full bg-white/10 overflow-hidden">
-                                            <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" style="width: 0%"></div>
-                                        </div>
-                                        <div class="mt-1 text-[11px] text-slate-400">Jugá para ganar XP</div>
-                                    </div>
-                                </div>
-                                <RouterLink @click="menuOpen=false" to="/profile" class="block px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Ver Perfil</RouterLink>
-                                <RouterLink v-if="isAdminUser" @click="menuOpen=false" to="/admin" class="block px-3 py-2 text-sm hover:bg-amber-500/10 text-amber-400 border-t border-white/10">
-                                    Panel Admin
-                                </RouterLink>
-                                <button @click="handleLogout" class="block w-full text-left px-3 py-2 text-sm hover:bg-white/5 text-slate-200">Cerrar sesión</button>
                             </div>
                         </li>
                     </template>
@@ -666,13 +662,9 @@ export default {
                                     <input type="search" v-model="q" @input="onSearchInput" placeholder="Buscar usuarios" class="searchbox w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20" />
                                     <div v-if="searchOpen" data-search-dropdown class="absolute z-50 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl">
                                         <ul>
-                                            <li v-for="u in results" :key="u.id" @click="isOpen=false; goUser(u)" class="px-3 py-2 hover:bg-white/5 cursor-pointer text-sm flex items-center gap-2">
-                                                <img v-if="u.avatar_url" :src="u.avatar_url" class="w-8 h-8 rounded-lg object-cover flex-none" alt="avatar" />
-                                                <div v-else class="w-8 h-8 rounded-lg bg-slate-700 text-[11px] grid place-items-center flex-none">{{ (u.email||'?')[0]?.toUpperCase() }}</div>
-                                                <div class="truncate">
-                                                    <span class="text-slate-100">{{ u.display_name || u.username || (u.email || u.id) }}</span>
-                                                    <span class="ml-1 text-slate-400">· {{ u.email }}</span>
-                                                </div>
+                                            <li v-for="u in results" :key="u.id" @click="isOpen=false; goUser(u)" class="px-2.5 py-2 hover:bg-white/5 cursor-pointer text-sm flex items-center gap-2.5 rounded-lg">
+                                                <UserAvatar :size="34" v-bind="avatarPropsFor(u, resultCos)" />
+                                                <span class="truncate text-slate-100 font-medium">{{ userLabel(u) }}</span>
                                             </li>
                                             <li v-if="!results.length && !searching" class="px-3 py-2 text-slate-400 text-sm">Sin resultados</li>
                                             <li v-if="searching" class="px-3 py-2 text-slate-400 text-sm">Buscando…</li>

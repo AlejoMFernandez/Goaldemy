@@ -5,6 +5,7 @@ import { soundManager } from '@/services/sounds'
 import { triggerConfetti } from '@/services/confetti'
 import { frameStyle, bannerStyle, iconBgStyle } from '@/services/cosmetics'
 import CosmeticIcon from './CosmeticIcon.vue'
+import RarityGem from './RarityGem.vue'
 
 const TYPE_LABEL = { frame: 'Borde', title: 'Título', icon: 'Ícono', banner: 'Banner' }
 
@@ -17,7 +18,7 @@ const RARITY_THEME = {
 
 export default {
   name: 'CosmeticUnlockOverlay',
-  components: { CosmeticIcon },
+  components: { CosmeticIcon, RarityGem },
   setup() {
     const current = ref(null)
     const phase = ref(0)
@@ -101,13 +102,31 @@ export default {
         <div class="absolute inset-0 bg-black/85 backdrop-blur-md"></div>
 
         <div class="relative flex flex-col items-center text-center max-w-md w-full">
+          <!-- Etiqueta de rareza (por encima del cosmético, bien visible) -->
+          <div class="mb-4 transition-all duration-500" :class="phase >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'">
+            <span class="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-extrabold uppercase tracking-wider backdrop-blur"
+                  :class="[theme.ringBorder, theme.text]"
+                  :style="`box-shadow: 0 0 18px ${theme.glow}`">
+              <RarityGem :rarity="current.rarity" :size="15" />
+              {{ theme.label }}
+            </span>
+          </div>
+
           <!-- Preview del cosmético con glow de rareza + respiración -->
           <div
             class="relative mb-6 transition-all duration-500"
             :class="phase >= 1 ? 'opacity-100' : 'opacity-0'"
             :style="phase >= 1 ? 'animation: scale-spring 0.6s var(--ease-bounce) both' : ''"
           >
+            <!-- ICON: se muestra con su PROPIA forma, sin marco circular, ocupando todo el contenedor -->
+            <div v-if="current.type === 'icon'"
+                 class="w-36 h-36 grid place-items-center"
+                 :style="phase >= 2 ? `filter: drop-shadow(0 0 26px ${theme.glow}); animation: glow-pulse 2s ease-in-out infinite` : `filter: drop-shadow(0 0 16px ${theme.glow})`">
+              <CosmeticIcon :iconKey="current.styleKey" :rarity="current.rarity" :size="140" />
+            </div>
+            <!-- Resto de cosméticos: contenedor con borde + glow por rareza -->
             <div
+              v-else
               class="w-32 h-32 rounded-3xl grid place-items-center border-2"
               :class="theme.ringBorder"
               :style="phase >= 2 ? `animation: glow-pulse 2s ease-in-out infinite; box-shadow: 0 0 40px ${theme.glow}` : `box-shadow: 0 0 24px ${theme.glow}`"
@@ -118,10 +137,6 @@ export default {
               </div>
               <!-- BANNER: muestra del gradiente -->
               <div v-else-if="current.type === 'banner'" :class="['w-24 h-16 rounded-xl border border-white/15', bannerStyle(current.styleKey)]"></div>
-              <!-- ICON: medallón detallado -->
-              <div v-else-if="current.type === 'icon'">
-                <CosmeticIcon :iconKey="current.styleKey" :rarity="current.rarity" framed :size="112" />
-              </div>
               <!-- TITLE: el texto del título -->
               <div v-else class="px-3">
                 <div class="font-display font-extrabold text-xl" :class="theme.text">{{ current.name }}</div>
@@ -139,13 +154,6 @@ export default {
               {{ typeLabel }} desbloqueado
             </div>
             <h2 class="font-display text-3xl font-extrabold text-white mb-2">{{ current.name }}</h2>
-          </div>
-
-          <!-- Badge de rareza -->
-          <div class="mb-6 transition-all duration-400" :class="phase >= 3 ? 'opacity-100' : 'opacity-0'">
-            <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold" :class="[theme.ringBorder, theme.text]">
-              ✦ {{ theme.label }}
-            </span>
           </div>
 
           <!-- Cómo lo conseguiste -->

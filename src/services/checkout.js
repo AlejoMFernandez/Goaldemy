@@ -2,12 +2,15 @@ import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { invalidatePlanCache } from './premium'
 
-export async function startCheckout(planSlug, provider = 'mercadopago') {
+export async function startCheckout(planSlug, provider = 'mercadopago', billingEmail = null) {
   const { id } = getAuthUser() || {}
   if (!id) throw new Error('No autenticado')
 
+  const body = { plan_slug: planSlug, provider }
+  if (billingEmail) body.billing_email = billingEmail
+
   const { data, error } = await supabase.functions.invoke('create-checkout', {
-    body: { plan_slug: planSlug, provider },
+    body,
   })
 
   if (error) throw new Error(error.message || 'Error al crear checkout')

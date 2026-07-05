@@ -25,12 +25,22 @@ serve(async (req) => {
       })
     }
 
-    const { plan_slug, provider } = await req.json()
+    const { plan_slug, provider, billing_email } = await req.json()
     if (!plan_slug || !provider) {
       return new Response(JSON.stringify({ error: 'Faltan parámetros' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+
+    // Mail de facturación opcional: permite pagar con una cuenta de Mercado Pago
+    // cuyo e-mail sea distinto al de Goaldemy. Si no viene o es inválido, usamos el de la cuenta.
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (billing_email && !emailRe.test(String(billing_email).trim())) {
+      return new Response(JSON.stringify({ error: 'El e-mail de facturación no es válido' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const payerEmail = billing_email ? String(billing_email).trim() : user.email
 
     const adminSupabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -53,7 +63,7 @@ serve(async (req) => {
     let checkoutUrl = ''
 
     if (provider === 'mercadopago') {
-      checkoutUrl = await createMercadoPagoCheckout(plan, user, frontendUrl)
+      checkoutUrl = await createMercadoPagoCheckout(plan, user, frontendUrl, payerEmail)
     } else if (provider === 'stripe') {
       checkoutUrl = await createStripeCheckout(plan, user, frontendUrl)
     } else {
@@ -73,7 +83,7 @@ serve(async (req) => {
   }
 })
 
-async function createMercadoPagoCheckout(plan: any, user: any, frontendUrl: string) {
+async function createMercadoPagoCheckout(plan: any, user: any, frontendUrl: string, payerEmail: string) {
   const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')
   if (!accessToken) throw new Error('MERCADOPAGO_ACCESS_TOKEN no configurado')
 
@@ -85,7 +95,7 @@ async function createMercadoPagoCheckout(plan: any, user: any, frontendUrl: stri
       transaction_amount: plan.price_ars / 100,
       currency_id: 'ARS',
     },
-    payer_email: user.email,
+    payer_email: payerEmail,
     back_url: `${frontendUrl}/pricing?result=mp`,
     external_reference: JSON.stringify({ user_id: user.id, plan_slug: plan.slug }),
   }

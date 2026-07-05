@@ -71,7 +71,7 @@ defineExpose({ reload: load })
           :title="pu.description"
           @click="activate(pu.key)"
         >
-          <PowerupIcon :type="pu.key" :size="38" />
+          <PowerupIcon :type="pu.key" :size="30" />
           <span
             v-if="pu.count > 0"
             class="absolute -top-1.5 -right-1.5 grid place-items-center min-w-[17px] h-[17px] px-1 rounded-full bg-slate-900/95 ring-1 ring-white/15 text-[10px] font-bold text-white leading-none"
@@ -89,13 +89,13 @@ defineExpose({ reload: load })
 
 <style scoped>
 .powerup-tile {
-  width: 44px;
-  height: 44px;
+  width: 50px;
+  height: 50px;
 }
 @media (min-width: 640px) {
   .powerup-tile {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
   }
 }
 .dock-fade-enter-active,

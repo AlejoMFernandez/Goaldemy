@@ -36,6 +36,7 @@ const NotFound = () => import('../pages/NotFound.vue');
 const PlayPoints = () => import('../pages/PlayPoints.vue');
 const PlayFree = () => import('../pages/PlayFree.vue');
 const RewardCenter = () => import('../pages/RewardCenter.vue');
+const Tienda = () => import('../pages/Tienda.vue');
 const Notifications = () => import('../pages/social/Notifications.vue');
 const DirectChat = () => import('../pages/social/DirectChat.vue');
 const DirectMessages = () => import('../pages/social/DirectMessages.vue');
@@ -97,6 +98,7 @@ const routes = [
     { path: '/play/points', component: PlayPoints, meta: { requiresAuth: true } },
     { path: '/play/free', component: PlayFree },
     { path: '/rewards', component: RewardCenter, meta: { requiresAuth: true } },
+    { path: '/tienda', component: Tienda, meta: { requiresAuth: true } },
     { path: '/pricing', component: Pricing },
     // 404 fallback
     { path: '/:pathMatch(.*)*', component: NotFound },

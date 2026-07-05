@@ -201,6 +201,22 @@ export async function getUserStats() {
 }
 
 /**
+ * Métricas agregadas del panel (MRR, PRO activos, DAU, partidas, altas…).
+ * Todo se calcula server-side en el RPC get_admin_dashboard (SECURITY DEFINER)
+ * porque subscriptions/game_sessions tienen RLS "solo lo propio".
+ * Requiere correr supabase/mejoras11-admin-dashboard.sql.
+ * @returns {Promise<Object>}
+ */
+export async function getAdminDashboard() {
+    const { data, error } = await supabase.rpc('get_admin_dashboard');
+    if (error) {
+        console.error('Error cargando dashboard admin:', error);
+        throw new Error('No se pudo cargar el dashboard. ¿Corriste supabase/mejoras11-admin-dashboard.sql?');
+    }
+    return data || {};
+}
+
+/**
  * Actualiza un usuario (solo para admins)
  * @param {string} userId - ID del usuario
  * @param {Object} updates - Datos a actualizar
