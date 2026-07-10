@@ -1,5 +1,5 @@
 <script>
-import AppH1 from '../../components/common/AppH1.vue'
+import GameShell from '../../components/game/GameShell.vue'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 import { getAllPlayersAsync } from '../../services/players'
@@ -76,7 +76,7 @@ function validatePlayer(player, rowConstraint, colConstraint) {
 
 export default {
   name: 'FootballGrid',
-  components: { AppH1, GamePreviewModal, GameSummaryPopup },
+  components: { GameShell, GamePreviewModal, GameSummaryPopup },
   data() {
     return {
       loading: true,
@@ -344,7 +344,79 @@ export default {
 </script>
 
 <template>
-  <section class="grid place-items-center min-h-[calc(100dvh-4rem)]">
+  <GameShell title="La Grilla" :backPath="backPath()">
+    <template #stat>
+      <div class="inline-flex items-center gap-1.5 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
+        <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Celdas</span>
+        <span class="font-display text-white font-extrabold text-base leading-none whitespace-nowrap">{{ corrects }}/9</span>
+      </div>
+    </template>
+
+    <div v-if="loading" class="text-center text-slate-300 py-12">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+      <p class="mt-3">Cargando grilla...</p>
+    </div>
+
+    <div v-else-if="!gridConfig" class="text-center text-slate-400 py-12">
+      <p>No se pudo generar la grilla hoy. Intentalo de nuevo.</p>
+      <button @click="initGrid(difficultyConfig?.guessesPerCell || 3)" class="mt-3 rounded-full bg-white/10 border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/15 transition">Reintentar</button>
+    </div>
+
+    <div v-else class="relative w-full max-w-xl mx-auto">
+      <!-- GRID TABLE -->
+      <div class="grid-table select-none">
+        <!-- Header row: empty corner + 3 column headers -->
+        <div class="grid-corner"></div>
+        <div v-for="(col, ci) in gridConfig.cols" :key="'ch-'+ci" class="grid-col-header">
+          <img v-if="flagSrc(col)" :src="flagSrc(col)" alt="" class="grid-flag" />
+          <span class="text-[10px] sm:text-xs text-slate-300 leading-tight text-center block mt-1 truncate max-w-full">{{ col.label }}</span>
+        </div>
+
+        <!-- 3 data rows -->
+        <template v-for="(row, ri) in gridConfig.rows" :key="'r-'+ri">
+          <!-- Row header -->
+          <div class="grid-row-header">
+            <img v-if="teamLogoForRow(ri)" :src="teamLogoForRow(ri)" alt="" class="grid-logo" />
+            <span class="text-[10px] sm:text-xs text-slate-300 leading-tight text-center block mt-1 truncate max-w-full">{{ row.label }}</span>
+          </div>
+          <!-- 3 cells -->
+          <div v-for="(col, ci) in gridConfig.cols" :key="'c-'+ri+'-'+ci"
+               :class="['grid-cell border rounded-lg transition-all duration-200', cellClass(ri, ci)]"
+               @click="openCell(ri, ci)">
+            <!-- Filled: solo la foto del jugador (sin nombre) -->
+            <template v-if="cells[ri][ci].player">
+              <img :src="cells[ri][ci].player.image" :alt="cells[ri][ci].player.name"
+                   class="grid-player-img" @error="e => e.target.style.display='none'" />
+            </template>
+            <!-- Failed -->
+            <template v-else-if="cells[ri][ci].failed">
+              <span class="text-2xl text-red-400/40">✕</span>
+            </template>
+            <!-- Empty -->
+            <template v-else>
+              <div class="flex flex-col items-center gap-1">
+                <div class="w-9 h-9 rounded-full border-2 border-dashed border-white/15 flex items-center justify-center">
+                  <span class="text-lg text-slate-500">+</span>
+                </div>
+                <span v-if="cells[ri][ci].guessesLeft < (difficultyConfig?.guessesPerCell || 3)" class="text-[10px] text-slate-500">
+                  {{ cells[ri][ci].guessesLeft }} restantes
+                </span>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <!-- FINISHED BANNER (free/normal mode) -->
+      <div v-if="gameFinished && mode !== 'challenge'" class="mt-4 text-center space-y-2">
+        <p class="text-lg" :class="corrects === 9 ? 'text-emerald-300' : 'text-slate-300'">
+          {{ corrects === 9 ? 'Completaste la grilla!' : `Lograste ${corrects}/9 celdas` }}
+        </p>
+        <p class="text-sm text-slate-400">Puntaje: {{ score }}</p>
+      </div>
+    </div>
+
+    <!-- OVERLAYS (fixed / teleport): fuera del flujo del cuerpo -->
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="La Grilla"
@@ -357,151 +429,74 @@ export default {
       @start="startChallenge"
     />
 
-    <div class="space-y-4 w-full max-w-3xl">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <AppH1 class="text-3xl md:text-4xl flex-none">La Grilla</AppH1>
-        <div class="flex items-center gap-2 self-stretch sm:self-auto flex-none">
-          <router-link :to="backPath()" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">
-            ← Volver
-          </router-link>
-          <div class="rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-white/15 px-3 py-2 flex items-center gap-2 shadow-lg shadow-black/20">
-            <span class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Celdas</span>
-            <span class="font-display text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ corrects }}/9</span>
+    <!-- AUTOCOMPLETE OVERLAY -->
+    <Transition name="fade">
+      <div v-if="activeCell" class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm" @click.self="closeAutocomplete">
+        <div class="w-full max-w-sm mx-4 rounded-2xl border border-white/15 bg-slate-900/95 shadow-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-slate-300 flex items-center gap-2">
+              <img v-if="teamLogoForRow(activeCell.row)" :src="teamLogoForRow(activeCell.row)" alt="" class="w-6 h-6 object-contain" />
+              <span class="text-white font-medium">{{ gridConfig.rows[activeCell.row].label }}</span>
+              <span class="text-slate-500">+</span>
+              <img v-if="flagSrc(gridConfig.cols[activeCell.col])" :src="flagSrc(gridConfig.cols[activeCell.col])" alt="" class="w-6 h-4 object-cover rounded-sm" />
+              <span class="text-white font-medium">{{ gridConfig.cols[activeCell.col].label }}</span>
+            </span>
+            <button @click="closeAutocomplete" class="text-slate-400 hover:text-white text-lg leading-none">&times;</button>
           </div>
-        </div>
-      </div>
-
-      <div v-if="loading" class="text-center text-slate-300 py-12">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
-        <p class="mt-3">Cargando grilla...</p>
-      </div>
-
-      <div v-else-if="!gridConfig" class="text-center text-slate-400 py-12">
-        <p>No se pudo generar la grilla hoy. Intentalo de nuevo.</p>
-        <button @click="initGrid(difficultyConfig?.guessesPerCell || 3)" class="mt-3 rounded-full bg-white/10 border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/15 transition">Reintentar</button>
-      </div>
-
-      <div v-else class="relative">
-        <!-- GRID TABLE -->
-        <div class="grid-table select-none">
-          <!-- Header row: empty corner + 3 column headers -->
-          <div class="grid-corner"></div>
-          <div v-for="(col, ci) in gridConfig.cols" :key="'ch-'+ci" class="grid-col-header">
-            <img v-if="flagSrc(col)" :src="flagSrc(col)" alt="" class="w-9 h-6 object-cover rounded-sm mx-auto" />
-            <span class="text-[11px] sm:text-xs text-slate-300 leading-tight text-center block mt-1 truncate">{{ col.label }}</span>
-          </div>
-
-          <!-- 3 data rows -->
-          <template v-for="(row, ri) in gridConfig.rows" :key="'r-'+ri">
-            <!-- Row header -->
-            <div class="grid-row-header">
-              <img v-if="teamLogoForRow(ri)" :src="teamLogoForRow(ri)" alt="" class="w-8 h-8 sm:w-10 sm:h-10 object-contain mx-auto" />
-              <span class="text-[11px] sm:text-xs text-slate-300 leading-tight text-center block mt-1 truncate">{{ row.label }}</span>
-            </div>
-            <!-- 3 cells -->
-            <div v-for="(col, ci) in gridConfig.cols" :key="'c-'+ri+'-'+ci"
-                 :class="['grid-cell border rounded-lg transition-all duration-200', cellClass(ri, ci)]"
-                 @click="openCell(ri, ci)">
-              <!-- Filled -->
-              <template v-if="cells[ri][ci].player">
-                <img :src="cells[ri][ci].player.image" :alt="cells[ri][ci].player.name"
-                     class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover mx-auto" @error="e => e.target.style.display='none'" />
-                <span class="text-xs sm:text-sm text-emerald-300 leading-tight text-center block mt-0.5 truncate px-1">{{ cells[ri][ci].player.name }}</span>
-              </template>
-              <!-- Failed -->
-              <template v-else-if="cells[ri][ci].failed">
-                <span class="text-xl text-red-400/40">✕</span>
-              </template>
-              <!-- Empty -->
-              <template v-else>
-                <div class="flex flex-col items-center gap-1">
-                  <div class="w-10 h-10 rounded-full border-2 border-dashed border-white/15 flex items-center justify-center">
-                    <span class="text-lg text-slate-500">+</span>
-                  </div>
-                  <span v-if="cells[ri][ci].guessesLeft < (difficultyConfig?.guessesPerCell || 3)" class="text-[10px] text-slate-500">
-                    {{ cells[ri][ci].guessesLeft }} restantes
-                  </span>
+          <input ref="searchInput" v-model="searchQuery" type="text" placeholder="Escribi al menos 3 letras..."
+                 @keydown.down.prevent="moveSelection(1)" @keydown.up.prevent="moveSelection(-1)"
+                 @keydown.enter.prevent="onEnterKey" @keydown.escape="closeAutocomplete"
+                 class="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2.5 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-white/20 text-sm" />
+          <div v-if="suggestions.length" class="rounded-xl border border-white/10 bg-slate-800/80 max-h-56 overflow-auto">
+            <ul>
+              <li v-for="(p, idx) in suggestions" :key="p.id" @click="submitPlayer(p)"
+                  :class="['px-3 py-2 cursor-pointer text-slate-200 flex items-center gap-2.5 text-sm', idx === selectedIndex ? 'bg-white/10' : 'hover:bg-white/5']">
+                <img :src="p.image" :alt="p.name" class="h-7 w-7 object-cover rounded-full flex-none" @error="e => e.target.style.display='none'" />
+                <div class="min-w-0 flex-1">
+                  <span class="block truncate">{{ p.name }}</span>
+                  <span class="text-[11px] text-slate-500">{{ p.teamName }}</span>
                 </div>
-              </template>
-            </div>
-          </template>
-        </div>
-
-        <!-- AUTOCOMPLETE OVERLAY -->
-        <Transition name="fade">
-          <div v-if="activeCell" class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm" @click.self="closeAutocomplete">
-            <div class="w-full max-w-sm mx-4 rounded-2xl border border-white/15 bg-slate-900/95 shadow-2xl p-4 space-y-3">
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-slate-300">
-                  <span class="text-white font-medium">{{ gridConfig.rows[activeCell.row].label }}</span>
-                  <span class="mx-1 text-slate-500">+</span>
-                  <span class="text-white font-medium">{{ gridConfig.cols[activeCell.col].label }}</span>
-                </span>
-                <button @click="closeAutocomplete" class="text-slate-400 hover:text-white text-lg leading-none">&times;</button>
-              </div>
-              <input ref="searchInput" v-model="searchQuery" type="text" placeholder="Escribi al menos 3 letras..."
-                     @keydown.down.prevent="moveSelection(1)" @keydown.up.prevent="moveSelection(-1)"
-                     @keydown.enter.prevent="onEnterKey" @keydown.escape="closeAutocomplete"
-                     class="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2.5 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-white/20 text-sm" />
-              <div v-if="suggestions.length" class="rounded-xl border border-white/10 bg-slate-800/80 max-h-56 overflow-auto">
-                <ul>
-                  <li v-for="(p, idx) in suggestions" :key="p.id" @click="submitPlayer(p)"
-                      :class="['px-3 py-2 cursor-pointer text-slate-200 flex items-center gap-2.5 text-sm', idx === selectedIndex ? 'bg-white/10' : 'hover:bg-white/5']">
-                    <img :src="p.image" :alt="p.name" class="h-7 w-7 object-cover rounded-full flex-none" @error="e => e.target.style.display='none'" />
-                    <div class="min-w-0 flex-1">
-                      <span class="block truncate">{{ p.name }}</span>
-                      <span class="text-[11px] text-slate-500">{{ p.teamName }}</span>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-              <p v-else-if="searchQuery.length >= 3" class="text-sm text-slate-500 text-center py-2">Sin resultados</p>
-            </div>
+              </li>
+            </ul>
           </div>
-        </Transition>
-
-        <!-- FINISHED BANNER (free/normal mode) -->
-        <div v-if="gameFinished && mode !== 'challenge'" class="mt-4 text-center space-y-2">
-          <p class="text-lg" :class="corrects === 9 ? 'text-emerald-300' : 'text-slate-300'">
-            {{ corrects === 9 ? 'Completaste la grilla!' : `Lograste ${corrects}/9 celdas` }}
-          </p>
-          <p class="text-sm text-slate-400">Puntaje: {{ score }}</p>
+          <p v-else-if="searchQuery.length >= 3" class="text-sm text-slate-500 text-center py-2">Sin resultados</p>
         </div>
       </div>
+    </Transition>
 
-      <!-- Summary Popup -->
-      <GameSummaryPopup
-        :show="showSummary"
-        :corrects="corrects"
-        :score="score"
-        :maxStreak="0"
-        :lifetimeMaxStreak="0"
-        :levelBefore="levelBefore"
-        :levelAfter="levelAfter"
-        :xpBeforeTotal="xpBeforeTotal"
-        :xpAfterTotal="xpAfterTotal"
-        :beforePercent="beforePercent"
-        :afterPercent="afterPercent"
-        :progressShown="progressShown"
-        :xpToNextAfter="xpToNextAfter"
-        :xpEarned="xpEarned"
-        :difficulty="selectedDifficulty"
-        :winThreshold="9"
-        :backPath="backPath()"
-        @close="showSummary = false"
-      />
-    </div>
-  </section>
+    <!-- Summary Popup -->
+    <GameSummaryPopup
+      :show="showSummary"
+      :corrects="corrects"
+      :score="score"
+      :maxStreak="0"
+      :lifetimeMaxStreak="0"
+      :levelBefore="levelBefore"
+      :levelAfter="levelAfter"
+      :xpBeforeTotal="xpBeforeTotal"
+      :xpAfterTotal="xpAfterTotal"
+      :beforePercent="beforePercent"
+      :afterPercent="afterPercent"
+      :progressShown="progressShown"
+      :xpToNextAfter="xpToNextAfter"
+      :xpEarned="xpEarned"
+      :difficulty="selectedDifficulty"
+      :winThreshold="9"
+      :backPath="backPath()"
+      @close="showSummary = false"
+    />
+  </GameShell>
 </template>
 
 <style scoped>
 .grid-table {
   display: grid;
-  grid-template-columns: 80px repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: 68px repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
 }
 @media (min-width: 640px) {
-  .grid-table { grid-template-columns: 100px repeat(3, 1fr); gap: 10px; }
+  .grid-table { grid-template-columns: 92px repeat(3, minmax(0, 1fr)); gap: 8px; }
 }
 .grid-corner { /* empty top-left cell */ }
 .grid-col-header, .grid-row-header {
@@ -509,7 +504,27 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 6px 2px;
+  padding: 4px 2px;
+  min-width: 0;
+}
+/* Bandera y logo del equipo: la materia prima del juego, bien grandes */
+.grid-flag {
+  width: 52px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  outline: 1px solid rgba(255, 255, 255, 0.12);
+}
+.grid-logo {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+@media (min-width: 640px) {
+  .grid-flag { width: 64px; height: 42px; }
+  .grid-logo { width: 58px; height: 58px; }
 }
 .grid-cell {
   aspect-ratio: 1;
@@ -517,11 +532,16 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100px;
-  padding: 4px;
+  min-height: 0;
+  padding: 3px;
 }
-@media (min-width: 640px) {
-  .grid-cell { min-height: 130px; }
+.grid-player-img {
+  width: 84%;
+  height: 84%;
+  max-width: 92px;
+  max-height: 92px;
+  border-radius: 12px;
+  object-fit: cover;
 }
 
 /* Transitions */

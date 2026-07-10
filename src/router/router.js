@@ -81,7 +81,7 @@ const routes = [
     { path: '/games/football-wordle', component: FootballWordle, meta: { requiresAuth: true } },
     { path: '/games/higher-or-lower', component: HigherOrLower, meta: { requiresAuth: true } },
     { path: '/games/connections', component: Connections, meta: { requiresAuth: true } },
-    { path: '/games/football-grid', component: FootballGrid, meta: { requiresAuth: true } },
+    { path: '/games/football-grid', component: FootballGrid, meta: { requiresAuth: true, immersive: true } },
     { path: '/games/stat-challenge', component: StatChallenge, meta: { requiresAuth: true } },
     { path: '/leaderboards', component: Leaderboards },
     { path: '/u/:id', component: Profile, meta: { requiresAuth: true } },

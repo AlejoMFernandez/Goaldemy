@@ -41,6 +41,11 @@ export default {
     isAuthLayout() {
       return this.$route?.meta?.layout === 'auth'
     },
+    // Rutas de juego inmersivas (GameShell): el <main> pierde el padding vertical
+    // para que el juego ocupe todo el alto visible sin pedir scroll.
+    isImmersive() {
+      return !!this.$route?.meta?.immersive
+    },
     // Reserva el ancho de la sidebar en desktop → el contenido "corta" en la barra
     // y nunca queda por debajo. Sin sesión o en /login no reserva nada.
     hasSidebar() {
@@ -88,7 +93,7 @@ export default {
          :class="isAuthLayout ? 'grid grid-rows-[1fr]' : 'grid grid-rows-[auto_1fr_auto]'"
          :style="shellStyle">
       <AppNavBar v-if="!isAuthLayout" />
-      <main :class="isAuthLayout ? 'relative z-10 min-h-screen grid place-items-center px-4 py-8' : 'relative z-10 w-full max-w-[1600px] mx-auto px-6 py-10 lg:py-12'">
+      <main :class="isAuthLayout ? 'relative z-10 min-h-screen grid place-items-center px-4 py-8' : (isImmersive ? 'relative z-10 w-full max-w-[1600px] mx-auto px-3 sm:px-6 py-0' : 'relative z-10 w-full max-w-[1600px] mx-auto px-6 py-10 lg:py-12')">
         <AppLoader v-if="authBooting" />
         <RouterView v-else v-slot="{ Component, route }">
           <Transition name="fade-slide" mode="out-in">
