@@ -73,7 +73,6 @@ function planPerks(plan) {
   if (plan.xp_multiplier > 1) perks.push(`Bonus de XP +${Math.round((plan.xp_multiplier - 1) * 100)}%`)
   if (plan.daily_powerups) perks.push(`${plan.daily_powerups} power-up${plan.daily_powerups === 1 ? '' : 's'} por día`)
   perks.push('Pase de Batalla PRO + cosméticos exclusivos')
-  if (plan.weekly_streak_protectors > 0) perks.push(`${plan.weekly_streak_protectors} protector${plan.weekly_streak_protectors === 1 ? '' : 'es'} de racha/semana`)
   if (plan.badge) perks.push(`Badge ${plan.slug === 'legend' ? 'Legend dorado' : 'Pro'} en perfil`)
   return perks
 }
@@ -83,7 +82,6 @@ const COMPARISON = [
   { label: 'Bonus de XP', key: 'xp_multiplier', format: v => v > 1 ? `+${Math.round((v - 1) * 100)}%` : 'Base' },
   { label: 'Pase de Batalla PRO', proOnly: true },
   { label: 'Íconos, bordes y banners exclusivos', proOnly: true },
-  { label: 'Protectores de racha / semana', key: 'weekly_streak_protectors', format: v => v > 0 ? v : '—' },
   { label: '9 modos de juego', static: true },
   { label: 'Sistema de XP y niveles', static: true },
   { label: 'Ranking global', static: true },

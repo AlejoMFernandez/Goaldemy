@@ -46,8 +46,6 @@ function planFeatures(plan) {
     f.push({ text: 'Pase de Batalla PRO — recompensas premium', strong: true })
     f.push({ text: 'Íconos exclusivos', hover: 'icons' })
     f.push({ text: 'Bordes y banners exclusivos', hover: 'cosmetics' })
-    if (plan.weekly_streak_protectors > 0)
-      f.push({ text: `${plan.weekly_streak_protectors} protector${plan.weekly_streak_protectors === 1 ? '' : 'es'} de racha/semana` })
     if (plan.badge) f.push({ text: `Badge ${plan.slug === 'legend' ? 'Legend dorado' : 'Pro'} en perfil`, hover: 'badge' })
   }
   return f

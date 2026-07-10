@@ -34,7 +34,6 @@ const AboutGoaldemy = () => import('../pages/info/AboutGoaldemy.vue');
 const AboutObjective = () => import('../pages/info/AboutObjective.vue');
 const NotFound = () => import('../pages/NotFound.vue');
 const PlayPoints = () => import('../pages/PlayPoints.vue');
-const PlayFree = () => import('../pages/PlayFree.vue');
 const RewardCenter = () => import('../pages/RewardCenter.vue');
 const Tienda = () => import('../pages/Tienda.vue');
 const Notifications = () => import('../pages/social/Notifications.vue');
@@ -97,7 +96,8 @@ const routes = [
     { path: '/about/objetivo', component: AboutObjective },
     // Play landing pages
     { path: '/play/points', component: PlayPoints, meta: { requiresAuth: true } },
-    { path: '/play/free', component: PlayFree },
+    // /play/free (Juego Libre) retirado en MEJORAS12: redirige al índice por puntos
+    { path: '/play/free', redirect: '/play/points' },
     { path: '/rewards', component: RewardCenter, meta: { requiresAuth: true } },
     { path: '/tienda', component: Tienda, meta: { requiresAuth: true } },
     { path: '/pricing', component: Pricing },

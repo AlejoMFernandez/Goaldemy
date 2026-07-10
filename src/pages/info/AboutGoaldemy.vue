@@ -43,8 +43,8 @@ import GoaldemyLogo from '../../components/GoaldemyLogo.vue'
             <li class="flex gap-3 items-start">
               <span class="text-slate-500 flex-shrink-0 mt-1">•</span>
               <div>
-                <p class="text-white font-semibold mb-1">Modo libre</p>
-                <p class="text-slate-300 text-sm">Practicá sin presión y mejorá de a poco.</p>
+                <p class="text-white font-semibold mb-1">Reto del día</p>
+                <p class="text-slate-300 text-sm">Un desafío diario abierto para compartir con amigos.</p>
               </div>
             </li>
             <li class="flex gap-3 items-start">
@@ -117,8 +117,8 @@ import GoaldemyLogo from '../../components/GoaldemyLogo.vue'
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <div class="text-lg font-bold text-white mb-2">Modo libre</div>
-            <p class="text-slate-300 text-sm">Entrená sin presión, ideal para afinar el ojo.</p>
+            <div class="text-lg font-bold text-white mb-2">Reto del día</div>
+            <p class="text-slate-300 text-sm">Un desafío diario abierto, ideal para compartir y sumar amigos.</p>
           </div>
           <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur-sm p-6 hover:border-indigo-400/30 transition">
             <div class="inline-flex rounded-lg bg-indigo-500/10 p-2 ring-1 ring-indigo-400/20 mb-4">
@@ -143,8 +143,8 @@ import GoaldemyLogo from '../../components/GoaldemyLogo.vue'
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </RouterLink>
-            <RouterLink to="/play/free" class="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 px-6 py-3 font-semibold text-cyan-400 transition hover:bg-cyan-500/10 hover:border-cyan-400/50">
-              PlayFree
+            <RouterLink to="/reto" class="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 px-6 py-3 font-semibold text-cyan-400 transition hover:bg-cyan-500/10 hover:border-cyan-400/50">
+              Reto del día
             </RouterLink>
             <RouterLink to="/leaderboards" class="inline-flex items-center gap-2 rounded-xl border border-indigo-400/30 px-6 py-3 font-semibold text-indigo-400 transition hover:bg-indigo-500/10 hover:border-indigo-400/50">
               Leaderboards

@@ -34,7 +34,7 @@ export default {
           <h3 class="text-white font-semibold mb-4">Enlaces rápidos</h3>
           <ul class="space-y-2 text-sm">
             <li><RouterLink to="/play/points" class="text-slate-400 hover:text-emerald-400 transition">Jugar por Puntos</RouterLink></li>
-            <li><RouterLink to="/play/free" class="text-slate-400 hover:text-emerald-400 transition">Jugar Libre</RouterLink></li>
+            <li><RouterLink to="/reto" class="text-slate-400 hover:text-emerald-400 transition">Reto del día</RouterLink></li>
             <li><RouterLink to="/leaderboards" class="text-slate-400 hover:text-emerald-400 transition">Ranking</RouterLink></li>
             <li><RouterLink to="/profile" class="text-slate-400 hover:text-emerald-400 transition">Mi Perfil</RouterLink></li>
           </ul>

@@ -489,9 +489,9 @@ export default {
                                     <div class="text-sm text-slate-100 font-medium">Jugar por puntos</div>
                                     <p class="text-slate-400 text-xs">Desafío diario con cronómetro. 1 intento por día. Sumá XP.</p>
                                 </RouterLink>
-                                <RouterLink @click="playOpen=false" to="/play/free" class="mt-1 block rounded-lg p-2 hover:bg-white/5">
-                                    <div class="text-sm text-slate-100 font-medium">Jugar libre</div>
-                                    <p class="text-slate-400 text-xs">Practicá sin límite de partidas. No suma XP.</p>
+                                <RouterLink @click="playOpen=false" to="/reto" class="mt-1 block rounded-lg p-2 hover:bg-white/5">
+                                    <div class="text-sm text-slate-100 font-medium">Reto del día</div>
+                                    <p class="text-slate-400 text-xs">El desafío diario abierto para compartir. Sin login.</p>
                                 </RouterLink>
                             </div>
                         </div>
@@ -746,7 +746,7 @@ export default {
                                 <summary class="cursor-pointer hover:text-white">Jugar</summary>
                                 <ul class="mt-1 pl-3 flex flex-col gap-1 text-slate-300">
                                     <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/play/points">Jugar por puntos</RouterLink></li>
-                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/play/free">Jugar libre</RouterLink></li>
+                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/reto">Reto del día</RouterLink></li>
                                 </ul>
                             </details>
                         </li>
