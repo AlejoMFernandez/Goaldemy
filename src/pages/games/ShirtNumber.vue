@@ -1,5 +1,5 @@
 <script>
-import AppH1 from '../../components/common/AppH1.vue'
+import GameShell from '../../components/game/GameShell.vue'
 import { getAllPlayers, getAllPlayersAsync } from '../../services/players'
 import { initScoring, onCorrect, onIncorrect } from '../../services/scoring'
 import { awardXpBatch } from '../../services/game-xp'
@@ -18,7 +18,7 @@ import { shuffleArray } from '../../services/game-common'
 
 export default {
   name: 'ShirtNumber',
-  components: { AppH1, GamePreviewModal, GameSummaryPopup, CircularTimer, StreakBadge, PowerupBar },
+  components: { GameShell, GamePreviewModal, GameSummaryPopup, CircularTimer, StreakBadge, PowerupBar },
   computed: {
     gameMetadata() { return getGameMetadata('shirt-number') }
   },
@@ -282,7 +282,14 @@ export default {
 </script>
 
 <template>
-  <section class="grid place-items-center min-h-[calc(100dvh-4rem)]">
+  <GameShell title="Número de camiseta" :backPath="backPath()">
+    <template #stat>
+      <div class="inline-flex items-center gap-2 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
+        <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Puntaje</span>
+        <span class="font-display text-white font-extrabold text-base leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
+        <StreakBadge :streak="streak" />
+      </div>
+    </template>
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="Número de camiseta"
@@ -294,17 +301,6 @@ export default {
       @start="startChallenge"
     />
     <div class="space-y-4 w-full max-w-4xl">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 w-full">
-        <AppH1 class="text-3xl md:text-4xl flex-none">Número de camiseta</AppH1>
-        <div class="flex items-center gap-2 self-stretch sm:self-auto flex-none">
-          <router-link :to="backPath()" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">← Volver</router-link>
-          <div class="rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-white/15 px-3 py-2 flex items-center gap-2 shadow-lg shadow-black/20">
-            <span class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Puntaje</span>
-            <span class="font-display text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
-            <StreakBadge :streak="streak" />
-          </div>
-        </div>
-      </div>
 
       <div v-if="loading" class="text-center text-slate-300 py-12">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
@@ -377,7 +373,7 @@ export default {
         </Transition>
       </div>
     </div>
-  </section>
+  </GameShell>
 </template>
 
 <style scoped>
