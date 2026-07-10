@@ -51,6 +51,7 @@ const LigaArgentina = () => import('../pages/leagues/LigaArgentina.vue');
 const WorldCup = () => import('../pages/leagues/WorldCup.vue');
 const TeamPage = () => import('../pages/TeamPage.vue');
 const Pricing = () => import('../pages/Pricing.vue');
+const DailyChallenge = () => import('../pages/DailyChallenge.vue');
 
 const routes = [
     { path: '/', component: Landing },
@@ -100,6 +101,8 @@ const routes = [
     { path: '/rewards', component: RewardCenter, meta: { requiresAuth: true } },
     { path: '/tienda', component: Tienda, meta: { requiresAuth: true } },
     { path: '/pricing', component: Pricing },
+    // Reto del día — funnel público sin login (entrada de marketing / streamers)
+    { path: '/reto', component: DailyChallenge },
     // 404 fallback
     { path: '/:pathMatch(.*)*', component: NotFound },
 ]

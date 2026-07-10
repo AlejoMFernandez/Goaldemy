@@ -463,6 +463,16 @@ export default {
                 </div>
 
                 <ul class="hidden lg:flex items-center gap-4 text-slate-200">
+                    <!-- Reto del día — entrada destacada (funnel público) -->
+                    <li>
+                        <RouterLink to="/reto" class="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-sm font-bold text-cyan-300 transition hover:border-cyan-300/60 hover:text-cyan-200 hover:bg-cyan-500/15">
+                            <span class="relative flex h-2 w-2">
+                                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
+                                <span class="relative inline-flex h-2 w-2 rounded-full bg-cyan-400"></span>
+                            </span>
+                            Reto del día
+                        </RouterLink>
+                    </li>
                     <!-- Play dropdown (hover) with descriptions -->
                     <li class="relative"
                         @mouseenter="onPlayEnter"
@@ -722,6 +732,15 @@ export default {
                         </li>
 
                         <!-- Nav items -->
+                        <li>
+                            <RouterLink @click="isOpen=false" to="/reto" class="flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2.5 font-bold text-cyan-300 hover:bg-cyan-500/15">
+                                <span class="relative flex h-2 w-2">
+                                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
+                                    <span class="relative inline-flex h-2 w-2 rounded-full bg-cyan-400"></span>
+                                </span>
+                                Reto del día
+                            </RouterLink>
+                        </li>
                         <li>
                             <details class="group">
                                 <summary class="cursor-pointer hover:text-white">Jugar</summary>
