@@ -447,6 +447,22 @@ export function getGameMetadata(slug) {
   }
 }
 
+// Etiqueta corta del tipo de juego, para el chip de cada card en el índice.
+const GAME_TYPE_LABELS = {
+  [GAME_TYPES.TIMED]: 'Contrarreloj',
+  [GAME_TYPES.ORDERING]: 'Ordenar',
+  [GAME_TYPES.LIVES]: 'Vidas',
+  [GAME_TYPES.WORDLE]: 'Adivinar',
+  [GAME_TYPES.CHAIN]: 'Cadena',
+  [GAME_TYPES.PUZZLE]: 'Grupos',
+  [GAME_TYPES.GRID]: 'Grilla',
+}
+
+export function getGameTypeLabel(slug) {
+  const t = getGameMetadata(slug)?.type
+  return GAME_TYPE_LABELS[t] || ''
+}
+
 // Map slug to in-app route
 export function gameRouteForSlug(slug) {
   switch ((slug || '').toString()) {

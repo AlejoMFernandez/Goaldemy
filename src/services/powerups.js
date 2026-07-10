@@ -35,6 +35,10 @@ export const POWERUP_TYPES = {
   },
 }
 
+// Las ayudas sólo se pueden usar en estos juegos (los de opción múltiple contra
+// reloj). El índice lo muestra explícito para que el usuario sepa antes de jugar.
+export const POWERUP_GAME_SLUGS = ['guess-player', 'nationality', 'player-position', 'shirt-number']
+
 export async function usePowerup(type) {
   const success = await _usePowerup(type)
   if (success) invalidatePlanCache()

@@ -1,13 +1,17 @@
 <script setup>
 import { onMounted, reactive, computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { fetchGames, gameRouteForSlug } from '../services/games'
+import { fetchGames, gameRouteForSlug, getGameTypeLabel } from '../services/games'
 import { isChallengeAvailable, fetchDailyWinStreak } from '../services/game-modes'
 import { getGameUnlockLevel, isGameUnlocked } from '../services/level-rewards'
 import { getUserLevel } from '../services/xp'
+import { POWERUP_GAME_SLUGS } from '../services/powerups'
 import DailyStreakCalendar from '../components/rewards/DailyStreakCalendar.vue'
 import DailyResetCountdown from '../components/DailyResetCountdown.vue'
+import AyudasPanel from '../components/game/AyudasPanel.vue'
 import { supabase } from '../services/supabase'
+
+const AYUDA_SLUGS = new Set(POWERUP_GAME_SLUGS)
 
 const state = reactive({
   games: [],
@@ -68,30 +72,45 @@ const totals = computed(() => {
   return { win, loss }
 })
 
+const playedCount = computed(() => Object.values(state.availability).filter(a => a?.available === false).length)
 </script>
 
 <template>
-  <section class="mx-auto max-w-4xl">
-    <div class="flex items-start justify-between gap-3 mb-4">
-      <div>
-        <h1 class="font-display text-2xl md:text-4xl font-extrabold text-white mb-1">Jugar por <span class="text-emerald-400 uppercase">PUNTOS</span></h1>
-        <p class="text-slate-300">Modo por XP: jugá <strong class="text-slate-100 font-semibold">UNA VEZ POR DÍA</strong>.</p>
-        <DailyResetCountdown class="my-4"/>
-      </div>
-      <div class="shrink-0 hidden sm:flex sm:flex-col sm:gap-2 sm:items-end">
-        <div class="rounded-xl bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-200">
-          <div class="flex items-end gap-3">
-            <div class="flex flex-col items-center gap-1" title="✓ Ganados hoy">
-              <div class="h-9 w-9 rounded-full grid place-items-center shadow-xl ring-2 ring-emerald-400/50 bg-emerald-500/20">
-                <div class="text-emerald-400 text-2xl font-extrabold leading-none">✓</div>
+  <section class="mx-auto max-w-5xl">
+    <!-- HERO inmersivo -->
+    <div class="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-5 md:p-6 mb-4">
+      <div class="pointer-events-none absolute -top-16 -right-10 w-72 h-72 rounded-full opacity-30 blur-3xl" style="background: radial-gradient(circle, rgba(16,185,129,0.35), transparent 70%);"></div>
+      <div class="pointer-events-none absolute -bottom-24 -left-12 w-72 h-72 rounded-full opacity-20 blur-3xl" style="background: radial-gradient(circle, rgba(34,211,238,0.30), transparent 70%);"></div>
+
+      <div class="relative flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 ring-1 ring-emerald-400/25 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-300 mb-3">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Modo Puntos · 1 partida por día
+          </span>
+          <h1 class="font-display text-3xl md:text-4xl font-extrabold text-white leading-tight mb-1.5">
+            Elegí tu <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">desafío</span>
+          </h1>
+          <p class="text-slate-300 text-sm md:text-base max-w-md">Cada juego, una vez al día. Ganás XP, sumás a tu racha y competís en el ranking.</p>
+          <DailyResetCountdown class="mt-4"/>
+        </div>
+
+        <div class="shrink-0 hidden sm:flex sm:flex-col sm:gap-2 sm:items-end">
+          <div class="rounded-2xl bg-slate-900/60 border border-white/15 px-3 py-2">
+            <div class="text-[10px] uppercase tracking-wider text-slate-400 text-center mb-1.5">Hoy</div>
+            <div class="flex items-end gap-3">
+              <div class="flex flex-col items-center gap-1" title="Ganados hoy">
+                <div class="h-9 w-9 rounded-full grid place-items-center shadow-xl ring-2 ring-emerald-400/50 bg-emerald-500/20">
+                  <div class="text-emerald-400 text-2xl font-extrabold leading-none">✓</div>
+                </div>
+                <div class="text-sm tabular-nums text-slate-100 font-semibold">{{ totals.win }}</div>
               </div>
-              <div class="text-m tabular-nums text-slate-100 font-semibold">{{ totals.win }}</div>
-            </div>
-            <div class="flex flex-col items-center gap-1" title="✕ Perdidos hoy">
-              <div class="h-9 w-9 rounded-full grid place-items-center shadow-xl ring-2 ring-red-400/50 bg-red-500/20">
-                <div class="text-red-400 text-2xl font-extrabold leading-none">✕</div>
+              <div class="flex flex-col items-center gap-1" title="Perdidos hoy">
+                <div class="h-9 w-9 rounded-full grid place-items-center shadow-xl ring-2 ring-red-400/50 bg-red-500/20">
+                  <div class="text-red-400 text-2xl font-extrabold leading-none">✕</div>
+                </div>
+                <div class="text-sm tabular-nums text-slate-100 font-semibold">{{ totals.loss }}</div>
               </div>
-              <div class="text-m tabular-nums text-slate-100 font-semibold">{{ totals.loss }}</div>
             </div>
           </div>
         </div>
@@ -101,9 +120,17 @@ const totals = computed(() => {
     <DailyStreakCalendar
       :currentStreak="state.dailyStreak.current"
       :bestStreak="state.dailyStreak.best"
-      :playedToday="Object.values(state.availability).some(a => a?.available === false)"
+      :playedToday="playedCount > 0"
       class="mb-4"
     />
+
+    <!-- Panel de ayudas: qué tenés y en qué juegos aplican -->
+    <AyudasPanel class="mb-5" />
+
+    <div class="flex items-center gap-2 mb-3">
+      <h2 class="font-display text-lg font-bold text-white">Todos los juegos</h2>
+      <span v-if="!state.loading" class="rounded-full bg-white/5 ring-1 ring-white/10 px-2 py-0.5 text-xs font-semibold text-slate-300 tabular-nums">{{ state.games.length }}</span>
+    </div>
 
     <div v-if="state.loading" class="flex flex-col items-center justify-center py-20 gap-4">
       <div class="h-10 w-10 rounded-full border-4 border-emerald-400/30 border-t-emerald-400 animate-spin"></div>
@@ -159,6 +186,22 @@ const totals = computed(() => {
             <div class="relative flex items-center justify-center h-36 bg-slate-800/60 overflow-hidden">
               <!-- Hover brand glow -->
               <div class="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="background: radial-gradient(60% 60% at 50% 42%, rgba(16,185,129,0.20), transparent 70%);"></div>
+
+              <!-- Chip tipo de juego -->
+              <span v-if="getGameTypeLabel(g.slug)" class="absolute top-2 left-2 z-20 rounded-md bg-slate-950/70 backdrop-blur px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-300 ring-1 ring-white/10">
+                {{ getGameTypeLabel(g.slug) }}
+              </span>
+
+              <!-- Indicador: este juego admite ayudas -->
+              <span
+                v-if="AYUDA_SLUGS.has(g.slug)"
+                class="absolute bottom-2 left-2 z-20 inline-flex items-center gap-0.5 rounded-md bg-amber-500/15 ring-1 ring-amber-400/30 px-1.5 py-0.5 text-amber-300"
+                title="Podés usar ayudas en este juego"
+              >
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span class="text-[9px] font-bold uppercase tracking-wide">Ayudas</span>
+              </span>
+
               <div
                 v-if="state.availability[g.slug]?.available === false"
                 class="absolute inset-0 flex items-center justify-center bg-black/50 z-10"
@@ -189,7 +232,9 @@ const totals = computed(() => {
               </div>
             </div>
             <div class="bg-slate-900/90 px-3 py-3 border-t border-white/5 text-center">
-              <div class="font-display font-bold text-white text-xs tracking-widest uppercase group-hover:text-emerald-300 transition-colors">JUGAR</div>
+              <div class="font-display font-bold text-white text-xs tracking-widest uppercase group-hover:text-emerald-300 transition-colors">
+                {{ state.availability[g.slug]?.available === false ? 'VER RESULTADO' : 'JUGAR' }}
+              </div>
               <div class="text-slate-400 text-xs mt-0.5 truncate">{{ g.name }}</div>
             </div>
           </RouterLink>
@@ -205,5 +250,3 @@ const totals = computed(() => {
   backdrop-filter: saturate(0) brightness(0.75);
 }
 </style>
-
-
