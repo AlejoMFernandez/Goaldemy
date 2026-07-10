@@ -21,8 +21,11 @@ const tierChanged = computed(() => oldTier.value && newTier.value && oldTier.val
 const isMilestone = computed(() => !!current.value?.milestone)
 
 const levelRewards = computed(() => current.value ? getLevelRewards(current.value.newLevel) : [])
-const unlockItems = computed(() => levelRewards.value.filter(r => r.kind !== 'xp'))
-const upcoming = computed(() => current.value ? getUpcomingRewards(current.value.newLevel, 4) : [])
+// Los COSMÉTICOS de este nivel los revela en grande el carrusel Fortnite
+// (CosmeticUnlockOverlay). Acá solo mostramos lo que ese carrusel NO cubre: juegos.
+const gameUnlocks = computed(() => levelRewards.value.filter(r => r.kind === 'game'))
+// Línea de tiempo "lo que viene": próximos hitos por nivel (cosméticos/juegos/rangos).
+const upcoming = computed(() => current.value ? getUpcomingRewards(current.value.newLevel, 5) : [])
 
 const newTierColor = computed(() => tierAccentText(newTier.value?.color))
 
@@ -60,10 +63,14 @@ function goToLevel() { clearTimers(); runLevel() }
 function showNext() {
   clearTimers()
   if (notificationsState.suppressOverlays) return
+  if (notificationsState.proWelcome) return
   if (notificationsState.achievementQueue.length > 0) {
     timers.push(setTimeout(showNext, 800))
     return
   }
+  // Prioridad: los cosméticos se revelan ANTES del nivel. Esperamos a que el
+  // carrusel termine. Los watchers de cosmeticActive/proWelcome re-disparan esto.
+  if (notificationsState.cosmeticActive || notificationsState.cosmeticQueue.length > 0) return
   const item = shiftLevelUpQueue()
   if (!item) { current.value = null; setLevelUpActive(false); return }
   current.value = item
@@ -88,6 +95,13 @@ watch(() => notificationsState.suppressOverlays, (suppressed) => {
   if (!suppressed && notificationsState.levelUpQueue.length > 0 && !current.value) {
     setTimeout(showNext, 600)
   }
+})
+// El carrusel de cosméticos terminó → recién ahora mostramos la subida de nivel.
+watch(() => notificationsState.cosmeticActive, (a) => {
+  if (!a && notificationsState.levelUpQueue.length > 0 && !current.value) setTimeout(showNext, 400)
+})
+watch(() => notificationsState.proWelcome, (pw) => {
+  if (!pw && notificationsState.levelUpQueue.length > 0 && !current.value) setTimeout(showNext, 400)
 })
 </script>
 
@@ -170,50 +184,71 @@ watch(() => notificationsState.suppressOverlays, (suppressed) => {
             </div>
           </div>
 
-          <!-- Desbloqueaste (cosméticos/juegos RENDERIZADOS) -->
-          <div v-if="lp >= 2 && unlockItems.length" class="mb-4 w-full">
-            <p class="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold mb-2">Desbloqueaste</p>
-            <div class="grid gap-2" :class="unlockItems.length === 1 ? 'grid-cols-1' : 'grid-cols-2'">
+          <!-- Desbloqueaste JUEGOS (los cosméticos los revela el carrusel grande) -->
+          <div v-if="lp >= 2 && gameUnlocks.length" class="mb-4 w-full">
+            <p class="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold mb-2">Nuevo juego desbloqueado</p>
+            <div class="grid gap-2" :class="gameUnlocks.length === 1 ? 'grid-cols-1' : 'grid-cols-2'">
               <div
-                v-for="(r, ri) in unlockItems"
-                :key="'u' + ri"
-                class="flex flex-col items-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] p-3"
+                v-for="(r, ri) in gameUnlocks"
+                :key="'g' + ri"
+                class="flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] p-2.5"
                 :style="`animation: slide-up 0.35s ease ${0.08 * ri}s both`"
               >
-                <div class="h-12 grid place-items-center">
-                  <PassCosmetic v-if="isCos(r.kind)" :cos="cosObj(r)" :size="46" />
-                  <img v-else-if="r.kind === 'game'" :src="`/games/${r.slug}.svg`" class="w-11 h-11 object-contain" alt="" />
-                  <img v-else-if="r.kind === 'tier'" :src="r.image" class="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(251,191,36,0.4)]" alt="" />
-                  <span v-else class="text-2xl">🎁</span>
-                </div>
-                <div class="text-[9px] uppercase tracking-wider text-emerald-400/80 font-semibold">{{ typeLabelOf(r) }}</div>
-                <div class="text-xs font-bold text-white leading-tight">{{ r.name || r.label }}</div>
+                <img :src="`/games/${r.slug}.svg`" class="w-9 h-9 object-contain shrink-0" alt="" />
+                <div class="text-xs font-bold text-white leading-tight text-left">{{ r.name || r.label }}</div>
               </div>
             </div>
           </div>
 
-          <!-- Lo que viene (visual, motiva a seguir) -->
+          <!-- ═══ LO QUE VIENE · línea de tiempo por nivel ═══ -->
           <div v-if="lp >= 2 && upcoming.length" class="mb-5 w-full">
-            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-2">Lo que viene — seguí jugando</p>
-            <div class="flex flex-wrap items-start justify-center gap-3">
-              <div
-                v-for="(r, ri) in upcoming"
-                :key="'up' + ri"
-                class="flex flex-col items-center gap-1 w-16"
-                :style="`animation: slide-up 0.35s ease ${0.25 + 0.08 * ri}s both`"
-              >
-                <div class="relative">
-                  <div class="opacity-70">
-                    <PassCosmetic v-if="isCos(r.kind)" :cos="cosObj(r)" :size="40" />
-                    <img v-else-if="r.kind === 'game'" :src="`/games/${r.slug}.svg`" class="w-10 h-10 object-contain" alt="" />
-                    <img v-else-if="r.kind === 'tier'" :src="r.image" class="w-10 h-10 object-contain" alt="" />
-                    <span v-else class="text-xl">🎁</span>
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-3">Lo que viene — seguí subiendo</p>
+            <div class="relative px-1">
+              <!-- Riel base + tramo ya conquistado (emerald) que se desvanece hacia lo bloqueado -->
+              <div class="absolute top-[22px] left-3 right-3 h-[3px] rounded-full bg-white/10"></div>
+              <div class="absolute top-[22px] left-3 h-[3px] w-10 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-400/0"></div>
+              <div class="relative flex items-start justify-between">
+                <div
+                  v-for="(r, ri) in upcoming"
+                  :key="'up' + ri"
+                  class="group relative z-10 flex flex-col items-center gap-1.5"
+                  style="width: 19%"
+                  :style="`animation: slide-up 0.35s ease ${0.2 + 0.07 * ri}s both`"
+                >
+                  <!-- Nodo bloqueado -->
+                  <div class="relative">
+                    <div class="w-11 h-11 rounded-xl grid place-items-center bg-slate-800/90 border border-white/10 ring-2 ring-slate-900">
+                      <div class="opacity-55 grayscale">
+                        <PassCosmetic v-if="isCos(r.kind)" :cos="cosObj(r)" :size="32" />
+                        <img v-else-if="r.kind === 'game'" :src="`/games/${r.slug}.svg`" class="w-7 h-7 object-contain" alt="" />
+                        <img v-else-if="r.kind === 'tier'" :src="r.image" class="w-8 h-8 object-contain" alt="" />
+                        <span v-else class="text-lg">🎁</span>
+                      </div>
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 grid place-items-center w-4 h-4 rounded-full bg-slate-900 ring-1 ring-white/10">
+                      <svg class="w-2.5 h-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75M6.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                    </div>
+
+                    <!-- Hover: preview grande y claro del cosmético bloqueado -->
+                    <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 w-40 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150">
+                      <div class="rounded-xl bg-slate-950/95 border border-white/15 shadow-xl p-3 flex flex-col items-center gap-2">
+                        <div class="grid place-items-center h-14">
+                          <PassCosmetic v-if="isCos(r.kind)" :cos="cosObj(r)" :size="54" />
+                          <img v-else-if="r.kind === 'game'" :src="`/games/${r.slug}.svg`" class="w-12 h-12 object-contain" alt="" />
+                          <img v-else-if="r.kind === 'tier'" :src="r.image" class="w-12 h-12 object-contain" alt="" />
+                          <span v-else class="text-3xl">🎁</span>
+                        </div>
+                        <div class="text-center">
+                          <div class="text-[9px] uppercase tracking-wide text-slate-400">{{ typeLabelOf(r) }}</div>
+                          <div class="text-sm font-bold text-white leading-tight">{{ r.name || r.label }}</div>
+                          <div class="text-[11px] font-semibold text-emerald-300 mt-0.5">Se desbloquea en nivel {{ r.level }}</div>
+                        </div>
+                      </div>
+                      <div class="w-2.5 h-2.5 bg-slate-950 border-r border-b border-white/15 rotate-45 mx-auto -mt-[6px]"></div>
+                    </div>
                   </div>
-                  <div class="absolute -bottom-1 -right-1 grid place-items-center w-4 h-4 rounded-full bg-slate-800 ring-1 ring-white/10">
-                    <svg class="w-2.5 h-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75M6.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
-                  </div>
+                  <div class="text-[9px] font-bold text-slate-500">Niv {{ r.level }}</div>
                 </div>
-                <div class="text-[9px] font-bold text-slate-500">Niv {{ r.level }}</div>
               </div>
             </div>
           </div>

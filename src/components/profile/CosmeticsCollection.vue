@@ -224,8 +224,7 @@ onMounted(load)
                 <!-- Popup (nombre, cómo, y la gema en una esquina) -->
                 <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 w-44 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                   <div class="relative rounded-lg bg-slate-950/95 border border-white/15 shadow-xl px-3 py-2 text-center">
-                    <span class="absolute top-1.5 right-1.5"><RarityGem :rarity="c.rarity" :size="13" /></span>
-                    <div class="font-bold text-white text-xs leading-tight truncate pr-3">{{ displayName(c) }}</div>
+                    <div class="font-bold text-white text-xs leading-tight truncate">{{ displayName(c) }}</div>
                     <div class="text-[10px] text-slate-300 mt-1 leading-snug"><span class="text-slate-500">{{ c.owned ? 'Conseguido: ' : 'Cómo conseguir: ' }}</span>{{ requirement(c) }}</div>
                   </div>
                   <div class="w-2.5 h-2.5 bg-slate-950 border-r border-b border-white/15 rotate-45 mx-auto -mt-[6px]"></div>
@@ -233,26 +232,32 @@ onMounted(load)
               </button>
             </div>
 
-            <!-- ═══ BORDES: más aire, nombre + nivel a la vista (sin hover) ═══ -->
-            <div v-else-if="activeTab === 'frame'" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <!-- ═══ BORDES: como los íconos — borde SOLO + gema + hover informativo ═══ -->
+            <div v-else-if="activeTab === 'frame'" class="grid grid-cols-3 sm:grid-cols-4 xl:grid-cols-5 gap-x-2.5 gap-y-4">
               <button v-for="c in sec.items" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
-                      class="relative rounded-2xl border p-4 flex flex-col items-center gap-2.5 transition"
-                      :class="[ c.owned ? 'cursor-pointer hover:brightness-110 hover:border-white/25' : 'cursor-not-allowed opacity-80', c.equipped ? 'border-emerald-400/60 bg-emerald-500/[0.06]' : (c.premium_only ? 'border-amber-400/50 bg-amber-500/[0.04]' : 'border-white/10 bg-slate-900/40') ]">
-                <div class="size-16 rounded-2xl" :class="[frameStyle(c.style_key).wrap, frameStyle(c.style_key).pad, c.premium_only ? 'anim-pan' : '', !c.owned ? 'grayscale opacity-60' : '']">
-                  <div class="w-full h-full rounded-[13px] bg-gradient-to-br from-slate-700 to-slate-900 grid place-items-center">
-                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7 text-slate-500"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z"/></svg>
-                  </div>
+                      class="relative group aspect-square rounded-xl grid place-items-center bg-slate-900/40 transition hover:z-30"
+                      :class="[ c.owned ? 'cursor-pointer hover:brightness-110' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : (c.premium_only ? 'ring-2 ring-amber-400/70' : 'ring-1 ring-white/5') ]">
+                <!-- Borde solo, alrededor de un disco liso (sin persona/emoji adentro) -->
+                <div class="size-[64%] rounded-full" :class="[frameStyle(c.style_key).wrap, frameStyle(c.style_key).pad, c.premium_only ? 'anim-pan' : '', !c.owned ? 'grayscale opacity-45' : '']">
+                  <div class="w-full h-full rounded-full bg-gradient-to-br from-slate-700 to-slate-900"></div>
                 </div>
-                <div class="text-center min-w-0">
-                  <div class="text-sm font-bold text-white truncate max-w-[130px]">{{ c.name }}</div>
-                  <div class="text-[11px] font-semibold mt-0.5" :class="c.equipped ? 'text-emerald-400' : (c.owned ? 'text-slate-500' : 'text-amber-300/80')">
-                    {{ c.equipped ? 'Equipado' : (c.owned ? 'Disponible' : shortReq(c)) }}
-                  </div>
-                </div>
-                <span v-if="c.premium_only" class="absolute top-2 right-2 px-1 rounded bg-amber-400 text-[8px] font-extrabold text-amber-950">PRO</span>
-                <span v-if="!c.owned" class="absolute top-2 left-2 grid place-items-center size-5 rounded-full bg-slate-950/85 text-slate-200">
-                  <svg viewBox="0 0 24 24" fill="currentColor" class="size-3"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 1 1 6 0v3z"/></svg>
+                <span v-if="c.premium_only" class="absolute top-0.5 right-0.5 z-10 px-1 rounded bg-amber-400 text-[7px] font-extrabold text-amber-950">PRO</span>
+                <span v-if="!c.owned" class="absolute top-0.5 left-0.5 z-10 grid place-items-center size-4 rounded-full bg-slate-950/85 text-slate-200">
+                  <svg viewBox="0 0 24 24" fill="currentColor" class="size-2.5"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 1 1 6 0v3z"/></svg>
                 </span>
+                <span v-else-if="c.equipped" class="absolute top-0.5 right-0.5 z-10 grid place-items-center size-4 rounded-full bg-emerald-500 text-white shadow">
+                  <svg viewBox="0 0 24 24" fill="currentColor" class="size-2.5"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </span>
+                <!-- Gema de rareza: abajo-centro (la rareza va acá, no en el hover) -->
+                <span class="absolute left-1/2 -translate-x-1/2 -bottom-2 z-10 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"><RarityGem :rarity="c.rarity" :size="16" /></span>
+                <!-- Popup informativo: título centrado, sin rareza -->
+                <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 w-44 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                  <div class="relative rounded-lg bg-slate-950/95 border border-white/15 shadow-xl px-3 py-2 text-center">
+                    <div class="font-bold text-white text-xs leading-tight truncate">{{ displayName(c) }}</div>
+                    <div class="text-[10px] text-slate-300 mt-1 leading-snug"><span class="text-slate-500">{{ c.owned ? 'Conseguido: ' : 'Cómo conseguir: ' }}</span>{{ requirement(c) }}</div>
+                  </div>
+                  <div class="w-2.5 h-2.5 bg-slate-950 border-r border-b border-white/15 rotate-45 mx-auto -mt-[6px]"></div>
+                </div>
               </button>
             </div>
 
@@ -275,11 +280,10 @@ onMounted(load)
                 <span v-else-if="c.equipped" class="absolute bottom-1.5 right-1.5 z-10 grid place-items-center size-5 rounded-full bg-emerald-500 text-white shadow-lg">
                   <svg viewBox="0 0 24 24" fill="currentColor" class="size-3.5"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                 </span>
-                <!-- Popup (como los íconos) -->
+                <!-- Popup (como los íconos): título centrado, sin rareza -->
                 <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 w-44 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                   <div class="relative rounded-lg bg-slate-950/95 border border-white/15 shadow-xl px-3 py-2 text-center">
-                    <span class="absolute top-1.5 right-1.5"><RarityGem :rarity="c.rarity" :size="13" /></span>
-                    <div class="font-bold text-white text-xs leading-tight truncate pr-3">{{ displayName(c) }}</div>
+                    <div class="font-bold text-white text-xs leading-tight truncate">{{ displayName(c) }}</div>
                     <div class="text-[10px] text-slate-300 mt-1 leading-snug"><span class="text-slate-500">{{ c.owned ? 'Conseguido: ' : 'Cómo conseguir: ' }}</span>{{ requirement(c) }}</div>
                   </div>
                   <div class="w-2.5 h-2.5 bg-slate-950 border-r border-b border-white/15 rotate-45 mx-auto -mt-[6px]"></div>

@@ -42,14 +42,32 @@ export function invalidatePlanCache() {
   _planCacheTime = 0
 }
 
+/**
+ * Plan de CUALQUIER usuario (para el badge PRO/Legend en su perfil).
+ * Solo lectura (RPC get_plan_badge). Devuelve { plan, name }.
+ * Requiere supabase/mejoras13-plan-badge.sql.
+ */
+export async function getPlanBadge(userId) {
+  if (!userId) return { plan: 'free', name: 'Free' }
+  const { data, error } = await supabase.rpc('get_plan_badge', { p_user_id: userId })
+  if (error) {
+    console.warn('[premium] get_plan_badge:', error.message)
+    return { plan: 'free', name: 'Free' }
+  }
+  return data || { plan: 'free', name: 'Free' }
+}
+
 export async function getXpMultiplier() {
   const plan = await getUserPlan()
   return plan.xpMultiplier ?? 1.0
 }
 
 export async function getDailyChallengeLimit() {
-  const plan = await getUserPlan()
-  return plan.dailyChallengesPerGame ?? 1
+  // 1 intento por juego por día para TODOS los planes. El multi-play PRO se
+  // retiró a propósito: el desafío diario debe ser único para que el ranking
+  // y las rachas sean justos. (El campo dailyChallengesPerGame del plan queda
+  // en la DB por compatibilidad, pero ya no habilita intentos extra.)
+  return 1
 }
 
 export async function getPowerupCounts() {

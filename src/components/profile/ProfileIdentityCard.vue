@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { getTierForLevel, getNextTier, tierAccentText } from '../../services/tiers'
 import { computeLevelProgress } from '../../services/xp'
 import { frameStyle, iconBgStyle, iconThemeBg, rarity } from '../../services/cosmetics'
+import { planStyle } from '../../services/plans-ui'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 import LevelProgressionModal from './LevelProgressionModal.vue'
 import countryNames from '../../codeCOUNTRYS.json'
@@ -20,6 +21,7 @@ const props = defineProps({
   iconGlyph: { type: String, default: '' },
   iconBgKey: { type: String, default: 'emerald' },
   framePremium: { type: Boolean, default: false },
+  planSlug: { type: String, default: 'free' },
   levelInfo: { type: Object, default: null },
   progressPercent: { type: Number, default: 0 },
   xpNow: { type: Number, default: 0 },
@@ -49,6 +51,11 @@ const countryName = computed(() => {
 })
 
 const accentText = computed(() => tierAccentText(currentTier.value?.color))
+
+// Badge de plan pago (PRO / Legend) para verlo de un vistazo en el perfil.
+const isPaidPlan = computed(() => props.planSlug === 'pro' || props.planSlug === 'legend')
+const planLabel = computed(() => props.planSlug === 'legend' ? 'Legend' : 'PRO')
+const planChip = computed(() => planStyle(props.planSlug))
 
 // Color del badge de ranking por puesto: 1 oro, 2 plata, 3 bronce, 4+ neutral (todos iguales).
 const RANK_STYLE = {
@@ -85,6 +92,14 @@ const showProgression = ref(false)
         {{ displayName }}
         <img v-if="nationalityCode" :src="`https://flagcdn.com/w20/${nationalityCode}.png`" width="20" height="14" class="rounded ring-1 ring-white/10" :alt="countryName" />
       </h2>
+      <!-- Badge de plan pago: se nota de una si tiene PRO / Legend -->
+      <div v-if="isPaidPlan" class="mt-1.5">
+        <span class="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider"
+              :class="[planChip.badge, planChip.glow]">
+          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          {{ planLabel }}
+        </span>
+      </div>
       <p v-if="titleText" class="text-sm font-bold mt-0.5" :class="titlePremium ? 'title-premium-anim' : rarity(titleRarity).text">{{ titleText }}</p>
     </div>
 

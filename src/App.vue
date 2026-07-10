@@ -8,6 +8,7 @@ import BrandedBackground from './components/BrandedBackground.vue';
 import AchievementUnlockOverlay from './components/rewards/AchievementUnlockOverlay.vue';
 import LevelUpOverlay from './components/rewards/LevelUpOverlay.vue';
 import CosmeticUnlockOverlay from './components/rewards/CosmeticUnlockOverlay.vue';
+import ProWelcomeOverlay from './components/rewards/ProWelcomeOverlay.vue';
 import ClaimNotificationStack from './components/rewards/ClaimNotificationStack.vue';
 import { authReady } from './services/auth';
 import { setSuppressOverlays } from './stores/notifications';
@@ -26,6 +27,7 @@ export default {
     AchievementUnlockOverlay,
     LevelUpOverlay,
     CosmeticUnlockOverlay,
+    ProWelcomeOverlay,
     ClaimNotificationStack,
   },
   data() {
@@ -58,7 +60,16 @@ export default {
     this._mqlSidebar.addEventListener('change', this._onMq)
     try { await authReady; } finally { this.authBooting = false }
     import('./services/players').then(m => m.initializePlayers?.()).catch(() => {})
+    // Bienvenida PRO ANTES de la lluvia de cosméticos: si el usuario recién se hizo
+    // PRO, primero ve el popup de beneficios y recién al cerrarlo se destapan los cosméticos.
+    try {
+      const notif = await import('./stores/notifications')
+      await notif.maybeShowProWelcome?.()
+    } catch {}
     import('./services/cosmetics').then(m => m.checkCosmeticUnlocks?.()).catch(() => {})
+    // Reto del día: si el usuario venía de jugar como invitado y ahora está logueado,
+    // otorgar de verdad la XP + Fichas que se le mostraron (cierra el loop del funnel).
+    import('./services/daily-reto').then(m => m.claimPendingRetoReward?.()).catch(() => {})
     installPresence()
     this.$watch(() => this.$route?.path, (path) => {
       setSuppressOverlays(false)
@@ -93,6 +104,7 @@ export default {
     <AchievementUnlockOverlay />
     <LevelUpOverlay />
     <CosmeticUnlockOverlay />
+    <ProWelcomeOverlay />
     <ClaimNotificationStack />
     <FriendsDock v-if="!isAuthLayout" />
   </div>

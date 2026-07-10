@@ -3,6 +3,7 @@
 import { computed } from 'vue'
 import { rarity as rarityMeta } from '../../services/cosmetics'
 import PassCosmetic from '../rewards/PassCosmetic.vue'
+import CurrencyIcon from './CurrencyIcon.vue'
 
 const props = defineProps({
   it: { type: Object, required: true },
@@ -34,17 +35,17 @@ const nf = (n) => new Intl.NumberFormat('es-AR').format(n || 0)
         v-if="it.price_fichas != null"
         @click="emit('buy', 'fichas')"
         :disabled="!affordFichas"
-        class="w-full rounded-lg text-xs font-bold py-2 transition bg-gradient-to-r from-emerald-500/90 to-cyan-600/90 hover:from-emerald-500 hover:to-cyan-600 text-white disabled:opacity-40 disabled:cursor-not-allowed"
+        class="w-full rounded-lg text-xs font-bold py-2 transition bg-gradient-to-r from-emerald-500/90 to-cyan-600/90 hover:from-emerald-500 hover:to-cyan-600 text-white disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1.5"
       >
-        ⚽ {{ nf(it.price_fichas) }}
+        <CurrencyIcon type="fichas" :size="16" /> {{ nf(it.price_fichas) }}
       </button>
       <button
         v-if="it.price_balones != null"
         @click="emit('buy', 'balones')"
         :disabled="!affordBalones"
-        class="w-full rounded-lg text-xs font-bold py-2 transition bg-gradient-to-r from-amber-500/90 to-yellow-600/90 hover:from-amber-500 hover:to-yellow-600 text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed"
+        class="w-full rounded-lg text-xs font-bold py-2 transition bg-gradient-to-r from-amber-500/90 to-yellow-600/90 hover:from-amber-500 hover:to-yellow-600 text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1.5"
       >
-        🏆 {{ nf(it.price_balones) }}
+        <CurrencyIcon type="balones" :size="16" /> {{ nf(it.price_balones) }}
       </button>
     </div>
   </div>

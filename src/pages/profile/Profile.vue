@@ -18,6 +18,7 @@ import LoadoutShowcase from '../../components/profile/LoadoutShowcase.vue';
 import ProfileIdentityCard from '../../components/profile/ProfileIdentityCard.vue';
 import { findTeamByName, findPlayerByName } from '../../services/players';
 import { getEquippedCosmetics, bannerStyle } from '../../services/cosmetics';
+import { getPlanBadge } from '../../services/premium';
 import { listConnections } from '../../services/connections';
 import { getPublicProfilesByIds } from '../../services/user-profiles';
 
@@ -46,6 +47,7 @@ export default {
       equippedFramePremium: false,
       equippedTitlePremium: false,
       equippedBannerPremium: false,
+      viewedPlanSlug: 'free',
       levelLoading: false,
       achievements: [],
       achLoading: false,
@@ -187,6 +189,7 @@ export default {
         this.equippedFramePremium = eq.framePremium
         this.equippedTitlePremium = eq.titlePremium
         this.equippedBannerPremium = eq.bannerPremium
+        try { this.viewedPlanSlug = (await getPlanBadge(userId)).plan || 'free' } catch { this.viewedPlanSlug = 'free' }
       } catch (e) {
         console.error('[Profile.vue] getPublicProfile exception:', e)
         this.user = { id: userId }
@@ -382,6 +385,7 @@ export default {
           :icon-glyph="equippedIconGlyph"
           :icon-bg-key="equippedIconBg"
           :frame-premium="equippedFramePremium"
+          :plan-slug="viewedPlanSlug"
           :level-info="levelInfo"
           :progress-percent="progressPercent"
           :xp-now="xpNow"

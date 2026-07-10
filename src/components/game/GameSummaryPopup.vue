@@ -2,6 +2,8 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { soundManager } from '@/services/sounds'
 import { setSuppressOverlays, notificationsState, shiftAchievementQueue } from '@/stores/notifications'
+import { friendlyNameForSlug } from '@/services/games'
+import { buildShareText, shareOrCopy } from '@/services/share'
 
 export default {
   name: 'GameSummaryPopup',
@@ -23,6 +25,7 @@ export default {
     backPath: { type: String, default: '/play/points' },
     xpEarned: { type: Number, default: 0 },
     difficulty: { type: String, default: 'normal' },
+    gameName: { type: String, default: '' },
   },
   emits: ['close'],
   setup(props) {
@@ -74,6 +77,51 @@ export default {
 
     const xpGained = computed(() => Math.max(0, (props.xpAfterTotal - props.xpBeforeTotal) || 0))
     const didLevelUp = computed(() => (props.levelAfter || 0) > (props.levelBefore || 0))
+
+    // XP real otorgado (con multiplicador PRO) = delta del total. El prop xpEarned
+    // es el XP BASE del juego (sin bonus). El bonus PRO es la diferencia. Antes el
+    // popup mostraba el base en el badge y el boosted en el headline → parecía un
+    // desajuste (375 vs 300). Ahora mostramos el total y desglosamos el bonus.
+    const baseXp = computed(() => Math.max(0, props.xpEarned || 0))
+    const totalXp = computed(() => xpGained.value > 0 ? xpGained.value : baseXp.value)
+    const bonusXp = computed(() =>
+      (xpGained.value > 0 && baseXp.value > 0) ? Math.max(0, xpGained.value - baseXp.value) : 0
+    )
+    const hasProBonus = computed(() => bonusXp.value > 0)
+
+    // --- Compartir resultado (efecto Wordle) -------------------------------
+    // Genera un texto listo para pegar en X / WhatsApp / IG. NO revela respuestas:
+    // solo una barra de emojis con el puntaje + el link a Goaldemy. Este es el
+    // motor viral de la app (cada jugador se vuelve un cartel gratis).
+    const shared = ref(false)
+
+    // Nombre del juego: usa el prop si vino, si no lo deriva del slug de la ruta (/games/<slug>)
+    function currentGameName() {
+      let display = props.gameName
+      if (!display) {
+        try {
+          const m = (window.location?.pathname || '').match(/\/games\/([a-z0-9-]+)/i)
+          if (m) display = friendlyNameForSlug(m[1])
+        } catch {}
+      }
+      return display || ''
+    }
+
+    async function onShare() {
+      const text = buildShareText({
+        gameName: currentGameName(),
+        corrects: props.corrects,
+        total: props.winThreshold,
+        accuracy: accuracy.value,
+        maxStreak: props.maxStreak,
+        won: won.value,
+      })
+      const result = await shareOrCopy(text)
+      if (result === 'copied') {
+        shared.value = true
+        setTimeout(() => { shared.value = false }, 2200)
+      }
+    }
 
     function animateCount(target, setter, duration = 600) {
       const start = performance.now()
@@ -165,7 +213,9 @@ export default {
       phase, won, animatedCorrects, animatedStreak, animatedXp,
       starsRevealed, starCount, accuracy, xpBarWidth,
       showActions, difficultyLabel, difficultyColor, xpGained,
+      baseXp, totalXp, bonusXp, hasProBonus,
       didLevelUp, sessionAchievements,
+      shared, onShare,
     }
   }
 }
@@ -305,7 +355,11 @@ export default {
                   </template>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span v-if="xpEarned > 0" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/20 rounded-full px-1.5 py-0.5">+{{ xpEarned }} XP</span>
+                  <span v-if="totalXp > 0" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/20 rounded-full px-1.5 py-0.5">+{{ totalXp }} XP</span>
+                  <span v-if="hasProBonus" class="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-300 bg-amber-500/15 border border-amber-500/30 rounded-full px-1.5 py-0.5">
+                    <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    +{{ bonusXp }} PRO
+                  </span>
                   <span v-if="xpToNextAfter != null" class="text-[10px] text-slate-500">
                     {{ xpToNextAfter }} XP para nivel {{ (levelAfter || levelBefore || 0) + (didLevelUp ? 0 : 1) }}
                   </span>
@@ -356,21 +410,47 @@ export default {
 
             <!-- Phase 5: Actions -->
             <div
-              class="flex gap-3 pt-1 transition-all duration-400"
+              class="pt-1 space-y-3 transition-all duration-400"
               :class="showActions ? 'opacity-100' : 'opacity-0 translate-y-4'"
             >
+              <!-- Compartir: protagonista (motor viral) -->
               <button
-                @click="$emit('close')"
-                class="flex-1 rounded-xl border border-white/15 hover:bg-white/5 text-slate-300 py-2.5 text-sm font-semibold transition"
+                @click="onShare"
+                :class="[
+                  'w-full rounded-xl py-2.5 text-sm font-bold transition flex items-center justify-center gap-2 shadow-lg',
+                  shared
+                    ? 'bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 shadow-emerald-500/10'
+                    : 'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 text-white shadow-emerald-500/25'
+                ]"
               >
-                Cerrar
+                <template v-if="shared">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  ¡Copiado! Pegalo donde quieras
+                </template>
+                <template v-else>
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  Compartir mi resultado
+                </template>
               </button>
-              <router-link
-                :to="backPath"
-                class="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 text-white py-2.5 text-sm font-bold transition text-center shadow-lg shadow-emerald-500/20"
-              >
-                Volver a juegos
-              </router-link>
+
+              <div class="flex gap-3">
+                <button
+                  @click="$emit('close')"
+                  class="flex-1 rounded-xl border border-white/15 hover:bg-white/5 text-slate-300 py-2.5 text-sm font-semibold transition"
+                >
+                  Cerrar
+                </button>
+                <router-link
+                  :to="backPath"
+                  class="flex-1 rounded-xl border border-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 py-2.5 text-sm font-bold transition text-center"
+                >
+                  Volver a juegos
+                </router-link>
+              </div>
             </div>
           </div>
         </div>

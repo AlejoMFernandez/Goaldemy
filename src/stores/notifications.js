@@ -9,7 +9,9 @@ const state = reactive({
   cosmeticQueue: [],
   pendingRewards: [],
   suppressOverlays: false,
-  levelUpActive: false,   // hay una escena de nivel/rango en pantalla (la escena de cosmético espera a que termine)
+  levelUpActive: false,   // hay una escena de nivel/rango en pantalla
+  cosmeticActive: false,  // hay un carrusel de cosméticos en pantalla → la subida de nivel espera a que termine
+  proWelcome: null,       // { plan, planName } → popup de bienvenida PRO (gatea los desbloqueables hasta cerrarlo)
   claimNotifications: [],
 })
 
@@ -238,6 +240,35 @@ export function pushLevelUpToast({ level, oldLevel }) {
 
 export function setSuppressOverlays(val) { state.suppressOverlays = !!val }
 export function setLevelUpActive(val) { state.levelUpActive = !!val }
+export function setCosmeticActive(val) { state.cosmeticActive = !!val }
+
+// ── Bienvenida PRO ──
+// Se muestra UNA vez, la primera vez que detectamos plan pago (guard por usuario).
+// Mientras está activo, la escena de cosméticos espera (ver CosmeticUnlockOverlay).
+export function clearProWelcome() { state.proWelcome = null }
+
+export async function maybeShowProWelcome() {
+  try {
+    const { getAuthUser } = await import('../services/auth')
+    const { id } = getAuthUser() || {}
+    if (!id) return
+    const key = `gl:pro_welcome_seen:${id}`
+    if (localStorage.getItem(key)) return
+
+    const { getUserPlan } = await import('../services/premium')
+    const plan = await getUserPlan()
+    if (!plan || plan.plan === 'free') return   // solo PRO / Legend
+
+    state.proWelcome = {
+      plan: plan.plan,
+      planName: plan.planName || 'PRO',
+      xpMultiplier: plan.xpMultiplier ?? 1,
+      dailyPowerups: plan.dailyPowerups ?? 0,
+      weeklyStreakProtectors: plan.weeklyStreakProtectors ?? 0,
+    }
+    // El guard se setea al CERRAR el popup (así si recarga sin cerrarlo, reaparece).
+  } catch {}
+}
 
 export { state as notificationsState, remove as removeNotification }
 
