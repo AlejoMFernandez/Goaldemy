@@ -1,5 +1,5 @@
 <script>
-import AppH1 from '../../components/common/AppH1.vue'
+import GameShell from '../../components/game/GameShell.vue'
 import { getAllPlayersAsync, sampleDistinct } from '../../services/players'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
 import { initScoring } from '../../services/scoring'
@@ -14,7 +14,7 @@ import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 
 export default {
   name: 'ValueOrder',
-  components: { AppH1, GamePreviewModal, GameSummaryPopup },
+  components: { GameShell, GamePreviewModal, GameSummaryPopup },
   computed: {
     gameMetadata() { return getGameMetadata('value-order') }
   },
@@ -253,7 +253,13 @@ export default {
 </script>
 
 <template>
-  <section class="grid place-items-center min-h-[calc(100dvh-4rem)]">
+  <GameShell title="Valor de mercado" :backPath="backPath()">
+    <template #stat>
+      <div class="inline-flex items-center gap-2 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
+        <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Puntaje</span>
+        <span class="font-display text-white font-extrabold text-base leading-none">{{ score }}/100</span>
+      </div>
+    </template>
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="Valor de mercado"
@@ -266,16 +272,6 @@ export default {
       @start="startChallenge"
     />
     <div class="space-y-4 w-full max-w-2xl">
-      <div class="flex items-center justify-between">
-        <AppH1 class="text-2xl md:text-3xl">Valor de mercado</AppH1>
-        <div class="flex items-center gap-2">
-          <router-link :to="backPath()" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">← Volver</router-link>
-          <div class="rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-white/15 px-3 py-2 flex items-center gap-2 shadow-lg shadow-black/20">
-            <span class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Puntaje</span>
-            <span class="font-display text-white font-extrabold text-lg leading-none">{{ score }}/100</span>
-          </div>
-        </div>
-      </div>
 
       <div class="relative card p-4 sm:p-6 ring-1 ring-white/5" ref="confettiHost">
         <div class="flex items-center justify-between text-[11px] text-slate-400 mb-2 px-1">
@@ -357,7 +353,7 @@ export default {
         />
       </div>
     </div>
-  </section>
+  </GameShell>
 </template>
 
 <style scoped>

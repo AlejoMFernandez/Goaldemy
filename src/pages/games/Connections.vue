@@ -1,5 +1,5 @@
 <script>
-import AppH1 from '../../components/common/AppH1.vue'
+import GameShell from '../../components/game/GameShell.vue'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 import { getAllPlayersAsync } from '../../services/players'
@@ -127,7 +127,7 @@ function generateGroups(allPlayers, rng) {
 
 export default {
   name: 'Connections',
-  components: { AppH1, GamePreviewModal, GameSummaryPopup },
+  components: { GameShell, GamePreviewModal, GameSummaryPopup },
   computed: {
     gameMetadata() { return getGameMetadata('connections') },
     selectedCount() { return this.selected.size },
@@ -358,7 +358,7 @@ export default {
 </script>
 
 <template>
-  <section class="grid place-items-center min-h-[calc(100dvh-4rem)]">
+  <GameShell title="Conexiones" :backPath="backPath()">
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="Conexiones"
@@ -371,12 +371,6 @@ export default {
       @start="startChallenge"
     />
     <div class="space-y-3 w-full max-w-lg sm:max-w-xl">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 w-full">
-        <AppH1 class="text-3xl md:text-4xl flex-none">Conexiones</AppH1>
-        <div class="flex items-center gap-2 self-stretch sm:self-auto flex-none">
-          <router-link :to="backPath()" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">&larr; Volver</router-link>
-        </div>
-      </div>
 
       <div v-if="loading" class="text-center text-slate-300 py-12">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
@@ -493,7 +487,7 @@ export default {
         />
       </div>
     </div>
-  </section>
+  </GameShell>
 </template>
 
 <style scoped>

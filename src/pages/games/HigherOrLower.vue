@@ -1,5 +1,5 @@
 <script>
-import AppH1 from '../../components/common/AppH1.vue'
+import GameShell from '../../components/game/GameShell.vue'
 import { getAllPlayersAsync, sampleDistinct } from '../../services/players'
 import { initScoring } from '../../services/scoring'
 import { awardXpBatch } from '../../services/game-xp'
@@ -33,7 +33,7 @@ function formatStat(key, value) {
 
 export default {
   name: 'HigherOrLower',
-  components: { AppH1, GamePreviewModal, GameSummaryPopup, StreakBadge },
+  components: { GameShell, GamePreviewModal, GameSummaryPopup, StreakBadge },
   computed: {
     gameMetadata() { return getGameMetadata('higher-or-lower') },
     target() { return this.difficultyConfig?.target || 12 },
@@ -299,7 +299,14 @@ export default {
 </script>
 
 <template>
-  <section class="grid place-items-center min-h-[calc(100dvh-4rem)]">
+  <GameShell title="Mayor o Menor" :backPath="backPath()">
+    <template #stat>
+      <div class="inline-flex items-center gap-2 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
+        <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Cadena</span>
+        <span class="font-display text-white font-extrabold text-base leading-none whitespace-nowrap">{{ chain }}/{{ target }}</span>
+        <StreakBadge :streak="chain" />
+      </div>
+    </template>
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameType="chain"
@@ -312,17 +319,6 @@ export default {
       @start="startChallenge"
     />
     <div class="space-y-4 w-full max-w-3xl">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 w-full">
-        <AppH1 class="text-3xl md:text-4xl flex-none">Mayor o Menor</AppH1>
-        <div class="flex items-center gap-2 self-stretch sm:self-auto flex-none">
-          <router-link :to="backPath()" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">← Volver</router-link>
-          <div class="rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-white/15 px-3 py-2 flex items-center gap-2 shadow-lg shadow-black/20">
-            <span class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Cadena</span>
-            <span class="font-display text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ chain }}/{{ target }}</span>
-            <StreakBadge :streak="chain" />
-          </div>
-        </div>
-      </div>
 
       <div v-if="loading" class="text-center text-slate-300 py-12">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
@@ -422,7 +418,7 @@ export default {
         />
       </div>
     </div>
-  </section>
+  </GameShell>
 </template>
 
 <style scoped>
