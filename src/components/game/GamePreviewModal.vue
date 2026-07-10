@@ -1,5 +1,5 @@
 <script>
-import { ref, computed, onUnmounted } from 'vue';
+import { ref, computed, onUnmounted, watch } from 'vue';
 import { GAME_TYPES } from '@/services/game-celebrations';
 import { DIFFICULTY_LEVELS, getDifficultyConfig } from '@/services/games';
 import { soundManager } from '@/services/sounds';
@@ -63,7 +63,28 @@ export default {
       }, 800);
     }
 
-    onUnmounted(() => { if (cdTimer) clearInterval(cdTimer); });
+    // Fix scroll pre-juego: mientras el popup está abierto, bloqueamos el scroll
+    // del body para que el índice de atrás NO se mueva. Antes, al scrollear dentro
+    // del popup para llegar al botón "Jugar", el fondo scrolleaba también y el
+    // juego arrancaba corrido hacia abajo. Al abrir, además reseteamos al top.
+    let hadScrollLock = false;
+    function lockBodyScroll(lock) {
+      if (typeof document === 'undefined') return;
+      if (lock) {
+        window.scrollTo({ top: 0 });
+        document.body.style.overflow = 'hidden';
+        hadScrollLock = true;
+      } else if (hadScrollLock) {
+        document.body.style.overflow = '';
+        hadScrollLock = false;
+      }
+    }
+    watch(() => props.open, (isOpen) => lockBodyScroll(isOpen), { immediate: true });
+
+    onUnmounted(() => {
+      if (cdTimer) clearInterval(cdTimer);
+      lockBodyScroll(false); // por si se desmonta con el popup abierto (navegación)
+    });
 
     return {
       selectedDifficulty,
