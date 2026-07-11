@@ -23,23 +23,38 @@ export default {
     },
   },
   methods: {
+    // Medimos la ALTURA DEL NAVBAR (estable) en vez de la posición del shell.
+    // La posición del shell (rect.top) es poco confiable al montar: si la página
+    // está scrolleada o en medio de la transición de ruta, top sale negativo y el
+    // alto quedaba ENORME. La altura del navbar no depende del scroll ni de la
+    // transición, así que es inmune a ese timing.
     measure() {
-      if (!this.$el || !this.$el.getBoundingClientRect) return
-      const top = this.$el.getBoundingClientRect().top
-      // Alto desde el borde superior del shell (justo bajo el navbar) hasta el
-      // fondo del viewport. Piso de 320px por las dudas.
-      this.availH = Math.max(320, Math.round(window.innerHeight - top))
+      if (typeof window === 'undefined') return
+      const nav = document.querySelector('nav')
+      const navH = nav ? Math.round(nav.getBoundingClientRect().height) : 74
+      this.availH = Math.max(320, Math.round(window.innerHeight - navH))
+    },
+    scheduleMeasure() {
+      this.$nextTick(() => {
+        // Doble rAF: medir después de que el navegador pintó el layout.
+        requestAnimationFrame(() => requestAnimationFrame(() => this.measure()))
+      })
     },
   },
   mounted() {
-    this.$nextTick(() => this.measure())
-    // Re-medir tras la transición de ruta (fade-slide) y al redimensionar.
-    setTimeout(() => this.measure(), 360)
+    this.scheduleMeasure()
+    // Re-medir tras la transición de ruta y cuando termina de cargar todo.
+    setTimeout(() => this.measure(), 220)
+    setTimeout(() => this.measure(), 550)
     this._onResize = () => this.measure()
     window.addEventListener('resize', this._onResize)
+    window.addEventListener('orientationchange', this._onResize)
   },
   beforeUnmount() {
-    if (this._onResize) window.removeEventListener('resize', this._onResize)
+    if (this._onResize) {
+      window.removeEventListener('resize', this._onResize)
+      window.removeEventListener('orientationchange', this._onResize)
+    }
   },
 }
 </script>
