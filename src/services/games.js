@@ -73,23 +73,23 @@ export const WORDLE_DIFFICULTY_CONFIG = {
   [DIFFICULTY_LEVELS.EASY]: {
     label: 'Fácil',
     icon: '🟢',
-    guesses: 8,
+    guesses: 12,
     xpCompletion: 100,
-    description: '8 intentos para adivinar'
+    description: '12 intentos para adivinar'
   },
   [DIFFICULTY_LEVELS.NORMAL]: {
     label: 'Normal',
     icon: '🟡',
-    guesses: 6,
+    guesses: 8,
     xpCompletion: 175,
-    description: '6 intentos para adivinar'
+    description: '8 intentos para adivinar'
   },
   [DIFFICULTY_LEVELS.HARD]: {
     label: 'Difícil',
     icon: '🔴',
-    guesses: 4,
+    guesses: 6,
     xpCompletion: 300,
-    description: '4 intentos para adivinar'
+    description: '6 intentos para adivinar'
   }
 };
 

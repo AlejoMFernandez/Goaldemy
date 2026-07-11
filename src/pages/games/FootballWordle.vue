@@ -122,6 +122,22 @@ export default {
       return out
     },
     remainingGuesses() { return this.maxGuesses - this.guesses.length },
+    // Historial con el intento más nuevo arriba (aparece bajo el input, animado).
+    guessesReversed() { return this.guesses.slice().reverse() },
+    // Atributos "revelados": si algún intento acertó (verde) equipo/liga/país/posición,
+    // se muestra en la carta estilo who-are-ya.
+    revealed() {
+      const r = { team: false, league: false, country: false, position: false }
+      for (const g of this.guesses) {
+        if (g.teamResult === 'green') r.team = true
+        if (g.leagueResult === 'green') r.league = true
+        if (g.countryResult === 'green') r.country = true
+        if (g.posResult === 'green') r.position = true
+      }
+      return r
+    },
+    targetLeagueLogo() { return this.target ? leagueLogoForId(this.target.leagueId) : null },
+    targetPosLabel() { return this.target ? (POS_LABELS[this.target.positionId] || 'MED') : '' },
   },
   async mounted() {
     const mode = (this.$route.query.mode || '').toString().toLowerCase()
@@ -184,10 +200,9 @@ export default {
       return 'bg-slate-600/80 text-slate-300'
     },
     chooseSuggestion(p) {
+      // Tocar una sugerencia la manda directo (más ágil, estilo who-are-ya).
       if (!p) return
-      this.guess = p.name || ''
-      this.suggestOpen = false
-      this.selectedIndex = -1
+      this.submitPlayer(p)
     },
     moveSelection(dir) {
       const n = this.suggestions.length
@@ -197,22 +212,18 @@ export default {
       this.suggestOpen = true
     },
     onEnterKey() {
+      // Si hay una sola coincidencia, Enter la manda directo.
+      if (this.suggestions.length === 1) { this.submitPlayer(this.suggestions[0]); return }
+      // Si hay una opción resaltada con las flechas, mandarla.
       if (this.suggestOpen && this.selectedIndex >= 0 && this.suggestions[this.selectedIndex]) {
-        this.chooseSuggestion(this.suggestions[this.selectedIndex])
+        this.submitPlayer(this.suggestions[this.selectedIndex])
         return
       }
       this.submit()
     },
-    submit() {
-      if (this.gameOver) return
-      const name = (this.guess || '').trim()
-      if (!name || name.length < 3) return
-      const norm = name.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
-      const player = this.allPlayers.find(
-        p => (p.name || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '') === norm
-      )
-      if (!player) return
-      if (this.guessedIds.has(player.id)) return
+    submitPlayer(player) {
+      if (this.gameOver || !player) return
+      if (this.guessedIds.has(player.id)) { this.guess = ''; this.suggestOpen = false; this.selectedIndex = -1; return }
 
       const row = evaluateGuess(player, this.target)
       this.guesses.push(row)
@@ -229,6 +240,17 @@ export default {
         this.gameOver = true
         if (this.mode === 'challenge') this.finishChallenge('loss')
       }
+    },
+    submit() {
+      if (this.gameOver) return
+      const name = (this.guess || '').trim()
+      if (!name || name.length < 3) return
+      const norm = name.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
+      const player = this.allPlayers.find(
+        p => (p.name || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '') === norm
+      )
+      if (!player) return
+      this.submitPlayer(player)
     },
     async checkAvailability() {
       this.availability = await isChallengeAvailable('football-wordle')
@@ -322,7 +344,7 @@ export default {
       @close="overlayOpen = false"
       @start="startChallenge"
     />
-    <div class="space-y-4 w-full max-w-4xl">
+    <div class="w-full max-w-2xl mx-auto">
 
       <!-- Loading -->
       <div v-if="loading" class="text-center text-slate-300 py-12">
@@ -330,107 +352,68 @@ export default {
         <p class="mt-3">Cargando...</p>
       </div>
 
-      <div v-else class="relative card p-4 sm:p-6 ring-1 ring-white/5">
-        <!-- Mystery player icon -->
-        <div class="flex flex-col items-center gap-2 mb-4">
-          <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-slate-700/60 border border-white/10 flex items-center justify-center overflow-hidden">
-            <template v-if="gameOver && target">
-              <img :src="target.image" :alt="target.name" class="w-full h-full object-cover reveal-img" />
-            </template>
-            <template v-else-if="target">
-              <img :src="target.image" :alt="'?'" class="w-full h-full object-cover" style="filter: blur(20px) brightness(0.5); user-select: none; -webkit-user-drag: none; pointer-events: none;" draggable="false" />
-            </template>
-            <template v-else>
-              <svg class="w-12 h-12 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-              </svg>
-            </template>
-          </div>
-          <p v-if="!gameOver" class="text-slate-300 text-sm text-center">Adiviná al jugador misterioso</p>
-          <div v-if="gameOver && won" class="text-center">
-            <p class="text-emerald-400 font-bold text-lg">{{ target.name }}</p>
-            <p class="text-slate-400 text-sm flex items-center justify-center gap-1.5">
-              <img v-if="target.teamLogo" :src="target.teamLogo" class="w-4 h-4 object-contain" />
-              <span>{{ target.teamName }}</span>
-              <img v-if="playerFlagUrl(target)" :src="playerFlagUrl(target)" class="w-4 h-3 object-cover rounded-sm" />
-            </p>
-          </div>
-          <div v-else-if="gameOver && !won" class="text-center">
-            <p class="text-red-400 font-semibold text-sm">No adivinaste. Era:</p>
-            <p class="text-white font-bold text-lg">{{ target.name }}</p>
-            <p class="text-slate-400 text-sm flex items-center justify-center gap-1.5">
-              <img v-if="target.teamLogo" :src="target.teamLogo" class="w-4 h-4 object-contain" />
-              <span>{{ target.teamName }}</span>
-              <img v-if="playerFlagUrl(target)" :src="playerFlagUrl(target)" class="w-4 h-3 object-cover rounded-sm" />
-            </p>
-          </div>
-        </div>
+      <template v-else>
+        <!-- CARTA MISTERIOSA estilo who-are-ya -->
+        <div class="relative rounded-2xl border border-white/10 bg-gradient-to-b from-slate-800/70 to-slate-900/85 px-4 pt-9 pb-4 sm:px-5 overflow-hidden">
+          <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full opacity-20 blur-3xl" style="background: radial-gradient(circle, rgba(16,185,129,0.4), transparent 70%);"></div>
 
-        <!-- Color legend -->
-        <div class="flex items-center justify-center gap-3 mb-3 text-xs text-slate-400">
-          <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-500/80 inline-block"></span> Exacto</span>
-          <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-yellow-500/80 inline-block"></span> Cerca</span>
-          <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-slate-600/80 inline-block"></span> Lejos</span>
-        </div>
-
-        <!-- Guess grid -->
-        <div v-if="guesses.length > 0" class="overflow-x-auto mb-4">
-          <!-- Column headers -->
-          <div class="grid grid-cols-[minmax(90px,1fr)_repeat(7,minmax(48px,1fr))] gap-1 text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1 px-1 min-w-[500px]">
-            <div>Jugador</div>
-            <div class="text-center">Equipo</div>
-            <div class="text-center">Liga</div>
-            <div class="text-center">País</div>
-            <div class="text-center">Pos</div>
-            <div class="text-center">Edad</div>
-            <div class="text-center">Altura</div>
-            <div class="text-center">Dorsal</div>
+          <!-- Esquina: intentos restantes -->
+          <div class="absolute top-2.5 left-3 z-10 flex items-center gap-1.5" title="Intentos restantes">
+            <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <div class="flex items-center gap-1">
+              <span v-for="n in maxGuesses" :key="n" class="w-1.5 h-1.5 rounded-full transition-colors" :class="n <= remainingGuesses ? 'bg-emerald-400' : 'bg-white/15'"></span>
+            </div>
           </div>
-          <!-- Rows -->
-          <TransitionGroup name="guess-row" tag="div" class="space-y-1">
-            <div v-for="(row, idx) in guesses" :key="idx"
-                 class="grid grid-cols-[minmax(90px,1fr)_repeat(7,minmax(48px,1fr))] gap-1 min-w-[500px]">
-              <!-- Player name + image -->
-              <div class="flex items-center gap-2 rounded-lg bg-slate-700/40 px-2 py-1.5 min-w-0">
-                <img :src="row.player.image" :alt="row.player.name" class="w-7 h-7 rounded object-cover flex-shrink-0" @error="e => e.target.style.display='none'" />
-                <span class="text-white text-sm truncate">{{ row.player.name }}</span>
+
+          <!-- Esquina: leyenda -->
+          <div class="absolute top-2.5 right-3 z-10 flex items-center gap-2 text-[9px] text-slate-400">
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-emerald-500/80 inline-block"></span>Exacto</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-yellow-500/80 inline-block"></span>Cerca</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-slate-500/70 inline-block"></span>Lejos</span>
+          </div>
+
+          <div class="relative flex flex-col items-center gap-2.5">
+            <!-- Foto misteriosa -->
+            <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-slate-700/60 border border-white/10 overflow-hidden shadow-xl">
+              <img v-if="gameOver && target" :src="target.image" :alt="target.name" class="w-full h-full object-cover reveal-img" />
+              <img v-else-if="target" :src="target.image" alt="?" class="w-full h-full object-cover" style="filter: blur(18px) brightness(0.55);" draggable="false" />
+            </div>
+
+            <div v-if="gameOver" class="text-center">
+              <p :class="won ? 'text-emerald-400' : 'text-white'" class="font-display font-extrabold text-lg leading-tight">{{ target.name }}</p>
+              <p v-if="!won" class="text-red-400/80 text-xs mt-0.5">No lo adivinaste</p>
+            </div>
+            <p v-else class="text-slate-300 text-sm font-medium">¿Quién es el crack?</p>
+
+            <!-- Chips revelados (se destapan al acertar en verde) -->
+            <div class="grid grid-cols-4 gap-2 w-full max-w-md mt-1">
+              <div class="reveal-chip" :class="(revealed.team || gameOver) ? 'on' : 'off'">
+                <img v-if="(revealed.team || gameOver) && target.teamLogo" :src="target.teamLogo" class="w-6 h-6 object-contain" @error="e=>e.target.style.display='none'" />
+                <span v-else-if="!(revealed.team || gameOver)" class="chip-lock">🔒</span>
+                <span class="chip-lbl">{{ (revealed.team || gameOver) ? target.teamName : 'Equipo' }}</span>
               </div>
-              <!-- Team -->
-              <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5 text-center', cellColor(row.teamResult)]">
-                <img v-if="row.teamLogo" :src="row.teamLogo" alt="" class="w-6 h-6 object-contain" @error="e => e.target.style.display='none'" />
+              <div class="reveal-chip" :class="(revealed.league || gameOver) ? 'on' : 'off'">
+                <img v-if="(revealed.league || gameOver) && targetLeagueLogo" :src="targetLeagueLogo" class="w-6 h-6 object-contain" @error="e=>e.target.style.display='none'" />
+                <span v-else-if="!(revealed.league || gameOver)" class="chip-lock">🔒</span>
+                <span class="chip-lbl">Liga</span>
               </div>
-              <!-- League -->
-              <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5', cellColor(row.leagueResult)]">
-                <img v-if="row.leagueLogo" :src="row.leagueLogo" alt="" class="w-6 h-6 object-contain" :class="row.leagueResult === 'gray' ? 'opacity-40 grayscale' : ''" @error="e => e.target.style.display='none'" />
-                <span v-else class="text-xs">?</span>
+              <div class="reveal-chip" :class="(revealed.country || gameOver) ? 'on' : 'off'">
+                <img v-if="(revealed.country || gameOver) && playerFlagUrl(target)" :src="playerFlagUrl(target)" class="w-6 h-4 object-cover rounded-sm" />
+                <span v-else-if="!(revealed.country || gameOver)" class="chip-lock">🔒</span>
+                <span class="chip-lbl">{{ (revealed.country || gameOver) ? target.cname : 'País' }}</span>
               </div>
-              <!-- Country -->
-              <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5', cellColor(row.countryResult)]">
-                <img v-if="playerFlagUrl(row.player)" :src="playerFlagUrl(row.player)" class="w-5 h-4 object-cover rounded-sm" />
-              </div>
-              <!-- Position -->
-              <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5 text-xs font-bold text-center', cellColor(row.posResult)]">
-                {{ row.posLabel }}
-              </div>
-              <!-- Age -->
-              <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5 text-xs font-mono text-center', cellColor(row.ageResult)]">
-                {{ row.player.age }} <span v-if="row.ageArrow" class="ml-0.5">{{ row.ageArrow }}</span>
-              </div>
-              <!-- Height -->
-              <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5 text-xs font-mono text-center', cellColor(row.heightResult)]">
-                {{ row.player.height || '?' }} <span v-if="row.heightArrow" class="ml-0.5">{{ row.heightArrow }}</span>
-              </div>
-              <!-- Dorsal -->
-              <div :class="['rounded-lg flex items-center justify-center px-1 py-1.5 text-xs font-mono text-center', cellColor(row.dorsalResult)]">
-                {{ row.player.shirtNumber || '?' }} <span v-if="row.dorsalArrow" class="ml-0.5">{{ row.dorsalArrow }}</span>
+              <div class="reveal-chip" :class="(revealed.position || gameOver) ? 'on' : 'off'">
+                <span v-if="(revealed.position || gameOver)" class="chip-pos">{{ targetPosLabel }}</span>
+                <span v-else class="chip-lock">🔒</span>
+                <span class="chip-lbl">Posición</span>
               </div>
             </div>
-          </TransitionGroup>
+          </div>
         </div>
 
-        <!-- Input area -->
-        <div v-if="!gameOver" class="flex flex-col items-center gap-2">
-          <form class="relative w-full max-w-md" @submit.prevent="submit">
+        <!-- INPUT (justo bajo la carta, siempre visible) -->
+        <div v-if="!gameOver" class="mt-3">
+          <form class="relative w-full max-w-md mx-auto" @submit.prevent="submit">
             <div class="relative">
               <input
                 v-model="guess"
@@ -441,10 +424,9 @@ export default {
                 @keydown.enter.prevent="onEnterKey"
                 type="text"
                 placeholder="Escribí el nombre del jugador..."
-                class="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2.5 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-white/20"
+                class="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
               />
-              <!-- Autocomplete dropdown -->
-              <div v-if="suggestOpen && suggestions.length > 0" class="absolute z-20 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-lg max-h-64 overflow-auto">
+              <div v-if="suggestOpen && suggestions.length > 0" class="absolute z-30 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl max-h-56 overflow-auto">
                 <ul>
                   <li v-for="(p, idx) in suggestions" :key="p.id" @click.prevent="chooseSuggestion(p)"
                       :class="['px-3 py-2 cursor-pointer text-slate-200 flex items-center gap-2', idx === selectedIndex ? 'bg-white/10' : 'hover:bg-white/5']">
@@ -455,14 +437,66 @@ export default {
                 </ul>
               </div>
             </div>
-            <div class="flex items-center justify-center gap-3 mt-2">
+            <div class="flex items-center justify-center mt-2">
               <button type="submit" :disabled="(guess?.length || 0) < 3"
-                      class="rounded-full bg-emerald-500 hover:brightness-110 border border-white/10 text-white px-5 py-2 text-sm font-semibold disabled:opacity-50 transition">
+                      class="rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 text-white px-6 py-2 text-sm font-bold disabled:opacity-40 transition shadow-lg shadow-emerald-500/20">
                 Adivinar
               </button>
-              <span class="text-slate-500 text-xs">{{ remainingGuesses }} intento{{ remainingGuesses === 1 ? '' : 's' }} restante{{ remainingGuesses === 1 ? '' : 's' }}</span>
             </div>
           </form>
+        </div>
+
+        <!-- HISTORIAL (más nuevo arriba, revela stat por stat) -->
+        <div v-if="guesses.length > 0" class="mt-4 overflow-x-auto">
+          <div class="min-w-[460px]">
+            <div class="grid grid-cols-[44px_repeat(7,minmax(38px,1fr))] gap-1 text-[9px] text-slate-500 font-semibold uppercase tracking-wider mb-1 px-0.5">
+              <div></div>
+              <div class="text-center">Equipo</div>
+              <div class="text-center">Liga</div>
+              <div class="text-center">País</div>
+              <div class="text-center">Pos</div>
+              <div class="text-center">Edad</div>
+              <div class="text-center">Alt</div>
+              <div class="text-center">Dorsal</div>
+            </div>
+            <TransitionGroup name="guess-row" tag="div" class="space-y-1">
+              <div v-for="row in guessesReversed" :key="row.player.id"
+                   class="grid grid-cols-[44px_repeat(7,minmax(38px,1fr))] gap-1">
+                <!-- Jugador: solo imagen (sin nombre) -->
+                <div class="rounded-lg bg-slate-700/40 overflow-hidden aspect-square" :title="row.player.name">
+                  <img :src="row.player.image" :alt="row.player.name" class="w-full h-full object-cover" @error="e => e.target.style.display='none'" />
+                </div>
+                <!-- Equipo -->
+                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square" :class="cellColor(row.teamResult)" style="animation-delay:0ms">
+                  <img v-if="row.teamLogo" :src="row.teamLogo" alt="" class="w-6 h-6 object-contain" @error="e => e.target.style.display='none'" />
+                </div>
+                <!-- Liga: sin logo gris, sólo el fondo pintado -->
+                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square" :class="cellColor(row.leagueResult)" style="animation-delay:110ms">
+                  <img v-if="row.leagueResult === 'green' && row.leagueLogo" :src="row.leagueLogo" alt="" class="w-6 h-6 object-contain" @error="e => e.target.style.display='none'" />
+                </div>
+                <!-- País -->
+                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square" :class="cellColor(row.countryResult)" style="animation-delay:220ms">
+                  <img v-if="playerFlagUrl(row.player)" :src="playerFlagUrl(row.player)" class="w-5 h-4 object-cover rounded-sm" />
+                </div>
+                <!-- Pos -->
+                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square text-[11px] font-bold" :class="cellColor(row.posResult)" style="animation-delay:330ms">
+                  {{ row.posLabel }}
+                </div>
+                <!-- Edad -->
+                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square text-[11px] font-mono" :class="cellColor(row.ageResult)" style="animation-delay:440ms">
+                  {{ row.player.age }}<span v-if="row.ageArrow" class="ml-0.5">{{ row.ageArrow }}</span>
+                </div>
+                <!-- Altura -->
+                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square text-[11px] font-mono" :class="cellColor(row.heightResult)" style="animation-delay:550ms">
+                  {{ row.player.height || '?' }}<span v-if="row.heightArrow" class="ml-0.5">{{ row.heightArrow }}</span>
+                </div>
+                <!-- Dorsal -->
+                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square text-[11px] font-mono" :class="cellColor(row.dorsalResult)" style="animation-delay:660ms">
+                  {{ row.player.shirtNumber || '?' }}<span v-if="row.dorsalArrow" class="ml-0.5">{{ row.dorsalArrow }}</span>
+                </div>
+              </div>
+            </TransitionGroup>
+          </div>
         </div>
 
         <!-- Summary Popup -->
@@ -486,7 +520,7 @@ export default {
           :backPath="backPath()"
           @close="showSummary = false"
         />
-      </div>
+      </template>
     </div>
   </GameShell>
 </template>
@@ -512,5 +546,60 @@ export default {
   0% { transform: scale(0.7); opacity: 0; }
   60% { transform: scale(1.05); }
   100% { transform: scale(1); opacity: 1; }
+}
+
+/* Chips estilo carta: se destapan al acertar el atributo en verde */
+.reveal-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 54px;
+  padding: 6px 4px;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.3s ease, background-color 0.3s ease, opacity 0.3s ease;
+}
+.reveal-chip.off { opacity: 0.55; }
+.reveal-chip.on {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.12);
+  animation: chipPop 0.42s ease;
+}
+.chip-lbl {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgb(148, 163, 184);
+  text-align: center;
+  line-height: 1.1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reveal-chip.on .chip-lbl { color: rgb(209, 250, 229); font-weight: 600; }
+.chip-lock { font-size: 13px; opacity: 0.5; filter: grayscale(1); }
+.chip-pos {
+  font-family: var(--font-display, inherit);
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+}
+@keyframes chipPop {
+  0% { transform: scale(0.82); opacity: 0.4; }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Reveal stat por stat al mandar un jugador (cada celda aparece con delay) */
+.reveal-cell { animation: cellReveal 0.42s ease both; }
+@keyframes cellReveal {
+  0% { opacity: 0; transform: scale(0.55) rotate(-8deg); }
+  60% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
 }
 </style>
