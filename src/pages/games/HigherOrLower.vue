@@ -348,12 +348,12 @@ export default {
       </div>
 
       <div v-else class="relative">
-        <!-- Categoría por la que comparan (lo más importante, bien visible) -->
-        <div class="text-center mb-4">
-          <p class="text-slate-400 text-[11px] uppercase tracking-widest mb-1.5">Comparan por</p>
-          <span v-if="currentCategory" class="inline-flex items-center gap-2 rounded-full bg-indigo-500/20 border border-indigo-400/30 px-5 py-2 text-base sm:text-lg font-extrabold text-indigo-200 font-display">
+        <!-- Categoría por la que comparan: título + subtítulo centrados -->
+        <div class="text-center mb-5">
+          <p class="text-slate-400 text-[11px] uppercase tracking-[0.2em] mb-1">Comparan por</p>
+          <h2 v-if="currentCategory" class="font-display text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-300 to-cyan-300 bg-clip-text text-transparent">
             {{ currentCategory.label }}
-          </span>
+          </h2>
         </div>
 
         <!-- Cards simétricas (sin botones adentro) -->
@@ -470,7 +470,6 @@ export default {
   height: 96px;
   object-fit: cover;
   border-radius: 1rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 .hl-name {
   color: #fff;
