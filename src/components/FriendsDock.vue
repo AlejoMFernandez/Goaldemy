@@ -32,13 +32,14 @@ import { playNotifySound } from '../services/sounds'
 import { setSidebarUser } from '../stores/sidebar'
 import UserAvatar from './common/UserAvatar.vue'
 import ChallengesModal from './rewards/ChallengesModal.vue'
+import ProfileHoverCard from './profile/ProfileHoverCard.vue'
 
 let unsubscribeAuth = () => {}
 let unsubscribeDM = () => {}
 
 export default {
   name: 'FriendsDock',
-  components: { UserAvatar, ChallengesModal },
+  components: { UserAvatar, ChallengesModal, ProfileHoverCard },
   data() {
     return {
       user: { id: null, email: null, avatar_url: null, display_name: null },
@@ -71,6 +72,8 @@ export default {
       _rtChannel: null,
       _notifInterval: null,
       _debounceTimer: null,
+      // Hover card estilo Steam sobre los avatares del rail
+      hover: { id: null, name: '', avatarUrl: '', top: 0, right: 0 },
     }
   },
   computed: {
@@ -204,6 +207,18 @@ export default {
       this.mobileOpen = true
       this.openChat(peerId)
     },
+    onRailHover(r, e) {
+      // Card estilo Steam a la IZQUIERDA del avatar (el rail está pegado al borde).
+      const rect = e.currentTarget.getBoundingClientRect()
+      this.hover = {
+        id: r.id,
+        name: r.name,
+        avatarUrl: r.avatar_url,
+        top: Math.max(76, Math.round(rect.top - 8)),
+        right: Math.round(window.innerWidth - rect.left + 10),
+      }
+    },
+    clearRailHover() { this.hover.id = null },
     async openChat(peerId) {
       const row = this.baseRows.find(r => r.id === peerId)
       if (row) row.unread = 0
@@ -329,7 +344,7 @@ export default {
       <!-- Amigos: solo avatar (icono + borde) + estado -->
       <div class="flex-1 w-full overflow-y-auto rail-scroll flex flex-col items-center gap-2 py-1">
         <button v-for="r in sortedRows" :key="r.id" @click="openFromRail(r.id)"
-          :title="r.name + (r.status==='playing' ? ' · Jugando' : r.status==='online' ? ' · En línea' : ' · Desconectado')"
+          @mouseenter="onRailHover(r, $event)" @mouseleave="clearRailHover"
           class="relative shrink-0 hover:scale-110 transition" :class="r.status==='offline' ? 'opacity-60 hover:opacity-100' : ''">
           <UserAvatar :size="42" v-bind="avatarPropsFor(r)" />
           <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-900" :class="statusDot(r.status)"></span>
@@ -495,6 +510,13 @@ export default {
 
     <!-- ───────── Popup de Objetivos (desafíos) ───────── -->
     <ChallengesModal :open="challengesOpen" @close="challengesOpen = false" />
+
+    <!-- ───────── Hover card estilo Steam sobre los avatares del rail ───────── -->
+    <Teleport to="body">
+      <div v-if="hover.id" class="fixed z-[60] pointer-events-none" :style="{ top: hover.top + 'px', right: hover.right + 'px' }">
+        <ProfileHoverCard :user-id="hover.id" :name="hover.name" :avatar-url="hover.avatarUrl" />
+      </div>
+    </Teleport>
   </div>
 </template>
 

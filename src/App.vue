@@ -90,12 +90,12 @@ export default {
 <template>
   <div class="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-slate-100">
     <BrandedBackground />
-    <!-- Shell del contenido: reserva el ancho de la sidebar en desktop -->
+    <!-- Shell del contenido: el rail de amigos reserva 60px SOLO en el contenido
+         (main + footer), no en el header → el navbar ocupa el 100% del ancho. -->
     <div class="min-h-screen transition-[padding] duration-300"
-         :class="isAuthLayout ? 'grid grid-rows-[1fr]' : 'grid grid-rows-[auto_1fr_auto]'"
-         :style="shellStyle">
+         :class="isAuthLayout ? 'grid grid-rows-[1fr]' : 'grid grid-rows-[auto_1fr_auto]'">
       <AppNavBar v-if="!isAuthLayout" />
-      <main :class="isAuthLayout ? 'relative z-10 min-h-screen grid place-items-center px-4 py-8' : (isImmersive ? 'relative z-10 w-full max-w-[1600px] mx-auto px-3 sm:px-6 py-0' : 'relative z-10 w-full max-w-[1600px] mx-auto px-6 py-10 lg:py-12')">
+      <main :style="shellStyle" :class="isAuthLayout ? 'relative z-10 min-h-screen grid place-items-center px-4 py-8' : (isImmersive ? 'relative z-10 w-full max-w-[1600px] mx-auto px-3 sm:px-6 py-0' : 'relative z-10 w-full max-w-[1600px] mx-auto px-6 py-10 lg:py-12')">
         <AppLoader v-if="authBooting" />
         <RouterView v-else v-slot="{ Component, route }">
           <Transition name="fade-slide" mode="out-in">
@@ -105,7 +105,7 @@ export default {
           </Transition>
         </RouterView>
       </main>
-      <AppFooter v-if="!isAuthLayout" />
+      <AppFooter v-if="!isAuthLayout" :style="shellStyle" />
     </div>
     <AppToast />
     <AchievementUnlockOverlay />
