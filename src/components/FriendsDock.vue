@@ -315,67 +315,25 @@ export default {
   <div v-if="user?.id">
     <!-- ───────── Mobile: botón flotante ───────── -->
     <button @click="toggleMobile"
-      class="lg:hidden fixed bottom-5 right-4 z-40 h-14 w-14 rounded-full grid place-items-center bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-2xl shadow-emerald-500/40 border border-white/20 hover:brightness-110 transition active:scale-95">
+      class="fixed bottom-5 right-4 z-40 h-14 w-14 rounded-full grid place-items-center bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-2xl shadow-emerald-500/40 border border-white/20 hover:brightness-110 transition active:scale-95">
       <svg v-if="!mobileOpen" viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
       <svg v-else viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
       <span v-if="totalUnread > 0" class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold grid place-items-center border border-white/20">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
     </button>
 
-    <!-- ───────── Barra (desktop estática / mobile drawer) ───────── -->
-    <div :class="mobileOpen ? 'flex' : 'hidden lg:flex'"
-      class="fixed z-40 bottom-0 right-0 w-[86vw] max-w-[340px] h-[82vh] rounded-t-2xl
-             lg:top-0 lg:bottom-0 lg:h-auto lg:w-[300px] lg:rounded-none lg:max-w-none
+    <!-- ───────── Barra de AMIGOS desplegable (drawer, todos los tamaños) ───────── -->
+    <div :class="mobileOpen ? 'flex' : 'hidden'"
+      class="fixed z-40 top-0 bottom-0 right-0 h-full w-[86vw] max-w-[360px]
              flex-col overflow-hidden border-l border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 backdrop-blur-xl shadow-2xl">
-
-      <!-- ===== MI PERFIL (arriba de todo) ===== -->
-      <div class="shrink-0 px-3 pt-3.5 pb-3 border-b border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent">
-        <div class="flex items-center gap-2.5">
-          <router-link to="/profile" @click="closeMobile" class="group relative shrink-0" title="Ver mi perfil">
-            <UserAvatar :size="46" :avatar-url="user.avatar_url" :initial="selfInitial" frame-key="none" :ring="false" :icon-glyph="selfCos.iconGlyph" :icon-bg="selfCos.iconBg" />
-            <!-- Overlay hover: deja claro que se va al perfil -->
-            <span class="absolute inset-0 rounded-[10px] bg-black/50 opacity-0 group-hover:opacity-100 transition grid place-items-center text-white">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M2.04 12.32a1 1 0 0 1 0-.64C3.42 7.5 7.36 4.5 12 4.5s8.57 3 9.96 7.18a1 1 0 0 1 0 .64C20.58 16.5 16.64 19.5 12 19.5s-8.57-3-9.96-7.18Z"/><circle cx="12" cy="12" r="3"/></svg>
-            </span>
-          </router-link>
-          <router-link to="/profile" @click="closeMobile" class="min-w-0 flex-1 group">
-            <div class="font-display font-bold text-white truncate leading-tight group-hover:text-emerald-300 transition">{{ selfName }}</div>
-            <div v-if="selfCos.titleText" class="text-[11px] font-semibold truncate" :class="selfTitleClass">{{ selfCos.titleText }}</div>
-            <div v-else class="text-[11px] text-slate-400">Ver mi perfil →</div>
-          </router-link>
-          <button v-if="mobileOpen" @click="closeMobile" class="shrink-0 h-8 w-8 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition" title="Cerrar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M6 18 18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-        <!-- Nivel + XP -->
-        <div class="mt-2.5">
-          <div class="flex items-center justify-between text-[10px] text-slate-400">
-            <span class="font-semibold text-slate-300">Nivel {{ level }}</span>
-            <span class="tabular-nums">{{ xpNow }} XP</span>
-          </div>
-          <div class="mt-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
-            <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: levelPct + '%' }"></div>
-          </div>
-        </div>
-        <!-- Acciones rápidas (el avatar y el nombre ya llevan al perfil) -->
-        <div class="mt-2.5 flex items-center gap-1.5">
-          <router-link to="/profile-edit" @click="closeMobile" title="Personalizar identidad" class="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-slate-200 text-xs font-semibold py-1.5 transition">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5"><path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32l8.4-8.4z"/></svg>
-            Personalizar
-          </router-link>
-          <router-link v-if="isAdminUser" to="/admin" @click="closeMobile" title="Panel Admin" class="h-8 w-8 grid place-items-center rounded-lg border border-amber-400/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path d="M12 1 3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4z"/></svg>
-          </router-link>
-          <button @click="doLogout" title="Cerrar sesión" class="h-8 w-8 grid place-items-center rounded-lg border border-white/10 bg-white/5 hover:bg-rose-500/15 hover:border-rose-400/30 hover:text-rose-300 text-slate-300 transition">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
-          </button>
-        </div>
-      </div>
 
       <!-- ===== Vista LISTA ===== -->
       <template v-if="view === 'list'">
-        <div class="flex items-center gap-2 px-3.5 py-2 border-b border-white/10 bg-white/[0.02]">
+        <div class="flex items-center gap-2 px-3.5 py-2.5 border-b border-white/10 bg-white/[0.02]">
           <span class="font-display font-bold text-white leading-tight text-sm flex-1">Amigos</span>
-          <span class="text-[11px] text-slate-400"><span class="text-emerald-400 font-bold">{{ onlineCount }}</span> en línea</span>
+          <span class="text-[11px] text-slate-400 mr-0.5"><span class="text-emerald-400 font-bold">{{ onlineCount }}</span> en línea</span>
+          <button @click="closeMobile" class="shrink-0 h-8 w-8 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition" title="Cerrar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M6 18 18 6M6 6l12 12"/></svg>
+          </button>
         </div>
 
         <div class="px-3 py-2 border-b border-white/10">

@@ -54,7 +54,9 @@ export default {
     // Reserva el ancho de la sidebar (300px) SOLO en desktop y con sesión.
     // Inline (no Tailwind ni scoped CSS) → garantizado, sin sorpresas de cascada.
     shellStyle() {
-      return (this.hasSidebar && this.isLg) ? { paddingRight: '300px' } : {}
+      // La barra social pasó a ser DESPLEGABLE (drawer), ya no reserva ancho fijo.
+      // El contenido usa todo el ancho disponible.
+      return {}
     }
   },
   async mounted() {

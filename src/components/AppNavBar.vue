@@ -349,9 +349,12 @@ export default {
                     subscribeToAuthStateChanges(userState => { this.user = userState; this.loadEquipped(); });
                     // Close menus on outside click
                     this._onDocClick = (e) => {
-                        const menu = this.$el.querySelector('[data-user-menu]')
-                        const btn = this.$el.querySelector('[data-user-button]')
-                        if (this.menuOpen && menu && !menu.contains(e.target) && btn && !btn.contains(e.target)) {
+                        // Puede haber dos disparadores (avatar desktop + mobile): cerrar
+                        // solo si el click cae fuera de TODOS los menús/botones de usuario.
+                        const userMenus = Array.from(this.$el.querySelectorAll('[data-user-menu]'))
+                        const userBtns = Array.from(this.$el.querySelectorAll('[data-user-button]'))
+                        const insideUser = userMenus.some(m => m.contains(e.target)) || userBtns.some(b => b.contains(e.target))
+                        if (this.menuOpen && !insideUser) {
                             this.menuOpen = false
                         }
                         const search = this.$el.querySelector('[data-search-dropdown]')
@@ -655,6 +658,44 @@ export default {
                                         <router-link @click="notifOpen=false" to="/notifications" class="text-slate-300 hover:text-white text-sm">Ver todas</router-link>
                                     </div>
                                 </div>
+                            </div>
+                        </li>
+                        <!-- User avatar dropdown (desktop) -->
+                        <li class="relative">
+                            <button data-user-button aria-label="Menú de usuario" @click.stop="menuOpen = !menuOpen" class="inline-flex items-center gap-1.5 rounded-full border border-white/10 pl-1.5 pr-2 py-1 text-slate-200 hover:border-white/20 transition">
+                                <UserAvatar :size="30" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" />
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                            </button>
+                            <div v-if="menuOpen" data-user-menu class="absolute right-0 mt-2 w-64 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-50">
+                                <!-- Cabecera: avatar + nivel/XP -->
+                                <div class="px-3 py-3 border-b border-white/10">
+                                    <div class="flex items-center gap-2.5">
+                                        <UserAvatar :size="40" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" />
+                                        <div class="min-w-0">
+                                            <div class="font-display font-bold text-white truncate leading-tight">{{ user.display_name || user.email || 'Mi cuenta' }}</div>
+                                            <div class="text-[11px] text-slate-400">Nivel {{ levelInfo?.level ?? 1 }} · {{ xpNow }} XP</div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                                        <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (progressPercent||0) + '%' }"></div>
+                                    </div>
+                                </div>
+                                <RouterLink @click="menuOpen=false" to="/profile" class="flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-white/5 text-slate-200 transition-colors">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    Ver perfil
+                                </RouterLink>
+                                <RouterLink @click="menuOpen=false" to="/profile-edit" class="flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-white/5 text-slate-200 transition-colors">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32l8.4-8.4z"/></svg>
+                                    Personalizar perfil
+                                </RouterLink>
+                                <RouterLink v-if="isAdminUser" @click="menuOpen=false" to="/admin" class="flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-amber-500/10 text-amber-400 border-t border-white/10 transition-colors">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1 3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4z"/></svg>
+                                    Panel Admin
+                                </RouterLink>
+                                <button @click="handleLogout" class="flex items-center gap-2.5 w-full text-left px-3 py-2.5 text-sm hover:bg-rose-500/10 hover:text-rose-300 text-slate-200 border-t border-white/10 transition-colors">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+                                    Cerrar sesión
+                                </button>
                             </div>
                         </li>
                     </template>
