@@ -54,6 +54,7 @@ export default {
     gameMetadata() {
       return getGameMetadata('who-is')
     },
+    maxLives() { return this.difficultyConfig?.lives ?? 3 },
     // Suggestions after 3+ chars, up to 12
     suggestions() {
       const q = (this.guess || '').toString().trim()
@@ -122,12 +123,13 @@ export default {
     },
     blurb() { return gameSummaryBlurb('who-is') },
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
-    chooseSuggestion(p) {
+    async chooseSuggestion(p) {
+      // Tocar una sugerencia la manda directo (estilo who-are-ya).
       if (!p) return
       this.guess = p.name || ''
       this.suggestOpen = false
       this.selectedIndex = -1
-      this.justPicked = true
+      await this.submit()
     },
     moveSelection(dir) {
       const n = this.suggestions.length
@@ -137,8 +139,10 @@ export default {
       this.suggestOpen = true
     },
     async onEnterKey() {
+      // Con una sola coincidencia, Enter la manda directo.
+      if (this.suggestions.length === 1) { await this.chooseSuggestion(this.suggestions[0]); return }
       if (this.suggestOpen && this.selectedIndex >= 0 && this.suggestions[this.selectedIndex]) {
-        this.chooseSuggestion(this.suggestions[this.selectedIndex])
+        await this.chooseSuggestion(this.suggestions[this.selectedIndex])
         return
       }
       await this.submit()
@@ -266,73 +270,75 @@ export default {
       @close="overlayOpen = false"
       @start="startChallenge"
     />
-    <div class="space-y-4 w-full max-w-4xl">
+    <div class="w-full max-w-md mx-auto">
 
       <div v-if="loading" class="text-center text-slate-300 py-12">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
         <p class="mt-3">Cargando...</p>
       </div>
-      <div v-else class="relative card p-6 ring-1 ring-white/5">
-        <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"></div>
-        <!-- Lives top-left with animated loss -->
-        <div class="absolute top-2 left-2 z-10 select-none">
-          <div class="relative inline-block rounded-full px-2.5 py-1.5 bg-white/5 ring-1 ring-white/10">
-            <!-- Base placeholders -->
-            <div class="flex items-center gap-1.5">
-              <span v-for="i in 3" :key="'base-'+i" class="h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full inline-block bg-white/20"></span>
-            </div>
-            <!-- Active lives overlay with leave animation -->
-            <TransitionGroup name="life" tag="div" class="absolute inset-0 flex items-center gap-1.5 px-2.5 py-1.5">
-              <span v-for="i in lives" :key="'live-'+i" class="h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full inline-block bg-red-400"></span>
-            </TransitionGroup>
+      <div v-else>
+        <!-- CARTA MISTERIOSA estilo who-are-ya -->
+        <div class="relative rounded-2xl border border-white/10 bg-gradient-to-b from-slate-800/70 to-slate-900/85 px-4 pt-9 pb-4 overflow-hidden">
+          <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl z-20"></div>
+          <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full opacity-20 blur-3xl" style="background: radial-gradient(circle, rgba(16,185,129,0.4), transparent 70%);"></div>
+
+          <!-- Vidas (esquina) -->
+          <div class="absolute top-2.5 left-3 z-10 flex items-center gap-1" title="Vidas">
+            <svg v-for="i in maxLives" :key="'life-'+i" class="h-4 w-4 transition-colors duration-300" :class="i <= lives ? 'text-rose-500 drop-shadow-[0_0_4px_rgba(244,63,94,0.5)]' : 'text-white/15'" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
           </div>
+
+          <Transition name="round-fade" mode="out-in">
+            <div :key="roundKey" class="relative flex flex-col items-center gap-3">
+              <!-- Foto blureada (se revela al responder) -->
+              <div v-if="current" class="w-36 h-36 sm:w-44 sm:h-44 rounded-2xl overflow-hidden shadow-xl bg-slate-700/60 border border-white/10 no-peek" @contextmenu.prevent>
+                <img :src="current.image" :alt="answered ? current.name : '?'"
+                     :style="{ filter: 'blur(' + (answered ? 0 : blurPx()) + 'px)' }"
+                     class="w-full h-full object-cover blur-img" draggable="false"
+                     @dragstart.prevent @contextmenu.prevent @error="e => e.target.style.display='none'" />
+              </div>
+
+              <!-- Nombre al acertar / perder -->
+              <div v-if="answered" class="text-center -mt-0.5">
+                <p :class="lastResultOk ? 'text-emerald-400' : 'text-white'" class="font-display font-extrabold text-lg leading-tight">{{ current?.name }}</p>
+                <p v-if="!lastResultOk && lives === 0" class="text-rose-400/80 text-xs mt-0.5">No lo adivinaste</p>
+              </div>
+              <p v-else class="text-slate-300 text-sm font-medium">¿Quién es este jugador?</p>
+
+              <!-- Pistas: posición, país, equipo -->
+              <div class="flex items-center justify-center gap-2 flex-wrap">
+                <span v-if="posBadge()" class="wi-chip">{{ posBadge() }}</span>
+                <span v-if="flagSrc()" class="wi-chip"><img :src="flagSrc()" alt="país" class="w-6 h-4 object-cover rounded-sm" /></span>
+                <span v-if="teamLogo()" class="wi-chip"><img :src="teamLogo()" alt="equipo" class="w-5 h-5 object-contain" @error="e => e.target.style.display='none'" /></span>
+              </div>
+            </div>
+          </Transition>
         </div>
-        <Transition name="round-fade" mode="out-in">
-          <div :key="roundKey">
-            <div class="flex flex-col items-center gap-2">
-              <p class="text-slate-200 text-center text-base">¿Quién es este jugador?</p>
-              <div class="flex items-center gap-3 text-sm">
-                <span class="rounded-full border border-white/15 bg-white/5 text-slate-200 px-3 py-1 text-sm">{{ posBadge() }}</span>
-                <img v-if="flagSrc()" :src="flagSrc()" alt="flag" width="36" height="26" class="object-cover" style="aspect-ratio: 20/14;" />
-                <img v-if="teamLogo()" :src="teamLogo()" alt="team" width="32" height="32" class="object-cover" />
+
+        <!-- INPUT -->
+        <div v-if="!answered" class="mt-3">
+          <form class="relative w-full max-w-md mx-auto" @submit.prevent="submit">
+            <div class="relative">
+              <input v-model="guess" @focus="suggestOpen=true" @input="suggestOpen = (guess?.length||0) >= 3; selectedIndex=-1"
+                     @keydown.down.prevent="moveSelection(1)" @keydown.up.prevent="moveSelection(-1)" @keydown.enter.prevent="onEnterKey"
+                     type="text" placeholder="Escribí el nombre del jugador..."
+                     class="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30" />
+              <div v-if="suggestOpen && suggestions.length>0" class="absolute z-30 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl max-h-56 overflow-auto">
+                <ul>
+                  <li v-for="(p,idx) in suggestions" :key="p.id" @click.prevent="chooseSuggestion(p)"
+                      :class="['px-3 py-2 cursor-pointer text-slate-200 flex items-center gap-2', idx===selectedIndex ? 'bg-white/10' : 'hover:bg-white/5']">
+                    <img :src="p.image" :alt="p.name" class="h-6 w-6 object-cover rounded flex-shrink-0" @error="e => e.target.style.display='none'" />
+                    <span class="truncate">{{ p.name }}</span>
+                    <span v-if="p.teamName" class="text-slate-500 text-xs ml-auto flex-shrink-0">{{ p.teamName }}</span>
+                  </li>
+                </ul>
               </div>
-              <div v-if="current" class="mb-2 overflow-hidden rounded-xl shadow-lg no-peek"
-                   @contextmenu.prevent @touchstart.passive>
-                <img :src="current.image" :alt="current.name"
-                     :style="{ filter: `blur(${blurPx()}px)` }"
-                     class="w-32 h-32 sm:w-40 sm:h-40 object-cover blur-img"
-                     draggable="false"
-                     @dragstart.prevent @contextmenu.prevent
-                     @error="e => e.target.style.display='none'" />
-              </div>
-              <div v-if="answered && lastResultOk" class="text-emerald-300 text-sm">¡Correcto! El jugador era: <span class="text-white font-medium">{{ current?.name }}</span></div>
             </div>
+            <div class="flex items-center justify-center mt-2">
+              <button type="submit" :disabled="(guess?.length || 0) < 3" class="rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 text-white px-6 py-2 text-sm font-bold disabled:opacity-40 transition shadow-lg shadow-emerald-500/20">Adivinar</button>
+            </div>
+          </form>
+        </div>
 
-            <form class="relative flex flex-col items-center gap-2 mt-3" @submit.prevent="submit">
-              <div class="relative w-full max-w-md">
-                <input v-model="guess" @focus="suggestOpen=true" @input="suggestOpen = (guess?.length||0) >= 3; selectedIndex=-1" 
-                       @keydown.down.prevent="moveSelection(1)" @keydown.up.prevent="moveSelection(-1)" @keydown.enter.prevent="onEnterKey"
-                       :disabled="answered" type="text" placeholder="Escribe al menos 3 letras"
-                       class="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-white/20" />
-                <!-- suggestions -->
-                <div v-if="suggestOpen && !answered && (suggestions.length>0)" class="absolute z-20 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/90 backdrop-blur shadow-lg max-h-64 overflow-auto">
-                  <ul>
-                    <li v-for="(p,idx) in suggestions" :key="p.id" @click.prevent="chooseSuggestion(p)"
-                        :class="['px-3 py-2 cursor-pointer text-slate-200', idx===selectedIndex ? 'bg-white/10' : 'hover:bg-white/5']">
-                      <span class="truncate">{{ p.name }}</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              <button type="button" @click="submit" :disabled="answered || (guess?.length || 0) < 3" class="rounded-full bg-emerald-500 hover:brightness-110 border border-white/10 text-white px-4 py-2 disabled:opacity-50">Adivinar</button>
-            </form>
-
-            <!-- Removed old lives row; now shown as hearts on top-left -->
-
-            <div v-if="answered && lives === 0" class="mt-2 text-slate-300 text-sm">Era <strong class="text-white">{{ current?.name }}</strong></div>
-          </div>
-        </Transition>
-        
         <!-- Summary Popup -->
         <GameSummaryPopup
           :show="showSummary"
@@ -368,6 +374,21 @@ export default {
 .round-fade-enter-from, .round-fade-leave-to {
   opacity: 0;
   transform: translateY(6px) scale(0.99);
+}
+
+/* Chips de pistas (posición / país / equipo) */
+.wi-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgb(226, 232, 240);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 /* reserved for game local styles */
