@@ -199,6 +199,11 @@ export default {
     async loadThreads() {
       try { const { data } = await fetchRecentConversations(50); this.threads = data || [] } catch {}
     },
+    openFromRail(peerId) {
+      // Desde el rail preview: abre el drawer directo en el chat del amigo.
+      this.mobileOpen = true
+      this.openChat(peerId)
+    },
     async openChat(peerId) {
       const row = this.baseRows.find(r => r.id === peerId)
       if (row) row.unread = 0
@@ -313,13 +318,50 @@ export default {
 
 <template>
   <div v-if="user?.id">
-    <!-- ───────── Mobile: botón flotante ───────── -->
-    <button @click="toggleMobile"
-      class="fixed bottom-5 right-4 z-40 h-14 w-14 rounded-full grid place-items-center bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-2xl shadow-emerald-500/40 border border-white/20 hover:brightness-110 transition active:scale-95">
-      <svg v-if="!mobileOpen" viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-      <svg v-else viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-      <span v-if="totalUnread > 0" class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold grid place-items-center border border-white/20">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
-    </button>
+    <!-- ───────── RAIL de amigos (desktop, fijo derecha) — preview solo icono+estado ───────── -->
+    <div class="hidden lg:flex fixed top-[72px] bottom-0 right-0 w-[60px] z-30 flex-col items-center border-l border-white/10 bg-slate-900/60 backdrop-blur-md">
+      <!-- Abrir lista completa -->
+      <button @click="toggleMobile" title="Ver amigos" class="relative mt-2 mb-1 h-10 w-10 grid place-items-center rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition">
+        <svg viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        <span v-if="totalUnread > 0" class="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold grid place-items-center">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
+      </button>
+
+      <!-- Amigos: solo avatar (icono + borde) + estado -->
+      <div class="flex-1 w-full overflow-y-auto rail-scroll flex flex-col items-center gap-2 py-1">
+        <button v-for="r in sortedRows" :key="r.id" @click="openFromRail(r.id)"
+          :title="r.name + (r.status==='playing' ? ' · Jugando' : r.status==='online' ? ' · En línea' : ' · Desconectado')"
+          class="relative shrink-0 hover:scale-110 transition" :class="r.status==='offline' ? 'opacity-60 hover:opacity-100' : ''">
+          <UserAvatar :size="42" v-bind="avatarPropsFor(r)" />
+          <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-900" :class="statusDot(r.status)"></span>
+          <span v-if="r.unread > 0" class="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold grid place-items-center">{{ r.unread > 9 ? '9+' : r.unread }}</span>
+        </button>
+      </div>
+
+      <!-- Desafíos + reportar bug (abajo, fijos) -->
+      <div class="w-full flex flex-col items-center gap-1.5 py-2 border-t border-white/10">
+        <button @click="challengesOpen = true" title="Objetivos y desafíos" class="h-9 w-9 grid place-items-center rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-amber-300 transition">
+          <svg viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </button>
+        <button @click="bugOpen = true" title="Reportar un bug" class="h-9 w-9 grid place-items-center rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M8 2l1.5 2.5M16 2l-1.5 2.5"/><rect x="7" y="6" width="10" height="12" rx="5"/><path d="M12 10v6M4 10h3M17 10h3M4 15h3M17 15h3M5 20l2.5-2M19 20l-2.5-2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ───────── Mobile: cluster flotante (desafíos + bug + amigos) ───────── -->
+    <div class="lg:hidden fixed bottom-5 right-4 z-40 flex flex-col items-center gap-2.5">
+      <button @click="challengesOpen = true" title="Desafíos" class="h-11 w-11 grid place-items-center rounded-full border border-white/15 bg-slate-800/90 text-amber-300 shadow-xl hover:brightness-110 transition active:scale-95">
+        <svg viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </button>
+      <button @click="bugOpen = true" title="Reportar bug" class="h-11 w-11 grid place-items-center rounded-full border border-white/15 bg-slate-800/90 text-slate-300 shadow-xl hover:brightness-110 transition active:scale-95">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M8 2l1.5 2.5M16 2l-1.5 2.5"/><rect x="7" y="6" width="10" height="12" rx="5"/><path d="M12 10v6M4 10h3M17 10h3M4 15h3M17 15h3M5 20l2.5-2M19 20l-2.5-2"/></svg>
+      </button>
+      <button @click="toggleMobile" title="Amigos" class="relative h-14 w-14 rounded-full grid place-items-center bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-2xl shadow-emerald-500/40 border border-white/20 hover:brightness-110 transition active:scale-95">
+        <svg v-if="!mobileOpen" viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        <svg v-else viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        <span v-if="totalUnread > 0" class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold grid place-items-center border border-white/20">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
+      </button>
+    </div>
 
     <!-- ───────── Barra de AMIGOS desplegable (drawer, todos los tamaños) ───────── -->
     <div :class="mobileOpen ? 'flex' : 'hidden'"
@@ -379,16 +421,6 @@ export default {
           </template>
         </div>
 
-        <!-- ===== Accesos rápidos (abajo de todo, estilo LoL) ===== -->
-        <div class="shrink-0 border-t border-white/10 bg-slate-950/40 px-2 py-2 flex items-center gap-1.5">
-          <button @click="closeMobile(); challengesOpen = true" class="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-slate-200 text-xs font-semibold py-2 transition" title="Objetivos y desafíos">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 text-amber-300"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            Desafíos
-          </button>
-          <button @click="bugOpen = true" title="Reportar un bug" class="h-9 w-9 grid place-items-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M8 2l1.5 2.5M16 2l-1.5 2.5"/><rect x="7" y="6" width="10" height="12" rx="5"/><path d="M12 10v6M4 10h3M17 10h3M4 15h3M17 15h3M5 20l2.5-2M19 20l-2.5-2"/></svg>
-          </button>
-        </div>
       </template>
 
       <!-- ===== Vista CHAT ===== -->

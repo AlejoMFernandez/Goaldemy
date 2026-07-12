@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, computed } from 'vue'
+import { onMounted, reactive, computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { fetchGames, gameRouteForSlug, getGameTypeLabel } from '../services/games'
 import { isChallengeAvailable, fetchDailyWinStreak } from '../services/game-modes'
@@ -12,6 +12,7 @@ import AyudasPanel from '../components/game/AyudasPanel.vue'
 import { supabase } from '../services/supabase'
 
 const AYUDA_SLUGS = new Set(POWERUP_GAME_SLUGS)
+const streakOpen = ref(false)
 
 const state = reactive({
   games: [],
@@ -117,12 +118,25 @@ const playedCount = computed(() => Object.values(state.availability).filter(a =>
       </div>
     </div>
 
-    <DailyStreakCalendar
-      :currentStreak="state.dailyStreak.current"
-      :bestStreak="state.dailyStreak.best"
-      :playedToday="playedCount > 0"
-      class="mb-4"
-    />
+    <!-- Racha diaria: botón compacto que se expande (hover en desktop / tap) -->
+    <div class="streak-wrap group mb-4">
+      <button
+        @click="streakOpen = !streakOpen"
+        class="w-full sm:w-auto inline-flex items-center gap-2 rounded-xl bg-slate-900/60 border border-white/12 px-3 py-2 hover:border-amber-400/30 transition"
+      >
+        <svg class="w-4 h-4 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.5)]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 23c-3.6 0-8-3.1-8-8.5C4 9 8 4 11.5 1c.2-.1.4-.1.5 0 .2.1.2.3.1.5C11 4 14 6 14 6s1-1.5 1.5-4c0-.2.2-.3.4-.3s.3.1.4.3C18 5 20 9 20 14.5 20 19.9 15.6 23 12 23z"/></svg>
+        <span class="text-sm font-semibold text-white">Racha diaria</span>
+        <span class="text-sm font-extrabold text-amber-300 tabular-nums">{{ state.dailyStreak.current }}</span>
+        <svg class="w-4 h-4 text-slate-400 ml-auto sm:ml-1 transition-transform duration-300" :class="streakOpen ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </button>
+      <div class="streak-panel" :class="{ open: streakOpen }">
+        <DailyStreakCalendar
+          :currentStreak="state.dailyStreak.current"
+          :bestStreak="state.dailyStreak.best"
+          :playedToday="playedCount > 0"
+        />
+      </div>
+    </div>
 
     <!-- Panel de ayudas: qué tenés y en qué juegos aplican -->
     <AyudasPanel class="mb-5" />
@@ -245,6 +259,20 @@ const playedCount = computed(() => Object.values(state.availability).filter(a =>
 </template>
 
 <style scoped>
+/* Racha diaria: se expande al pasar el mouse por el botón o al fijarla con click */
+.streak-panel {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.35s ease, opacity 0.25s ease, margin-top 0.25s ease;
+}
+.streak-wrap button:hover ~ .streak-panel,
+.streak-panel.open {
+  max-height: 520px;
+  opacity: 1;
+  margin-top: 8px;
+}
+
 .backdrop-grayscale {
   -webkit-backdrop-filter: saturate(0) brightness(0.75);
   backdrop-filter: saturate(0) brightness(0.75);

@@ -662,9 +662,8 @@ export default {
                         </li>
                         <!-- User avatar dropdown (desktop) -->
                         <li class="relative">
-                            <button data-user-button aria-label="Menú de usuario" @click.stop="menuOpen = !menuOpen" class="inline-flex items-center gap-1.5 rounded-full border border-white/10 pl-1.5 pr-2 py-1 text-slate-200 hover:border-white/20 transition">
-                                <UserAvatar :size="30" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" />
-                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                            <button data-user-button aria-label="Menú de usuario" @click.stop="menuOpen = !menuOpen" class="inline-flex items-center rounded-full hover:opacity-90 hover:scale-105 transition active:scale-95">
+                                <UserAvatar :size="38" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" />
                             </button>
                             <div v-if="menuOpen" data-user-menu class="absolute right-0 mt-2 w-64 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-50">
                                 <!-- Cabecera: avatar + nivel/XP -->
