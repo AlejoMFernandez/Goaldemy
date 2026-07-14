@@ -359,6 +359,18 @@ export default {
 
 <template>
   <GameShell title="Conexiones" :backPath="backPath()">
+    <template #stat>
+      <div class="inline-flex items-center gap-2.5 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
+        <span class="inline-flex items-center gap-1.5">
+          <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Grupos</span>
+          <span class="font-display text-white font-extrabold text-base leading-none">{{ solvedGroups.length }}/4</span>
+        </span>
+        <span class="w-px h-4 bg-white/12"></span>
+        <span class="inline-flex items-center gap-1" title="Errores restantes">
+          <span v-for="i in maxMistakes" :key="'hm-'+i" class="h-2 w-2 rounded-full transition-colors" :class="i <= mistakesRemaining ? 'bg-rose-500' : 'bg-white/15'"></span>
+        </span>
+      </div>
+    </template>
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="Conexiones"
@@ -370,7 +382,7 @@ export default {
       @close="overlayOpen = false"
       @start="startChallenge"
     />
-    <div class="space-y-3 w-full max-w-lg sm:max-w-xl">
+    <div class="space-y-3 w-full max-w-xl mx-auto">
 
       <div v-if="loading" class="text-center text-slate-300 py-12">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
@@ -409,10 +421,8 @@ export default {
             <img :src="p.image" :alt="p.name"
                  class="w-full h-full object-cover bg-slate-700"
                  @error="e => e.target.src = ''" />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
-            <div class="absolute inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm px-2 py-1.5
-                        opacity-0 group-hover:opacity-100 sm:opacity-0 max-sm:opacity-100 transition-opacity">
-              <span class="text-white text-xs font-medium truncate block">{{ p.name }}</span>
+            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-1.5 pt-5 pb-1 pointer-events-none">
+              <span class="text-white text-[10px] font-semibold leading-tight truncate block text-center">{{ p.name }}</span>
             </div>
             <div v-if="isSelected(p)"
                  class="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-emerald-400 flex items-center justify-center">
@@ -440,16 +450,9 @@ export default {
               Deseleccionar
             </button>
             <button @click="verify" :disabled="!canVerify"
-                    class="rounded-full bg-emerald-500 hover:brightness-110 border border-white/10 text-white px-5 py-2 text-sm font-semibold transition disabled:opacity-40">
+                    class="rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 text-white px-6 py-2 text-sm font-bold transition disabled:opacity-40 shadow-lg shadow-emerald-500/20">
               Verificar
             </button>
-          </div>
-          <!-- Mistakes dots -->
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-400 mr-1">Errores:</span>
-            <span v-for="i in maxMistakes" :key="'m-' + i"
-                  :class="['h-3 w-3 rounded-full inline-block transition-colors duration-300',
-                            i <= mistakes ? 'bg-red-400' : 'bg-white/20']"></span>
           </div>
         </div>
 
