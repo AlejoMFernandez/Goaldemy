@@ -246,20 +246,20 @@ export default {
   <div class="space-y-4 w-full max-w-4xl">
 
       <div v-if="loading" class="text-slate-300">Cargando…</div>
-      <div v-else class="relative card p-4">
+      <div v-else class="relative rounded-2xl border border-white/10 bg-gradient-to-b from-slate-800/70 to-slate-900/85 p-4 sm:p-5 overflow-hidden max-w-md mx-auto">
         <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden"></div>
+        <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full opacity-20 blur-3xl" style="background: radial-gradient(circle, rgba(16,185,129,0.4), transparent 70%);"></div>
         <Transition name="round-fade" mode="out-in">
-          <div :key="roundKey">
-            <div class="flex flex-col items-center gap-2">
-              <p class="text-slate-200 text-center text-base">Adivina el jugador</p>
-              <img v-if="current" :src="current.image" :alt="current.name" class="mb-3 w-32 h-32 sm:w-36 sm:h-36 object-cover rounded-lg" />
+          <div :key="roundKey" class="relative">
+            <div class="flex flex-col items-center gap-3 pt-5">
+              <img v-if="current" :src="current.image" :alt="current.name" class="w-36 h-36 sm:w-44 sm:h-44 object-cover rounded-2xl ring-1 ring-white/10 shadow-xl" />
+              <Transition name="hint-fade">
+                <p v-if="hintVisible && current" class="text-center text-amber-300 text-sm font-medium">
+                  Juega en {{ current.teamName }}
+                </p>
+              </Transition>
             </div>
-            <Transition name="hint-fade">
-              <p v-if="hintVisible && current" class="text-center text-amber-300 text-sm font-medium mb-1">
-                Juega en {{ current.teamName }}
-              </p>
-            </Transition>
-            <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button v-for="opt in options" :key="opt.value" :class="optionClass(opt)" :disabled="timeOver || eliminatedOptions.includes(opt.value)" v-show="!eliminatedOptions.includes(opt.value)" @click="choose(opt)">{{ opt.label }}</button>
             </div>
           </div>
