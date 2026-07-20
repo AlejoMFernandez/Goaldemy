@@ -183,21 +183,35 @@ export async function getAllMatches(leagueId) {
   }
 }
 
+// Estructura de la fase de eliminación (bracket real con drawOrder por llave).
+// FotMob la entrega en el tab 'overview' bajo pageProps.playoff.
+export async function getPlayoff(leagueId) {
+  try {
+    const raw = await fetchFotMob(leagueId, 'overview');
+    const data = raw.pageProps || raw;
+    return data.playoff || null;
+  } catch (error) {
+    console.error('Error getting playoff:', error);
+    return null;
+  }
+}
+
 export async function getLeagueOverview(leagueId) {
   try {
-    const [table, scorers, assists, matches, allMatches] = await Promise.all([
+    const [table, scorers, assists, matches, allMatches, playoff] = await Promise.all([
       getLeagueTable(leagueId).catch(() => ({ league: {}, table: [], tables: [], lastUpdated: new Date().toISOString() })),
       getTopScorers(leagueId, 5).catch(() => []),
       getTopAssists(leagueId, 5).catch(() => []),
       getUpcomingMatches(leagueId, 5).catch(() => []),
-      getAllMatches(leagueId).catch(() => [])
+      getAllMatches(leagueId).catch(() => []),
+      getPlayoff(leagueId).catch(() => null)
     ]);
-    return { table, topScorers: scorers, topAssists: assists, upcomingMatches: matches, allMatches };
+    return { table, topScorers: scorers, topAssists: assists, upcomingMatches: matches, allMatches, playoff };
   } catch (error) {
     console.error('Error getting league overview:', error);
     return {
       table: { league: {}, table: [], tables: [], lastUpdated: new Date().toISOString() },
-      topScorers: [], topAssists: [], upcomingMatches: [], allMatches: []
+      topScorers: [], topAssists: [], upcomingMatches: [], allMatches: [], playoff: null
     };
   }
 }
@@ -210,7 +224,10 @@ export async function getTeamDetails(teamId) {
     const response = await fetch(url);
     if (!response.ok) return null;
     const raw = await response.json();
-    const data = raw.pageProps || raw;
+    const pp = raw.pageProps || raw;
+    // FotMob movió el payload del equipo a pageProps.fallback['team-{id}'].
+    // Mantenemos el fallback al layout viejo por si vuelve a cambiar.
+    const data = pp.fallback?.[`team-${teamId}`] || pp;
     return {
       id: teamId, name: data.details?.name || '', shortName: data.details?.shortName || '',
       logo: `https://images.fotmob.com/image_resources/logo/teamlogo/${teamId}.png`,
@@ -292,6 +309,6 @@ function parseMatchDetails(data) {
 export { LEAGUES, ACTIVE_LEAGUES, PAUSED_LEAGUES };
 export default {
   getLeagueTable, getTopScorers, getTopAssists, getUpcomingMatches,
-  getTodayMatches, getAllMatches, getLeagueOverview, getTeamDetails, getMatchDetails,
+  getTodayMatches, getAllMatches, getLeagueOverview, getPlayoff, getTeamDetails, getMatchDetails,
   LEAGUES, ACTIVE_LEAGUES, PAUSED_LEAGUES
 };

@@ -1,0 +1,13 @@
+# Excluir media del grafo — solo queremos código + docs .md
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.svg
+*.ico
+*.mp4
+*.mov
+*.mp3
+*.wav
+*.pdf

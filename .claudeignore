@@ -1,0 +1,3 @@
+# graphify build artifacts — evita invalidar el cache de prompt en cada rebuild
+graph.json
+graphify-out/

@@ -465,7 +465,7 @@ export default {
                     </button>
                 </div>
 
-                <ul class="hidden lg:flex items-center gap-4 text-slate-200">
+                <ul class="hidden lg:flex items-center gap-2.5 xl:gap-4 text-slate-200">
                     <!-- Reto del día — entrada destacada (funnel público) -->
                     <li>
                         <RouterLink to="/reto" class="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-sm font-bold text-cyan-300 transition hover:border-cyan-300/60 hover:text-cyan-200 hover:bg-cyan-500/15">
@@ -501,54 +501,12 @@ export default {
                     </li>
                     <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Ranking</RouterLink></li>
                     <li><RouterLink class="inline-flex items-center gap-1 font-semibold text-amber-300 hover:text-amber-200 transition-colors" to="/pricing"><span>⭐</span> Premium</RouterLink></li>
-                    <!-- Ligas dropdown (hover) -->
-                    <li class="relative"
-                        @mouseenter="onLeaguesEnter"
-                        @mouseleave="onLeaguesLeave">
-                        <button data-leagues-button class="inline-flex items-center gap-1 px-0 py-1.5 text-slate-200 hover:text-white">
-                            Ligas
-                            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
-                        </button>
-                        <div v-if="leaguesOpen" data-leagues-menu class="absolute left-0 mt-2 w-64 rounded-2xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-30"
-                             @mouseenter="onLeaguesEnter" @mouseleave="onLeaguesLeave">
-                            <!-- World Cup - Featured -->
-                            <RouterLink @click="leaguesOpen=false" to="/leagues/world-cup" class="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold hover:bg-amber-500/10 text-amber-300 border-b border-white/10 bg-amber-500/5 transition-colors">
-                                <svg class="w-5 h-5 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3zm2.36 0l1.14 5h7l1.14-5H7.36zM4 9v1a4 4 0 003.5 3.97V15h9v-1.03A4 4 0 0020 10V9H4z"/></svg>
-                                <div class="flex-1">
-                                    <div>Copa del Mundo 2026</div>
-                                    <div class="text-[10px] font-normal text-amber-400/70 uppercase tracking-wider">EN VIVO</div>
-                                </div>
-                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                            </RouterLink>
-                            <!-- Paused domestic leagues -->
-                            <div class="px-3 pt-3 pb-1">
-                                <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Ligas domésticas — Próximamente</span>
-                            </div>
-                            <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 cursor-default border-b border-white/5 opacity-50">
-                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/47.png" alt="Premier League" class="w-4 h-4 object-contain grayscale" />
-                                Premier League
-                            </div>
-                            <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 cursor-default border-b border-white/5 opacity-50">
-                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/87.png" alt="La Liga" class="w-4 h-4 object-contain grayscale" />
-                                La Liga
-                            </div>
-                            <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 cursor-default border-b border-white/5 opacity-50">
-                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/55.png" alt="Serie A" class="w-4 h-4 object-contain grayscale" />
-                                Serie A
-                            </div>
-                            <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 cursor-default border-b border-white/5 opacity-50">
-                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/54.png" alt="Bundesliga" class="w-4 h-4 object-contain grayscale" />
-                                Bundesliga
-                            </div>
-                            <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 cursor-default border-b border-white/5 opacity-50">
-                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/53.png" alt="Ligue 1" class="w-4 h-4 object-contain grayscale" />
-                                Ligue 1
-                            </div>
-                            <div class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-500 cursor-default opacity-50">
-                                <img src="https://images.fotmob.com/image_resources/logo/leaguelogo/dark/112.png" alt="Liga Profesional" class="w-4 h-4 object-contain grayscale" />
-                                Liga Profesional
-                            </div>
-                        </div>
+                    <!-- Competiciones — link directo al HUB (reemplaza el dropdown gigante) -->
+                    <li>
+                        <RouterLink class="inline-flex items-center gap-1.5 hover:text-white transition-colors" to="/competiciones">
+                            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3zm2.36 0l1.14 5h7l1.14-5H7.36zM4 9v1a4 4 0 003.5 3.97V15h9v-1.03A4 4 0 0020 10V9H4z"/></svg>
+                            Competiciones
+                        </RouterLink>
                     </li>
                     <!-- Info dropdown (hover) -->
                     <li class="relative"
@@ -567,7 +525,7 @@ export default {
                         </div>
                     </li>
                     <!-- Search -->
-                    <li class="relative w-44 xl:w-56">
+                    <li class="relative w-32 lg:w-36 xl:w-52">
                         <div class="relative" data-search-box>
                             <input type="search" v-model="q" @input="onSearchInput" placeholder="Buscar usuarios" class="searchbox w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20" />
                             <svg class="absolute right-2 top-1.5 h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -793,19 +751,10 @@ export default {
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/leaderboards">Ranking</RouterLink></li>
                         <li><RouterLink @click="isOpen=false" class="flex items-center gap-1.5 font-semibold text-amber-300 hover:text-amber-200" to="/pricing"><span>⭐</span> Premium</RouterLink></li>
                         <li>
-                            <details class="group">
-                                <summary class="cursor-pointer hover:text-white">Ligas</summary>
-                                <ul class="mt-1 pl-3 flex flex-col gap-1 text-slate-300">
-                                    <li><RouterLink @click="isOpen=false" class="flex items-center gap-2 text-amber-300 font-semibold hover:text-amber-200" to="/leagues/world-cup"><svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3zm2.36 0l1.14 5h7l1.14-5H7.36zM4 9v1a4 4 0 003.5 3.97V15h9v-1.03A4 4 0 0020 10V9H4z"/></svg> Copa del Mundo 2026</RouterLink></li>
-                                    <li class="mt-1 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Próximamente</li>
-                                    <li class="text-slate-500 cursor-default opacity-50">Premier League</li>
-                                    <li class="text-slate-500 cursor-default opacity-50">La Liga</li>
-                                    <li class="text-slate-500 cursor-default opacity-50">Serie A</li>
-                                    <li class="text-slate-500 cursor-default opacity-50">Bundesliga</li>
-                                    <li class="text-slate-500 cursor-default opacity-50">Ligue 1</li>
-                                    <li class="text-slate-500 cursor-default opacity-50">Liga Profesional</li>
-                                </ul>
-                            </details>
+                            <RouterLink @click="isOpen=false" class="flex items-center gap-2 hover:text-white" to="/competiciones">
+                                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3zm2.36 0l1.14 5h7l1.14-5H7.36zM4 9v1a4 4 0 003.5 3.97V15h9v-1.03A4 4 0 0020 10V9H4z"/></svg>
+                                Competiciones
+                            </RouterLink>
                         </li>
                         <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/notifications">Notificaciones</RouterLink></li>
                                                 <li>

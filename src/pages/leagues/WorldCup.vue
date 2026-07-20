@@ -29,7 +29,31 @@
       </div>
 
       <!-- Content -->
-      <div v-else class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div v-else>
+      <!-- Tabs (solo si hay fase de eliminación) -->
+      <div v-if="hasKnockout" class="mb-5 inline-flex rounded-xl border border-white/10 bg-slate-900/60 p-1">
+        <button @click="view='bracket'" class="rounded-lg px-4 py-1.5 text-sm font-semibold transition"
+          :class="view==='bracket' ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow' : 'text-slate-300 hover:text-white'">
+          🏆 Llaves
+        </button>
+        <button @click="view='grupos'" class="rounded-lg px-4 py-1.5 text-sm font-semibold transition"
+          :class="view==='grupos' ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow' : 'text-slate-300 hover:text-white'">
+          Grupos
+        </button>
+      </div>
+
+      <!-- Bracket / Fase final -->
+      <div v-if="view==='bracket' && hasKnockout" class="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur shadow-2xl p-5">
+        <div class="mb-4 flex items-center gap-2">
+          <h2 class="text-xl font-bold text-white">Fase de eliminación</h2>
+          <span class="text-xs text-slate-500">Deslizá si no entra en pantalla →</span>
+        </div>
+        <KnockoutBracket v-if="leagueData?.playoff" :playoff="leagueData.playoff" />
+        <TournamentBracket v-else :matches="leagueData?.allMatches || []" />
+      </div>
+
+      <!-- Grupos + sidebar -->
+      <div v-show="view==='grupos' || !hasKnockout" class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <!-- Tabla de Posiciones / Grupos -->
         <div class="xl:col-span-2">
           <div class="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur shadow-2xl overflow-hidden">
@@ -245,6 +269,7 @@
           </div>
         </div>
       </div>
+      </div>
     </div>
   </div>
 </template>
@@ -252,14 +277,32 @@
 <script>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { getLeagueOverview, LEAGUES } from '@/services/fotmob.js';
+import TournamentBracket from '@/components/league/TournamentBracket.vue';
+import KnockoutBracket from '@/components/league/KnockoutBracket.vue';
 
 export default {
   name: 'WorldCup',
+  components: { TournamentBracket, KnockoutBracket },
   setup() {
     const leagueData = ref(null);
     const loading = ref(true);
     const error = ref(null);
     const currentRoundIndex = ref(0);
+    const view = ref('bracket');
+
+    const hasPlayoff = computed(() => !!(leagueData.value?.playoff?.rounds?.some(r => r.matchups?.length)));
+
+    const hasKnockout = computed(() => {
+      if (hasPlayoff.value) return true;
+      const ms = leagueData.value?.allMatches || [];
+      return ms.some(m => {
+        const r = (m.round ?? '').toString().trim().toLowerCase();
+        if (!r) return false;
+        if (/^\d+$/.test(r)) return false;
+        if (/group|grupo|matchday|jornada|fecha/.test(r)) return false;
+        return true;
+      });
+    });
 
     const loadLeagueData = async ({ silent = false } = {}) => {
       try {
@@ -350,7 +393,8 @@ export default {
 
     return {
       leagueData, loading, error, currentRoundIndex, availableRounds, currentRoundName,
-      groupedMatchesByDate, previousRound, nextRound, formatMatchTime, handleImageError
+      groupedMatchesByDate, previousRound, nextRound, formatMatchTime, handleImageError,
+      view, hasKnockout, hasPlayoff
     };
   }
 };

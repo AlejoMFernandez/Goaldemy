@@ -48,12 +48,15 @@ const Bundesliga = () => import('../pages/leagues/Bundesliga.vue');
 const Ligue1 = () => import('../pages/leagues/Ligue1.vue');
 const LigaArgentina = () => import('../pages/leagues/LigaArgentina.vue');
 const WorldCup = () => import('../pages/leagues/WorldCup.vue');
+const CompetitionsHub = () => import('../pages/leagues/CompetitionsHub.vue');
 const TeamPage = () => import('../pages/TeamPage.vue');
 const Pricing = () => import('../pages/Pricing.vue');
 const DailyChallenge = () => import('../pages/DailyChallenge.vue');
 
 const routes = [
     { path: '/', component: Landing },
+    { path: '/competiciones', component: CompetitionsHub },
+    { path: '/leagues', redirect: '/competiciones' },
     { path: '/leagues/world-cup', component: WorldCup },
     { path: '/leagues/premier-league', component: PremierLeague },
     { path: '/leagues/la-liga', component: LaLiga },

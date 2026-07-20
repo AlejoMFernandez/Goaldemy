@@ -41,3 +41,8 @@ icon-sources/
 *.backup.gz
 db_cluster-*
 migration-backup/
+
+# Knowledge graph generado por graphify (no versionar)
+graphify-out/
+# Backups locales del scraper
+src/dataGAMES.backup-before-refresh.json

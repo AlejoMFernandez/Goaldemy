@@ -73,8 +73,13 @@ export async function loadPlayersFromFotMob() {
     }
   } catch { /* caché corrupto, reconstruir */ }
 
-  // 2. Obtener standings de ligas activas
-  const leagueList = Object.values(LEAGUES).filter(l => l.active)
+  // 2. Obtener standings de las ligas marcadas para alimentar el pool de jugadores.
+  //    OJO: se filtra por `playersPool`, NO por `active`. `active` marca qué
+  //    competición está "en vivo" en el sitio (hoy: el Mundial), pero las
+  //    selecciones nacionales NO deben entrar a los juegos de clubes. Mientras
+  //    ninguna liga tenga `playersPool:true`, este fetch es un no-op y los juegos
+  //    corren sobre dataGAMES.json (refrescado con scripts/refresh-fotmob-squads.cjs).
+  const leagueList = Object.values(LEAGUES).filter(l => l.playersPool)
   const tables = await Promise.allSettled(
     leagueList.map(l => getLeagueTable(l.id))
   )
