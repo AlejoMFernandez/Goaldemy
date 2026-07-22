@@ -3,6 +3,7 @@ import { RouterLink } from 'vue-router';
 import { subscribeToAuthStateChanges } from '../services/auth';
 import { logout } from '../services/auth';
 import { searchPublicProfiles } from '../services/user-profiles';
+import { searchAll, countResults, competitionRoute } from '../services/global-search';
 import { getUserLevel, computeProgressPercentSync, computeLevelProgress, fetchLevelThresholds } from '../services/xp';
 import { fetchUnreadCount, listNotifications, markAsRead } from '../services/notifications';
 import { supabase } from '../services/supabase';
@@ -12,6 +13,7 @@ import { getEquippedCosmeticsBatch } from '../services/cosmetics';
 import { isAdmin } from '../services/admin';
 import GoaldemyLogo from './GoaldemyLogo.vue';
 import UserAvatar from './common/UserAvatar.vue';
+import GlobalSearchResults from './GlobalSearchResults.vue';
 import { getUnclaimedCount } from '../stores/notifications';
 import { playNotifySound } from '../services/sounds';
 
@@ -20,7 +22,8 @@ export default {
   components: {
     RouterLink,
     GoaldemyLogo,
-    UserAvatar
+    UserAvatar,
+    GlobalSearchResults
   },
     data() {
         return {
@@ -40,7 +43,7 @@ export default {
             q: '',
             searchOpen: false,
             searching: false,
-            results: [],
+            results: { users: [], players: [], teams: [], competitions: [] },
             resultCos: {},   // cosméticos equipados por id (para el ícono en resultados)
             menuOpen: false,
             levelInfo: null,
@@ -83,27 +86,33 @@ export default {
                 this.levelLoading = false;
             }
         },
+        emptyResults() { return { users: [], players: [], teams: [], competitions: [] } },
         async onSearchInput() {
             const term = this.q.trim()
-            if (term.length < 2) { this.results = []; this.searchOpen = false; return }
+            if (term.length < 2) { this.results = this.emptyResults(); return }
             this.searching = true
             try {
-                const { data, error } = await searchPublicProfiles(term, 8)
-                if (!error) {
-                    const me = this.user?.id
-                    const filtered = (data || []).filter(u => u.id !== me)
-                    this.results = filtered
-                    // Íconos reales de cada resultado (borde + ícono equipado)
-                    try {
-                        const ids = filtered.map(u => u.id).filter(Boolean)
-                        this.resultCos = ids.length ? await getEquippedCosmeticsBatch(ids) : {}
-                    } catch { this.resultCos = {} }
-                }
+                const res = await searchAll(term, { limitEach: 5, currentUserId: this.user?.id })
+                this.results = res
+                // Íconos reales de cada usuario resultado (borde + ícono equipado)
+                try {
+                    const ids = (res.users || []).map(u => u.id).filter(Boolean)
+                    this.resultCos = ids.length ? await getEquippedCosmeticsBatch(ids) : {}
+                } catch { this.resultCos = {} }
             } finally {
                 this.searching = false
-                this.searchOpen = true
             }
         },
+        openSearch() {
+            this.searchOpen = true
+            this.infoOpen = false; this.playOpen = false; this.leaguesOpen = false; this.notifOpen = false; this.menuOpen = false
+            this.$nextTick(() => { try { this.$refs.searchInput?.focus() } catch {} })
+        },
+        toggleSearch() { this.searchOpen ? this.resetSearch() : this.openSearch() },
+        resetSearch() { this.q = ''; this.results = this.emptyResults(); this.searchOpen = false },
+        goTeam(t) { if (!t?.id) return; this.resetSearch(); this.$router.push(`/team/${t.id}`) },
+        goPlayer(p) { if (!p?.teamId) return; this.resetSearch(); this.$router.push(`/team/${p.teamId}`) },
+        goCompetition(c) { if (!c) return; this.resetSearch(); this.$router.push(competitionRoute(c)) },
         // Props de avatar (ícono/borde equipado) para un usuario dado, listo para <UserAvatar>.
         avatarPropsFor(u, cosMap) {
             const c = (cosMap || {})[u?.id] || {}
@@ -119,11 +128,13 @@ export default {
         userLabel(u) { return u?.display_name || u?.username || u?.email || 'Usuario' },
         goUser(u) {
             if (!u?.id) return
-            this.q = ''
-            this.results = []
-            this.searchOpen = false
+            this.resetSearch()
             this.$router.push(`/u/${u.id}`)
         },
+        playerImg(p) { return p?.image || `https://images.fotmob.com/image_resources/playerimages/${p?.id}.png` },
+        teamLogo(t) { return t?.logo || `https://images.fotmob.com/image_resources/logo/teamlogo/${t?.id}.png` },
+        compLogo(c) { return `https://images.fotmob.com/image_resources/logo/leaguelogo/dark/${c?.id}.png` },
+        onImgHide(e) { e.target.style.visibility = 'hidden' },
         avatarInitial() {
             const name = this.user?.display_name || this.user?.email || '?'
             const letter = name.trim()[0] || '?'
@@ -335,6 +346,9 @@ export default {
         rewardCount() {
             return getUnclaimedCount()
         },
+        resultCount() {
+            return countResults(this.results)
+        },
         progressPercent() {
             return computeProgressPercentSync(this.levelInfo);
         },
@@ -466,9 +480,9 @@ export default {
                 </div>
 
                 <ul class="hidden lg:flex items-center gap-2.5 xl:gap-4 text-slate-200">
-                    <!-- Reto del día — entrada destacada (funnel público) -->
+                    <!-- Reto del día — píldora de acento (funnel público) -->
                     <li>
-                        <RouterLink to="/reto" class="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-sm font-bold text-cyan-300 transition hover:border-cyan-300/60 hover:text-cyan-200 hover:bg-cyan-500/15">
+                        <RouterLink to="/reto" class="nav-pill nav-pill--cyan">
                             <span class="relative flex h-2 w-2">
                                 <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
                                 <span class="relative inline-flex h-2 w-2 rounded-full bg-cyan-400"></span>
@@ -476,70 +490,87 @@ export default {
                             Reto del día
                         </RouterLink>
                     </li>
-                    <!-- Play dropdown (hover) with descriptions -->
-                    <li class="relative"
-                        @mouseenter="onPlayEnter"
-                        @mouseleave="onPlayLeave">
-                        <button data-play-button class="inline-flex items-center gap-1 px-0 py-1.5 text-slate-200 hover:text-white">
+                    <!-- Jugar (dropdown) -->
+                    <li class="relative" @mouseenter="onPlayEnter" @mouseleave="onPlayLeave">
+                        <button data-play-button class="nav-link" :class="{ 'text-white': playOpen }">
                             Jugar
-                            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                            <svg class="nav-chevron" :class="{ 'rotate-180': playOpen }" width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
                         </button>
-                        <div v-if="playOpen" data-play-menu class="absolute left-0 mt-2 w-56 rounded-2xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-30"
-                             @mouseenter="onPlayEnter" @mouseleave="onPlayLeave">
-                            <div class="p-3">
-                                <h4 class="text-slate-400 text-xs uppercase tracking-wider mb-2">Modos de juego</h4>
-                                <RouterLink @click="playOpen=false" to="/play/points" class="block rounded-lg p-2 hover:bg-white/5">
-                                    <div class="text-sm text-slate-100 font-medium">Jugar por puntos</div>
-                                    <p class="text-slate-400 text-xs">Desafío diario con cronómetro. 1 intento por día. Sumá XP.</p>
-                                </RouterLink>
-                                <RouterLink @click="playOpen=false" to="/reto" class="mt-1 block rounded-lg p-2 hover:bg-white/5">
-                                    <div class="text-sm text-slate-100 font-medium">Reto del día</div>
-                                    <p class="text-slate-400 text-xs">El desafío diario abierto para compartir. Sin login.</p>
-                                </RouterLink>
-                            </div>
+                        <transition name="fade-slide">
+                        <div v-if="playOpen" data-play-menu class="nav-menu w-64" @mouseenter="onPlayEnter" @mouseleave="onPlayLeave">
+                            <h4 class="nav-menu-title">Modos de juego</h4>
+                            <RouterLink @click="playOpen=false" to="/play/points" class="nav-menu-item">
+                                <div class="nav-menu-item-title">Jugar por puntos</div>
+                                <p class="nav-menu-item-sub">Desafío diario con cronómetro. 1 intento por día. Sumá XP.</p>
+                            </RouterLink>
+                            <RouterLink @click="playOpen=false" to="/reto" class="nav-menu-item">
+                                <div class="nav-menu-item-title">Reto del día</div>
+                                <p class="nav-menu-item-sub">El desafío diario abierto para compartir. Sin login.</p>
+                            </RouterLink>
                         </div>
+                        </transition>
                     </li>
-                    <li><RouterLink class="hover:text-white transition-colors" to="/leaderboards">Ranking</RouterLink></li>
-                    <li><RouterLink class="inline-flex items-center gap-1 font-semibold text-amber-300 hover:text-amber-200 transition-colors" to="/pricing"><span>⭐</span> Premium</RouterLink></li>
-                    <!-- Competiciones — link directo al HUB (reemplaza el dropdown gigante) -->
+                    <!-- Ranking -->
+                    <li><RouterLink class="nav-link" to="/leaderboards">Ranking</RouterLink></li>
+                    <!-- Competiciones -->
+                    <li><RouterLink class="nav-link" to="/competiciones">Competiciones</RouterLink></li>
+                    <!-- Información (dropdown) -->
+                    <li class="relative" @mouseenter="onInfoEnter" @mouseleave="onInfoLeave">
+                        <button data-info-button class="nav-link" :class="{ 'text-white': infoOpen }">
+                            Información
+                            <svg class="nav-chevron" :class="{ 'rotate-180': infoOpen }" width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                        </button>
+                        <transition name="fade-slide">
+                        <div v-if="infoOpen" data-info-menu class="nav-menu w-64" @mouseenter="onInfoEnter" @mouseleave="onInfoLeave">
+                            <h4 class="nav-menu-title">Información</h4>
+                            <RouterLink @click="infoOpen=false" to="/teams" class="nav-menu-item">
+                                <div class="nav-menu-item-title">Equipos y Jugadores</div>
+                                <p class="nav-menu-item-sub">Explorá plantillas, valores y datos.</p>
+                            </RouterLink>
+                            <RouterLink @click="infoOpen=false" to="/about/goaldemy" class="nav-menu-item">
+                                <div class="nav-menu-item-title">¿Qué es Goaldemy?</div>
+                                <p class="nav-menu-item-sub">La idea detrás de la plataforma.</p>
+                            </RouterLink>
+                            <RouterLink @click="infoOpen=false" to="/about/objetivo" class="nav-menu-item">
+                                <div class="nav-menu-item-title">Objetivo</div>
+                                <p class="nav-menu-item-sub">Nuestra misión y hacia dónde vamos.</p>
+                            </RouterLink>
+                            <RouterLink @click="infoOpen=false" to="/about/me" class="nav-menu-item">
+                                <div class="nav-menu-item-title">¿Quién soy?</div>
+                                <p class="nav-menu-item-sub">Conocé al creador del proyecto.</p>
+                            </RouterLink>
+                        </div>
+                        </transition>
+                    </li>
+                    <!-- Premium — píldora de acento (upsell) -->
                     <li>
-                        <RouterLink class="inline-flex items-center gap-1.5 hover:text-white transition-colors" to="/competiciones">
-                            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3zm2.36 0l1.14 5h7l1.14-5H7.36zM4 9v1a4 4 0 003.5 3.97V15h9v-1.03A4 4 0 0020 10V9H4z"/></svg>
-                            Competiciones
+                        <RouterLink to="/pricing" class="nav-pill nav-pill--amber">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l4.5 3L12 4l4.5 6L21 7l-1.7 11H4.7L3 7z"/></svg>
+                            Premium
                         </RouterLink>
                     </li>
-                    <!-- Info dropdown (hover) -->
-                    <li class="relative"
-                        @mouseenter="onInfoEnter"
-                        @mouseleave="onInfoLeave">
-                        <button data-info-button class="inline-flex items-center gap-1 px-0 py-1.5 text-slate-200 hover:text-white">
-                            Información
-                            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                    <!-- Search (ícono chico → popup) -->
+                    <li class="relative" data-search-box>
+                        <button data-search-button @click.stop="toggleSearch" aria-label="Buscar"
+                            class="inline-flex items-center justify-center rounded-full border p-2 transition"
+                            :class="searchOpen ? 'border-white/25 text-white bg-white/5' : 'border-white/10 text-slate-200 hover:border-white/20 hover:text-white'">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         </button>
-                        <div v-if="infoOpen" data-info-menu class="absolute left-0 mt-2 w-56 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl overflow-hidden z-30"
-                             @mouseenter="onInfoEnter" @mouseleave="onInfoLeave">
-                            <RouterLink @click="infoOpen=false" to="/teams" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">Equipos y Jugadores</RouterLink>
-                            <RouterLink @click="infoOpen=false" to="/about/me" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">¿Quién soy?</RouterLink>
-                            <RouterLink @click="infoOpen=false" to="/about/goaldemy" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">¿Qué es Goaldemy?</RouterLink>
-                            <RouterLink @click="infoOpen=false" to="/about/objetivo" class="block px-4 py-3 text-sm font-medium hover:bg-white/5 text-slate-200">Objetivo</RouterLink>
+                        <transition name="fade-slide">
+                        <div v-if="searchOpen" data-search-dropdown class="absolute right-0 mt-2 w-[22rem] rounded-2xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-50">
+                            <div class="p-3 border-b border-white/10">
+                                <div class="relative">
+                                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                    <input ref="searchInput" type="search" v-model="q" @input="onSearchInput" placeholder="Jugadores, equipos, usuarios…"
+                                        class="searchbox w-full rounded-lg border border-white/10 bg-white/5 pl-9 pr-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-400/30" />
+                                </div>
+                            </div>
+                            <div class="max-h-[70vh] overflow-auto p-2">
+                                <GlobalSearchResults :results="results" :result-cos="resultCos" :searching="searching" :query="q"
+                                    @go-user="goUser" @go-player="goPlayer" @go-team="goTeam" @go-competition="goCompetition" />
+                            </div>
                         </div>
-                    </li>
-                    <!-- Search -->
-                    <li class="relative w-32 lg:w-36 xl:w-52">
-                        <div class="relative" data-search-box>
-                            <input type="search" v-model="q" @input="onSearchInput" placeholder="Buscar usuarios" class="searchbox w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20" />
-                            <svg class="absolute right-2 top-1.5 h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                        </div>
-                        <div v-if="searchOpen" data-search-dropdown class="absolute z-30 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl">
-                            <ul>
-                                <li v-for="u in results" :key="u.id" @click="goUser(u)" class="px-2.5 py-2 hover:bg-white/5 cursor-pointer text-sm flex items-center gap-2.5 rounded-lg">
-                                    <UserAvatar :size="34" v-bind="avatarPropsFor(u, resultCos)" />
-                                    <span class="truncate text-slate-100 font-medium">{{ userLabel(u) }}</span>
-                                </li>
-                                <li v-if="!results.length && !searching" class="px-3 py-2 text-slate-400 text-sm">Sin resultados</li>
-                                <li v-if="searching" class="px-3 py-2 text-slate-400 text-sm">Buscando…</li>
-                            </ul>
-                        </div>
+                        </transition>
                     </li>
                     <!-- User dropdown / login button -->
                     <template v-if="user.id === null">
@@ -550,26 +581,29 @@ export default {
                             </li>
                     </template>
                     <template v-else>
-                        <!-- Rewards icon -->
+                        <!-- Grupo segmentado: Recompensas · Tienda · Notificaciones -->
                         <li>
-                            <RouterLink to="/rewards" class="relative inline-flex items-center justify-center rounded-full border border-white/10 px-2 py-1.5 hover:border-white/20 text-slate-200" aria-label="Recompensas">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
-                                <span v-if="rewardCount>0" class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 text-white text-[11px] grid place-items-center">{{ rewardCount>9?'9+':rewardCount }}</span>
-                            </RouterLink>
-                        </li>
-                        <!-- Shop icon -->
-                        <li>
-                            <RouterLink to="/tienda" class="relative inline-flex items-center justify-center rounded-full border border-white/10 px-2 py-1.5 hover:border-amber-400/40 text-slate-200" aria-label="Tienda">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
-                            </RouterLink>
-                        </li>
-                        <!-- Notifications dropdown -->
-                        <li class="relative">
-                            <button data-notif-button aria-label="Notificaciones" @click.stop="toggleNotif" class="relative inline-flex items-center justify-center rounded-full border border-white/10 px-2 py-1.5 hover:border-white/20">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="text-slate-200"><path d="M14 18.5a2 2 0 1 1-4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 9a6 6 0 1 1 12 0c0 2.28.67 3.6 1.2 4.38.4.6.6.9.6 1.12 0 .83-.67 1.5-1.5 1.5H5.7A1.7 1.7 0 0 1 4 14.3c0-.22.2-.52.6-1.12C5.13 12.6 6 11.28 6 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                                <span v-if="notifCount>0" class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-[11px] grid place-items-center">{{ notifCount>9?'9+':notifCount }}</span>
-                            </button>
-                            <div v-if="notifOpen" data-notif-menu class="absolute right-0 mt-2 w-96 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-50">
+                            <div class="flex items-center rounded-full border border-white/10 bg-white/5 divide-x divide-white/10">
+                                <!-- Recompensas -->
+                                <RouterLink to="/rewards" aria-label="Recompensas" class="group relative inline-flex items-center justify-center px-2.5 py-1.5 rounded-l-full text-slate-200 hover:text-emerald-300 hover:bg-white/5 transition">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+                                    <span v-if="rewardCount>0" class="absolute -top-1.5 -right-1 h-4 min-w-4 px-1 rounded-full bg-emerald-500 text-white text-[10px] grid place-items-center">{{ rewardCount>9?'9+':rewardCount }}</span>
+                                    <span class="nav-tip">Recompensas</span>
+                                </RouterLink>
+                                <!-- Tienda -->
+                                <RouterLink to="/tienda" aria-label="Tienda" class="group relative inline-flex items-center justify-center px-2.5 py-1.5 text-slate-200 hover:text-amber-300 hover:bg-white/5 transition">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+                                    <span class="nav-tip">Tienda</span>
+                                </RouterLink>
+                                <!-- Notificaciones -->
+                                <div class="relative">
+                                    <button data-notif-button aria-label="Notificaciones" @click.stop="toggleNotif" class="group relative inline-flex items-center justify-center px-2.5 py-1.5 rounded-r-full text-slate-200 hover:text-white hover:bg-white/5 transition">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 18.5a2 2 0 1 1-4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 9a6 6 0 1 1 12 0c0 2.28.67 3.6 1.2 4.38.4.6.6.9.6 1.12 0 .83-.67 1.5-1.5 1.5H5.7A1.7 1.7 0 0 1 4 14.3c0-.22.2-.52.6-1.12C5.13 12.6 6 11.28 6 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                                        <span v-if="notifCount>0" class="absolute -top-1.5 -right-1 h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] grid place-items-center">{{ notifCount>9?'9+':notifCount }}</span>
+                                        <span class="nav-tip">Notificaciones</span>
+                                    </button>
+                                    <transition name="fade-slide">
+                                    <div v-if="notifOpen" data-notif-menu class="absolute right-0 mt-2 w-96 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-50">
                                 <div class="p-3">
                                     <h4 class="text-slate-400 text-xs uppercase tracking-wider mb-2">Notificaciones</h4>
                                     <div v-if="notifLoading" class="text-slate-400 text-sm">Cargando…</div>
@@ -617,12 +651,16 @@ export default {
                                     </div>
                                 </div>
                             </div>
+                                    </transition>
+                                </div>
+                            </div>
                         </li>
                         <!-- User avatar dropdown (desktop) -->
                         <li class="relative">
                             <button data-user-button aria-label="Menú de usuario" @click.stop="menuOpen = !menuOpen" class="inline-flex items-center rounded-full hover:opacity-90 hover:scale-105 transition active:scale-95">
                                 <UserAvatar :size="38" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" />
                             </button>
+                            <transition name="fade-slide">
                             <div v-if="menuOpen" data-user-menu class="absolute right-0 mt-2 w-64 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-50">
                                 <!-- Cabecera: avatar + nivel/XP -->
                                 <div class="px-3 py-3 border-b border-white/10">
@@ -654,6 +692,7 @@ export default {
                                     Cerrar sesión
                                 </button>
                             </div>
+                            </transition>
                         </li>
                     </template>
                 </ul>
@@ -667,16 +706,10 @@ export default {
                         <li>
                             <div class="flex items-center gap-2">
                                 <div class="relative flex-1" data-search-box>
-                                    <input type="search" v-model="q" @input="onSearchInput" placeholder="Buscar usuarios" class="searchbox w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20" />
-                                    <div v-if="searchOpen" data-search-dropdown class="absolute z-50 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl">
-                                        <ul>
-                                            <li v-for="u in results" :key="u.id" @click="isOpen=false; goUser(u)" class="px-2.5 py-2 hover:bg-white/5 cursor-pointer text-sm flex items-center gap-2.5 rounded-lg">
-                                                <UserAvatar :size="34" v-bind="avatarPropsFor(u, resultCos)" />
-                                                <span class="truncate text-slate-100 font-medium">{{ userLabel(u) }}</span>
-                                            </li>
-                                            <li v-if="!results.length && !searching" class="px-3 py-2 text-slate-400 text-sm">Sin resultados</li>
-                                            <li v-if="searching" class="px-3 py-2 text-slate-400 text-sm">Buscando…</li>
-                                        </ul>
+                                    <input type="search" v-model="q" @input="onSearchInput" placeholder="Jugadores, equipos, usuarios…" class="searchbox w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-400/30" />
+                                    <div v-if="q.trim().length >= 2" data-search-dropdown class="absolute z-50 mt-1 w-full max-h-[60vh] overflow-auto rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl p-2">
+                                        <GlobalSearchResults :results="results" :result-cos="resultCos" :searching="searching" :query="q"
+                                            @go-user="(u)=>{ isOpen=false; goUser(u) }" @go-player="(p)=>{ isOpen=false; goPlayer(p) }" @go-team="(t)=>{ isOpen=false; goTeam(t) }" @go-competition="(c)=>{ isOpen=false; goCompetition(c) }" />
                                     </div>
                                 </div>
 
@@ -777,6 +810,111 @@ export default {
 </template>
 
 <style scoped>
+/* Tooltip de los botones del header (Recompensas / Tienda / Notificaciones) */
+.nav-tip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(2px);
+  margin-top: 8px;
+  white-space: nowrap;
+  background: #1e293b;
+  color: #f1f5f9;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 60;
+}
+.group:hover > .nav-tip { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Sistema unificado del nav ───────────────────────────── */
+/* Link plano (Jugar, Ranking, Competiciones, Información) */
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #e2e8f0;              /* slate-200 */
+  transition: color 0.15s ease;
+  cursor: pointer;
+}
+.nav-link:hover { color: #fff; }
+.nav-chevron { color: #64748b; transition: transform 0.2s ease; }
+
+/* Píldoras de acento hermanas (Reto = cian, Premium = dorado) */
+.nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9999px;
+  border: 1px solid;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+.nav-pill--cyan {
+  border-color: rgba(34, 211, 238, 0.4);
+  background: rgba(6, 182, 212, 0.1);
+  color: #67e8f9;
+}
+.nav-pill--cyan:hover {
+  border-color: rgba(103, 232, 249, 0.6);
+  background: rgba(6, 182, 212, 0.16);
+  color: #a5f3fc;
+}
+.nav-pill--amber {
+  border-color: rgba(251, 191, 36, 0.4);
+  background: rgba(245, 158, 11, 0.1);
+  color: #fcd34d;
+}
+.nav-pill--amber:hover {
+  border-color: rgba(252, 211, 77, 0.6);
+  background: rgba(245, 158, 11, 0.16);
+  color: #fde68a;
+}
+
+/* Panel de dropdown unificado (Jugar / Información) */
+.nav-menu {
+  position: absolute;
+  left: 0;
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  z-index: 30;
+}
+.nav-menu-title {
+  padding: 4px 8px;
+  margin-bottom: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+.nav-menu-item {
+  display: block;
+  border-radius: 10px;
+  padding: 8px;
+  transition: background 0.12s ease;
+}
+.nav-menu-item:hover { background: rgba(255, 255, 255, 0.06); }
+.nav-menu-item-title { font-size: 14px; font-weight: 600; color: #f1f5f9; }
+.nav-menu-item-sub { margin-top: 1px; font-size: 12px; line-height: 1.35; color: #94a3b8; }
+
 /* Make search avatars/initials uniform */
 .searchbox::-ms-clear { display: none; width: 0; height: 0; }
 .searchbox::-ms-reveal { display: none; width: 0; height: 0; }
