@@ -18,7 +18,9 @@ const STAGE_LABEL = {
   '1/64': '64avos', '1/32': '32avos', '1/16': '16avos',
   '1/8': 'Octavos', '1/4': 'Cuartos', '1/2': 'Semifinal', 'final': 'Final',
 }
-const STAGE_ORDER = { '1/64': 0, '1/32': 1, '1/16': 2, '1/8': 3, '1/4': 4, '1/2': 5, 'final': 6 }
+// Etiqueta derivada de la cantidad de cruces de la ronda (robusto ante cualquier
+// nombre de stage que use FotMob: copas mezclan "1/4" con "4", "Round 5", etc.)
+const LABEL_BY_COUNT = { 16: '16avos', 8: 'Octavos', 4: 'Cuartos', 2: 'Semifinal', 1: 'Final' }
 
 function normMatchup(mu, idx) {
   return {
@@ -45,15 +47,19 @@ export default {
   },
   computed: {
     stages() {
+      // Tope de 16 llaves por ronda: en copas como la FA Cup las rondas tempranas
+      // tienen 40+ cruces y el bracket se vuelve inmanejable. Mostramos desde los
+      // 16avos (igual que el Mundial), que es donde se pone interesante.
       const rounds = (this.playoff?.rounds || [])
-        .filter(r => r.stage !== 'final' && Array.isArray(r.matchups) && r.matchups.length)
-        .sort((a, b) => (STAGE_ORDER[a.stage] ?? 99) - (STAGE_ORDER[b.stage] ?? 99))
+        .filter(r => r.stage !== 'final' && Array.isArray(r.matchups) && r.matchups.length && r.matchups.length <= 16)
+        // Más cruces = ronda más temprana (afuera). Orden agnóstico del nombre.
+        .sort((a, b) => b.matchups.length - a.matchups.length)
       return rounds.map(r => {
         const mus = r.matchups.map(normMatchup).sort((a, b) => a.drawOrder - b.drawOrder)
         const half = Math.ceil(mus.length / 2)
         return {
           stage: r.stage,
-          label: STAGE_LABEL[r.stage] || r.stage,
+          label: LABEL_BY_COUNT[mus.length] || STAGE_LABEL[r.stage] || r.stage,
           left: mus.slice(0, half),
           right: mus.slice(half),
         }

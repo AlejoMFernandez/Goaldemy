@@ -35,7 +35,7 @@
       <div v-if="hasKnockout" class="mb-5 inline-flex rounded-xl border border-white/10 bg-slate-900/60 p-1">
         <button @click="view='bracket'" class="rounded-lg px-4 py-1.5 text-sm font-semibold transition"
           :class="view==='bracket' ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow' : 'text-slate-300 hover:text-white'">
-          🏆 Llaves
+          Llaves
         </button>
         <button @click="view='grupos'" class="rounded-lg px-4 py-1.5 text-sm font-semibold transition"
           :class="view==='grupos' ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow' : 'text-slate-300 hover:text-white'">
@@ -44,7 +44,7 @@
       </div>
 
       <!-- Bracket / Fase final -->
-      <div v-if="view==='bracket' && hasKnockout" class="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur shadow-2xl p-5">
+      <div v-if="view==='bracket' && hasKnockout" class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800/40 to-slate-900 backdrop-blur shadow-2xl p-5">
         <div class="mb-4 flex items-center gap-2">
           <h2 class="text-xl font-bold text-white">Fase de eliminación</h2>
           <span class="text-xs text-slate-500">Deslizá si no entra en pantalla →</span>
@@ -57,11 +57,15 @@
       <div v-show="view==='grupos' || !hasKnockout" class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <!-- Tabla de Posiciones / Grupos -->
         <div class="xl:col-span-2">
-          <div class="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur shadow-2xl overflow-hidden">
-            <div class="bg-gradient-to-r from-cyan-900/30 to-cyan-800/20 border-b border-white/10 px-6 py-4">
-              <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                🏆 Tabla de Posiciones
-              </h2>
+          <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800/40 to-slate-900 backdrop-blur shadow-2xl overflow-hidden">
+            <div class="flex items-center gap-3 border-b border-white/10 px-6 py-4">
+              <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-400/25 bg-emerald-500/10 text-emerald-300">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M2 20h20"/></svg>
+              </div>
+              <div>
+                <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Clasificación</div>
+                <h2 class="font-display text-lg font-bold text-white leading-tight">Tabla de Posiciones</h2>
+              </div>
             </div>
 
             <!-- Múltiples tablas (grupos / zonas) -->
@@ -82,7 +86,7 @@
                         <th class="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase w-10">E</th>
                         <th class="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase w-10">P</th>
                         <th class="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase w-10">DG</th>
-                        <th class="text-center py-2.5 px-2 text-xs font-semibold text-cyan-400 uppercase w-12 font-bold">PTS</th>
+                        <th class="text-center py-2.5 px-2 text-xs font-semibold text-emerald-300 uppercase w-12 font-bold">PTS</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -128,7 +132,7 @@
                       <th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase w-12">E</th>
                       <th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase w-12">P</th>
                       <th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase w-12">DG</th>
-                      <th class="text-center py-3 px-2 text-xs font-semibold text-cyan-400 uppercase w-16 font-bold">PTS</th>
+                      <th class="text-center py-3 px-2 text-xs font-semibold text-emerald-300 uppercase w-16 font-bold">PTS</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -159,9 +163,11 @@
               </div>
             </template>
 
-            <div v-else class="text-slate-400 text-center py-12 text-sm">
-              <span class="text-4xl block mb-3">⚽</span>
-              La tabla se actualiza cuando arranca el torneo
+            <div v-else class="text-center py-12">
+              <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-500">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M2 20h20"/></svg>
+              </div>
+              <p class="text-slate-400 text-sm">La tabla se actualiza cuando arranca el torneo</p>
             </div>
           </div>
         </div>
@@ -169,8 +175,17 @@
         <!-- Sidebar -->
         <div class="xl:col-span-1 space-y-6">
           <!-- Partidos -->
-          <div class="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur shadow-2xl overflow-hidden">
-            <div class="bg-slate-800/60 border-b border-white/10 px-5 py-3">
+          <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800/40 to-slate-900 backdrop-blur shadow-2xl overflow-hidden">
+            <div class="border-b border-white/10 px-5 py-3">
+              <div class="flex items-center gap-3 mb-2.5">
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-400/25 bg-cyan-500/10 text-cyan-300">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                </div>
+                <div>
+                  <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Fixture</div>
+                  <h3 class="font-display text-base font-bold text-white leading-tight">Partidos</h3>
+                </div>
+              </div>
               <div class="flex items-center justify-center gap-2 relative">
                 <button @click="previousRound" :disabled="currentRoundIndex <= 0"
                   class="w-7 h-7 rounded-md flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 hover:text-white transition-all disabled:opacity-20 disabled:cursor-not-allowed">
@@ -216,9 +231,15 @@
           </div>
 
           <!-- Goleadores -->
-          <div class="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur shadow-2xl overflow-hidden">
-            <div class="bg-gradient-to-r from-cyan-900/30 to-cyan-800/20 border-b border-white/10 px-5 py-3.5">
-              <h3 class="text-base font-bold text-white flex items-center gap-2">⚽ Top Goleadores</h3>
+          <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800/40 to-slate-900 backdrop-blur shadow-2xl overflow-hidden">
+            <div class="flex items-center gap-3 border-b border-white/10 px-5 py-3.5">
+              <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-400/25 bg-emerald-500/10 text-emerald-300">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 7.5l4 2.9-1.5 4.7h-5L8 10.4z"/><path d="M12 2.5v5M2.8 9.7l4.7 1M5.9 20l3-4M18.1 20l-3-4M21.2 9.7l-4.7 1"/></svg>
+              </div>
+              <div>
+                <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Máximos</div>
+                <h3 class="font-display text-base font-bold text-white leading-tight">Goleadores</h3>
+              </div>
             </div>
             <div v-if="leagueData?.topScorers?.length">
               <div v-for="(player, idx) in leagueData.topScorers" :key="idx" class="flex items-center gap-3 px-5 py-3.5 border-b border-white/5 hover:bg-white/5 transition-colors group">
@@ -228,16 +249,22 @@
                   <div class="font-semibold text-white text-sm truncate group-hover:text-cyan-300 transition-colors">{{ player.name }}</div>
                   <div class="text-xs text-slate-400 truncate">{{ player.teamName }}</div>
                 </div>
-                <div class="text-lg font-bold text-cyan-400">{{ player.goals }}</div>
+                <div class="font-display text-xl font-extrabold text-emerald-300 tabular-nums">{{ player.goals }}</div>
               </div>
             </div>
             <div v-else class="text-slate-400 text-center py-8 text-sm">Los goleadores se actualizan durante el torneo</div>
           </div>
 
           <!-- Asistidores -->
-          <div class="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur shadow-2xl overflow-hidden">
-            <div class="bg-gradient-to-r from-cyan-900/30 to-blue-900/20 border-b border-white/10 px-5 py-3.5">
-              <h3 class="text-base font-bold text-white flex items-center gap-2">🎯 Top Asistidores</h3>
+          <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800/40 to-slate-900 backdrop-blur shadow-2xl overflow-hidden">
+            <div class="flex items-center gap-3 border-b border-white/10 px-5 py-3.5">
+              <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-400/25 bg-cyan-500/10 text-cyan-300">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>
+              </div>
+              <div>
+                <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Máximos</div>
+                <h3 class="font-display text-base font-bold text-white leading-tight">Asistidores</h3>
+              </div>
             </div>
             <div v-if="leagueData?.topAssists?.length">
               <div v-for="(player, idx) in leagueData.topAssists" :key="idx" class="flex items-center gap-3 px-5 py-3.5 border-b border-white/5 hover:bg-white/5 transition-colors group">
@@ -247,7 +274,7 @@
                   <div class="font-semibold text-white text-sm truncate group-hover:text-cyan-300 transition-colors">{{ player.name }}</div>
                   <div class="text-xs text-slate-400 truncate">{{ player.teamName }}</div>
                 </div>
-                <div class="text-lg font-bold text-cyan-400">{{ player.assists }}</div>
+                <div class="font-display text-xl font-extrabold text-cyan-300 tabular-nums">{{ player.assists }}</div>
               </div>
             </div>
             <div v-else class="text-slate-400 text-center py-8 text-sm">Las asistencias se actualizan durante el torneo</div>
