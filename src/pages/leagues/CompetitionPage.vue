@@ -1,17 +1,18 @@
 <template>
-  <div class="world-cup-page py-8 px-4">
+  <div class="competition-page py-8 px-4">
     <div class="container mx-auto max-w-7xl">
       <!-- Header -->
       <div class="league-header mb-6">
         <div class="flex items-center gap-4">
-          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 border border-cyan-400/30 flex items-center justify-center text-3xl">
-            🏆
+          <div class="w-14 h-14 rounded-2xl bg-slate-800/60 border border-white/10 flex items-center justify-center overflow-hidden">
+            <img v-if="comp" :src="compLogo" :alt="comp.name" class="w-10 h-10 object-contain" @error="onLogoError" />
+            <span v-else class="text-3xl">🏆</span>
           </div>
           <div>
-            <h1 class="text-3xl font-bold text-white mb-0">Copa del Mundo 2026</h1>
+            <h1 class="text-3xl font-bold text-white mb-0">{{ comp?.name || 'Competición' }}</h1>
             <div class="flex items-center gap-2 mt-0.5">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <p class="text-cyan-400 text-sm font-medium mb-0">FIFA World Cup — USA, Canadá, México</p>
+              <p class="text-cyan-400 text-sm font-medium mb-0">{{ comp?.tagline || comp?.country || '' }}</p>
             </div>
           </div>
         </div>
@@ -20,7 +21,7 @@
       <!-- Loading -->
       <div v-if="loading" class="text-center py-20">
         <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
-        <p class="mt-4 text-slate-300">Cargando datos del Mundial...</p>
+        <p class="mt-4 text-slate-300">Cargando datos…</p>
       </div>
 
       <!-- Error -->
@@ -38,7 +39,7 @@
         </button>
         <button @click="view='grupos'" class="rounded-lg px-4 py-1.5 text-sm font-semibold transition"
           :class="view==='grupos' ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow' : 'text-slate-300 hover:text-white'">
-          Grupos
+          Tabla
         </button>
       </div>
 
@@ -52,7 +53,7 @@
         <TournamentBracket v-else :matches="leagueData?.allMatches || []" />
       </div>
 
-      <!-- Grupos + sidebar -->
+      <!-- Tabla + sidebar -->
       <div v-show="view==='grupos' || !hasKnockout" class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <!-- Tabla de Posiciones / Grupos -->
         <div class="xl:col-span-2">
@@ -63,7 +64,7 @@
               </h2>
             </div>
 
-            <!-- Multiple group tables (World Cup format) -->
+            <!-- Múltiples tablas (grupos / zonas) -->
             <template v-if="leagueData?.table?.tables?.length">
               <div v-for="group in leagueData.table.tables" :key="group.name" class="border-b border-white/10 last:border-b-0">
                 <div class="px-6 py-2.5 bg-slate-800/40">
@@ -75,7 +76,7 @@
                       <tr class="border-b border-white/10">
                         <th class="text-left py-2.5 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider w-12"></th>
                         <th class="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider w-10">#</th>
-                        <th class="text-left py-2.5 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Selección</th>
+                        <th class="text-left py-2.5 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Equipo</th>
                         <th class="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase w-10">PJ</th>
                         <th class="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase w-10">G</th>
                         <th class="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase w-10">E</th>
@@ -85,22 +86,14 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr
-                        v-for="team in group.teams"
-                        :key="team.id"
-                        class="border-b border-white/5 hover:bg-white/5 transition-colors group"
-                      >
+                      <tr v-for="team in group.teams" :key="team.id" class="border-b border-white/5 hover:bg-white/5 transition-colors group">
                         <td class="py-2 px-4">
                           <div class="w-1 h-5 rounded-full" :style="{ backgroundColor: team.qualColor || 'transparent' }"></div>
                         </td>
                         <td class="text-center py-2 px-2 text-slate-300 font-semibold text-sm">{{ team.idx }}</td>
                         <td class="py-2 px-4">
                           <router-link :to="`/team/${team.id}`" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                            <img
-                              :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${team.id}.png`"
-                              :alt="team.name" class="w-6 h-6 object-contain flex-shrink-0"
-                              @error="handleImageError"
-                            />
+                            <img :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${team.id}.png`" :alt="team.name" class="w-6 h-6 object-contain flex-shrink-0" @error="handleImageError" />
                             <span class="font-medium text-white text-sm truncate group-hover:text-cyan-300 transition-colors">{{ team.name }}</span>
                           </router-link>
                         </td>
@@ -121,7 +114,7 @@
               </div>
             </template>
 
-            <!-- Single table fallback -->
+            <!-- Tabla única -->
             <template v-else-if="leagueData?.table?.table?.length">
               <div class="overflow-x-auto">
                 <table class="w-full">
@@ -129,7 +122,7 @@
                     <tr class="border-b border-white/10">
                       <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase w-12"></th>
                       <th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase w-12">#</th>
-                      <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase">Selección</th>
+                      <th class="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase">Equipo</th>
                       <th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase w-12">PJ</th>
                       <th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase w-12">G</th>
                       <th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase w-12">E</th>
@@ -139,22 +132,14 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr
-                      v-for="team in leagueData.table.table"
-                      :key="team.id"
-                      class="border-b border-white/5 hover:bg-white/5 transition-colors group"
-                    >
+                    <tr v-for="team in leagueData.table.table" :key="team.id" class="border-b border-white/5 hover:bg-white/5 transition-colors group">
                       <td class="py-2.5 px-4">
                         <div class="w-1 h-6 rounded-full" :style="{ backgroundColor: team.qualColor || 'transparent' }"></div>
                       </td>
                       <td class="text-center py-2.5 px-2 text-slate-300 font-semibold text-sm">{{ team.idx }}</td>
                       <td class="py-2.5 px-4">
                         <router-link :to="`/team/${team.id}`" class="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-                          <img
-                            :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${team.id}.png`"
-                            :alt="team.name" class="w-6 h-6 object-contain flex-shrink-0"
-                            @error="handleImageError"
-                          />
+                          <img :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${team.id}.png`" :alt="team.name" class="w-6 h-6 object-contain flex-shrink-0" @error="handleImageError" />
                           <span class="font-medium text-white text-sm truncate max-w-[180px] group-hover:text-cyan-300 transition-colors">{{ team.name }}</span>
                         </router-link>
                       </td>
@@ -176,7 +161,7 @@
 
             <div v-else class="text-slate-400 text-center py-12 text-sm">
               <span class="text-4xl block mb-3">⚽</span>
-              Las tablas se actualizan cuando comienza la fase de grupos
+              La tabla se actualiza cuando arranca el torneo
             </div>
           </div>
         </div>
@@ -275,15 +260,21 @@
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
-import { getLeagueOverview, LEAGUES } from '@/services/fotmob.js';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import { getLeagueOverview } from '@/services/fotmob.js';
+import { competitionBySlug, LEAGUE_LOGO } from '@/services/competitions.js';
 import TournamentBracket from '@/components/league/TournamentBracket.vue';
 import KnockoutBracket from '@/components/league/KnockoutBracket.vue';
 
 export default {
-  name: 'WorldCup',
+  name: 'CompetitionPage',
   components: { TournamentBracket, KnockoutBracket },
   setup() {
+    const route = useRoute();
+    const comp = computed(() => competitionBySlug(route.params.slug));
+    const compLogo = computed(() => (comp.value ? LEAGUE_LOGO(comp.value.id) : ''));
+
     const leagueData = ref(null);
     const loading = ref(true);
     const error = ref(null);
@@ -291,7 +282,6 @@ export default {
     const view = ref('bracket');
 
     const hasPlayoff = computed(() => !!(leagueData.value?.playoff?.rounds?.some(r => r.matchups?.length)));
-
     const hasKnockout = computed(() => {
       if (hasPlayoff.value) return true;
       const ms = leagueData.value?.allMatches || [];
@@ -305,26 +295,29 @@ export default {
     });
 
     const loadLeagueData = async ({ silent = false } = {}) => {
+      if (!comp.value) { error.value = 'Competición no encontrada.'; loading.value = false; return; }
       try {
         if (!silent || !leagueData.value) loading.value = true;
         error.value = null;
-        const data = await getLeagueOverview(LEAGUES.WORLD_CUP.id);
+        const data = await getLeagueOverview(comp.value.id);
         leagueData.value = data;
+        // Default de la vista (solo en cargas no silenciosas, para no pisar la
+        // elección del usuario): bracket si la llave está completa (tiene final),
+        // si no, arranca en la tabla/grupos.
+        if (!silent) {
+          const hasFinal = !!data.playoff?.rounds?.some(r => r.stage === 'final' && r.matchups?.length);
+          view.value = hasFinal ? 'bracket' : 'grupos';
+        }
         if (data.allMatches) {
-          const rounds = [...new Set(data.allMatches.map(m => m.round))].sort((a, b) => {
-            const numA = parseInt(a) || 0;
-            const numB = parseInt(b) || 0;
-            return numA - numB;
-          });
-          const currentIdx = rounds.findIndex(round => {
-            const roundMatches = data.allMatches.filter(m => m.round === round);
-            return roundMatches.some(m => !m.status.finished);
-          });
+          const rounds = [...new Set(data.allMatches.map(m => m.round))].sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0));
+          const currentIdx = rounds.findIndex(round =>
+            data.allMatches.filter(m => m.round === round).some(m => !m.status.finished)
+          );
           if (currentIdx !== -1) currentRoundIndex.value = currentIdx;
         }
       } catch (err) {
-        console.error('Error loading World Cup data:', err);
-        error.value = 'Error al cargar los datos del Mundial. Intentá de nuevo más tarde.';
+        console.error('Error loading competition data:', err);
+        error.value = 'Error al cargar los datos. Intentá de nuevo más tarde.';
       } finally {
         loading.value = false;
       }
@@ -332,32 +325,22 @@ export default {
 
     const availableRounds = computed(() => {
       if (!leagueData.value?.allMatches) return [];
-      return [...new Set(leagueData.value.allMatches.map(m => m.round))].sort((a, b) => {
-        const numA = parseInt(a) || 0;
-        const numB = parseInt(b) || 0;
-        return numA - numB;
-      });
+      return [...new Set(leagueData.value.allMatches.map(m => m.round))].sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0));
     });
-
     const currentRoundName = computed(() => {
       const rounds = availableRounds.value;
       if (!rounds.length) return '';
       const round = rounds[currentRoundIndex.value];
       const num = parseInt(round);
-      if (!isNaN(num)) return `Jornada ${num}`;
-      return round;
+      return isNaN(num) ? round : `Jornada ${num}`;
     });
-
     const currentRoundMatches = computed(() => {
       if (!leagueData.value?.allMatches) return [];
       const rounds = availableRounds.value;
       if (!rounds.length) return [];
       const currentRound = rounds[currentRoundIndex.value];
-      return leagueData.value.allMatches
-        .filter(m => m.round === currentRound)
-        .sort((a, b) => new Date(a.time) - new Date(b.time));
+      return leagueData.value.allMatches.filter(m => m.round === currentRound).sort((a, b) => new Date(a.time) - new Date(b.time));
     });
-
     const groupedMatchesByDate = computed(() => {
       const matches = currentRoundMatches.value;
       if (!matches.length) return {};
@@ -383,6 +366,7 @@ export default {
     const nextRound = () => { if (currentRoundIndex.value < availableRounds.value.length - 1) currentRoundIndex.value++; };
     const formatMatchTime = (dateStr) => new Date(dateStr).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
     const handleImageError = (e) => { e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%23ddd"/></svg>'; };
+    const onLogoError = (e) => { e.target.style.display = 'none'; };
 
     let refreshInterval = null;
     onMounted(() => {
@@ -391,19 +375,27 @@ export default {
     });
     onBeforeUnmount(() => { if (refreshInterval) clearInterval(refreshInterval); });
 
+    // Al cambiar de torneo (misma ruta, distinto slug) recargar todo
+    watch(() => route.params.slug, () => {
+      view.value = 'bracket';
+      currentRoundIndex.value = 0;
+      leagueData.value = null;
+      loadLeagueData();
+    });
+
     return {
-      leagueData, loading, error, currentRoundIndex, availableRounds, currentRoundName,
-      groupedMatchesByDate, previousRound, nextRound, formatMatchTime, handleImageError,
-      view, hasKnockout, hasPlayoff
+      comp, compLogo, leagueData, loading, error, currentRoundIndex, availableRounds, currentRoundName,
+      groupedMatchesByDate, previousRound, nextRound, formatMatchTime, handleImageError, onLogoError,
+      view, hasKnockout,
     };
-  }
+  },
 };
 </script>
 
 <style scoped>
-.world-cup-page { min-height: 100vh; }
+.competition-page { min-height: 100vh; }
 @media (max-width: 768px) {
-  .world-cup-page { padding: 1rem 0.75rem; }
+  .competition-page { padding: 1rem 0.75rem; }
   h1 { font-size: 1.5rem !important; }
 }
 </style>

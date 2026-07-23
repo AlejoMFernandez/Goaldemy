@@ -8,16 +8,11 @@
  * - Competiciones → catálogo (competitions.js)       → /leagues/:slug o /competiciones
  */
 import { getAllPlayers, getAllTeams } from './players'
-import { COMPETITIONS } from './competitions'
+import { COMPETITIONS, isRoutedCompetition } from './competitions'
 import { searchPublicProfiles } from './user-profiles'
 
-// Slugs de competiciones que tienen página propia ruteada hoy.
-const ROUTED_COMPETITION_SLUGS = new Set([
-  'world-cup', 'premier-league', 'la-liga', 'serie-a', 'bundesliga', 'ligue-1', 'liga-argentina',
-])
-
 export function competitionRoute(c) {
-  return ROUTED_COMPETITION_SLUGS.has(c?.slug) ? `/leagues/${c.slug}` : '/competiciones'
+  return isRoutedCompetition(c?.slug) ? `/leagues/${c.slug}` : '/competiciones'
 }
 
 function norm(s) {

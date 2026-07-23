@@ -41,14 +41,8 @@ const DirectChat = () => import('../pages/social/DirectChat.vue');
 const DirectMessages = () => import('../pages/social/DirectMessages.vue');
 const AdminPanel = () => import('../pages/admin/AdminPanel.vue');
 const Teams = () => import('../pages/Teams.vue');
-const PremierLeague = () => import('../pages/leagues/PremierLeague.vue');
-const LaLiga = () => import('../pages/leagues/LaLiga.vue');
-const SerieA = () => import('../pages/leagues/SerieA.vue');
-const Bundesliga = () => import('../pages/leagues/Bundesliga.vue');
-const Ligue1 = () => import('../pages/leagues/Ligue1.vue');
-const LigaArgentina = () => import('../pages/leagues/LigaArgentina.vue');
-const WorldCup = () => import('../pages/leagues/WorldCup.vue');
 const CompetitionsHub = () => import('../pages/leagues/CompetitionsHub.vue');
+const CompetitionPage = () => import('../pages/leagues/CompetitionPage.vue');
 const TeamPage = () => import('../pages/TeamPage.vue');
 const Pricing = () => import('../pages/Pricing.vue');
 const DailyChallenge = () => import('../pages/DailyChallenge.vue');
@@ -57,13 +51,7 @@ const routes = [
     { path: '/', component: Landing },
     { path: '/competiciones', component: CompetitionsHub },
     { path: '/leagues', redirect: '/competiciones' },
-    { path: '/leagues/world-cup', component: WorldCup },
-    { path: '/leagues/premier-league', component: PremierLeague },
-    { path: '/leagues/la-liga', component: LaLiga },
-    { path: '/leagues/serie-a', component: SerieA },
-    { path: '/leagues/bundesliga', component: Bundesliga },
-    { path: '/leagues/ligue-1', component: Ligue1 },
-    { path: '/leagues/liga-argentina', component: LigaArgentina },
+    { path: '/leagues/:slug', component: CompetitionPage },
     { path: '/team/:teamId', component: TeamPage },
     { path: '/login', component: Login, meta: { layout: 'auth' } },
     { path: '/register', component: Register, meta: { layout: 'auth' } },

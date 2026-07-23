@@ -76,7 +76,9 @@ export default {
       return this.playoff?.bronzeFinal ? normMatchup(this.playoff.bronzeFinal, 0) : null
     },
     hasBracket() {
-      return this.leftColumns.some(c => c.matches.length) && !!this.final
+      // Renderiza aunque falte la final (torneo en curso): alcanza con tener
+      // al menos una ronda de eliminación. El centro muestra "Por definir".
+      return this.leftColumns.some(c => c.matches.length)
     },
   },
   methods: {
@@ -138,6 +140,10 @@ export default {
             <span class="kb-name">{{ final.away }}</span>
             <span class="kb-score">{{ final.awayScore }}</span>
           </div>
+        </div>
+        <div v-else class="kb-card kb-final kb-tbd">
+          <div class="kb-row"><span class="kb-name">Por definir</span></div>
+          <div class="kb-row"><span class="kb-name">Por definir</span></div>
         </div>
         <div v-if="bronze" class="kb-bronze">
           <div class="kb-bronze-label">🥉 Tercer puesto</div>
