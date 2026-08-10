@@ -34,31 +34,6 @@
             }
           },
           {
-            "id": 1319972,
-            "name": "Mike Penders",
-            "shirtNumber": null,
-            "cname": "Belgium",
-            "ccode": "bel",
-            "role": {
-              "key": "keeper_long",
-              "fallback": "Keeper"
-            },
-            "positionId": 0,
-            "positionIdsDesc": "GK",
-            "height": 200,
-            "age": 21,
-            "dateOfBirth": "2005-07-31",
-            "transferValue": 20379159,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
             "id": 789571,
             "name": "Robert Sánchez",
             "shirtNumber": 1,
@@ -99,6 +74,31 @@
             "age": 24,
             "dateOfBirth": "2002-04-16",
             "transferValue": 16211689,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 1319972,
+            "name": "Mike Penders",
+            "shirtNumber": 39,
+            "cname": "Belgium",
+            "ccode": "bel",
+            "role": {
+              "key": "keeper_long",
+              "fallback": "Keeper"
+            },
+            "positionId": 0,
+            "positionIdsDesc": "GK",
+            "height": 200,
+            "age": 21,
+            "dateOfBirth": "2005-07-31",
+            "transferValue": 20379159,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -569,6 +569,31 @@
             }
           },
           {
+            "id": 156008,
+            "name": "Jordan Henderson",
+            "shirtNumber": null,
+            "cname": "England",
+            "ccode": "eng",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CDM,CM",
+            "height": 182,
+            "age": 36,
+            "dateOfBirth": "1990-06-17",
+            "transferValue": 1602436,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 1272440,
             "name": "Valentín Barco",
             "shirtNumber": null,
@@ -604,7 +629,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "RM,RB",
+            "positionIdsDesc": "RM,RB,LM",
             "height": 186,
             "age": 21,
             "dateOfBirth": "2005-03-03",
@@ -708,7 +733,7 @@
             "height": 187,
             "age": 24,
             "dateOfBirth": "2002-07-26",
-            "transferValue": 58633402,
+            "transferValue": 73405050,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -774,31 +799,6 @@
         "title": "attackers",
         "members": [
           {
-            "id": 113836,
-            "name": "Danny Welbeck",
-            "shirtNumber": null,
-            "cname": "England",
-            "ccode": "eng",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "ST",
-            "height": 185,
-            "age": 35,
-            "dateOfBirth": "1990-11-26",
-            "transferValue": 3030875,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
             "id": 1207581,
             "name": "David Datro Fofana",
             "shirtNumber": null,
@@ -839,81 +839,6 @@
             "age": 23,
             "dateOfBirth": "2003-02-03",
             "transferValue": 25768926,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1530314,
-            "name": "Geovany Quenda",
-            "shirtNumber": null,
-            "cname": "Portugal",
-            "ccode": "por",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "RW,LW,RM",
-            "height": 172,
-            "age": 19,
-            "dateOfBirth": "2007-04-30",
-            "transferValue": 36100697,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 976506,
-            "name": "Mykhaylo Mudryk",
-            "shirtNumber": null,
-            "cname": "Ukraine",
-            "ccode": "ukr",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "LW",
-            "height": 175,
-            "age": 25,
-            "dateOfBirth": "2001-01-05",
-            "transferValue": 34021651,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1197347,
-            "name": "Nicolas Jackson",
-            "shirtNumber": null,
-            "cname": "Senegal",
-            "ccode": "sen",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "ST",
-            "height": 187,
-            "age": 25,
-            "dateOfBirth": "2001-06-20",
-            "transferValue": 35692893,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -986,9 +911,59 @@
             "positionId": 3,
             "positionIdsDesc": "LW,RW",
             "height": 175,
-            "age": 21,
+            "age": 22,
             "dateOfBirth": "2004-08-08",
             "transferValue": 41989314,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 1197347,
+            "name": "Nicolas Jackson",
+            "shirtNumber": 15,
+            "cname": "Senegal",
+            "ccode": "sen",
+            "role": {
+              "key": "attacker_long",
+              "fallback": "Attacker"
+            },
+            "positionId": 3,
+            "positionIdsDesc": "ST",
+            "height": 187,
+            "age": 25,
+            "dateOfBirth": "2001-06-20",
+            "transferValue": 35692893,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 113836,
+            "name": "Danny Welbeck",
+            "shirtNumber": 18,
+            "cname": "England",
+            "ccode": "eng",
+            "role": {
+              "key": "attacker_long",
+              "fallback": "Attacker"
+            },
+            "positionId": 3,
+            "positionIdsDesc": "ST",
+            "height": 185,
+            "age": 35,
+            "dateOfBirth": "1990-11-26",
+            "transferValue": 3030875,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -1114,6 +1089,56 @@
             "age": 19,
             "dateOfBirth": "2007-04-24",
             "transferValue": 87456075,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 976506,
+            "name": "Mykhaylo Mudryk",
+            "shirtNumber": 43,
+            "cname": "Ukraine",
+            "ccode": "ukr",
+            "role": {
+              "key": "attacker_long",
+              "fallback": "Attacker"
+            },
+            "positionId": 3,
+            "positionIdsDesc": "LW",
+            "height": 175,
+            "age": 25,
+            "dateOfBirth": "2001-01-05",
+            "transferValue": 34021651,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 1530314,
+            "name": "Geovany Quenda",
+            "shirtNumber": 47,
+            "cname": "Portugal",
+            "ccode": "por",
+            "role": {
+              "key": "attacker_long",
+              "fallback": "Attacker"
+            },
+            "positionId": 3,
+            "positionIdsDesc": "RW,LW,RM",
+            "height": 172,
+            "age": 19,
+            "dateOfBirth": "2007-04-30",
+            "transferValue": 36100697,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -1327,7 +1352,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "LB,CB",
+            "positionIdsDesc": "LB",
             "height": 178,
             "age": 32,
             "dateOfBirth": "1994-03-11",
@@ -1479,7 +1504,7 @@
             "positionId": 1,
             "positionIdsDesc": "LB,RB,LWB,LM",
             "height": 184,
-            "age": 25,
+            "age": 26,
             "dateOfBirth": "2000-08-09",
             "transferValue": 31074797,
             "stats": {
@@ -1962,7 +1987,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "RW,CAM,LW,RM",
+            "positionIdsDesc": "RW,CAM,RM",
             "height": 175,
             "age": 26,
             "dateOfBirth": "2000-08-02",
@@ -2114,31 +2139,6 @@
       {
         "title": "keepers",
         "members": [
-          {
-            "id": 866967,
-            "name": "Altay Bayindir",
-            "shirtNumber": 1,
-            "cname": "Turkiye",
-            "ccode": "tur",
-            "role": {
-              "key": "keeper_long",
-              "fallback": "Keeper"
-            },
-            "positionId": 0,
-            "positionIdsDesc": "GK",
-            "height": 198,
-            "age": 28,
-            "dateOfBirth": "1998-04-14",
-            "transferValue": 5760454,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
           {
             "id": 163604,
             "name": "Karl Darlow",
@@ -2625,6 +2625,31 @@
             }
           },
           {
+            "id": 1676985,
+            "name": "Tyler Fletcher",
+            "shirtNumber": 39,
+            "cname": "Scotland",
+            "ccode": "sco",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CDM,CM,CAM",
+            "height": 183,
+            "age": 19,
+            "dateOfBirth": "2007-03-19",
+            "transferValue": 120000,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 1430832,
             "name": "Harry Amass",
             "shirtNumber": 41,
@@ -2840,9 +2865,9 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "CAM,ST,RW",
+            "positionIdsDesc": "CAM,RW,ST",
             "height": 171,
-            "age": 26,
+            "age": 27,
             "dateOfBirth": "1999-08-07",
             "transferValue": 73375032,
             "stats": {
@@ -3020,7 +3045,7 @@
           {
             "id": 2022740,
             "name": "Leo Paul Bouyer",
-            "shirtNumber": 93,
+            "shirtNumber": 41,
             "cname": "France",
             "ccode": "fra",
             "role": {
@@ -3148,31 +3173,6 @@
             }
           },
           {
-            "id": 1595629,
-            "name": "Zachary Athekame",
-            "shirtNumber": 24,
-            "cname": "Switzerland",
-            "ccode": "sui",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "RB,RM",
-            "height": 180,
-            "age": 21,
-            "dateOfBirth": "2004-12-13",
-            "transferValue": 11459268,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
             "id": 1469996,
             "name": "David Odogu",
             "shirtNumber": 27,
@@ -3223,6 +3223,31 @@
             }
           },
           {
+            "id": 1163501,
+            "name": "Filippo Terracciano",
+            "shirtNumber": 42,
+            "cname": "Italy",
+            "ccode": "ita",
+            "role": {
+              "key": "defender_long",
+              "fallback": "Defender"
+            },
+            "positionId": 1,
+            "positionIdsDesc": "CB,RB",
+            "height": 186,
+            "age": 23,
+            "dateOfBirth": "2003-02-08",
+            "transferValue": 5940458,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 844996,
             "name": "Matteo Gabbia",
             "shirtNumber": 46,
@@ -3263,31 +3288,6 @@
             "age": 25,
             "dateOfBirth": "2000-08-29",
             "transferValue": 23389263,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1163501,
-            "name": "Filippo Terracciano",
-            "shirtNumber": 97,
-            "cname": "Italy",
-            "ccode": "ita",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "CB,RB",
-            "height": 186,
-            "age": 23,
-            "dateOfBirth": "2003-02-08",
-            "transferValue": 5940458,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -3503,6 +3503,31 @@
             }
           },
           {
+            "id": 31097,
+            "name": "Luka Modric",
+            "shirtNumber": 14,
+            "cname": "Croatia",
+            "ccode": "cro",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CM,CDM",
+            "height": 174,
+            "age": 40,
+            "dateOfBirth": "1985-09-09",
+            "transferValue": 2181879,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 954621,
             "name": "Youssouf Fofana",
             "shirtNumber": 19,
@@ -3518,6 +3543,31 @@
             "age": 27,
             "dateOfBirth": "1999-01-10",
             "transferValue": 20502439,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 1595629,
+            "name": "Zachary Athekame",
+            "shirtNumber": 24,
+            "cname": "Switzerland",
+            "ccode": "sui",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "RB,RM",
+            "height": 180,
+            "age": 21,
+            "dateOfBirth": "2004-12-13",
+            "transferValue": 11459268,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -3603,6 +3653,31 @@
             }
           },
           {
+            "id": 1445650,
+            "name": "Alphadjo Cissè",
+            "shirtNumber": 70,
+            "cname": "Italy",
+            "ccode": "ita",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CAM,CM,ST",
+            "height": 181,
+            "age": 19,
+            "dateOfBirth": "2006-10-22",
+            "transferValue": 3190822,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 1137272,
             "name": "Yunus Musah",
             "shirtNumber": 80,
@@ -3626,62 +3701,12 @@
               "redCards": 0,
               "minutes": 0
             }
-          },
-          {
-            "id": 1445650,
-            "name": "Alphadjo Cissè",
-            "shirtNumber": 98,
-            "cname": "Italy",
-            "ccode": "ita",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CAM,CM,ST",
-            "height": 181,
-            "age": 19,
-            "dateOfBirth": "2006-10-22",
-            "transferValue": 3190822,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
           }
         ]
       },
       {
         "title": "attackers",
         "members": [
-          {
-            "id": 940087,
-            "name": "Gonçalo Ramos",
-            "shirtNumber": null,
-            "cname": "Portugal",
-            "ccode": "por",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "ST",
-            "height": 185,
-            "age": 25,
-            "dateOfBirth": "2001-06-20",
-            "transferValue": 31822292,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
           {
             "id": 954092,
             "name": "Santiago Giménez",
@@ -3698,6 +3723,31 @@
             "age": 25,
             "dateOfBirth": "2001-04-18",
             "transferValue": 18075421,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 940087,
+            "name": "Gonçalo Ramos",
+            "shirtNumber": 9,
+            "cname": "Portugal",
+            "ccode": "por",
+            "role": {
+              "key": "attacker_long",
+              "fallback": "Attacker"
+            },
+            "positionId": 3,
+            "positionIdsDesc": "ST",
+            "height": 185,
+            "age": 25,
+            "dateOfBirth": "2001-06-20",
+            "transferValue": 31822292,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -3793,7 +3843,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "LW,RW,RM",
+            "positionIdsDesc": "LW,RW,RM,RWB",
             "height": 172,
             "age": 27,
             "dateOfBirth": "1999-05-22",
@@ -4113,7 +4163,7 @@
             "positionId": 1,
             "positionIdsDesc": "RB,CB,RWB,RM",
             "height": 183,
-            "age": 32,
+            "age": 33,
             "dateOfBirth": "1993-08-04",
             "transferValue": 8352616,
             "stats": {
@@ -4381,31 +4431,6 @@
             }
           },
           {
-            "id": 942379,
-            "name": "Miguel Gutiérrez",
-            "shirtNumber": 3,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "LWB,RWB,LB",
-            "height": 180,
-            "age": 25,
-            "dateOfBirth": "2001-07-27",
-            "transferValue": 14947677,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
             "id": 942549,
             "name": "Billy Gilmour",
             "shirtNumber": 6,
@@ -4421,6 +4446,31 @@
             "age": 25,
             "dateOfBirth": "2001-06-11",
             "transferValue": 18103607,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 793066,
+            "name": "David Neres",
+            "shirtNumber": 7,
+            "cname": "Brazil",
+            "ccode": "bra",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CAM,LW,RW",
+            "height": 175,
+            "age": 29,
+            "dateOfBirth": "1997-03-03",
+            "transferValue": 23932452,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -4836,31 +4886,6 @@
             }
           },
           {
-            "id": 793066,
-            "name": "David Neres",
-            "shirtNumber": 7,
-            "cname": "Brazil",
-            "ccode": "bra",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "CAM,RW,LW",
-            "height": 175,
-            "age": 29,
-            "dateOfBirth": "1997-03-03",
-            "transferValue": 23932452,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
             "id": 181276,
             "name": "Romelu Lukaku",
             "shirtNumber": 9,
@@ -5259,31 +5284,6 @@
             }
           },
           {
-            "id": 940976,
-            "name": "Kang-In Lee",
-            "shirtNumber": null,
-            "cname": "South Korea",
-            "ccode": "kor",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CM,RW,CAM,RM,ST",
-            "height": 173,
-            "age": 25,
-            "dateOfBirth": "2001-02-19",
-            "transferValue": 24888027,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
             "id": 1419969,
             "name": "Rodrigo Mendoza",
             "shirtNumber": 4,
@@ -5359,6 +5359,31 @@
             }
           },
           {
+            "id": 940976,
+            "name": "Kang-In Lee",
+            "shirtNumber": 7,
+            "cname": "South Korea",
+            "ccode": "kor",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CM,RW,CAM,RM,ST",
+            "height": 173,
+            "age": 25,
+            "dateOfBirth": "2001-02-19",
+            "transferValue": 24888027,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 1338192,
             "name": "Pablo Barrios",
             "shirtNumber": 8,
@@ -5399,31 +5424,6 @@
             "age": 25,
             "dateOfBirth": "2001-07-20",
             "transferValue": 36895216,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 955271,
-            "name": "Thiago Almada",
-            "shirtNumber": 11,
-            "cname": "Argentina",
-            "ccode": "arg",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "LM,CAM,CM,LW,ST",
-            "height": 171,
-            "age": 25,
-            "dateOfBirth": "2001-04-26",
-            "transferValue": 17984053,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -5496,7 +5496,7 @@
             "positionId": 2,
             "positionIdsDesc": "CDM,CM,LM,CAM",
             "height": 175,
-            "age": 20,
+            "age": 21,
             "dateOfBirth": "2005-08-05",
             "transferValue": 9037319,
             "stats": {
@@ -5832,31 +5832,6 @@
         "title": "defenders",
         "members": [
           {
-            "id": 1750565,
-            "name": "Kauã Prates",
-            "shirtNumber": null,
-            "cname": "Brazil",
-            "ccode": "bra",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "LB",
-            "height": 184,
-            "age": 17,
-            "dateOfBirth": "2008-08-12",
-            "transferValue": 2600473,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
             "id": 664970,
             "name": "Waldemar Anton",
             "shirtNumber": 3,
@@ -5982,8 +5957,33 @@
             }
           },
           {
+            "id": 1750565,
+            "name": "Kauã Prates",
+            "shirtNumber": 36,
+            "cname": "Brazil",
+            "ccode": "bra",
+            "role": {
+              "key": "defender_long",
+              "fallback": "Defender"
+            },
+            "positionId": 1,
+            "positionIdsDesc": "LB",
+            "height": 184,
+            "age": 17,
+            "dateOfBirth": "2008-08-12",
+            "transferValue": 2600473,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 1663094,
-            "name": "Filippo Mané",
+            "name": "Filippo Mane",
             "shirtNumber": 39,
             "cname": "Italy",
             "ccode": "ita",
@@ -6127,31 +6127,6 @@
             "age": 17,
             "dateOfBirth": "2008-11-17",
             "transferValue": 523496,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1109171,
-            "name": "Yan Couto",
-            "shirtNumber": 2,
-            "cname": "Brazil",
-            "ccode": "bra",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "RWB,RM",
-            "height": 168,
-            "age": 24,
-            "dateOfBirth": "2002-06-03",
-            "transferValue": 19953628,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -6442,6 +6417,31 @@
             }
           },
           {
+            "id": 1536436,
+            "name": "Konstantinos Karetsas",
+            "shirtNumber": 19,
+            "cname": "Greece",
+            "ccode": "gre",
+            "role": {
+              "key": "attacker_long",
+              "fallback": "Attacker"
+            },
+            "positionId": 3,
+            "positionIdsDesc": "RW,CAM,CM",
+            "height": 171,
+            "age": 18,
+            "dateOfBirth": "2007-11-19",
+            "transferValue": 28744921,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 1050158,
             "name": "Fábio Silva",
             "shirtNumber": 21,
@@ -6653,8 +6653,8 @@
             "stats": {
               "appearances": 1,
               "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
+              "assists": 1,
+              "yellowCards": 1,
               "redCards": 0,
               "minutes": 0
             }
@@ -6829,7 +6829,7 @@
               "appearances": 1,
               "goals": 0,
               "assists": 0,
-              "yellowCards": 1,
+              "yellowCards": 2,
               "redCards": 0,
               "minutes": 0
             }
@@ -7050,14 +7050,14 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,CDM,RM,CAM,RW",
+            "positionIdsDesc": "CM,CDM,CAM,RM,RW",
             "height": 169,
             "age": 29,
             "dateOfBirth": "1997-02-25",
             "transferValue": 3830216,
             "stats": {
               "appearances": 1,
-              "goals": 1,
+              "goals": 3,
               "assists": 0,
               "yellowCards": 0,
               "redCards": 0,
@@ -7330,7 +7330,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "ST,RW,LM",
+            "positionIdsDesc": "RW,ST,LM",
             "height": 176,
             "age": 34,
             "dateOfBirth": "1992-07-04",
@@ -7370,31 +7370,6 @@
             }
           },
           {
-            "id": 1634838,
-            "name": "Iker Zufiaurre",
-            "shirtNumber": 41,
-            "cname": "Argentina",
-            "ccode": "arg",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "ST",
-            "height": 175,
-            "age": 20,
-            "dateOfBirth": "2005-08-07",
-            "transferValue": 711360,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
             "id": 1899030,
             "name": "Leonel Flores",
             "shirtNumber": 44,
@@ -7414,7 +7389,7 @@
               "appearances": 1,
               "goals": 0,
               "assists": 0,
-              "yellowCards": 0,
+              "yellowCards": 1,
               "redCards": 0,
               "minutes": 0
             }
@@ -7663,6 +7638,31 @@
         "title": "defenders",
         "members": [
           {
+            "id": 902969,
+            "name": "Francisco Ortega",
+            "shirtNumber": null,
+            "cname": "Argentina",
+            "ccode": "arg",
+            "role": {
+              "key": "defender_long",
+              "fallback": "Defender"
+            },
+            "positionId": 1,
+            "positionIdsDesc": "LB",
+            "height": 178,
+            "age": 27,
+            "dateOfBirth": "1999-03-19",
+            "transferValue": 4487982,
+            "stats": {
+              "appearances": 1,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 1607568,
             "name": "Tobías Ramírez",
             "shirtNumber": 2,
@@ -7857,7 +7857,7 @@
               "appearances": 1,
               "goals": 0,
               "assists": 0,
-              "yellowCards": 1,
+              "yellowCards": 2,
               "redCards": 0,
               "minutes": 0
             }
@@ -7930,31 +7930,6 @@
             "transferValue": 698517,
             "stats": {
               "appearances": 1,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1609439,
-            "name": "Ulises Giménez",
-            "shirtNumber": 36,
-            "cname": "Argentina",
-            "ccode": "arg",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "RB",
-            "height": 185,
-            "age": 20,
-            "dateOfBirth": "2006-01-01",
-            "transferValue": 732243,
-            "stats": {
-              "appearances": 0,
               "goals": 0,
               "assists": 0,
               "yellowCards": 0,
@@ -8043,6 +8018,56 @@
             }
           },
           {
+            "id": 955271,
+            "name": "Thiago Almada",
+            "shirtNumber": null,
+            "cname": "Argentina",
+            "ccode": "arg",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "LM,CAM,CM,LW,ST",
+            "height": 171,
+            "age": 25,
+            "dateOfBirth": "2001-04-26",
+            "transferValue": 17984053,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 1761527,
+            "name": "Tobías Andrada",
+            "shirtNumber": null,
+            "cname": "Argentina",
+            "ccode": "arg",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CDM,RW",
+            "height": 179,
+            "age": 19,
+            "dateOfBirth": "2007-02-02",
+            "transferValue": 7380074,
+            "stats": {
+              "appearances": 1,
+              "goals": 0,
+              "assists": 1,
+              "yellowCards": 1,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 1201814,
             "name": "Juan Carlos Portillo",
             "shirtNumber": 5,
@@ -8087,7 +8112,7 @@
               "appearances": 1,
               "goals": 0,
               "assists": 0,
-              "yellowCards": 0,
+              "yellowCards": 1,
               "redCards": 0,
               "minutes": 0
             }
@@ -8212,6 +8237,31 @@
               "appearances": 1,
               "goals": 0,
               "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 1946519,
+            "name": "Lautaro Pereyra",
+            "shirtNumber": 25,
+            "cname": "Argentina",
+            "ccode": "arg",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CAM",
+            "height": null,
+            "age": 18,
+            "dateOfBirth": "2008-03-23",
+            "transferValue": null,
+            "stats": {
+              "appearances": 1,
+              "goals": 0,
+              "assists": 1,
               "yellowCards": 0,
               "redCards": 0,
               "minutes": 0
@@ -8398,31 +8448,6 @@
         "title": "attackers",
         "members": [
           {
-            "id": 730647,
-            "name": "Maximiliano Salas",
-            "shirtNumber": 7,
-            "cname": "Argentina",
-            "ccode": "arg",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "ST",
-            "height": 174,
-            "age": 28,
-            "dateOfBirth": "1997-12-01",
-            "transferValue": 3172973,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
             "id": 510698,
             "name": "Sebastián Driussi",
             "shirtNumber": 9,
@@ -8548,31 +8573,6 @@
             }
           },
           {
-            "id": 1946519,
-            "name": "Lautaro Pereyra",
-            "shirtNumber": 25,
-            "cname": "Argentina",
-            "ccode": "arg",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "CAM",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-03-23",
-            "transferValue": null,
-            "stats": {
-              "appearances": 1,
-              "goals": 0,
-              "assists": 1,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
             "id": 1580546,
             "name": "Agustín Ruberto",
             "shirtNumber": 32,
@@ -8608,7 +8608,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "ST",
+            "positionIdsDesc": "ST,RW",
             "height": null,
             "age": 19,
             "dateOfBirth": "2006-12-02",
@@ -8618,56 +8618,6 @@
               "goals": 0,
               "assists": 0,
               "yellowCards": 1,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1582679,
-            "name": "Ian Subiabre",
-            "shirtNumber": 38,
-            "cname": "Argentina",
-            "ccode": "arg",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "LW,RW,LM,RM",
-            "height": 174,
-            "age": 19,
-            "dateOfBirth": "2007-01-01",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1666511,
-            "name": "Santiago Lencina",
-            "shirtNumber": 39,
-            "cname": "Argentina",
-            "ccode": "arg",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "RW",
-            "height": 173,
-            "age": 20,
-            "dateOfBirth": "2005-09-04",
-            "transferValue": 2199964,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
               "redCards": 0,
               "minutes": 0
             }
@@ -8908,7 +8858,7 @@
             "transferValue": 2073644,
             "stats": {
               "appearances": 1,
-              "goals": 0,
+              "goals": 1,
               "assists": 0,
               "yellowCards": 1,
               "redCards": 0,
@@ -9337,7 +9287,7 @@
             "dateOfBirth": "2007-03-15",
             "transferValue": null,
             "stats": {
-              "appearances": 0,
+              "appearances": 1,
               "goals": 0,
               "assists": 0,
               "yellowCards": 0,
@@ -9346,9 +9296,9 @@
             }
           },
           {
-            "id": 1897441,
-            "name": "Gonzalo Sosa",
-            "shirtNumber": 44,
+            "id": 1933856,
+            "name": "Bautista Perez",
+            "shirtNumber": 39,
             "cname": "Argentina",
             "ccode": "arg",
             "role": {
@@ -9356,10 +9306,10 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM",
-            "height": 176,
-            "age": 21,
-            "dateOfBirth": "2005-03-05",
+            "positionIdsDesc": "Midfielder",
+            "height": 184,
+            "age": 18,
+            "dateOfBirth": "2008-06-07",
             "transferValue": null,
             "stats": {
               "appearances": 0,
@@ -9381,7 +9331,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,CDM,CAM",
+            "positionIdsDesc": "CM,CDM",
             "height": 184,
             "age": 18,
             "dateOfBirth": "2008-02-08",
@@ -9446,7 +9396,7 @@
               "goals": 0,
               "assists": 0,
               "yellowCards": 0,
-              "redCards": 0,
+              "redCards": 1,
               "minutes": 0
             }
           },
@@ -9461,7 +9411,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "LW,ST,LM,CAM,RW",
+            "positionIdsDesc": "LW,ST,LM,CAM",
             "height": 176,
             "age": 28,
             "dateOfBirth": "1998-03-30",
@@ -9589,31 +9539,6 @@
         "title": "keepers",
         "members": [
           {
-            "id": 319784,
-            "name": "Alisson Becker",
-            "shirtNumber": null,
-            "cname": "Brazil",
-            "ccode": "bra",
-            "role": {
-              "key": "keeper_long",
-              "fallback": "Keeper"
-            },
-            "positionId": 0,
-            "positionIdsDesc": "GK",
-            "height": 193,
-            "age": 33,
-            "dateOfBirth": "1992-10-02",
-            "transferValue": 13315982,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
             "id": 1068920,
             "name": "Vítezslav Jaros",
             "shirtNumber": null,
@@ -9629,6 +9554,31 @@
             "age": 25,
             "dateOfBirth": "2001-07-23",
             "transferValue": 3136684,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 319784,
+            "name": "Alisson Becker",
+            "shirtNumber": 1,
+            "cname": "Brazil",
+            "ccode": "bra",
+            "role": {
+              "key": "keeper_long",
+              "fallback": "Keeper"
+            },
+            "positionId": 0,
+            "positionIdsDesc": "GK",
+            "height": 193,
+            "age": 33,
+            "dateOfBirth": "1992-10-02",
+            "transferValue": 13315982,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -9934,7 +9884,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CDM,CB",
+            "positionIdsDesc": "CDM",
             "height": 178,
             "age": 33,
             "dateOfBirth": "1993-02-09",
@@ -10059,7 +10009,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "LB,LWB,LM",
+            "positionIdsDesc": "LWB,LB,LM",
             "height": 179,
             "age": 30,
             "dateOfBirth": "1996-05-12",
@@ -10109,7 +10059,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CDM,CM,CB",
+            "positionIdsDesc": "CDM,CM",
             "height": null,
             "age": 19,
             "dateOfBirth": "2007-06-30",
@@ -10153,31 +10103,6 @@
       {
         "title": "attackers",
         "members": [
-          {
-            "id": 1553105,
-            "name": "Víctor Muñoz",
-            "shirtNumber": null,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "LW,RW,CAM,ST,LM",
-            "height": 173,
-            "age": 23,
-            "dateOfBirth": "2003-07-13",
-            "transferValue": 60000,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
           {
             "id": 1152455,
             "name": "Florian Wirtz",
@@ -10304,6 +10229,31 @@
             }
           },
           {
+            "id": 1553105,
+            "name": "Víctor Muñoz",
+            "shirtNumber": 23,
+            "cname": "Spain",
+            "ccode": "esp",
+            "role": {
+              "key": "attacker_long",
+              "fallback": "Attacker"
+            },
+            "positionId": 3,
+            "positionIdsDesc": "LW,RW,CAM,ST,LM",
+            "height": 173,
+            "age": 23,
+            "dateOfBirth": "2003-07-13",
+            "transferValue": 60000,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 1597668,
             "name": "Rio Ngumoha",
             "shirtNumber": 73,
@@ -10341,31 +10291,6 @@
       {
         "title": "keepers",
         "members": [
-          {
-            "id": 184554,
-            "name": "Marc-André ter Stegen",
-            "shirtNumber": null,
-            "cname": "Germany",
-            "ccode": "ger",
-            "role": {
-              "key": "keeper_long",
-              "fallback": "Keeper"
-            },
-            "positionId": 0,
-            "positionIdsDesc": "GK",
-            "height": 187,
-            "age": 34,
-            "dateOfBirth": "1992-04-30",
-            "transferValue": 2201504,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
           {
             "id": 1167220,
             "name": "Joan García",
@@ -10447,8 +10372,33 @@
         "title": "defenders",
         "members": [
           {
-            "id": 1598982,
-            "name": "Gerard Martín",
+            "id": 1490110,
+            "name": "Héctor Fort",
+            "shirtNumber": 2,
+            "cname": "Spain",
+            "ccode": "esp",
+            "role": {
+              "key": "defender_long",
+              "fallback": "Defender"
+            },
+            "positionId": 1,
+            "positionIdsDesc": "RWB,RM",
+            "height": 185,
+            "age": 20,
+            "dateOfBirth": "2006-08-02",
+            "transferValue": 14911844,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 1254166,
+            "name": "Alejandro Balde",
             "shirtNumber": 3,
             "cname": "Spain",
             "ccode": "esp",
@@ -10457,11 +10407,11 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "CB,LB",
-            "height": 186,
-            "age": 24,
-            "dateOfBirth": "2002-02-26",
-            "transferValue": 18080237,
+            "positionIdsDesc": "LB",
+            "height": 175,
+            "age": 22,
+            "dateOfBirth": "2003-10-18",
+            "transferValue": 48029219,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -10497,6 +10447,31 @@
             }
           },
           {
+            "id": 1695867,
+            "name": "Álvaro Cortés",
+            "shirtNumber": 5,
+            "cname": "Spain",
+            "ccode": "esp",
+            "role": {
+              "key": "defender_long",
+              "fallback": "Defender"
+            },
+            "positionId": 1,
+            "positionIdsDesc": "CB",
+            "height": 190,
+            "age": 21,
+            "dateOfBirth": "2005-03-17",
+            "transferValue": null,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 1532137,
             "name": "Pau Cubarsí",
             "shirtNumber": 5,
@@ -10511,7 +10486,7 @@
             "height": 184,
             "age": 19,
             "dateOfBirth": "2007-01-22",
-            "transferValue": 108577654,
+            "transferValue": 136504030,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -10547,9 +10522,34 @@
             }
           },
           {
+            "id": 1598982,
+            "name": "Gerard Martín",
+            "shirtNumber": 18,
+            "cname": "Spain",
+            "ccode": "esp",
+            "role": {
+              "key": "defender_long",
+              "fallback": "Defender"
+            },
+            "positionId": 1,
+            "positionIdsDesc": "CB,LB",
+            "height": 186,
+            "age": 24,
+            "dateOfBirth": "2002-02-26",
+            "transferValue": 18080237,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 1789791,
             "name": "Jofre Torrents",
-            "shirtNumber": 23,
+            "shirtNumber": 21,
             "cname": "Spain",
             "ccode": "esp",
             "role": {
@@ -10620,112 +10620,12 @@
               "redCards": 0,
               "minutes": 0
             }
-          },
-          {
-            "id": 1490110,
-            "name": "Héctor Fort",
-            "shirtNumber": 95,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "RWB,RM",
-            "height": 185,
-            "age": 20,
-            "dateOfBirth": "2006-08-02",
-            "transferValue": 14911844,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1695867,
-            "name": "Álvaro Cortés",
-            "shirtNumber": 97,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "CB",
-            "height": 190,
-            "age": 21,
-            "dateOfBirth": "2005-03-17",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1254166,
-            "name": "Alejandro Balde",
-            "shirtNumber": 99,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "LB",
-            "height": 175,
-            "age": 22,
-            "dateOfBirth": "2003-10-18",
-            "transferValue": 48029219,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
           }
         ]
       },
       {
         "title": "midfielders",
         "members": [
-          {
-            "id": 1815149,
-            "name": "Xavi Espart",
-            "shirtNumber": 2,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CM,RB",
-            "height": null,
-            "age": 19,
-            "dateOfBirth": "2007-05-21",
-            "transferValue": 1030284,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
           {
             "id": 1279040,
             "name": "Gavi",
@@ -10739,34 +10639,9 @@
             "positionId": 2,
             "positionIdsDesc": "CDM,LW",
             "height": 173,
-            "age": 21,
+            "age": 22,
             "dateOfBirth": "2004-08-05",
             "transferValue": 32137793,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 959594,
-            "name": "Karim Adeyemi",
-            "shirtNumber": 7,
-            "cname": "Germany",
-            "ccode": "ger",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CAM,ST,RW",
-            "height": 176,
-            "age": 24,
-            "dateOfBirth": "2002-01-18",
-            "transferValue": 40370690,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -10792,6 +10667,81 @@
             "age": 23,
             "dateOfBirth": "2002-11-25",
             "transferValue": 94417188,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 1777474,
+            "name": "Tomás Marqués",
+            "shirtNumber": 10,
+            "cname": "Spain",
+            "ccode": "esp",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CDM",
+            "height": null,
+            "age": 19,
+            "dateOfBirth": "2006-10-30",
+            "transferValue": 1911724,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 1815149,
+            "name": "Xavi Espart",
+            "shirtNumber": 12,
+            "cname": "Spain",
+            "ccode": "esp",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CM,RB",
+            "height": null,
+            "age": 19,
+            "dateOfBirth": "2007-05-21",
+            "transferValue": 1030284,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 959594,
+            "name": "Karim Adeyemi",
+            "shirtNumber": 14,
+            "cname": "Germany",
+            "ccode": "ger",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CAM,ST,RW",
+            "height": 176,
+            "age": 24,
+            "dateOfBirth": "2002-01-18",
+            "transferValue": 40370690,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -10904,7 +10854,7 @@
           {
             "id": 1573126,
             "name": "Marc Bernal",
-            "shirtNumber": 36,
+            "shirtNumber": 22,
             "cname": "Spain",
             "ccode": "esp",
             "role": {
@@ -10917,31 +10867,6 @@
             "age": 19,
             "dateOfBirth": "2007-05-26",
             "transferValue": 14045949,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1777474,
-            "name": "Tomás Marqués",
-            "shirtNumber": 43,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CDM",
-            "height": null,
-            "age": 19,
-            "dateOfBirth": "2006-10-30",
-            "transferValue": 1911724,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -10971,32 +10896,7 @@
             "height": 182,
             "age": 25,
             "dateOfBirth": "2001-02-24",
-            "transferValue": 50837468,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1656591,
-            "name": "Jesse Bisiwu",
-            "shirtNumber": null,
-            "cname": "Belgium",
-            "ccode": "bel",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "Attacker",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-01-22",
-            "transferValue": 1124559,
+            "transferValue": 64304050,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -11022,6 +10922,31 @@
             "age": 26,
             "dateOfBirth": "2000-02-29",
             "transferValue": 38016334,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
+            "id": 1665438,
+            "name": "Toni Fernández",
+            "shirtNumber": 7,
+            "cname": "Spain",
+            "ccode": "esp",
+            "role": {
+              "key": "attacker_long",
+              "fallback": "Attacker"
+            },
+            "positionId": 3,
+            "positionIdsDesc": "ST",
+            "height": null,
+            "age": 18,
+            "dateOfBirth": "2008-07-15",
+            "transferValue": null,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -11082,21 +11007,21 @@
             }
           },
           {
-            "id": 1665438,
-            "name": "Toni Fernández",
-            "shirtNumber": 29,
-            "cname": "Spain",
-            "ccode": "esp",
+            "id": 1656591,
+            "name": "Jesse Bisiwu",
+            "shirtNumber": 74,
+            "cname": "Belgium",
+            "ccode": "bel",
             "role": {
               "key": "attacker_long",
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "ST",
+            "positionIdsDesc": "Attacker",
             "height": null,
             "age": 18,
-            "dateOfBirth": "2008-07-15",
-            "transferValue": null,
+            "dateOfBirth": "2008-01-22",
+            "transferValue": 1124559,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -11364,7 +11289,7 @@
             "height": 190,
             "age": 28,
             "dateOfBirth": "1997-12-19",
-            "transferValue": 44925759,
+            "transferValue": 82588929,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -11435,7 +11360,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "LB,CDM",
+            "positionIdsDesc": "LB,CDM,CM",
             "height": 178,
             "age": 19,
             "dateOfBirth": "2006-09-26",
@@ -11480,6 +11405,31 @@
         "title": "midfielders",
         "members": [
           {
+            "id": 850354,
+            "name": "Bruno Guimarães",
+            "shirtNumber": null,
+            "cname": "Brazil",
+            "ccode": "bra",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CM,CDM,CAM",
+            "height": 182,
+            "age": 28,
+            "dateOfBirth": "1997-11-16",
+            "transferValue": 56752301,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 534670,
             "name": "Martin Ødegaard",
             "shirtNumber": 8,
@@ -11520,31 +11470,6 @@
             "age": 28,
             "dateOfBirth": "1998-06-29",
             "transferValue": 49538098,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 266520,
-            "name": "Christian Nørgaard",
-            "shirtNumber": 16,
-            "cname": "Denmark",
-            "ccode": "den",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CDM,CM,CB",
-            "height": 185,
-            "age": 32,
-            "dateOfBirth": "1994-03-10",
-            "transferValue": 4256481,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -11945,7 +11870,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "ST,CAM",
+            "positionIdsDesc": "ST,CAM,CM",
             "height": 193,
             "age": 27,
             "dateOfBirth": "1999-06-11",
@@ -11973,6 +11898,31 @@
         "title": "keepers",
         "members": [
           {
+            "id": 772168,
+            "name": "Josep Martínez",
+            "shirtNumber": 1,
+            "cname": "Spain",
+            "ccode": "esp",
+            "role": {
+              "key": "keeper_long",
+              "fallback": "Keeper"
+            },
+            "positionId": 0,
+            "positionIdsDesc": "GK",
+            "height": 191,
+            "age": 28,
+            "dateOfBirth": "1998-05-27",
+            "transferValue": 8145296,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 417743,
             "name": "Raffaele Di Gennaro",
             "shirtNumber": 12,
@@ -11988,31 +11938,6 @@
             "age": 32,
             "dateOfBirth": "1993-10-03",
             "transferValue": 244472,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 772168,
-            "name": "Josep Martínez",
-            "shirtNumber": 13,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "keeper_long",
-              "fallback": "Keeper"
-            },
-            "positionId": 0,
-            "positionIdsDesc": "GK",
-            "height": 191,
-            "age": 28,
-            "dateOfBirth": "1998-05-27",
-            "transferValue": 8145296,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -12218,31 +12143,6 @@
             "age": 25,
             "dateOfBirth": "2000-11-29",
             "transferValue": 33138428,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1661191,
-            "name": "Leonardo Bovo",
-            "shirtNumber": 46,
-            "cname": "Italy",
-            "ccode": "ita",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "CM",
-            "height": null,
-            "age": 21,
-            "dateOfBirth": "2005-05-07",
-            "transferValue": 585121,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -12618,7 +12518,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM",
+            "positionIdsDesc": "CM,CDM",
             "height": 184,
             "age": 21,
             "dateOfBirth": "2004-11-25",
@@ -12700,7 +12600,7 @@
             "positionId": 3,
             "positionIdsDesc": "ST",
             "height": 188,
-            "age": 28,
+            "age": 29,
             "dateOfBirth": "1997-08-06",
             "transferValue": 43921995,
             "stats": {
@@ -13045,7 +12945,7 @@
             "height": 180,
             "age": 27,
             "dateOfBirth": "1998-10-07",
-            "transferValue": 47576340,
+            "transferValue": 58382995,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -13211,56 +13111,6 @@
         "title": "midfielders",
         "members": [
           {
-            "id": 488139,
-            "name": "Bernardo Silva",
-            "shirtNumber": null,
-            "cname": "Portugal",
-            "ccode": "por",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CAM,CDM,RW,CM",
-            "height": 173,
-            "age": 31,
-            "dateOfBirth": "1994-08-10",
-            "transferValue": 19462996,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1403691,
-            "name": "César Palacios",
-            "shirtNumber": null,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "Midfielder",
-            "height": 182,
-            "age": 21,
-            "dateOfBirth": "2004-11-11",
-            "transferValue": 853873,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
             "id": 1077894,
             "name": "Jude Bellingham",
             "shirtNumber": 5,
@@ -13275,7 +13125,7 @@
             "height": 186,
             "age": 23,
             "dateOfBirth": "2003-06-29",
-            "transferValue": 80167386,
+            "transferValue": 139530005,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -13386,6 +13236,31 @@
             }
           },
           {
+            "id": 488139,
+            "name": "Bernardo Silva",
+            "shirtNumber": 31,
+            "cname": "Portugal",
+            "ccode": "por",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CAM,CDM,RW,CM",
+            "height": 173,
+            "age": 31,
+            "dateOfBirth": "1994-08-10",
+            "transferValue": 19462996,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 1807277,
             "name": "Jorge Cestero",
             "shirtNumber": 32,
@@ -13466,6 +13341,31 @@
         "title": "attackers",
         "members": [
           {
+            "id": 1735453,
+            "name": "Yan Diomande",
+            "shirtNumber": null,
+            "cname": "Ivory Coast",
+            "ccode": "civ",
+            "role": {
+              "key": "attacker_long",
+              "fallback": "Attacker"
+            },
+            "positionId": 3,
+            "positionIdsDesc": "RW,LW,RM,LM",
+            "height": 180,
+            "age": 19,
+            "dateOfBirth": "2006-11-14",
+            "transferValue": 51835903,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 846033,
             "name": "Vinícius Júnior",
             "shirtNumber": 7,
@@ -13505,7 +13405,7 @@
             "height": 178,
             "age": 27,
             "dateOfBirth": "1998-12-20",
-            "transferValue": 98644592,
+            "transferValue": 115694930,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -13541,31 +13441,6 @@
             }
           },
           {
-            "id": 1413847,
-            "name": "Gonzalo García",
-            "shirtNumber": 16,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "ST",
-            "height": 182,
-            "age": 22,
-            "dateOfBirth": "2004-03-24",
-            "transferValue": 21876076,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
             "id": 750027,
             "name": "Brahim Díaz",
             "shirtNumber": 21,
@@ -13581,31 +13456,6 @@
             "age": 27,
             "dateOfBirth": "1999-08-03",
             "transferValue": 28324323,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1607566,
-            "name": "Franco Mastantuono",
-            "shirtNumber": 30,
-            "cname": "Argentina",
-            "ccode": "arg",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "RW,RM",
-            "height": 180,
-            "age": 18,
-            "dateOfBirth": "2007-08-14",
-            "transferValue": 44484989,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -13716,7 +13566,7 @@
             "positionId": 0,
             "positionIdsDesc": "GK",
             "height": 189,
-            "age": 22,
+            "age": 23,
             "dateOfBirth": "2003-08-08",
             "transferValue": 15253076,
             "stats": {
@@ -14078,7 +13928,7 @@
             "height": 185,
             "age": 25,
             "dateOfBirth": "2001-01-28",
-            "transferValue": 24621333,
+            "transferValue": 49583828,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -14912,6 +14762,31 @@
             }
           },
           {
+            "id": 2124812,
+            "name": "Axel Koukaba",
+            "shirtNumber": 52,
+            "cname": "France",
+            "ccode": "fra",
+            "role": {
+              "key": "defender_long",
+              "fallback": "Defender"
+            },
+            "positionId": 1,
+            "positionIdsDesc": "CB",
+            "height": null,
+            "age": 16,
+            "dateOfBirth": "2010-01-07",
+            "transferValue": null,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 1830648,
             "name": "Dimitri Lucea",
             "shirtNumber": 54,
@@ -14922,7 +14797,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "CB",
+            "positionIdsDesc": "CB,LB",
             "height": null,
             "age": 19,
             "dateOfBirth": "2007-01-20",
@@ -15027,7 +14902,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,ST,RB,LW",
+            "positionIdsDesc": "CM,ST,RB",
             "height": 183,
             "age": 20,
             "dateOfBirth": "2006-05-17",
@@ -15147,6 +15022,31 @@
         "title": "attackers",
         "members": [
           {
+            "id": 1305618,
+            "name": "Maghnes Akliouche",
+            "shirtNumber": null,
+            "cname": "France",
+            "ccode": "fra",
+            "role": {
+              "key": "attacker_long",
+              "fallback": "Attacker"
+            },
+            "positionId": 3,
+            "positionIdsDesc": "RW,CAM,ST,RM",
+            "height": 183,
+            "age": 24,
+            "dateOfBirth": "2002-02-25",
+            "transferValue": 44071866,
+            "stats": {
+              "appearances": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "minutes": 0
+            }
+          },
+          {
             "id": 900433,
             "name": "Khvicha Kvaratskhelia",
             "shirtNumber": 7,
@@ -15161,7 +15061,7 @@
             "height": 183,
             "age": 25,
             "dateOfBirth": "2001-02-12",
-            "transferValue": 82429393,
+            "transferValue": 91829294,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -15211,7 +15111,7 @@
             "height": 178,
             "age": 21,
             "dateOfBirth": "2005-06-03",
-            "transferValue": 80773279,
+            "transferValue": 89203040,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -15284,31 +15184,6 @@
       {
         "title": "keepers",
         "members": [
-          {
-            "id": 1187213,
-            "name": "James Trafford",
-            "shirtNumber": 1,
-            "cname": "England",
-            "ccode": "eng",
-            "role": {
-              "key": "keeper_long",
-              "fallback": "Keeper"
-            },
-            "positionId": 0,
-            "positionIdsDesc": "GK",
-            "height": 197,
-            "age": 23,
-            "dateOfBirth": "2002-10-10",
-            "transferValue": 26522322,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
           {
             "id": 363357,
             "name": "Marcus Bettinelli",
@@ -15684,7 +15559,7 @@
             "height": 179,
             "age": 23,
             "dateOfBirth": "2002-11-06",
-            "transferValue": 51375813,
+            "transferValue": 69389405,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -15964,7 +15839,7 @@
             "height": 194,
             "age": 26,
             "dateOfBirth": "2000-07-21",
-            "transferValue": 122030959,
+            "transferValue": 159349200,
             "stats": {
               "appearances": 0,
               "goals": 0,
