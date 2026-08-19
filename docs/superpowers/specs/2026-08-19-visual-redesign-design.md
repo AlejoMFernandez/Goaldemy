@@ -57,9 +57,9 @@ Estos valores nunca cambian entre zonas — viven como CSS custom properties glo
 
 **Semántico (cruza todas las zonas, nunca decorativo salvo en el instante de feedback):**
 ```
---success: #4ade80   /* acierto / victoria — flash transitorio ~600ms */
---danger: #ef4444    /* error — flash transitorio ~600ms */
---prestige-gold: #fbbf24   /* PRO, rachas, medallas — ya existía, se mantiene cross-zona */
+--mb-success: #4ade80   /* acierto / victoria — flash transitorio ~600ms */
+--mb-danger: #ef4444    /* error — flash transitorio ~600ms */
+--mb-prestige: #fbbf24   /* PRO, rachas, medallas — ya existía, se mantiene cross-zona */
 ```
 
 **Tipografía:**
@@ -67,12 +67,12 @@ Estos valores nunca cambian entre zonas — viven como CSS custom properties glo
 - Cuerpo: **Inter** — sin cambios.
 - `--font-display: "Space Grotesk", var(--font-sans);`
 
-**Radios (escala única, hoy mezclado sin criterio entre `rounded-lg/xl/2xl/3xl`):**
+**Radios (escala única, hoy mezclado sin criterio entre `rounded-lg/xl/2xl/3xl`). Namespace `--mb-radius-*` obligatorio: Tailwind v4 ya define `--radius-sm/md/lg/xl` en su propio tema, y como este `:root` no está dentro de un `@layer`, un token sin prefijo pisaría el de Tailwind en toda la app (encontrado y corregido en la revisión final de la Fundación):**
 ```
---radius-sm: 8px    /* chips, badges */
---radius-md: 12px   /* botones, inputs */
---radius-lg: 16px   /* cards */
---radius-xl: 24px   /* paneles/heroes grandes */
+--mb-radius-sm: 8px    /* chips, badges */
+--mb-radius-md: 12px   /* botones, inputs */
+--mb-radius-lg: 16px   /* cards */
+--mb-radius-xl: 24px   /* paneles/heroes grandes */
 ```
 
 **Superficies (2 tratamientos, elegidos por zona):**

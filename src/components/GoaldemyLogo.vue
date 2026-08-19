@@ -53,7 +53,7 @@ const textClass = computed(() => sizeConfig[props.size].text)
       ]"
       style="font-family: 'Montserrat', sans-serif;"
     >
-      <span class="text-white">GOAL</span><span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">DEMY</span>
+      <span class="text-white">GOAL</span><span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">DEMY</span>
     </span>
   </div>
 </template>

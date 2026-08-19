@@ -1,12 +1,12 @@
 /* Modern fonts */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=optional");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Space+Grotesk:wght@600;700&display=optional");
 
 @import "tailwindcss";
 
 /* Design tokens */
 :root {
     --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-    --font-display: "Plus Jakarta Sans", var(--font-sans);
+    --font-display: "Space Grotesk", var(--font-sans);
 
     /* Brand palette — esmeralda → cian (identidad Goaldemy) */
     --brand-400: oklch(0.80 0.14 168);   /* ~emerald-400 #34d399 */
@@ -15,6 +15,46 @@
     --brand-cyan: oklch(0.82 0.12 207);  /* ~cyan-400 #22d3ee */
     --accent-gold: #fbbf24;              /* victorias / estrellas / rachas */
     --radius-card: 1.1rem;
+
+    /* ─── Rediseño 2026: "Midnight Broadcast" ───
+       docs/superpowers/specs/2026-08-19-visual-redesign-design.md
+       Convive con --brand-* mientras dura el rollout por zonas: nada se borra
+       todavía, solo se agrega. Los --brand-* se retiran cuando la Zona Hub migre. */
+
+    /* Base compartida entre las 3 zonas */
+    --mb-950: #070a1a;
+    --mb-900: #0b1024;
+    --mb-800: #141a38;
+    --mb-border: rgba(255,255,255,.06);
+
+    /* Acento Zona Hub/Social — violeta-índigo */
+    --hub-300: #c084fc;
+    --hub-400: #a78bfa;
+    --hub-500: #818cf8;
+
+    /* Acento Zona Juego — dorado, único acento en reposo */
+    --play-400: #fcd34d;
+    --play-500: #f59e0b;
+    --play-600: #d97706;
+
+    /* Acento Zona Data — azul puro, sin decoración */
+    --data-500: #60a5fa;
+    --data-600: #2563eb;
+    --data-700: #3b82f6;
+
+    /* Semántico — cruza las 3 zonas, solo como feedback transitorio (~600ms) */
+    --mb-success: #4ade80;
+    --mb-danger: #ef4444;
+    /* Alias por ahora — la Zona Juego puede diferenciarlo del dorado de PRO/rachas más adelante, ver spec */
+    --mb-prestige: var(--accent-gold);
+
+    /* Escala de radios (namespaced: --radius-sm/md/lg/xl ya los define Tailwind v4
+       internamente en su propio @layer theme; como este bloque :root no está en
+       ningún @layer, colisionaba y pisaba el radio de rounded-lg/xl/etc. en toda la app) */
+    --mb-radius-sm: 8px;
+    --mb-radius-md: 12px;
+    --mb-radius-lg: 16px;
+    --mb-radius-xl: 24px;
 
     /* Surface elevation system */
     --surface-0: #0b1220;
@@ -31,22 +71,6 @@
     /* Overlay z-index scale */
     --z-overlay: 60;
     --z-confetti: 70;
-}
-
-/* Keyframes for subtle motion */
-@keyframes fade-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-4px); }
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
 }
 
 /* App base */
@@ -95,6 +119,20 @@ body {
     border: 1px solid rgba(255,255,255,0.10);
     background: linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
     box-shadow: 0 10px 30px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.05) inset;
+}
+/* Superficies del rediseño 2026 (ver spec). Conviven con .card durante el
+   rollout — cada zona migra sus componentes de .card a una de estas dos según
+   su fase: Hub y Juego usan .surface-solid, Data usa .surface-flat. */
+.surface-solid {
+    border-radius: var(--mb-radius-lg);
+    background: var(--mb-800);
+    border: 1px solid var(--mb-border);
+    box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
+}
+.surface-flat {
+    border-radius: var(--mb-radius-md);
+    background: var(--mb-900);
+    border: 1px solid color-mix(in srgb, var(--data-500) 22%, transparent);
 }
 .backdrop-blur { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 /* Mobile fix: some devices render backdrop-filter as solid white; disable on small screens */
@@ -177,21 +215,6 @@ body {
 .stagger-grid > *:nth-child(7) { animation-delay: 0.28s; }
 .stagger-grid > *:nth-child(8) { animation-delay: 0.32s; }
 .stagger-grid > *:nth-child(9) { animation-delay: 0.36s; }
-
-/* Pulse glow for live elements */
-@keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); }
-    50% { box-shadow: 0 0 12px 4px rgba(52, 211, 153, 0.2); }
-}
-.pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
-
-/* Score pop animation */
-@keyframes score-pop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.25); }
-    100% { transform: scale(1); }
-}
-.score-pop { animation: score-pop 0.3s ease; }
 
 /* Shake for wrong answers — snappy with decay */
 @keyframes shake {
@@ -320,18 +343,6 @@ option:disabled { color: #64748b; }
     100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
-/* XP bar fill shimmer */
-@keyframes bar-shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-}
-
-/* Ripple effect for correct answer */
-@keyframes option-ripple {
-    0% { transform: scale(0); opacity: 0.5; }
-    100% { transform: scale(4); opacity: 0; }
-}
-
 /* Level number morph */
 @keyframes level-morph {
     0% { transform: scale(1.5) rotate(-10deg); opacity: 0; filter: blur(8px); }
@@ -345,23 +356,10 @@ option:disabled { color: #64748b; }
     100% { opacity: 0; }
 }
 
-/* Chest bounce for daily streak */
-@keyframes chest-bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
-}
-
 /* Claim button glow pulse */
 @keyframes claim-pulse {
     0%, 100% { box-shadow: 0 0 12px 2px rgba(16,185,129,0.4); }
     50% { box-shadow: 0 0 24px 6px rgba(16,185,129,0.6); }
-}
-
-/* Counter spin-up for animated numbers */
-@keyframes counter-pop {
-    0% { transform: scale(0.8); opacity: 0.5; }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); opacity: 1; }
 }
 
 /* ─── Cosméticos PRO (animaciones tipo Steam) ─── */
