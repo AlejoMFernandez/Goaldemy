@@ -69,6 +69,7 @@ export default {
       selectedId: null,
       roundKey: 0,
       usedIds: new Set(),
+      noData: false,
       // Scoring
       ...initScoring(15),
       streak: 0,
@@ -153,8 +154,20 @@ export default {
     nextRound() {
       if (!this.allPlayers.length) return
       const rng = this.rng || Math.random
-      const round = generateRound(this.allPlayers, rng, this.usedIds)
-      if (!round) { this.usedIds.clear(); return this.nextRound() }
+      let round = generateRound(this.allPlayers, rng, this.usedIds)
+      if (!round) {
+        // Se agotaron los jugadores "notorios" sin repetir: reintentamos UNA vez
+        // con el pool completo. Si el dataset actual no alcanza ni así (muy pocos
+        // jugadores con stats diferenciales), no hay ronda posible — no reintentar
+        // en loop (eso es lo que causaba el stack overflow).
+        this.usedIds.clear()
+        round = generateRound(this.allPlayers, rng, this.usedIds)
+      }
+      if (!round) {
+        this.noData = true
+        this.currentCorrect = null
+        return
+      }
       this.usedIds.add(round.correct.id)
       this.currentCorrect = round.correct
       this.options = round.options
@@ -296,6 +309,9 @@ export default {
       <div v-if="loading" class="text-center text-slate-300 py-12">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
         <p class="mt-3">Cargando...</p>
+      </div>
+      <div v-else-if="noData" class="text-center text-slate-300 py-12">
+        <p>No hay suficientes jugadores con estadísticas para armar este desafío ahora mismo.</p>
       </div>
       <div v-else class="relative card p-6 ring-1 ring-white/5">
         <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"></div>

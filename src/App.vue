@@ -54,9 +54,18 @@ export default {
     // Reserva el ancho de la sidebar (300px) SOLO en desktop y con sesión.
     // Inline (no Tailwind ni scoped CSS) → garantizado, sin sorpresas de cascada.
     shellStyle() {
-      // Rail fino de amigos (preview) a la derecha en desktop: reserva sólo ~60px
-      // (antes eran 300). La lista completa + chat son un drawer desplegable.
-      return (this.hasSidebar && this.isLg) ? { paddingRight: '60px' } : {}
+      // Card flotante de amigos a la derecha en desktop: ya no es una columna
+      // full-height, sino una card centrada y separada del borde. Reservamos un
+      // gutter fino (~72px = ancho card + inset) para que el contenido no quede
+      // tapado por la card. La lista completa + chat son un drawer desplegable.
+      if (this.hasSidebar && this.isLg) return { paddingRight: '84px' }
+      // Mobile/tablet (<lg): el cluster flotante de amigos (desafíos + bug + amigos,
+      // fixed bottom-5 right-4) mide ~164px de alto real. Reservamos abajo para que
+      // no tape contenido que caiga en la esquina inferior derecha (ej. la última
+      // card del grid de "Jugá hoy" en Home). No aplica en juegos inmersivos: ahí
+      // el shell pide py-0 a propósito (ocupa 100dvh sin scroll).
+      if (this.hasSidebar && !this.isImmersive) return { paddingBottom: '104px' }
+      return {}
     }
   },
   async mounted() {
@@ -92,10 +101,10 @@ export default {
     <BrandedBackground />
     <!-- Shell del contenido: el rail de amigos reserva 60px SOLO en el contenido
          (main + footer), no en el header → el navbar ocupa el 100% del ancho. -->
-    <div class="min-h-screen transition-[padding] duration-300"
+    <div class="min-h-screen min-w-0 transition-[padding] duration-300"
          :class="isAuthLayout ? 'grid grid-rows-[1fr]' : 'grid grid-rows-[auto_1fr_auto]'">
       <AppNavBar v-if="!isAuthLayout" />
-      <main :style="shellStyle" :class="isAuthLayout ? 'relative z-10 min-h-screen grid place-items-center px-4 py-8' : (isImmersive ? 'relative z-10 w-full max-w-[1600px] mx-auto px-3 sm:px-6 py-0' : 'relative z-10 w-full max-w-[1600px] mx-auto px-6 py-10 lg:py-12')">
+      <main :style="shellStyle" :class="isAuthLayout ? 'relative z-10 min-h-screen min-w-0 grid place-items-center px-4 py-8' : (isImmersive ? 'relative z-10 w-full min-w-0 max-w-[1600px] mx-auto px-3 sm:px-6 py-0' : 'relative z-10 w-full min-w-0 max-w-[1600px] mx-auto px-6 py-10 lg:py-12')">
         <AppLoader v-if="authBooting" />
         <RouterView v-else v-slot="{ Component, route }">
           <Transition name="fade-slide" mode="out-in">
@@ -105,7 +114,7 @@ export default {
           </Transition>
         </RouterView>
       </main>
-      <AppFooter v-if="!isAuthLayout" :style="shellStyle" />
+      <AppFooter v-if="!isAuthLayout && !isImmersive" :style="shellStyle" />
     </div>
     <AppToast />
     <AchievementUnlockOverlay />

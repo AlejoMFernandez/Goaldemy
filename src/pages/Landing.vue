@@ -3,7 +3,7 @@ import { onMounted, onUnmounted, reactive, computed, ref, defineAsyncComponent }
 import { RouterLink, useRouter } from 'vue-router'
 import { supabase } from '../services/supabase'
 import { getAuthUser } from '../services/auth'
-import { fetchGames, gameRouteForSlug } from '../services/games'
+import { fetchGames, gameRouteForSlug, getGameTypeLabel, getGameTypeColor } from '../services/games'
 import { ACTIVE_LEAGUES, getTodayMatches, getUpcomingMatches } from '../services/fotmob'
 import { getDailyChallenges, getDailyReward, getMonthlyPass } from '../services/rewards'
 import { getUserLevel } from '../services/xp'
@@ -486,10 +486,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
       </div>
 
       <div v-if="state.loading" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        <div v-for="i in 4" :key="i" class="rounded-2xl border border-white/10 bg-slate-900/50 overflow-hidden animate-pulse">
-          <div class="h-36 bg-slate-700/40"></div>
-          <div class="px-3 py-3 border-t border-white/5"><div class="h-3 bg-slate-700/40 rounded mx-auto w-2/3"></div></div>
-        </div>
+        <div v-for="i in 4" :key="i" class="rounded-2xl border border-white/10 bg-slate-900/50 overflow-hidden animate-pulse aspect-[3/3.5]"></div>
       </div>
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 stagger-grid">
         <template v-for="g in state.featuredGames" :key="g.slug">
@@ -513,47 +510,60 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
             </div>
           </div>
 
-          <!-- Desbloqueado -->
+          <!-- Desbloqueado — dirección "Poster": superficie única full-bleed con
+               color por tipo de juego, imagen protagonista y nombre sobreimpreso -->
           <RouterLink
             v-else
             :to="toChallenge(g.slug)"
-            class="group relative flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-slate-800/80 to-slate-900 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]"
+            class="poster-card group relative block rounded-2xl overflow-hidden border border-white/10 aspect-[3/3.5]"
+            :style="{ '--c': getGameTypeColor(g.slug) }"
             :class="[
               state.availability[g.slug]?.result === 'win'
                 ? 'border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
                 : state.availability[g.slug]?.result === 'loss'
                 ? 'border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
-                : 'hover:border-emerald-400/30 hover:shadow-[0_10px_34px_rgba(16,185,129,0.18)]'
+                : ''
             ]"
           >
-            <div class="absolute top-0 inset-x-0 h-0.5 z-20 bg-gradient-to-r from-emerald-400/70 via-cyan-400/70 to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <!-- Fondo full-bleed por tipo -->
+            <div class="poster-bg pointer-events-none absolute inset-0"></div>
 
-            <div class="relative flex items-center justify-center h-36 bg-slate-800/60 overflow-hidden">
-              <div class="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="background: radial-gradient(60% 60% at 50% 42%, rgba(16,185,129,0.20), transparent 70%);"></div>
-              <div v-if="state.availability[g.slug]?.available === false" class="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-                <div v-if="state.availability[g.slug]?.result === 'win'" class="w-14 h-14 rounded-2xl flex items-center justify-center ring-1 ring-emerald-400/40 bg-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-                  <span class="text-emerald-400 text-3xl font-extrabold leading-none">✓</span>
-                </div>
-                <div v-else class="w-14 h-14 rounded-2xl flex items-center justify-center ring-1 ring-red-400/40 bg-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.3)]">
-                  <span class="text-red-400 text-3xl font-extrabold leading-none">✕</span>
-                </div>
-              </div>
-              <img
-                v-if="g.cover_url"
-                :src="g.cover_url"
-                :alt="g.name"
-                width="96" height="96" loading="lazy" decoding="async"
-                class="relative w-24 h-24 object-contain transition-transform duration-300 group-hover:scale-110"
-                :class="state.availability[g.slug]?.available === false ? 'opacity-30' : 'opacity-90'"
-              />
-              <div v-if="(state.streaks[g.slug] || 0) > 0" class="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 rounded-full bg-slate-900/90 ring-1 ring-amber-400/30 shadow-[0_0_12px_rgba(251,191,36,0.25)] px-2 py-0.5">
+            <!-- Imagen protagonista -->
+            <img
+              v-if="g.cover_url"
+              :src="g.cover_url"
+              :alt="g.name"
+              width="120" height="120" loading="lazy" decoding="async"
+              class="absolute left-1/2 top-[41%] -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] object-contain drop-shadow-[0_10px_22px_rgba(0,0,0,0.45)] transition-transform duration-300 group-hover:scale-105"
+              :class="state.availability[g.slug]?.available === false ? 'opacity-40' : ''"
+            />
+
+            <!-- Chips arriba -->
+            <div class="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-start justify-between gap-2">
+              <span v-if="getGameTypeLabel(g.slug)" class="rounded-md bg-slate-950/60 backdrop-blur px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-100 ring-1 ring-white/15">{{ getGameTypeLabel(g.slug) }}</span>
+              <span v-if="(state.streaks[g.slug] || 0) > 0" class="flex items-center gap-1 rounded-full bg-slate-950/70 ring-1 ring-amber-400/30 px-2 py-0.5">
                 <svg class="w-3 h-3 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.5)]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 23c-3.6 0-8-3.1-8-8.5C4 9 8 4 11.5 1c.2-.1.4-.1.5 0 .2.1.2.3.1.5C11 4 14 6 14 6s1-1.5 1.5-4c0-.2.2-.3.4-.3s.3.1.4.3C18 5 20 9 20 14.5 20 19.9 15.6 23 12 23z"/></svg>
                 <span class="text-amber-300 font-bold text-[11px] leading-none tabular-nums">{{ state.streaks[g.slug] }}</span>
-              </div>
+              </span>
             </div>
-            <div class="bg-slate-900/90 px-3 py-3 border-t border-white/5 text-center">
-              <div class="font-display font-bold text-white text-xs tracking-widest uppercase group-hover:text-emerald-300 transition-colors">JUGAR</div>
-              <div class="text-slate-400 text-xs mt-0.5 truncate">{{ g.name }}</div>
+
+            <!-- Scrim inferior -->
+            <div class="pointer-events-none absolute inset-x-0 bottom-0 h-[64%] z-10 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent"></div>
+
+            <!-- Nombre + CTA -->
+            <div class="absolute inset-x-0 bottom-0 z-20 p-3">
+              <div class="font-display font-extrabold text-white text-sm leading-tight drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">{{ g.name }}</div>
+              <div class="poster-sub text-[11px] font-bold mt-0.5">{{ state.availability[g.slug]?.available === false ? 'Ver resultado →' : 'Jugar →' }}</div>
+            </div>
+
+            <!-- Estado (ya jugado hoy) -->
+            <div v-if="state.availability[g.slug]?.available === false" class="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/35">
+              <div v-if="state.availability[g.slug]?.result === 'win'" class="w-14 h-14 rounded-2xl flex items-center justify-center ring-1 ring-emerald-400/40 bg-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                <span class="text-emerald-400 text-3xl font-extrabold leading-none">✓</span>
+              </div>
+              <div v-else class="w-14 h-14 rounded-2xl flex items-center justify-center ring-1 ring-red-400/40 bg-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.3)]">
+                <span class="text-red-400 text-3xl font-extrabold leading-none">✕</span>
+              </div>
             </div>
           </RouterLink>
         </template>
@@ -643,3 +653,31 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
     <MatchDetailModal :match="selectedMatch" :open="matchModalOpen" @close="matchModalOpen = false" />
   </section>
 </template>
+
+<style scoped>
+/* Dirección "Poster" para el bloque "Jugá hoy": superficie única con color por
+   tipo de juego (var --c la setea cada card según getGameTypeColor). */
+.poster-card {
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+.poster-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .5);
+  border-color: color-mix(in srgb, var(--c, #34d399) 45%, transparent);
+}
+.poster-bg {
+  background: linear-gradient(150deg, color-mix(in srgb, var(--c, #34d399) 40%, #0a1120), #0a1120 72%);
+}
+.poster-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(72% 55% at 68% 26%, color-mix(in srgb, var(--c, #34d399) 42%, transparent), transparent 70%);
+}
+.poster-sub {
+  color: color-mix(in srgb, var(--c, #34d399) 68%, #ffffff);
+}
+@media (prefers-reduced-motion: reduce) {
+  .poster-card { transition: none; }
+}
+</style>

@@ -30,6 +30,7 @@ dist-ssr
 # Local tooling / agent config
 .claude/
 .agents/
+.superpowers/
 
 # Supabase CLI temp
 supabase/.temp/

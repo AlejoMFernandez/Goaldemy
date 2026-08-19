@@ -21,10 +21,13 @@ export default {
     avatarPropsFor(u) {
       const c = (this.resultCos || {})[u?.id] || {}
       const name = u?.display_name || u?.username || u?.email || '?'
+      // En el dropdown de búsqueda mostramos avatares UNIFORMES: sin el marco
+      // equipado (los bordes gruesos rompían la alineación de la fila a 32px).
+      // Dejamos el ícono/foto dentro de un aro neutro, estilo Discord/Slack.
       return {
         avatarUrl: u?.avatar_url || '',
         initial: (name.trim()[0] || '?').toUpperCase(),
-        frameKey: c.frameKey || 'none',
+        frameKey: 'none',
         iconGlyph: c.iconGlyph || '',
         iconBg: c.iconBg || 'emerald',
       }

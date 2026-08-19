@@ -21,12 +21,12 @@
     <div v-else-if="teamData" class="container mx-auto px-4 py-8 max-w-7xl">
       <!-- Team Header -->
       <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6 mb-6">
-        <div class="flex items-center gap-6">
+        <div class="flex flex-wrap sm:flex-nowrap items-center gap-4 sm:gap-6">
           <!-- Team Logo -->
           <div class="flex-shrink-0">
-            <img 
-              v-if="teamData.logo" 
-              :src="teamData.logo" 
+            <img
+              v-if="teamData.logo"
+              :src="teamData.logo"
               :alt="teamData.name"
               class="w-24 h-24 object-contain"
             />
@@ -36,9 +36,9 @@
           </div>
 
           <!-- Team Info -->
-          <div class="flex-1">
-            <h1 class="text-4xl font-bold mb-2">{{ teamData.name || 'Equipo' }}</h1>
-            <div class="flex items-center gap-4 text-sm text-slate-400">
+          <div class="flex-1 min-w-0">
+            <h1 class="text-2xl sm:text-4xl font-bold mb-2 break-words">{{ teamData.name || 'Equipo' }}</h1>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-slate-400">
               <span v-if="teamData.stadium?.name" class="flex items-center gap-1">
                 <i class="bi bi-geo-alt"></i>
                 {{ teamData.stadium.name }}
@@ -135,21 +135,21 @@
                 :key="match.id"
                 class="bg-slate-700/50 rounded-xl p-4 hover:bg-slate-700 transition-colors"
               >
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3 flex-1">
-                    <div class="text-xs text-slate-400 w-20">{{ match.date }}</div>
-                    <div class="flex items-center gap-2 flex-1">
-                      <img :src="match.homeLogo" :alt="match.home" class="w-5 h-5 object-contain" />
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                    <div class="text-xs text-slate-400 w-10 sm:w-20 shrink-0">{{ match.date }}</div>
+                    <div class="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
+                      <img :src="match.homeLogo" :alt="match.home" class="w-5 h-5 object-contain shrink-0" />
                       <span class="font-semibold truncate">{{ match.home }}</span>
-                      <span class="text-slate-400">vs</span>
+                      <span class="text-slate-400 shrink-0 text-xs">vs</span>
                       <span class="font-semibold truncate">{{ match.away }}</span>
-                      <img :src="match.awayLogo" :alt="match.away" class="w-5 h-5 object-contain" />
+                      <img :src="match.awayLogo" :alt="match.away" class="w-5 h-5 object-contain shrink-0" />
                     </div>
                   </div>
-                  <div class="flex items-center gap-3">
-                    <div class="text-xs text-slate-500 w-40 text-right">{{ match.competition }}</div>
+                  <div class="flex items-center justify-end gap-2 sm:gap-3 shrink-0 pl-[52px] sm:pl-0">
+                    <div class="text-xs text-slate-500 w-40 text-right hidden md:block truncate">{{ match.competition }}</div>
                     <span class="font-bold text-sm min-w-[35px] text-center">{{ match.score }}</span>
-                    <span 
+                    <span
                       class="px-2 py-1 rounded text-xs font-bold min-w-[28px] text-center"
                       :class="{
                         'bg-green-500/20 text-green-500': match.result === 'W',

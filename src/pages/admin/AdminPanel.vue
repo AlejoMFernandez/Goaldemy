@@ -30,11 +30,11 @@
 
                 <!-- Navigation Tabs -->
                 <div class="bg-gradient-to-br from-slate-800/80 to-slate-900/50 backdrop-blur border border-white/10 rounded-2xl p-2 mb-8 shadow-xl">
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 overflow-x-auto">
                         <button
                             @click="activeTab = 'users'"
                             :class="[
-                                'flex-1 px-6 py-3 rounded-lg font-semibold transition-all',
+                                'flex-1 min-w-max whitespace-nowrap px-6 py-3 rounded-lg font-semibold transition-all',
                                 activeTab === 'users' 
                                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
                                     : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
@@ -45,7 +45,7 @@
                         <button
                             @click="activeTab = 'teams'"
                             :class="[
-                                'flex-1 px-6 py-3 rounded-lg font-semibold transition-all',
+                                'flex-1 min-w-max whitespace-nowrap px-6 py-3 rounded-lg font-semibold transition-all',
                                 activeTab === 'teams'
                                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
                                     : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
@@ -56,7 +56,7 @@
                         <button
                             @click="activeTab = 'pass'"
                             :class="[
-                                'flex-1 px-6 py-3 rounded-lg font-semibold transition-all',
+                                'flex-1 min-w-max whitespace-nowrap px-6 py-3 rounded-lg font-semibold transition-all',
                                 activeTab === 'pass'
                                     ? 'bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-900 shadow-lg'
                                     : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
@@ -67,7 +67,7 @@
                         <button
                             @click="activeTab = 'bugs'"
                             :class="[
-                                'flex-1 px-6 py-3 rounded-lg font-semibold transition-all',
+                                'flex-1 min-w-max whitespace-nowrap px-6 py-3 rounded-lg font-semibold transition-all',
                                 activeTab === 'bugs'
                                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
                                     : 'text-slate-400 hover:text-white hover:bg-slate-700/50'

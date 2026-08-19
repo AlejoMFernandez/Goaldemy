@@ -22,7 +22,7 @@ const nf = (n) => new Intl.NumberFormat('es-AR').format(n || 0)
     :class="it.owned ? 'border-emerald-500/30' : 'border-white/10 hover:border-white/20'"
   >
     <div class="mb-3 mt-1"><PassCosmetic :cos="it" :size="64" /></div>
-    <div class="text-sm font-bold text-white truncate w-full">{{ it.name }}</div>
+    <div class="text-sm font-bold text-white line-clamp-2 w-full leading-tight">{{ it.name }}</div>
     <div class="text-[11px] mb-3 capitalize" :class="rar.text">
       {{ it.rarity }}<span class="text-slate-500"> · {{ it.type }}</span>
     </div>
