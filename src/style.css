@@ -133,6 +133,20 @@ body {
     background: linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
     box-shadow: 0 10px 30px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.05) inset;
 }
+/* Superficies del rediseño 2026 (ver spec). Conviven con .card durante el
+   rollout — cada zona migra sus componentes de .card a una de estas dos según
+   su fase: Hub y Juego usan .surface-solid, Data usa .surface-flat. */
+.surface-solid {
+    border-radius: var(--radius-lg);
+    background: var(--mb-800);
+    border: 1px solid var(--mb-border);
+    box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
+}
+.surface-flat {
+    border-radius: var(--radius-md);
+    background: var(--mb-900);
+    border: 1px solid rgba(96,165,250,.22);
+}
 .backdrop-blur { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 /* Mobile fix: some devices render backdrop-filter as solid white; disable on small screens */
 @media (max-width: 640px) {
