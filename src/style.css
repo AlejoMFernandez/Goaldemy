@@ -70,22 +70,6 @@
     --z-confetti: 70;
 }
 
-/* Keyframes for subtle motion */
-@keyframes fade-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-4px); }
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
 /* App base */
 html, body, #app { min-height: 100%; }
 html, body { margin: 0; padding: 0; overflow-x: hidden; }
@@ -229,21 +213,6 @@ body {
 .stagger-grid > *:nth-child(8) { animation-delay: 0.32s; }
 .stagger-grid > *:nth-child(9) { animation-delay: 0.36s; }
 
-/* Pulse glow for live elements */
-@keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); }
-    50% { box-shadow: 0 0 12px 4px rgba(52, 211, 153, 0.2); }
-}
-.pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
-
-/* Score pop animation */
-@keyframes score-pop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.25); }
-    100% { transform: scale(1); }
-}
-.score-pop { animation: score-pop 0.3s ease; }
-
 /* Shake for wrong answers — snappy with decay */
 @keyframes shake {
     0% { transform: translateX(0); }
@@ -371,18 +340,6 @@ option:disabled { color: #64748b; }
     100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
-/* XP bar fill shimmer */
-@keyframes bar-shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-}
-
-/* Ripple effect for correct answer */
-@keyframes option-ripple {
-    0% { transform: scale(0); opacity: 0.5; }
-    100% { transform: scale(4); opacity: 0; }
-}
-
 /* Level number morph */
 @keyframes level-morph {
     0% { transform: scale(1.5) rotate(-10deg); opacity: 0; filter: blur(8px); }
@@ -396,23 +353,10 @@ option:disabled { color: #64748b; }
     100% { opacity: 0; }
 }
 
-/* Chest bounce for daily streak */
-@keyframes chest-bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
-}
-
 /* Claim button glow pulse */
 @keyframes claim-pulse {
     0%, 100% { box-shadow: 0 0 12px 2px rgba(16,185,129,0.4); }
     50% { box-shadow: 0 0 24px 6px rgba(16,185,129,0.6); }
-}
-
-/* Counter spin-up for animated numbers */
-@keyframes counter-pop {
-    0% { transform: scale(0.8); opacity: 0.5; }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); opacity: 1; }
 }
 
 /* ─── Cosméticos PRO (animaciones tipo Steam) ─── */
