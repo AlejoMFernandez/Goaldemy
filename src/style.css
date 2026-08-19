@@ -16,6 +16,43 @@
     --accent-gold: #fbbf24;              /* victorias / estrellas / rachas */
     --radius-card: 1.1rem;
 
+    /* ─── Rediseño 2026: "Midnight Broadcast" ───
+       docs/superpowers/specs/2026-08-19-visual-redesign-design.md
+       Convive con --brand-* mientras dura el rollout por zonas: nada se borra
+       todavía, solo se agrega. Los --brand-* se retiran cuando la Zona Hub migre. */
+
+    /* Base compartida entre las 3 zonas */
+    --mb-950: #070a1a;
+    --mb-900: #0b1024;
+    --mb-800: #141a38;
+    --mb-border: rgba(255,255,255,.06);
+
+    /* Acento Zona Hub/Social — violeta-índigo */
+    --hub-300: #c084fc;
+    --hub-400: #a78bfa;
+    --hub-500: #818cf8;
+
+    /* Acento Zona Juego — dorado, único acento en reposo */
+    --play-400: #fcd34d;
+    --play-500: #f59e0b;
+    --play-600: #d97706;
+
+    /* Acento Zona Data — azul puro, sin decoración */
+    --data-500: #60a5fa;
+    --data-600: #2563eb;
+    --data-700: #3b82f6;
+
+    /* Semántico — cruza las 3 zonas, solo como feedback transitorio (~600ms) */
+    --mb-success: #4ade80;
+    --mb-danger: #ef4444;
+    --mb-prestige: #fbbf24;
+
+    /* Escala de radios (reemplaza el mix actual de rounded-lg/xl/2xl/3xl sin criterio) */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+
     /* Surface elevation system */
     --surface-0: #0b1220;
     --surface-1: rgba(255,255,255,0.04);
