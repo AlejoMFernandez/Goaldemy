@@ -31,6 +31,7 @@ dist-ssr
 .claude/
 .agents/
 .superpowers/
+.worktrees/
 
 # Supabase CLI temp
 supabase/.temp/
