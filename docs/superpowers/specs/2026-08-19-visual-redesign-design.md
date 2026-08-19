@@ -30,8 +30,8 @@ La app se divide en 3 zonas funcionales. Todas comparten la misma base ("Midnigh
 
 | Zona | Rutas | Acento | Superficie |
 |---|---|---|---|
-| **Hub / Social** | `/`, `/play/points`, `/profile`, `/profile-edit`, `/notifications`, `/messages*`, `/pricing`, `/tienda`, `/rewards`, FriendsDock (global) | Violeta-índigo | Sólida elevada |
-| **Juego** | `/games/*` (14 rutas) + GameShell, level-up overlay, achievement unlock overlay, `/reto` | Dorado (único acento en reposo) | Sólida elevada |
+| **Hub / Social** | `/`, `/play/points`, `/profile`, `/profile-edit`, `/notifications`, `/messages*`, `/pricing`, `/tienda`, FriendsDock (global) | Violeta-índigo | Sólida elevada |
+| **Juego** | `/games/*` (14 rutas) + GameShell, level-up overlay, achievement unlock overlay, `/reto`, `/rewards` | Dorado (único acento en reposo) | Sólida elevada |
 | **Data** | `/competiciones`, `/leagues/*`, `/team/*`, `/leaderboards`, `/teams` | Azul puro | Bordeada plana |
 
 Páginas de auth (`/login`, `/register`, etc.) y `/about/*` heredan la identidad Hub por defecto (son parte del "chrome" general, no necesitan mood propio). `/admin` recibe solo las reglas estructurales (radios, tipografía, íconos) y el acento azul de Data por defecto, sin inversión de diseño adicional.
@@ -100,7 +100,7 @@ Unificar todo a SVG stroke custom (el estilo que ya usa la mayoría de la app). 
 
 1. **Fundación** (esta spec → plan de implementación): tokens en `style.css`, `meta.zone` en el router, clases de superficie, auditoría y reemplazo de íconos Bootstrap, poda del set de animaciones. No debería ser visible como "cambio grande" todavía — es la base.
 2. **Zona Hub**: Landing, PlayPoints, FriendsDock, Profile/ProfileEdit, Pricing, Tienda, Notifications, Messages. Es la puerta de entrada — mayor impacto percibido primero.
-3. **Zona Juego**: los 14 juegos + GameShell + overlays de recompensa/logro/nivel.
+3. **Zona Juego**: los 14 juegos + GameShell, `/reto`, `/rewards` (Recompensas + Pase) + overlays de recompensa/logro/nivel.
 4. **Zona Data**: Competiciones, ligas/brackets, equipos, ranking.
 
 Cada fase se implementa, se prueba en vivo (Playwright, mismos breakpoints que la Fase 1: 375/768/1280/1920) y se confirma con el owner antes de pasar a la siguiente. No se avanza a la fase N+1 sin haber validado la fase N.
