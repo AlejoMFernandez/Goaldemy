@@ -57,9 +57,9 @@ Estos valores nunca cambian entre zonas — viven como CSS custom properties glo
 
 **Semántico (cruza todas las zonas, nunca decorativo salvo en el instante de feedback):**
 ```
---success: #4ade80   /* acierto / victoria — flash transitorio ~600ms */
---danger: #ef4444    /* error — flash transitorio ~600ms */
---prestige-gold: #fbbf24   /* PRO, rachas, medallas — ya existía, se mantiene cross-zona */
+--mb-success: #4ade80   /* acierto / victoria — flash transitorio ~600ms */
+--mb-danger: #ef4444    /* error — flash transitorio ~600ms */
+--mb-prestige: #fbbf24   /* PRO, rachas, medallas — ya existía, se mantiene cross-zona */
 ```
 
 **Tipografía:**

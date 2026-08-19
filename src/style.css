@@ -45,13 +45,16 @@
     /* Semántico — cruza las 3 zonas, solo como feedback transitorio (~600ms) */
     --mb-success: #4ade80;
     --mb-danger: #ef4444;
-    --mb-prestige: #fbbf24;
+    /* Alias por ahora — la Zona Juego puede diferenciarlo del dorado de PRO/rachas más adelante, ver spec */
+    --mb-prestige: var(--accent-gold);
 
-    /* Escala de radios (reemplaza el mix actual de rounded-lg/xl/2xl/3xl sin criterio) */
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
+    /* Escala de radios (namespaced: --radius-sm/md/lg/xl ya los define Tailwind v4
+       internamente en su propio @layer theme; como este bloque :root no está en
+       ningún @layer, colisionaba y pisaba el radio de rounded-lg/xl/etc. en toda la app) */
+    --mb-radius-sm: 8px;
+    --mb-radius-md: 12px;
+    --mb-radius-lg: 16px;
+    --mb-radius-xl: 24px;
 
     /* Surface elevation system */
     --surface-0: #0b1220;
@@ -121,15 +124,15 @@ body {
    rollout — cada zona migra sus componentes de .card a una de estas dos según
    su fase: Hub y Juego usan .surface-solid, Data usa .surface-flat. */
 .surface-solid {
-    border-radius: var(--radius-lg);
+    border-radius: var(--mb-radius-lg);
     background: var(--mb-800);
     border: 1px solid var(--mb-border);
     box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
 }
 .surface-flat {
-    border-radius: var(--radius-md);
+    border-radius: var(--mb-radius-md);
     background: var(--mb-900);
-    border: 1px solid rgba(96,165,250,.22);
+    border: 1px solid color-mix(in srgb, var(--data-500) 22%, transparent);
 }
 .backdrop-blur { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 /* Mobile fix: some devices render backdrop-filter as solid white; disable on small screens */
