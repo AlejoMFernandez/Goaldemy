@@ -463,23 +463,6 @@ export function getGameTypeLabel(slug) {
   return GAME_TYPE_LABELS[t] || ''
 }
 
-// Color de acento por tipo de juego, para el tinte de cada card en el índice
-// (dirección "Limpia"). Da variedad visual sin salirse de una paleta cohesiva.
-const GAME_TYPE_COLORS = {
-  [GAME_TYPES.TIMED]: '#22d3ee',    // cyan — contrarreloj
-  [GAME_TYPES.ORDERING]: '#f472b6', // pink — ordenar
-  [GAME_TYPES.LIVES]: '#fb923c',    // orange — vidas
-  [GAME_TYPES.WORDLE]: '#a78bfa',   // violet — adivinar
-  [GAME_TYPES.CHAIN]: '#fb7185',    // rose — cadena
-  [GAME_TYPES.PUZZLE]: '#38bdf8',   // sky — grupos
-  [GAME_TYPES.GRID]: '#34d399',     // emerald — grilla
-}
-
-export function getGameTypeColor(slug) {
-  const t = getGameMetadata(slug)?.type
-  return GAME_TYPE_COLORS[t] || '#34d399'
-}
-
 // Map slug to in-app route
 export function gameRouteForSlug(slug) {
   switch ((slug || '').toString()) {
