@@ -487,7 +487,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
       </div>
 
       <div v-if="state.loading" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        <div v-for="i in 4" :key="i" class="rounded-2xl border border-white/10 bg-slate-900/50 overflow-hidden animate-pulse aspect-[3/3.5]"></div>
+        <div v-for="i in 4" :key="i" class="rounded-2xl border border-white/10 bg-slate-900/50 overflow-hidden animate-pulse h-[184px]"></div>
       </div>
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 stagger-grid">
         <template v-for="g in state.featuredGames" :key="g.slug">

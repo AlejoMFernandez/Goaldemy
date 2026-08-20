@@ -1,6 +1,5 @@
 <script setup>
 import { onMounted, reactive, computed, ref } from 'vue'
-import { RouterLink } from 'vue-router'
 import { fetchGames, gameRouteForSlug } from '../services/games'
 import { isChallengeAvailable, fetchDailyWinStreak } from '../services/game-modes'
 import { getGameUnlockLevel, isGameUnlocked } from '../services/level-rewards'
