@@ -3,7 +3,7 @@ import { onMounted, onUnmounted, reactive, computed, ref, defineAsyncComponent }
 import { RouterLink, useRouter } from 'vue-router'
 import { supabase } from '../services/supabase'
 import { getAuthUser } from '../services/auth'
-import { fetchGames, gameRouteForSlug, getGameTypeLabel, getGameTypeColor } from '../services/games'
+import { fetchGames, gameRouteForSlug } from '../services/games'
 import { ACTIVE_LEAGUES, getTodayMatches, getUpcomingMatches } from '../services/fotmob'
 import { getDailyChallenges, getDailyReward, getMonthlyPass } from '../services/rewards'
 import { getUserLevel } from '../services/xp'
@@ -12,6 +12,7 @@ import { getTierForLevel, tierAccentText } from '../services/tiers'
 import { getGameUnlockLevel, isGameUnlocked } from '../services/level-rewards'
 import { fetchPlans, getUserPlan } from '../services/premium'
 import UserAvatar from '../components/common/UserAvatar.vue'
+import GameCard from '../components/game/GameCard.vue'
 // Async: pase, planes y modal de partido bajan en su propio chunk (deps pesadas
 // fuera del bundle inicial de la home). MonthlyPass trae su card + modal + datos.
 const MatchDetailModal = defineAsyncComponent(() => import('../components/match/MatchDetailModal.vue'))
@@ -243,17 +244,17 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
       <!-- Invitado: hero marketing (no tocar) -->
       <div v-if="!state.isAuthenticated" class="text-center space-y-6">
         <div class="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-sm text-amber-300 font-medium slide-up">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
           Copa del Mundo 2026 — EN VIVO
         </div>
         <h1 class="text-4xl sm:text-6xl font-extrabold text-white tracking-tight leading-[1.1]">
-          Jugá. Aprendé. <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Dominá.</span>
+          Jugá. Aprendé. <span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">Dominá.</span>
         </h1>
         <p class="text-slate-400 max-w-lg mx-auto text-base leading-relaxed">
           Micro-desafíos de fútbol diarios — ganás XP, subís de rango y competís con el mundo.
         </p>
         <div class="flex flex-wrap gap-3 justify-center pt-2">
-          <RouterLink to="/register" class="group rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-7 py-3 font-semibold text-white text-sm transition-all hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-105 active:scale-95">
+          <RouterLink to="/register" class="group rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-7 py-3 font-semibold text-white text-sm transition-all hover:shadow-lg hover:shadow-indigo-500/30 hover:scale-105 active:scale-95">
             Crear cuenta gratis
             <span class="inline-block ml-1 transition-transform group-hover:translate-x-0.5">→</span>
           </RouterLink>
@@ -265,8 +266,8 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 
       <!-- Logueado: hero XL estilo lobby (avatar grande + JUGAR + Tu día) -->
       <div v-else class="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900/70 to-slate-800/40 p-6 sm:p-8 shadow-xl shadow-black/30">
-        <div class="pointer-events-none absolute -top-24 -right-20 w-72 h-72 rounded-full opacity-20" style="background: radial-gradient(circle, rgba(16,185,129,0.55), transparent 70%);"></div>
-        <div class="pointer-events-none absolute -bottom-28 -left-16 w-72 h-72 rounded-full opacity-10" style="background: radial-gradient(circle, rgba(34,211,238,0.5), transparent 70%);"></div>
+        <div class="pointer-events-none absolute -top-24 -right-20 w-72 h-72 rounded-full opacity-20" style="background: radial-gradient(circle, rgba(99,102,241,0.55), transparent 70%);"></div>
+        <div class="pointer-events-none absolute -bottom-28 -left-16 w-72 h-72 rounded-full opacity-10" style="background: radial-gradient(circle, rgba(168,85,247,0.5), transparent 70%);"></div>
 
         <div class="relative flex flex-col sm:flex-row items-center gap-5 sm:gap-7">
           <!-- Avatar XL con badge de nivel -->
@@ -280,7 +281,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
               :icon-bg="home.iconBg"
               :frame-premium="home.framePremium"
             />
-            <div class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-slate-950 border border-emerald-400/60 px-3 py-1 text-xs font-extrabold text-emerald-400 shadow-lg shadow-emerald-500/20">
+            <div class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-slate-950 border border-violet-400/60 px-3 py-1 text-xs font-extrabold text-violet-400 shadow-lg shadow-indigo-500/20">
               NIVEL {{ home.level }}
             </div>
           </div>
@@ -288,7 +289,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
           <!-- Identidad + CTA -->
           <div class="flex-1 min-w-0 w-full text-center sm:text-left">
             <p class="text-[11px] uppercase tracking-[0.22em] text-slate-500 mb-1">Bienvenido de vuelta</p>
-            <h1 class="font-display text-2xl sm:text-4xl font-extrabold text-white leading-tight truncate">Hola{{ home.name ? ', ' + home.name : '' }}</h1>
+            <h1 class="font-display text-2xl sm:text-4xl font-bold text-white leading-tight truncate">Hola{{ home.name ? ', ' + home.name : '' }}</h1>
             <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-2.5 gap-y-1 text-sm mt-2">
               <span v-if="tierLabel" class="inline-flex items-center gap-1.5 font-bold" :class="tierAccent">
                 <span class="w-1.5 h-1.5 rounded-full bg-current"></span>{{ tierLabel }}
@@ -302,7 +303,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
               </span>
             </div>
             <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-5">
-              <RouterLink to="/play/points" class="group inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-8 py-3.5 font-bold text-white text-base shadow-lg shadow-emerald-500/30 transition-all hover:scale-105 hover:shadow-emerald-500/50 active:scale-95">
+              <RouterLink to="/play/points" class="group inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3.5 font-bold text-white text-base shadow-lg shadow-indigo-500/30 transition-all hover:scale-105 hover:shadow-indigo-500/50 active:scale-95">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
                 Jugar ahora
               </RouterLink>
@@ -317,16 +318,16 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
         <!-- Strip "Tu día" -->
         <div class="relative mt-6 pt-5 border-t border-white/10 grid grid-cols-3 divide-x divide-white/10">
           <RouterLink to="/play/points" class="group flex flex-col items-center px-2 transition">
-            <span class="text-[10px] uppercase tracking-wider text-slate-500 group-hover:text-emerald-400 transition-colors">Jugados hoy</span>
-            <span class="font-display text-xl font-extrabold text-white mt-0.5">{{ home.playedToday }}<span class="text-slate-600 text-sm">/{{ state.totalGames || '—' }}</span></span>
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 group-hover:text-violet-400 transition-colors">Jugados hoy</span>
+            <span class="font-display text-xl font-bold text-white mt-0.5">{{ home.playedToday }}<span class="text-slate-600 text-sm">/{{ state.totalGames || '—' }}</span></span>
           </RouterLink>
           <div class="flex flex-col items-center px-2">
             <span class="text-[10px] uppercase tracking-wider text-slate-500">Racha</span>
-            <span class="font-display text-xl font-extrabold text-white mt-0.5">{{ home.dailyStreak }} <span class="text-slate-500 text-sm font-semibold">días</span></span>
+            <span class="font-display text-xl font-bold text-white mt-0.5">{{ home.dailyStreak }} <span class="text-slate-500 text-sm font-semibold">días</span></span>
           </div>
           <RouterLink to="/rewards" class="group relative flex flex-col items-center px-2 transition">
             <span class="text-[10px] uppercase tracking-wider transition-colors" :class="home.rewardsToClaim > 0 ? 'text-amber-300' : 'text-slate-500 group-hover:text-amber-300'">Recompensas</span>
-            <span class="font-display text-xl font-extrabold mt-0.5" :class="home.rewardsToClaim > 0 ? 'text-amber-300' : 'text-white'">{{ home.rewardsToClaim }}</span>
+            <span class="font-display text-xl font-bold mt-0.5" :class="home.rewardsToClaim > 0 ? 'text-amber-300' : 'text-white'">{{ home.rewardsToClaim }}</span>
             <span v-if="home.rewardsToClaim > 0" class="absolute -top-1 right-1 w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
           </RouterLink>
         </div>
@@ -431,7 +432,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
       <div v-else-if="!state.loadingToday" class="rounded-2xl border border-white/10 bg-slate-900/40 p-10 text-center">
         <svg class="w-12 h-12 mx-auto text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="1.5"/><path stroke-linecap="round" stroke-width="1.5" d="M12 2a15 15 0 010 20M12 2a15 15 0 000 20M2 12h20"/></svg>
         <p class="text-slate-300 font-medium">No hay partidos programados para hoy</p>
-        <RouterLink to="/leagues/world-cup" class="inline-block mt-3 text-sm text-cyan-400 hover:text-cyan-300 transition-colors">
+        <RouterLink to="/leagues/world-cup" class="inline-block mt-3 text-sm text-purple-400 hover:text-purple-300 transition-colors">
           Ver calendario completo →
         </RouterLink>
       </div>
@@ -445,15 +446,15 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div class="rounded-2xl border border-white/10 bg-slate-900/40 p-6 text-center">
-          <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 grid place-items-center">
-            <svg class="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-indigo-500/15 border border-indigo-500/30 grid place-items-center">
+            <svg class="w-6 h-6 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
           </div>
           <h3 class="text-white font-semibold mb-1.5">Creá tu cuenta</h3>
           <p class="text-slate-400 text-sm leading-relaxed">Registrate gratis y personalizá tu perfil con tu equipo y jugador favorito.</p>
         </div>
         <div class="rounded-2xl border border-white/10 bg-slate-900/40 p-6 text-center">
-          <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-cyan-500/15 border border-cyan-500/30 grid place-items-center">
-            <svg class="w-6 h-6 text-cyan-400" fill="currentColor" viewBox="0 0 24 24"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+          <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-purple-500/15 border border-purple-500/30 grid place-items-center">
+            <svg class="w-6 h-6 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
           </div>
           <h3 class="text-white font-semibold mb-1.5">Jugá desafíos diarios</h3>
           <p class="text-slate-400 text-sm leading-relaxed">9 modos de juego únicos. Adivinar jugadores, ordenar por valor, armar formaciones y más.</p>
@@ -472,14 +473,14 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
     <!-- Logueado: cards idénticas al índice de juegos -->
     <div v-if="state.isAuthenticated" class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 mb-16">
       <div class="flex items-center gap-2.5 mb-4">
-        <span class="grid place-items-center size-9 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/10 border border-emerald-400/25 shrink-0">
-          <svg class="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 24 24"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+        <span class="grid place-items-center size-9 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-violet-400/25 shrink-0">
+          <svg class="w-5 h-5 text-violet-400" fill="currentColor" viewBox="0 0 24 24"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
         </span>
         <div class="flex-1 min-w-0">
           <h2 class="font-display font-bold text-white text-lg leading-tight">Jugá hoy</h2>
           <p class="text-xs text-slate-500">Tus desafíos diarios</p>
         </div>
-        <RouterLink to="/play/points" class="group inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-emerald-400 transition-colors">
+        <RouterLink to="/play/points" class="group inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-violet-400 transition-colors">
           Ver todos
           <svg class="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
         </RouterLink>
@@ -490,82 +491,14 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
       </div>
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 stagger-grid">
         <template v-for="g in state.featuredGames" :key="g.slug">
-          <!-- Bloqueado por nivel -->
-          <div
-            v-if="!isGameUnlocked(g.slug, home.level)"
-            class="relative flex flex-col rounded-2xl overflow-hidden border border-white/5 bg-gradient-to-b from-slate-800/40 to-slate-900/60 opacity-60 cursor-not-allowed select-none"
-          >
-            <div class="relative flex items-center justify-center h-36 bg-slate-800/40">
-              <img v-if="g.cover_url" :src="g.cover_url" :alt="g.name" width="96" height="96" loading="lazy" decoding="async" class="w-24 h-24 object-contain opacity-20 grayscale" />
-              <div class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/40">
-                <svg class="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                </svg>
-                <span class="text-[10px] text-slate-400 font-semibold text-center px-2 leading-tight">Nivel {{ getGameUnlockLevel(g.slug) }}</span>
-              </div>
-            </div>
-            <div class="bg-slate-900/90 px-3 py-3 border-t border-white/5 text-center">
-              <div class="font-display font-bold text-slate-500 text-xs tracking-widest uppercase">BLOQUEADO</div>
-              <div class="text-slate-500 text-xs mt-0.5 truncate">{{ g.name }}</div>
-            </div>
-          </div>
-
-          <!-- Desbloqueado — dirección "Poster": superficie única full-bleed con
-               color por tipo de juego, imagen protagonista y nombre sobreimpreso -->
-          <RouterLink
-            v-else
+          <GameCard
+            :game="g"
+            :unlocked="isGameUnlocked(g.slug, home.level)"
+            :unlock-level="getGameUnlockLevel(g.slug)"
+            :availability="state.availability[g.slug]"
+            :streak="state.streaks[g.slug] || 0"
             :to="toChallenge(g.slug)"
-            class="poster-card group relative block rounded-2xl overflow-hidden border border-white/10 aspect-[3/3.5]"
-            :style="{ '--c': getGameTypeColor(g.slug) }"
-            :class="[
-              state.availability[g.slug]?.result === 'win'
-                ? 'border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
-                : state.availability[g.slug]?.result === 'loss'
-                ? 'border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
-                : ''
-            ]"
-          >
-            <!-- Fondo full-bleed por tipo -->
-            <div class="poster-bg pointer-events-none absolute inset-0"></div>
-
-            <!-- Imagen protagonista -->
-            <img
-              v-if="g.cover_url"
-              :src="g.cover_url"
-              :alt="g.name"
-              width="120" height="120" loading="lazy" decoding="async"
-              class="absolute left-1/2 top-[41%] -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] object-contain drop-shadow-[0_10px_22px_rgba(0,0,0,0.45)] transition-transform duration-300 group-hover:scale-105"
-              :class="state.availability[g.slug]?.available === false ? 'opacity-40' : ''"
-            />
-
-            <!-- Chips arriba -->
-            <div class="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-start justify-between gap-2">
-              <span v-if="getGameTypeLabel(g.slug)" class="rounded-md bg-slate-950/60 backdrop-blur px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-100 ring-1 ring-white/15">{{ getGameTypeLabel(g.slug) }}</span>
-              <span v-if="(state.streaks[g.slug] || 0) > 0" class="flex items-center gap-1 rounded-full bg-slate-950/70 ring-1 ring-amber-400/30 px-2 py-0.5">
-                <svg class="w-3 h-3 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.5)]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 23c-3.6 0-8-3.1-8-8.5C4 9 8 4 11.5 1c.2-.1.4-.1.5 0 .2.1.2.3.1.5C11 4 14 6 14 6s1-1.5 1.5-4c0-.2.2-.3.4-.3s.3.1.4.3C18 5 20 9 20 14.5 20 19.9 15.6 23 12 23z"/></svg>
-                <span class="text-amber-300 font-bold text-[11px] leading-none tabular-nums">{{ state.streaks[g.slug] }}</span>
-              </span>
-            </div>
-
-            <!-- Scrim inferior -->
-            <div class="pointer-events-none absolute inset-x-0 bottom-0 h-[64%] z-10 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent"></div>
-
-            <!-- Nombre + CTA -->
-            <div class="absolute inset-x-0 bottom-0 z-20 p-3">
-              <div class="font-display font-extrabold text-white text-sm leading-tight drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">{{ g.name }}</div>
-              <div class="poster-sub text-[11px] font-bold mt-0.5">{{ state.availability[g.slug]?.available === false ? 'Ver resultado →' : 'Jugar →' }}</div>
-            </div>
-
-            <!-- Estado (ya jugado hoy) -->
-            <div v-if="state.availability[g.slug]?.available === false" class="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/35">
-              <div v-if="state.availability[g.slug]?.result === 'win'" class="w-14 h-14 rounded-2xl flex items-center justify-center ring-1 ring-emerald-400/40 bg-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-                <span class="text-emerald-400 text-3xl font-extrabold leading-none">✓</span>
-              </div>
-              <div v-else class="w-14 h-14 rounded-2xl flex items-center justify-center ring-1 ring-red-400/40 bg-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.3)]">
-                <span class="text-red-400 text-3xl font-extrabold leading-none">✕</span>
-              </div>
-            </div>
-          </RouterLink>
+          />
         </template>
       </div>
     </div>
@@ -576,7 +509,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
         <div class="absolute -top-4 left-1/2 -translate-x-1/2">
           <div class="px-6 py-1.5 rounded-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-white/20 shadow-xl backdrop-blur-sm">
             <h2 class="text-lg font-bold text-white whitespace-nowrap flex items-center gap-2">
-              <svg class="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 24 24"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+              <svg class="w-5 h-5 text-violet-400" fill="currentColor" viewBox="0 0 24 24"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
               Jugá
             </h2>
           </div>
@@ -601,7 +534,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
             <div class="flex flex-col flex-1 pointer-events-none">
               <div class="relative h-36 bg-gradient-to-br from-slate-800/60 to-slate-900 flex items-center justify-center overflow-hidden">
                 <img v-if="game.cover_url" :src="game.cover_url" :alt="game.name" width="80" height="80" loading="lazy" decoding="async" class="relative z-10 w-20 h-20 object-contain" />
-                <svg v-else class="relative z-10 w-16 h-16 text-emerald-400/80" fill="currentColor" viewBox="0 0 24 24">
+                <svg v-else class="relative z-10 w-16 h-16 text-violet-400/80" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
                 </svg>
               </div>
@@ -653,31 +586,3 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
     <MatchDetailModal :match="selectedMatch" :open="matchModalOpen" @close="matchModalOpen = false" />
   </section>
 </template>
-
-<style scoped>
-/* Dirección "Poster" para el bloque "Jugá hoy": superficie única con color por
-   tipo de juego (var --c la setea cada card según getGameTypeColor). */
-.poster-card {
-  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
-}
-.poster-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, .5);
-  border-color: color-mix(in srgb, var(--c, #34d399) 45%, transparent);
-}
-.poster-bg {
-  background: linear-gradient(150deg, color-mix(in srgb, var(--c, #34d399) 40%, #0a1120), #0a1120 72%);
-}
-.poster-bg::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(72% 55% at 68% 26%, color-mix(in srgb, var(--c, #34d399) 42%, transparent), transparent 70%);
-}
-.poster-sub {
-  color: color-mix(in srgb, var(--c, #34d399) 68%, #ffffff);
-}
-@media (prefers-reduced-motion: reduce) {
-  .poster-card { transition: none; }
-}
-</style>
