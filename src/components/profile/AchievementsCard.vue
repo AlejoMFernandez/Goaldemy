@@ -187,7 +187,7 @@ const groupedAchievements = computed(() => {
           <div class="relative min-h-full flex items-start sm:items-center justify-center p-3 sm:p-4" @click.self="showAll = false">
             <div class="relative w-full max-w-4xl rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl my-4">
               <div class="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 py-4 border-b border-white/10 bg-slate-900/95 backdrop-blur rounded-t-2xl">
-                <h3 class="font-display font-extrabold text-white text-lg">{{ currentCategoryLabel || 'Todos los logros' }}</h3>
+                <h3 class="font-display font-bold text-white text-lg">{{ currentCategoryLabel || 'Todos los logros' }}</h3>
                 <button @click="showAll = false" class="text-slate-400 hover:text-white transition">
                   <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
@@ -196,7 +196,7 @@ const groupedAchievements = computed(() => {
               <div class="px-5 pt-4 flex flex-wrap gap-2">
                 <button v-for="t in tabs" :key="t.key" @click="selected = t.key"
                   class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-all whitespace-nowrap"
-                  :class="selected === t.key ? 'border-emerald-400/50 bg-emerald-500/20 text-emerald-200' : 'border-white/10 text-slate-400 hover:bg-white/5 hover:border-white/20'">
+                  :class="selected === t.key ? 'border-violet-400/50 bg-indigo-500/20 text-violet-200' : 'border-white/10 text-slate-400 hover:bg-white/5 hover:border-white/20'">
                   {{ t.label }}
                 </button>
               </div>
