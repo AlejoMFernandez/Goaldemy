@@ -26,7 +26,7 @@ function initial(c) { return ((c.display_name || c.email || '?').trim()[0] || '?
 </script>
 
 <template>
-  <div class="card p-6">
+  <div class="surface-solid p-6">
     <div class="flex items-center gap-2.5 mb-4">
       <span class="w-1 h-5 rounded-full bg-gradient-to-b from-violet-400 to-fuchsia-500"></span>
       <h3 class="font-display font-bold text-white flex-1">Conexiones</h3>

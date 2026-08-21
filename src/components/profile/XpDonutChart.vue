@@ -21,7 +21,7 @@ function pct(xp) { return Math.max(4, Math.round(((xp || 0) / maxXp.value) * 100
   <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur p-5 sm:p-6 w-full shadow-xl">
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-2.5">
-        <span class="w-1 h-5 rounded-full bg-gradient-to-b from-emerald-400 to-cyan-500"></span>
+        <span class="w-1 h-5 rounded-full bg-gradient-to-b from-indigo-400 to-purple-500"></span>
         <h3 class="font-display font-bold text-white leading-tight">XP por juego</h3>
       </div>
       <span v-if="!loading && sorted.length" class="text-[11px] text-slate-400 tabular-nums">{{ nf.format(totalXp) }} XP</span>
@@ -46,7 +46,7 @@ function pct(xp) { return Math.max(4, Math.round(((xp || 0) / maxXp.value) * 100
               <span class="text-sm text-white font-semibold tabular-nums shrink-0">{{ nf.format(g.xp) }} XP</span>
             </div>
             <div class="h-2 rounded-full bg-black/40 overflow-hidden ring-1 ring-white/5">
-              <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-700" :style="{ width: pct(g.xp) + '%' }"></div>
+              <div class="h-full rounded-full bg-gradient-to-r from-indigo-400 to-purple-400 transition-all duration-700" :style="{ width: pct(g.xp) + '%' }"></div>
             </div>
           </div>
         </div>
@@ -66,7 +66,7 @@ function pct(xp) { return Math.max(4, Math.round(((xp || 0) / maxXp.value) * 100
           <div class="relative min-h-full flex items-start sm:items-center justify-center p-3 sm:p-4" @click.self="showAll = false">
             <div class="relative w-full max-w-lg rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl my-4">
               <div class="flex items-center justify-between px-5 py-4 border-b border-white/10">
-                <h3 class="font-display font-extrabold text-white text-lg">XP por juego</h3>
+                <h3 class="font-display font-bold text-white text-lg">XP por juego</h3>
                 <button @click="showAll = false" class="text-slate-400 hover:text-white transition">
                   <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
@@ -83,7 +83,7 @@ function pct(xp) { return Math.max(4, Math.round(((xp || 0) / maxXp.value) * 100
                       <span class="text-sm text-white font-semibold tabular-nums shrink-0">{{ nf.format(g.xp) }} XP</span>
                     </div>
                     <div class="h-2 rounded-full bg-black/40 overflow-hidden ring-1 ring-white/5">
-                      <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400" :style="{ width: pct(g.xp) + '%' }"></div>
+                      <div class="h-full rounded-full bg-gradient-to-r from-indigo-400 to-purple-400" :style="{ width: pct(g.xp) + '%' }"></div>
                     </div>
                   </div>
                 </div>
