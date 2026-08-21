@@ -70,8 +70,8 @@ function fmtXp(n) { return n >= 1000 ? (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1
         <div class="prog-card w-full max-w-lg rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden shadow-2xl shadow-black/50 flex flex-col max-h-[90vh]">
 
           <!-- Header -->
-          <div class="shrink-0 p-5 text-center border-b border-white/10 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 relative">
-            <h2 class="font-display text-xl font-extrabold text-white">Rangos y recompensas</h2>
+          <div class="shrink-0 p-5 text-center border-b border-white/10 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 relative">
+            <h2 class="font-display text-xl font-bold text-white">Rangos y recompensas</h2>
             <p class="text-slate-400 text-xs mt-1">Lo que desbloqueás al llegar a cada rango</p>
             <button @click="emit('close')" class="absolute top-3 right-3 h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 grid place-items-center">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 text-slate-300"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg>
@@ -92,7 +92,7 @@ function fmtXp(n) { return n >= 1000 ? (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1
                 <img :src="s.tier.image" :alt="s.tier.label" class="w-14 h-14 object-contain drop-shadow-lg shrink-0" :class="s.reached ? '' : 'grayscale'" />
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
-                    <p class="font-display font-extrabold text-base" :class="s.accent">{{ s.tier.label }}</p>
+                    <p class="font-display font-bold text-base" :class="s.accent">{{ s.tier.label }}</p>
                     <span v-if="s.current" class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-white/10 border border-white/15 text-white">Actual</span>
                   </div>
                   <p class="text-[11px] text-slate-400">
@@ -149,7 +149,7 @@ function fmtXp(n) { return n >= 1000 ? (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1
 
           <!-- Footer -->
           <div class="shrink-0 p-4 border-t border-white/10">
-            <button @click="emit('close')" class="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 text-white py-3 font-bold transition text-center shadow-lg shadow-emerald-500/25">Cerrar</button>
+            <button @click="emit('close')" class="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:brightness-110 text-white py-3 font-bold transition text-center shadow-lg shadow-indigo-500/25">Cerrar</button>
           </div>
         </div>
       </div>
