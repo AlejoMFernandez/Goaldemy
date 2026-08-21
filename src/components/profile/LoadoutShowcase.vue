@@ -108,10 +108,10 @@ function rarLabel(r) { return RARITY_LABEL[r] || 'Común' }
       <router-link to="/profile-edit" class="block rounded-xl border border-white/10 bg-black/20 hover:bg-black/30 transition px-4 py-3">
         <div class="flex items-center justify-between text-xs mb-1.5">
           <span class="text-slate-300 font-semibold">Colección desbloqueada</span>
-          <span class="text-emerald-300 font-bold tabular-nums">{{ ownedCount }}/{{ totalCount }}</span>
+          <span class="text-violet-300 font-bold tabular-nums">{{ ownedCount }}/{{ totalCount }}</span>
         </div>
         <div class="h-2.5 rounded-full bg-black/40 overflow-hidden ring-1 ring-white/5">
-          <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-700" :style="{ width: progressPct + '%' }"></div>
+          <div class="h-full rounded-full bg-gradient-to-r from-indigo-400 to-purple-400 transition-all duration-700" :style="{ width: progressPct + '%' }"></div>
         </div>
         <div class="mt-1.5 text-[10px] text-slate-500 flex items-center justify-between">
           <span>{{ progressPct }}% completado</span>

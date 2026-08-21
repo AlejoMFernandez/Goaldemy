@@ -132,12 +132,12 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="card p-5 sm:p-6">
+  <div class="surface-solid p-5 sm:p-6">
     <!-- Tabs -->
     <div class="flex gap-1 rounded-xl border border-white/10 bg-slate-900/50 p-1 mb-5 overflow-x-auto">
       <button v-for="t in TABS" :key="t.key" @click="setTab(t.key)"
               class="flex-1 min-w-max rounded-lg px-3 py-2 text-sm font-semibold transition flex items-center justify-center gap-1.5"
-              :class="activeTab === t.key ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'">
+              :class="activeTab === t.key ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 shrink-0" aria-hidden="true"><path :d="t.path" /></svg>{{ t.label }}
       </button>
     </div>
