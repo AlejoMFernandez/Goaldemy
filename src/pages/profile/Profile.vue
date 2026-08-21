@@ -6,7 +6,6 @@ import { getUserXpByGame } from '../../services/games';
 import { getPublicProfile, updateFeaturedAchievements } from '../../services/user-profiles';
 import { getStatusWith, sendRequest, disconnectWith } from '../../services/connections';
 import { pushErrorToast } from '../../stores/notifications';
-import ProfileHeaderCard from '../../components/profile/ProfileHeaderCard.vue';
 import AchievementsCard from '../../components/profile/AchievementsCard.vue';
 import FeaturedAchievementsModal from '../../components/profile/FeaturedAchievementsModal.vue';
 import XpDonutChart from '../../components/profile/XpDonutChart.vue';
@@ -26,7 +25,7 @@ let unsubscribeAuth = () => {};
 
 export default {
   name: 'Profile',
-  components: { ProfileHeaderCard, AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard, LoadoutShowcase, ProfileIdentityCard },
+  components: { AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard, LoadoutShowcase, ProfileIdentityCard },
   data() {
     return {
       user: {
@@ -542,7 +541,7 @@ export default {
                 <div class="flex items-center gap-2.5">
                   <span class="inline-flex items-baseline gap-1 text-orange-300">
                     <span class="text-base">🔥</span>
-                    <span class="font-display font-extrabold text-xl leading-none">{{ d.current }}</span>
+                    <span class="font-display font-bold text-xl leading-none">{{ d.current }}</span>
                   </span>
                   <span class="text-[10px] text-slate-500">mejor <span class="text-amber-400 font-bold">{{ d.best }}</span></span>
                 </div>

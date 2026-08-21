@@ -107,7 +107,7 @@ const showProgression = ref(false)
     <div class="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
       <div class="flex items-center gap-4">
         <div class="text-center shrink-0">
-          <div class="font-display font-extrabold text-[2.6rem] leading-none" :class="accentText">{{ level }}</div>
+          <div class="font-display font-bold text-[2.6rem] leading-none" :class="accentText">{{ level }}</div>
           <div class="text-[10px] uppercase tracking-wider text-slate-500 mt-1">Nivel</div>
         </div>
         <div class="flex-1 grid grid-cols-2 gap-2">
@@ -136,7 +136,7 @@ const showProgression = ref(false)
           <svg class="w-4 h-4" :class="rankStyle.icon" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3z"/></svg>
           Ranking global
         </span>
-        <span class="font-display font-extrabold" :class="rankStyle.num">#{{ topRank }}</span>
+        <span class="font-display font-bold" :class="rankStyle.num">#{{ topRank }}</span>
       </router-link>
     </div>
 
