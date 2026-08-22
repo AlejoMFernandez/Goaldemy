@@ -117,7 +117,7 @@ export default {
 }
 .gs-back:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(52, 211, 153, 0.4);
+  border-color: rgba(252, 211, 77, 0.4);
 }
 .gs-title-wrap {
   justify-self: center;
@@ -126,7 +126,7 @@ export default {
 }
 .gs-title {
   font-family: var(--font-display, inherit);
-  font-weight: 800;
+  font-weight: 700;
   color: #fff;
   line-height: 1.05;
   font-size: clamp(1.05rem, 3.5vw, 1.6rem);
