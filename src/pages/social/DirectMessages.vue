@@ -63,7 +63,7 @@ export default {
                   {{ t.last?.content || '' }}
                 </div>
               </div>
-              <div v-if="t.unread > 0" class="shrink-0 ml-2 rounded-full bg-indigo-500 text-white text-[11px] px-2 py-0.5">
+              <div v-if="t.unread > 0" class="shrink-0 ml-2 rounded-full bg-rose-500 text-white text-[11px] px-2 py-0.5">
                 {{ t.unread }}
               </div>
             </router-link>
