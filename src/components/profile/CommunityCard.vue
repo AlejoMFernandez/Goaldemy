@@ -7,7 +7,7 @@ defineProps({
 </script>
 
 <template>
-  <div class="card p-6">
+  <div class="surface-solid p-6">
     <p class="text-xs uppercase tracking-wide text-slate-400">Comunidad</p>
     <div class="mt-2 grid grid-cols-3 gap-2 text-center">
       <div class="rounded-lg border border-white/10 p-3">

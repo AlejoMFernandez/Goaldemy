@@ -107,7 +107,7 @@ const showProgression = ref(false)
     <div class="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
       <div class="flex items-center gap-4">
         <div class="text-center shrink-0">
-          <div class="font-display font-extrabold text-[2.6rem] leading-none" :class="accentText">{{ level }}</div>
+          <div class="font-display font-bold text-[2.6rem] leading-none" :class="accentText">{{ level }}</div>
           <div class="text-[10px] uppercase tracking-wider text-slate-500 mt-1">Nivel</div>
         </div>
         <div class="flex-1 grid grid-cols-2 gap-2">
@@ -128,7 +128,7 @@ const showProgression = ref(false)
           <span class="text-slate-300 font-medium tabular-nums">{{ levelProgress.earned }}/{{ levelProgress.range }} XP</span>
         </div>
         <div class="h-2 rounded-full bg-black/40 overflow-hidden ring-1 ring-white/5">
-          <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: progressPercent + '%' }"></div>
+          <div class="h-full rounded-full bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 transition-all duration-700" :style="{ width: progressPercent + '%' }"></div>
         </div>
       </div>
       <router-link v-if="topRank" to="/leaderboards" class="mt-3 flex items-center justify-between rounded-lg border px-3 py-2 transition" :class="rankStyle.box">
@@ -136,7 +136,7 @@ const showProgression = ref(false)
           <svg class="w-4 h-4" :class="rankStyle.icon" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3z"/></svg>
           Ranking global
         </span>
-        <span class="font-display font-extrabold" :class="rankStyle.num">#{{ topRank }}</span>
+        <span class="font-display font-bold" :class="rankStyle.num">#{{ topRank }}</span>
       </router-link>
     </div>
 
@@ -150,7 +150,7 @@ const showProgression = ref(false)
         </div>
         <div class="flex-1 self-start pt-4">
           <div class="h-3 rounded-full bg-black/40 overflow-hidden ring-1 ring-white/5">
-            <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (level >= 50 ? 100 : tierProgress) + '%' }"></div>
+            <div class="h-full rounded-full bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 transition-all duration-700" :style="{ width: (level >= 50 ? 100 : tierProgress) + '%' }"></div>
           </div>
           <p class="mt-2 text-[10px] text-center text-slate-400 leading-snug">
             <template v-if="level >= 50">¡Rango máximo! 👑</template>
@@ -162,7 +162,7 @@ const showProgression = ref(false)
           <span class="text-[10px] font-semibold mt-1 text-center leading-tight text-slate-400">{{ nextTier.label }}</span>
         </div>
       </div>
-      <div class="mt-2.5 pt-2.5 border-t border-white/5 flex items-center justify-center gap-1.5 text-[10px] font-semibold text-slate-500 group-hover:text-emerald-300 transition">
+      <div class="mt-2.5 pt-2.5 border-t border-white/5 flex items-center justify-center gap-1.5 text-[10px] font-semibold text-slate-500 group-hover:text-violet-300 transition">
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
         Ver todos los rangos
       </div>

@@ -117,8 +117,8 @@ const canSave = computed(() => selected.value.length > 0 && selected.value.lengt
           </button>
         </div>
         <!-- Counter -->
-        <div class="mt-4 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-400/20">
-          <span class="text-emerald-400 font-semibold">{{ selected.length }} / 3</span>
+        <div class="mt-4 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-500/10 border border-violet-400/20">
+          <span class="text-violet-400 font-semibold">{{ selected.length }} / 3</span>
           <span class="text-sm text-slate-300">seleccionados</span>
         </div>
       </div>
@@ -141,12 +141,12 @@ const canSave = computed(() => selected.value.length > 0 && selected.value.lengt
                 :key="ach.code"
                 @click="toggleSelection(ach.code)"
                 class="relative text-left rounded-xl border p-4 transition"
-                :class="isSelected(ach.code) 
-                  ? 'border-emerald-400/50 bg-emerald-500/10 shadow-lg shadow-emerald-500/20' 
+                :class="isSelected(ach.code)
+                  ? 'border-violet-400/50 bg-indigo-500/10 shadow-lg shadow-indigo-500/20'
                   : 'border-white/10 bg-slate-800/40 hover:border-white/20 hover:bg-slate-800/60'
                 ">
                 <!-- Selected checkmark -->
-                <div v-if="isSelected(ach.code)" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-emerald-500 grid place-items-center">
+                <div v-if="isSelected(ach.code)" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-indigo-500 grid place-items-center">
                   <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                   </svg>
@@ -175,12 +175,12 @@ const canSave = computed(() => selected.value.length > 0 && selected.value.lengt
         <button @click="cancel" class="px-4 py-2 rounded-lg border border-white/10 text-slate-300 hover:bg-white/5 transition">
           Cancelar
         </button>
-        <button 
-          @click="save" 
+        <button
+          @click="save"
           :disabled="!canSave"
           class="px-6 py-2 rounded-lg font-semibold transition"
-          :class="canSave 
-            ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20' 
+          :class="canSave
+            ? 'bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg shadow-indigo-500/20'
             : 'bg-slate-700 text-slate-500 cursor-not-allowed'
           ">
           Guardar

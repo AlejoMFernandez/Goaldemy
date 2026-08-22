@@ -337,7 +337,7 @@ export default {
          Ya NO es una columna full-height: es una card centrada verticalmente y
          separada del borde (right-3) para dejar la barra de scroll de la página
          totalmente libre a su derecha. Flota sobre el contenido. -->
-    <div class="hidden lg:flex fixed right-5 top-1/2 -translate-y-1/2 z-30 w-[58px] max-h-[calc(100dvh-140px)] flex-col items-center rounded-2xl border border-white/10 bg-slate-900/70 backdrop-blur-md shadow-2xl shadow-black/40 py-2">
+    <div class="hidden lg:flex fixed right-5 top-1/2 -translate-y-1/2 z-30 w-[58px] max-h-[calc(100dvh-140px)] flex-col items-center surface-solid py-2">
       <!-- Abrir lista completa -->
       <button @click="toggleMobile" title="Ver amigos" class="relative mb-1 h-10 w-10 grid place-items-center rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition">
         <svg viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
@@ -374,7 +374,7 @@ export default {
       <button @click="bugOpen = true" title="Reportar bug" class="h-11 w-11 grid place-items-center rounded-full border border-white/15 bg-slate-800/90 text-slate-300 shadow-xl hover:brightness-110 transition active:scale-95">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M8 2l1.5 2.5M16 2l-1.5 2.5"/><rect x="7" y="6" width="10" height="12" rx="5"/><path d="M12 10v6M4 10h3M17 10h3M4 15h3M17 15h3M5 20l2.5-2M19 20l-2.5-2"/></svg>
       </button>
-      <button @click="toggleMobile" title="Amigos" class="relative h-14 w-14 rounded-full grid place-items-center bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-2xl shadow-emerald-500/40 border border-white/20 hover:brightness-110 transition active:scale-95">
+      <button @click="toggleMobile" title="Amigos" class="relative h-14 w-14 rounded-full grid place-items-center bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-2xl shadow-indigo-500/40 border border-white/20 hover:brightness-110 transition active:scale-95">
         <svg v-if="!mobileOpen" viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         <svg v-else viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         <span v-if="totalUnread > 0" class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold grid place-items-center border border-white/20">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
@@ -398,7 +398,7 @@ export default {
 
         <div class="px-3 py-2 border-b border-white/10">
           <div class="relative">
-            <input v-model="query" type="text" placeholder="Buscar amigo…" class="w-full text-sm pl-9 pr-3 py-1.5 rounded-lg bg-black/30 border border-white/10 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400/30 transition" />
+            <input v-model="query" type="text" placeholder="Buscar amigo…" class="w-full text-sm pl-9 pr-3 py-1.5 rounded-lg bg-black/30 border border-white/10 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400/30 transition" />
             <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
           </div>
         </div>
@@ -460,7 +460,7 @@ export default {
         <div ref="chatContainer" class="flex-1 overflow-y-auto p-3 bg-black/10 rail-scroll">
           <div v-if="chatLoading" class="text-center text-slate-400 text-sm py-8">Cargando…</div>
           <ol v-else class="flex flex-col gap-2 items-start">
-            <li v-for="m in messages" :key="m.id" :class="['w-fit max-w-[85%] rounded-2xl px-3.5 py-2 text-slate-100 border', isOwn(m) ? 'ml-auto bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border-emerald-400/40' : 'bg-slate-800/80 border-white/15']">
+            <li v-for="m in messages" :key="m.id" :class="['w-fit max-w-[85%] rounded-2xl px-3.5 py-2 text-slate-100 border', isOwn(m) ? 'ml-auto bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border-violet-400/40' : 'bg-slate-800/80 border-white/15']">
               <div class="whitespace-pre-line break-words text-sm">{{ m.content }}</div>
               <div class="mt-0.5 text-[10px] text-slate-400 flex items-center gap-1" :class="isOwn(m) ? 'justify-end' : 'justify-start'">
                 <span>{{ formatShortDate(m.created_at) }}</span>
@@ -474,9 +474,9 @@ export default {
         </div>
 
         <form @submit.prevent="handleSubmit" class="p-2.5 border-t border-white/10 bg-slate-900/80">
-          <div class="flex items-center gap-2 rounded-full border border-white/15 bg-black/30 pl-4 pr-1.5 py-1.5 focus-within:ring-2 focus-within:ring-emerald-400/30 focus-within:border-emerald-400/30 transition">
+          <div class="flex items-center gap-2 rounded-full border border-white/15 bg-black/30 pl-4 pr-1.5 py-1.5 focus-within:ring-2 focus-within:ring-violet-400/30 focus-within:border-violet-400/30 transition">
             <input v-model="newMessage.content" type="text" placeholder="Escribí un mensaje…" class="flex-1 bg-transparent outline-none text-slate-100 placeholder-slate-500 text-sm" @keydown.enter.exact.prevent="handleSubmit" />
-            <button type="submit" class="shrink-0 h-8 w-8 grid place-items-center rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:brightness-110 transition active:scale-95">
+            <button type="submit" class="shrink-0 h-8 w-8 grid place-items-center rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:brightness-110 transition active:scale-95">
               <svg viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             </button>
           </div>
@@ -501,11 +501,11 @@ export default {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M6 18 18 6M6 6l12 12"/></svg>
             </button>
           </div>
-          <textarea v-model="bugMsg" rows="4" maxlength="2000" placeholder="¿Qué salió mal? ¿En qué parte?" class="w-full text-sm rounded-xl bg-black/30 border border-white/10 text-slate-100 placeholder:text-slate-500 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400/30 transition resize-none"></textarea>
-          <input v-model="bugContact" type="text" maxlength="200" placeholder="Contacto (opcional): mail o @usuario" class="mt-2 w-full text-sm rounded-xl bg-black/30 border border-white/10 text-slate-100 placeholder:text-slate-500 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400/30 transition" />
+          <textarea v-model="bugMsg" rows="4" maxlength="2000" placeholder="¿Qué salió mal? ¿En qué parte?" class="w-full text-sm rounded-xl bg-black/30 border border-white/10 text-slate-100 placeholder:text-slate-500 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400/30 transition resize-none"></textarea>
+          <input v-model="bugContact" type="text" maxlength="200" placeholder="Contacto (opcional): mail o @usuario" class="mt-2 w-full text-sm rounded-xl bg-black/30 border border-white/10 text-slate-100 placeholder:text-slate-500 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400/30 transition" />
           <div class="mt-3 flex justify-end gap-2">
             <button @click="bugOpen = false" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition">Cancelar</button>
-            <button @click="submitBug" :disabled="bugBusy" class="px-4 py-2 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-95 transition disabled:opacity-60">{{ bugBusy ? 'Enviando…' : 'Enviar reporte' }}</button>
+            <button @click="submitBug" :disabled="bugBusy" class="px-4 py-2 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:brightness-110 active:scale-95 transition disabled:opacity-60">{{ bugBusy ? 'Enviando…' : 'Enviar reporte' }}</button>
           </div>
         </div>
       </div>

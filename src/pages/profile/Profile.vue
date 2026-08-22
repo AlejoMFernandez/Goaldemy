@@ -6,7 +6,6 @@ import { getUserXpByGame } from '../../services/games';
 import { getPublicProfile, updateFeaturedAchievements } from '../../services/user-profiles';
 import { getStatusWith, sendRequest, disconnectWith } from '../../services/connections';
 import { pushErrorToast } from '../../stores/notifications';
-import ProfileHeaderCard from '../../components/profile/ProfileHeaderCard.vue';
 import AchievementsCard from '../../components/profile/AchievementsCard.vue';
 import FeaturedAchievementsModal from '../../components/profile/FeaturedAchievementsModal.vue';
 import XpDonutChart from '../../components/profile/XpDonutChart.vue';
@@ -26,7 +25,7 @@ let unsubscribeAuth = () => {};
 
 export default {
   name: 'Profile',
-  components: { ProfileHeaderCard, AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard, LoadoutShowcase, ProfileIdentityCard },
+  components: { AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard, LoadoutShowcase, ProfileIdentityCard },
   data() {
     return {
       user: {
@@ -412,7 +411,7 @@ export default {
         <!-- Favoritos -->
         <div v-if="user.favorite_player || user.favorite_team" class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/50 p-4">
           <div class="flex items-center gap-2.5 mb-3">
-            <span class="w-1 h-5 rounded-full bg-gradient-to-b from-emerald-400 to-cyan-500"></span>
+            <span class="w-1 h-5 rounded-full bg-gradient-to-b from-indigo-400 to-purple-500"></span>
             <h3 class="font-display font-bold text-white">Favoritos</h3>
           </div>
           <div class="grid grid-cols-2 gap-3">
@@ -421,14 +420,14 @@ export default {
                 <img v-if="favPlayerImage" :src="favPlayerImage" alt="" class="h-full w-full object-cover" />
                 <svg v-else class="w-6 h-6 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
               </div>
-              <div class="min-w-0 w-full"><p class="text-[9px] uppercase tracking-wider text-emerald-400/70 font-semibold">Jugador</p><p class="text-xs text-white font-medium truncate">{{ user.favorite_player }}</p></div>
+              <div class="min-w-0 w-full"><p class="text-[9px] uppercase tracking-wider text-violet-400/70 font-semibold">Jugador</p><p class="text-xs text-white font-medium truncate">{{ user.favorite_player }}</p></div>
             </div>
             <div v-if="user.favorite_team" class="rounded-xl border border-white/10 bg-white/[0.03] p-3 flex flex-col items-center text-center gap-2">
               <div class="w-16 h-16 rounded-xl overflow-hidden bg-slate-800/50 grid place-items-center ring-1 ring-white/10">
                 <img v-if="favTeamLogo" :src="favTeamLogo" alt="" class="h-full w-full object-contain p-1.5" />
                 <svg v-else class="w-6 h-6 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2L3 7v6c0 3.5 3 6 7 9 4-3 7-5.5 7-9V7l-7-5z" clip-rule="evenodd"/></svg>
               </div>
-              <div class="min-w-0 w-full"><p class="text-[9px] uppercase tracking-wider text-cyan-400/70 font-semibold">Equipo</p><p class="text-xs text-white font-medium truncate">{{ user.favorite_team }}</p></div>
+              <div class="min-w-0 w-full"><p class="text-[9px] uppercase tracking-wider text-purple-400/70 font-semibold">Equipo</p><p class="text-xs text-white font-medium truncate">{{ user.favorite_team }}</p></div>
             </div>
           </div>
         </div>
@@ -454,7 +453,7 @@ export default {
           </div>
           <div class="flex items-center gap-2">
             <template v-if="conn.state==='connected'">
-              <button @click="$router.push('/messages/' + user.id)" class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-emerald-400/30 text-white bg-emerald-500/20 hover:bg-emerald-500/30 transition">Mensaje</button>
+              <button @click="$router.push('/messages/' + user.id)" class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-violet-400/30 text-white bg-indigo-500/20 hover:bg-indigo-500/30 transition">Mensaje</button>
               <button @click="onDisconnect" :disabled="connBusy" class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-red-400/30 text-red-200 bg-red-500/10 hover:bg-red-500/20 transition">Desconectar</button>
             </template>
             <template v-else-if="conn.state==='pending_out'">
@@ -464,7 +463,7 @@ export default {
               <button @click="$router.push('/notifications')" class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-amber-400/30 text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 transition">Responder</button>
             </template>
             <template v-else>
-              <button @click="onConnect" :disabled="connectDisabled" class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-emerald-400/30 bg-emerald-500/20 text-white hover:bg-emerald-500/30 transition shadow-lg hover:shadow-emerald-500/20">Conectar</button>
+              <button @click="onConnect" :disabled="connectDisabled" class="rounded-xl px-4 py-2.5 text-sm font-semibold border border-violet-400/30 bg-indigo-500/20 text-white hover:bg-indigo-500/30 transition shadow-lg hover:shadow-indigo-500/20">Conectar</button>
             </template>
           </div>
         </div>
@@ -501,7 +500,7 @@ export default {
         />
 
         <!-- 4. Mejores rachas -->
-        <div v-if="hasStreaks" class="card p-6">
+        <div v-if="hasStreaks" class="surface-solid p-6">
           <div class="flex items-center gap-2.5 mb-4">
             <span class="w-1 h-5 rounded-full bg-gradient-to-b from-amber-400 to-orange-500"></span>
             <h3 class="font-display font-bold text-white">Mejores rachas</h3>
@@ -522,7 +521,7 @@ export default {
         </div>
 
         <!-- Rachas diarias (visual: imagen del juego + 🔥 + números) -->
-        <div v-if="dailyStreaksItems.some(r => r.best > 0)" class="card p-6">
+        <div v-if="dailyStreaksItems.some(r => r.best > 0)" class="surface-solid p-6">
           <div class="flex items-center gap-2.5 mb-4">
             <span class="w-1 h-5 rounded-full bg-gradient-to-b from-orange-400 to-red-500"></span>
             <h3 class="font-display font-bold text-white">Rachas diarias</h3>
@@ -542,7 +541,7 @@ export default {
                 <div class="flex items-center gap-2.5">
                   <span class="inline-flex items-baseline gap-1 text-orange-300">
                     <span class="text-base">🔥</span>
-                    <span class="font-display font-extrabold text-xl leading-none">{{ d.current }}</span>
+                    <span class="font-display font-bold text-xl leading-none">{{ d.current }}</span>
                   </span>
                   <span class="text-[10px] text-slate-500">mejor <span class="text-amber-400 font-bold">{{ d.best }}</span></span>
                 </div>

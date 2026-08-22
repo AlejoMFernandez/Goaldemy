@@ -132,12 +132,12 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="card p-5 sm:p-6">
+  <div class="surface-solid p-5 sm:p-6">
     <!-- Tabs -->
     <div class="flex gap-1 rounded-xl border border-white/10 bg-slate-900/50 p-1 mb-5 overflow-x-auto">
       <button v-for="t in TABS" :key="t.key" @click="setTab(t.key)"
               class="flex-1 min-w-max rounded-lg px-3 py-2 text-sm font-semibold transition flex items-center justify-center gap-1.5"
-              :class="activeTab === t.key ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'">
+              :class="activeTab === t.key ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 shrink-0" aria-hidden="true"><path :d="t.path" /></svg>{{ t.label }}
       </button>
     </div>
@@ -166,7 +166,7 @@ onMounted(load)
           </div>
           <div class="rounded-xl border border-white/10 bg-slate-900/40 p-3">
             <div class="flex items-baseline justify-center gap-1.5">
-              <span class="text-2xl font-display font-extrabold text-white leading-none">{{ ownedCount }}</span>
+              <span class="text-2xl font-display font-bold text-white leading-none">{{ ownedCount }}</span>
               <span class="text-xs text-slate-500">de {{ totalCount }}</span>
             </div>
             <!-- Mini-dashboard: cuántos tenés por rareza -->
@@ -186,7 +186,7 @@ onMounted(load)
           <div v-for="sec in sections" :key="sec.key" class="mb-8 last:mb-0">
             <!-- Encabezado del bloque "los que no tenés" (antes de la 1ª rareza) -->
             <div v-if="sec.firstLocked" class="flex items-center gap-2.5 mb-4 -mt-1">
-              <span class="text-sm font-display font-extrabold uppercase tracking-wide text-slate-300">Por desbloquear</span>
+              <span class="text-sm font-display font-bold uppercase tracking-wide text-slate-300">Por desbloquear</span>
               <div class="flex-1 h-px bg-gradient-to-r from-white/20 to-transparent"></div>
             </div>
             <!-- Título de sección: Tuyos (esmeralda) / rareza (gema) / Secretos (candado) -->
