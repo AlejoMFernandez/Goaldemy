@@ -254,7 +254,7 @@ export default {
             </div>
             <div class="flex-1 min-w-0">
               <h2
-                :class="['font-display text-2xl font-extrabold leading-tight', won ? 'text-emerald-400' : 'text-red-400']"
+                :class="['font-display text-2xl font-bold leading-tight', won ? 'text-emerald-400' : 'text-red-400']"
                 :style="phase >= 1 ? 'animation: tracking-reveal 0.4s var(--ease-out-expo) 0.1s both' : ''"
               >
                 {{ won ? '¡VICTORIA!' : '¡DERROTA!' }}
@@ -288,7 +288,7 @@ export default {
                 </template>
               </div>
               <div class="text-center">
-                <span class="font-display text-3xl font-extrabold text-white">{{ animatedCorrects }}</span>
+                <span class="font-display text-3xl font-bold text-white">{{ animatedCorrects }}</span>
                 <span class="text-slate-500 text-lg font-semibold">/{{ winThreshold }}</span>
                 <span class="text-slate-400 text-sm ml-1.5">aciertos</span>
               </div>
@@ -367,7 +367,7 @@ export default {
               </div>
               <div class="h-2 rounded-full bg-black/30 overflow-hidden">
                 <div
-                  class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400"
+                  class="h-full rounded-full bg-gradient-to-r from-amber-300 via-amber-500 to-amber-600"
                   :style="{ width: xpBarWidth + '%', transition: 'width 1.2s var(--ease-out-expo)' }"
                 ></div>
               </div>
@@ -420,7 +420,7 @@ export default {
                   'w-full rounded-xl py-2.5 text-sm font-bold transition flex items-center justify-center gap-2 shadow-lg',
                   shared
                     ? 'bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 shadow-emerald-500/10'
-                    : 'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 text-white shadow-emerald-500/25'
+                    : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-white shadow-amber-500/25'
                 ]"
               >
                 <template v-if="shared">
@@ -446,7 +446,7 @@ export default {
                 </button>
                 <router-link
                   :to="backPath"
-                  class="flex-1 rounded-xl border border-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 py-2.5 text-sm font-bold transition text-center"
+                  class="flex-1 rounded-xl border border-amber-400/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 py-2.5 text-sm font-bold transition text-center"
                 >
                   Volver a juegos
                 </router-link>
