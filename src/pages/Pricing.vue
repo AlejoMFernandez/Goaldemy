@@ -123,7 +123,7 @@ onMounted(async () => {
 
     <!-- Hero -->
     <div class="relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-transparent to-transparent"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-indigo-500/5 via-transparent to-transparent"></div>
       <div class="relative max-w-5xl mx-auto px-4 pt-12 pb-6 text-center">
         <h1 class="text-3xl sm:text-4xl font-extrabold mb-3">Elegí tu plan</h1>
         <p class="text-slate-400 max-w-lg mx-auto">
@@ -181,7 +181,7 @@ onMounted(async () => {
                 class="text-center py-3 px-3 font-semibold"
               >
                 <template v-if="row.static">
-                  <svg class="w-5 h-5 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                  <svg class="w-5 h-5 text-violet-400 mx-auto" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
                 </template>
                 <template v-else-if="row.proOnly">
                   <svg v-if="plan.slug !== 'free'" class="w-5 h-5 mx-auto" :class="planStyle(plan.slug).accent" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
@@ -266,7 +266,7 @@ onMounted(async () => {
                   <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                 </div>
                 <div>
-                  <div class="font-display font-extrabold text-white text-lg leading-tight">Plan {{ confirmPlan.name }}</div>
+                  <div class="font-display font-bold text-white text-lg leading-tight">Plan {{ confirmPlan.name }}</div>
                   <div class="flex items-end gap-1">
                     <span class="text-2xl font-extrabold text-white">{{ formatPrice(confirmPlan) }}</span>
                     <span class="text-slate-400 text-xs mb-1">ARS / mes</span>
@@ -297,7 +297,7 @@ onMounted(async () => {
                   <strong class="text-slate-200">{{ accountEmail }}</strong>.
                 </p>
                 <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
-                  <input type="checkbox" v-model="useOtherEmail" class="accent-emerald-500 w-4 h-4 rounded" />
+                  <input type="checkbox" v-model="useOtherEmail" class="accent-indigo-500 w-4 h-4 rounded" />
                   Mi cuenta de Mercado Pago usa otro e-mail
                 </label>
 
@@ -309,7 +309,7 @@ onMounted(async () => {
                       inputmode="email"
                       autocomplete="email"
                       placeholder="tu-email-de-mercadopago@ejemplo.com"
-                      class="w-full rounded-xl border bg-slate-900/60 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-emerald-400/60"
+                      class="w-full rounded-xl border bg-slate-900/60 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-violet-400/60"
                       :class="emailError ? 'border-red-500/60' : 'border-white/15'"
                       @keyup.enter="confirmCheckout"
                     />
