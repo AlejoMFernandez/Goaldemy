@@ -95,7 +95,7 @@ export default {
               <div class="text-[11px] text-slate-400">{{ fmtWhen(n.created_at) }}</div>
             </div>
             <div class="flex items-center gap-1">
-              <button @click="onAccept(n.connection.id)" :disabled="busy[n.connection.id]" title="Aceptar" class="inline-flex items-center justify-center rounded-full border border-emerald-400/40 text-emerald-300 hover:bg-emerald-400/10 w-8 h-8">
+              <button @click="onAccept(n.connection.id)" :disabled="busy[n.connection.id]" title="Aceptar" class="inline-flex items-center justify-center rounded-full border border-violet-400/40 text-violet-300 hover:bg-violet-400/10 w-8 h-8">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
               </button>
               <button @click="onReject(n.connection.id)" :disabled="busy[n.connection.id]" title="Rechazar" class="inline-flex items-center justify-center rounded-full border border-red-400/40 text-red-300 hover:bg-red-400/10 w-8 h-8">
