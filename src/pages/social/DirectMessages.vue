@@ -39,7 +39,7 @@ export default {
     <div class="flex items-center justify-between gap-2 mb-2">
       <AppH1>Mensajes</AppH1>
     </div>
-    <section class="card p-0 overflow-hidden">
+    <section class="surface-solid p-0 overflow-hidden">
       <div class="p-3">
         <div v-if="loading" class="text-slate-400 text-sm">Cargando…</div>
         <div v-else-if="!threads.length" class="text-slate-400 text-sm">Sin conversaciones</div>
@@ -63,7 +63,7 @@ export default {
                   {{ t.last?.content || '' }}
                 </div>
               </div>
-              <div v-if="t.unread > 0" class="shrink-0 ml-2 rounded-full bg-emerald-500 text-white text-[11px] px-2 py-0.5">
+              <div v-if="t.unread > 0" class="shrink-0 ml-2 rounded-full bg-indigo-500 text-white text-[11px] px-2 py-0.5">
                 {{ t.unread }}
               </div>
             </router-link>

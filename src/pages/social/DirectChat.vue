@@ -164,7 +164,7 @@ export default {
         Marcar todo como leído
       </button>
     </div>
-    <section class="card p-0 overflow-hidden">
+    <section class="surface-solid p-0 overflow-hidden">
       <div class="flex flex-col h-[60vh] sm:h-[70vh]">
         <div class="flex-1 overflow-y-auto p-4" ref="chatContainer">
           <h2 class="sr-only">Mensajes directos</h2>
@@ -174,7 +174,7 @@ export default {
               :key="m.id"
               :class="[
                 'w-fit max-w-[90%] sm:max-w-[75%] rounded-2xl px-3 py-2 text-slate-100 shadow-sm border',
-                isOwn(m) ? 'ml-auto bg-emerald-500/15 border-emerald-400/30' : 'bg-white/5 border-white/10'
+                isOwn(m) ? 'ml-auto bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border-violet-400/30' : 'bg-white/5 border-white/10'
               ]"
             >
               <div class="m-0 text-xs font-semibold text-slate-300" v-if="!isOwn(m)"><span>{{ m.display_name || peer.display_name || m.email || peer.email }}</span></div>
@@ -205,7 +205,7 @@ export default {
                 class="flex-1 bg-transparent outline-none text-slate-100 placeholder-slate-400"
                 @keydown.enter.exact.prevent="handleSubmit"
               />
-              <button type="submit" class="shrink-0 rounded-full bg-emerald-500 hover:brightness-110 text-white h-10 w-10 grid place-items-center">
+              <button type="submit" class="shrink-0 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:brightness-110 text-white h-10 w-10 grid place-items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
                   <path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/>
                 </svg>
