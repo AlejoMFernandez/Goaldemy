@@ -117,7 +117,7 @@ export default {
 }
 .gs-back:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(252, 211, 77, 0.4);
+  border-color: color-mix(in srgb, var(--play-400) 40%, transparent);
 }
 .gs-title-wrap {
   justify-self: center;

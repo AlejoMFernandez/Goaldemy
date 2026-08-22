@@ -182,7 +182,7 @@ Replace with:
 ```html
                 <router-link
                   :to="backPath"
-                  class="flex-1 rounded-xl border border-amber-400/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 py-2.5 text-sm font-bold transition text-center"
+                  class="flex-1 rounded-xl border border-amber-300/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 py-2.5 text-sm font-bold transition text-center"
                 >
                   Volver a juegos
                 </router-link>

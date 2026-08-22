@@ -420,7 +420,7 @@ export default {
                   'w-full rounded-xl py-2.5 text-sm font-bold transition flex items-center justify-center gap-2 shadow-lg',
                   shared
                     ? 'bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 shadow-emerald-500/10'
-                    : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-white shadow-amber-500/25'
+                    : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-900 shadow-amber-500/25'
                 ]"
               >
                 <template v-if="shared">
@@ -446,7 +446,7 @@ export default {
                 </button>
                 <router-link
                   :to="backPath"
-                  class="flex-1 rounded-xl border border-amber-400/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 py-2.5 text-sm font-bold transition text-center"
+                  class="flex-1 rounded-xl border border-amber-300/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 py-2.5 text-sm font-bold transition text-center"
                 >
                   Volver a juegos
                 </router-link>
