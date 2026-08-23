@@ -221,7 +221,7 @@ export default {
     <template #stat>
       <div class="inline-flex items-center gap-2 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
         <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Puntaje</span>
-        <span class="font-display text-white font-extrabold text-base leading-none">{{ score }}/100</span>
+        <span class="font-display text-white font-bold text-base leading-none">{{ score }}/100</span>
       </div>
     </template>
     <GamePreviewModal
@@ -237,7 +237,7 @@ export default {
     />
     <div class="space-y-4 w-full max-w-2xl">
 
-      <div class="relative card p-4 sm:p-6 ring-1 ring-white/5" ref="confettiHost">
+      <div class="relative surface-solid p-4 sm:p-6 ring-1 ring-white/5" ref="confettiHost">
         <div class="flex items-center justify-between text-[11px] text-slate-400 mb-2 px-1">
           <span class="flex items-center gap-1">⬆ Más viejo</span>
           <span class="flex items-center gap-1">Más joven ⬇</span>
@@ -256,7 +256,7 @@ export default {
                         (hoveredSlot===i && (selectedIndex!=null || selectedFromSlot!=null)) ? 'ring-2 ring-amber-400 border-amber-400' : '',
                         locked ? 'cursor-not-allowed' : 'cursor-pointer'
                       ]">
-                <div class="shrink-0 w-8 h-8 rounded-full grid place-items-center font-display font-extrabold text-sm"
+                <div class="shrink-0 w-8 h-8 rounded-full grid place-items-center font-display font-bold text-sm"
                      :class="slot != null ? 'bg-white/10 text-white' : 'border-2 border-dashed border-white/15 text-slate-500'">{{ i+1 }}</div>
                 <template v-if="slot != null">
                   <div class="w-12 h-12 rounded-full overflow-hidden ring-2 shrink-0"
@@ -290,7 +290,7 @@ export default {
 
         <div class="mt-4 flex items-center justify-center">
           <button @click="check" :disabled="slots.some(x=>x==null) || locked"
-                  class="rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 border border-white/10 text-white px-6 py-2.5 text-sm font-bold shadow-lg shadow-emerald-500/20 disabled:opacity-40 disabled:shadow-none transition-all active:scale-95">
+                  class="rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 border border-white/10 text-slate-900 px-6 py-2.5 text-sm font-bold shadow-lg shadow-amber-500/25 disabled:opacity-40 disabled:shadow-none transition-all active:scale-95">
             Comprobar
           </button>
         </div>
