@@ -229,7 +229,7 @@ export default {
     <template #stat>
       <div class="inline-flex items-center gap-2 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
         <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Puntaje</span>
-        <span class="font-display text-white font-extrabold text-base leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
+        <span class="font-display text-white font-bold text-base leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
         <StreakBadge :streak="streak" />
       </div>
     </template>
@@ -248,7 +248,7 @@ export default {
       <div v-if="loading" class="text-slate-300">Cargando…</div>
       <div v-else class="relative rounded-2xl border border-white/10 bg-gradient-to-b from-slate-800/70 to-slate-900/85 p-4 sm:p-5 overflow-hidden max-w-md mx-auto">
         <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden"></div>
-        <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full opacity-20 blur-3xl" style="background: radial-gradient(circle, rgba(16,185,129,0.4), transparent 70%);"></div>
+        <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full opacity-20 blur-3xl" style="background: radial-gradient(circle, rgba(245,158,11,0.4), transparent 70%);"></div>
         <Transition name="round-fade" mode="out-in">
           <div :key="roundKey" class="relative">
             <div class="flex flex-col items-center gap-3 pt-5">
