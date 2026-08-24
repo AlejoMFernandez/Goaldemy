@@ -325,7 +325,7 @@ export default {
     <template #stat>
       <div class="inline-flex items-center gap-2 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
         <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Cadena</span>
-        <span class="font-display text-white font-extrabold text-base leading-none whitespace-nowrap">{{ chain }}/{{ target }}</span>
+        <span class="font-display text-white font-bold text-base leading-none whitespace-nowrap">{{ chain }}/{{ target }}</span>
         <StreakBadge :streak="chain" />
       </div>
     </template>
@@ -343,7 +343,7 @@ export default {
     <div class="w-full max-w-xl mx-auto">
 
       <div v-if="loading" class="text-center text-slate-300 py-12">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-300"></div>
         <p class="mt-3">Cargando...</p>
       </div>
 
@@ -351,7 +351,7 @@ export default {
         <!-- Categoría por la que comparan: título + subtítulo centrados -->
         <div class="text-center mb-5">
           <p class="text-slate-400 text-[11px] uppercase tracking-[0.2em] mb-1">Comparan por</p>
-          <h2 v-if="currentCategory" class="font-display text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-300 to-cyan-300 bg-clip-text text-transparent">
+          <h2 v-if="currentCategory" class="font-display text-2xl sm:text-3xl font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
             {{ currentCategory.label }}
           </h2>
         </div>
@@ -367,7 +367,7 @@ export default {
                 <img :src="leftPlayer.teamLogo" :alt="leftPlayer.teamName" class="w-4 h-4 object-contain" />
                 <span>{{ leftPlayer?.teamName }}</span>
               </div>
-              <div class="hl-stat text-emerald-400">{{ leftStatDisplay() }}</div>
+              <div class="hl-stat text-amber-300">{{ leftStatDisplay() }}</div>
             </div>
 
             <!-- Right player -->
@@ -497,7 +497,7 @@ export default {
 }
 .hl-stat {
   font-family: var(--font-display, inherit);
-  font-weight: 800;
+  font-weight: 700;
   font-size: 1.9rem;
   line-height: 1;
   margin-top: 2px;
