@@ -363,7 +363,7 @@ export default {
       <div class="inline-flex items-center gap-2.5 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
         <span class="inline-flex items-center gap-1.5">
           <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Grupos</span>
-          <span class="font-display text-white font-extrabold text-base leading-none">{{ solvedGroups.length }}/4</span>
+          <span class="font-display text-white font-bold text-base leading-none">{{ solvedGroups.length }}/4</span>
         </span>
         <span class="w-px h-4 bg-white/12"></span>
         <span class="inline-flex items-center gap-1" title="Errores restantes">
@@ -385,7 +385,7 @@ export default {
     <div class="space-y-3 w-full max-w-xl mx-auto">
 
       <div v-if="loading" class="text-center text-slate-300 py-12">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-300"></div>
         <p class="mt-3">Cargando jugadores...</p>
       </div>
 
@@ -412,7 +412,7 @@ export default {
                   :class="[
                     'group relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-150',
                     isSelected(p)
-                      ? 'border-emerald-400 ring-2 ring-emerald-400/50 scale-[1.04] z-10'
+                      ? 'border-amber-300 ring-2 ring-amber-300/50 scale-[1.04] z-10'
                       : 'border-white/10 hover:border-white/25',
                     shaking && isSelected(p) ? 'shake' : '',
                     gameOver ? 'pointer-events-none opacity-60' : 'cursor-pointer active:scale-95'
@@ -425,8 +425,8 @@ export default {
               <span class="text-white text-[10px] font-semibold leading-tight truncate block text-center">{{ p.name }}</span>
             </div>
             <div v-if="isSelected(p)"
-                 class="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-emerald-400 flex items-center justify-center">
-              <svg class="w-3 h-3 text-emerald-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                 class="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-amber-300 flex items-center justify-center">
+              <svg class="w-3 h-3 text-amber-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -450,7 +450,7 @@ export default {
               Deseleccionar
             </button>
             <button @click="verify" :disabled="!canVerify"
-                    class="rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 text-white px-6 py-2 text-sm font-bold transition disabled:opacity-40 shadow-lg shadow-emerald-500/20">
+                    class="rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-900 px-6 py-2 text-sm font-bold transition disabled:opacity-40 shadow-lg shadow-amber-500/25">
               Verificar
             </button>
           </div>
