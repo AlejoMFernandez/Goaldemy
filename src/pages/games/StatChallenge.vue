@@ -300,20 +300,20 @@ export default {
           <router-link :to="backPath()" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">← Volver</router-link>
           <div class="rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-white/15 px-3 py-2 flex items-center gap-2 shadow-lg shadow-black/20">
             <span class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Puntaje</span>
-            <span class="font-display text-white font-extrabold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 15 }}</span>
+            <span class="font-display text-white font-bold text-lg leading-none whitespace-nowrap">{{ score }}/{{ attempts * 15 }}</span>
             <StreakBadge :streak="streak" />
           </div>
         </div>
       </div>
 
       <div v-if="loading" class="text-center text-slate-300 py-12">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-300"></div>
         <p class="mt-3">Cargando...</p>
       </div>
       <div v-else-if="noData" class="text-center text-slate-300 py-12">
         <p>No hay suficientes jugadores con estadísticas para armar este desafío ahora mismo.</p>
       </div>
-      <div v-else class="relative card p-6 ring-1 ring-white/5">
+      <div v-else class="relative surface-solid p-6 ring-1 ring-white/5">
         <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"></div>
 
         <!-- Timer -->
