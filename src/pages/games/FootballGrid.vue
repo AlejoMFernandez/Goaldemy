@@ -348,12 +348,12 @@ export default {
     <template #stat>
       <div class="inline-flex items-center gap-1.5 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
         <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Celdas</span>
-        <span class="font-display text-white font-extrabold text-base leading-none whitespace-nowrap">{{ corrects }}/9</span>
+        <span class="font-display text-white font-bold text-base leading-none whitespace-nowrap">{{ corrects }}/9</span>
       </div>
     </template>
 
     <div v-if="loading" class="text-center text-slate-300 py-12">
-      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-300"></div>
       <p class="mt-3">Cargando grilla...</p>
     </div>
 
