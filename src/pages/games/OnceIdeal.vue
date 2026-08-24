@@ -256,7 +256,7 @@ onUnmounted(() => clearInterval(timerHandle))
       </div>
       <div class="flex flex-col items-center gap-1 flex-shrink-0">
         <CircularTimer :seconds="Math.max(0, timeLeft)" :total="TOTAL_TIME" />
-        <div class="text-2xl font-bold text-cyan-400">{{ filledCount }}<span class="text-slate-500 text-base">/11</span></div>
+        <div class="text-2xl font-bold text-amber-300">{{ filledCount }}<span class="text-slate-500 text-base">/11</span></div>
       </div>
     </div>
 
@@ -283,7 +283,7 @@ onUnmounted(() => clearInterval(timerHandle))
       >
         <!-- Filled slot -->
         <div v-if="slot.filled" class="flex flex-col items-center gap-0.5">
-          <div class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-cyan-400/70 shadow-lg shadow-black/60">
+          <div class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-amber-300/70 shadow-lg shadow-black/60">
             <img :src="slot.filled.image" class="w-full h-full object-cover object-top bg-slate-800"
                  @error="e => e.target.src = '/placeholder-player.png'" />
           </div>
@@ -295,7 +295,7 @@ onUnmounted(() => clearInterval(timerHandle))
         <!-- Empty slot -->
         <div v-else class="flex items-center justify-center rounded-lg border font-bold text-[11px] tracking-wide select-none transition-all"
              :class="activeSlot === slot.id
-               ? 'w-14 h-9 bg-cyan-500/30 border-cyan-400 text-cyan-200 scale-110 shadow-lg shadow-cyan-500/30'
+               ? 'w-14 h-9 bg-amber-500/30 border-amber-300 text-amber-200 scale-110 shadow-lg shadow-amber-500/30'
                : 'w-12 h-8 bg-slate-900/55 border-white/20 text-slate-300 hover:border-white/50 hover:bg-slate-800/60 hover:scale-105'">
           {{ slot.label }}
         </div>
@@ -307,8 +307,8 @@ onUnmounted(() => clearInterval(timerHandle))
       <div class="text-3xl mb-2">⏱️</div>
       <h3 class="text-lg font-bold text-amber-300 mb-1">¡Se acabó el tiempo!</h3>
       <p class="text-slate-300 text-sm mb-1">Llenaste <span class="font-bold text-white">{{ filledCount }}/11</span> posiciones</p>
-      <p v-if="xpEarned > 0" class="text-slate-400 text-sm mb-4">+<span class="text-cyan-400 font-bold">{{ xpEarned }} XP</span> ganados</p>
-      <button @click="resetGame" class="rounded-xl bg-emerald-500 hover:brightness-110 px-5 py-2.5 font-semibold text-white transition">
+      <p v-if="xpEarned > 0" class="text-slate-400 text-sm mb-4">+<span class="text-amber-300 font-bold">{{ xpEarned }} XP</span> ganados</p>
+      <button @click="resetGame" class="rounded-xl bg-amber-500 hover:brightness-110 px-5 py-2.5 font-semibold text-slate-900 transition">
         Intentar de nuevo
       </button>
     </div>
@@ -318,7 +318,7 @@ onUnmounted(() => clearInterval(timerHandle))
       <template v-if="activeSlot !== null">
         <p class="text-xs text-slate-400 uppercase tracking-wider mb-2">
           Escribí un jugador para
-          <span class="text-cyan-400 font-bold">{{ slots[activeSlot]?.label }}</span>
+          <span class="text-amber-300 font-bold">{{ slots[activeSlot]?.label }}</span>
           <span class="text-slate-500 ml-1">({{ constraint?.label }})</span>
         </p>
         <div class="relative">
@@ -327,7 +327,7 @@ onUnmounted(() => clearInterval(timerHandle))
             type="text"
             placeholder="Nombre del jugador..."
             autofocus
-            class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
+            class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40"
           />
           <!-- Autocomplete suggestions -->
           <div v-if="suggestions.length > 0"
@@ -364,19 +364,19 @@ onUnmounted(() => clearInterval(timerHandle))
     </div>
 
     <!-- Finished -->
-    <div v-if="finished" class="mt-4 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 p-6 text-center">
+    <div v-if="finished" class="mt-4 rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-600/10 p-6 text-center">
       <div class="text-5xl mb-3">🏆</div>
-      <h2 class="text-2xl font-bold text-emerald-400 mb-1">¡Once Ideal Completo!</h2>
+      <h2 class="text-2xl font-bold text-amber-300 mb-1">¡Once Ideal Completo!</h2>
       <p class="text-slate-300 mb-2">
         Armaste el once de
         <span class="font-bold text-white">{{ constraint?.label }}</span>
       </p>
       <p class="text-slate-400 text-sm mb-5">
-        +<span class="text-cyan-400 font-bold">{{ xpEarned }} XP</span> ganados
+        +<span class="text-amber-300 font-bold">{{ xpEarned }} XP</span> ganados
       </p>
       <div class="flex gap-3 justify-center flex-wrap">
         <button @click="resetGame"
-                class="rounded-xl bg-emerald-500 hover:brightness-110 px-5 py-2.5 font-semibold text-white transition">
+                class="rounded-xl bg-amber-500 hover:brightness-110 px-5 py-2.5 font-semibold text-slate-900 transition">
           Nuevo desafío
         </button>
         <router-link to="/play/free"
