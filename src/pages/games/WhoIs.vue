@@ -255,7 +255,7 @@ export default {
     <template #stat>
       <div class="inline-flex items-center gap-2 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
         <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Puntaje</span>
-        <span class="font-display text-white font-extrabold text-base leading-none whitespace-nowrap">{{ score }}/{{ attempts * (pointsPerCorrect || 10) }}</span>
+        <span class="font-display text-white font-bold text-base leading-none whitespace-nowrap">{{ score }}/{{ attempts * (pointsPerCorrect || 10) }}</span>
         <StreakBadge :streak="streak" />
       </div>
     </template>
@@ -273,14 +273,14 @@ export default {
     <div class="w-full max-w-md mx-auto">
 
       <div v-if="loading" class="text-center text-slate-300 py-12">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-300"></div>
         <p class="mt-3">Cargando...</p>
       </div>
       <div v-else>
         <!-- CARTA MISTERIOSA estilo who-are-ya -->
         <div class="relative rounded-2xl border border-white/10 bg-gradient-to-b from-slate-800/70 to-slate-900/85 px-4 pt-9 pb-4 overflow-hidden">
           <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl z-20"></div>
-          <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full opacity-20 blur-3xl" style="background: radial-gradient(circle, rgba(16,185,129,0.4), transparent 70%);"></div>
+          <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full opacity-20 blur-3xl" style="background: radial-gradient(circle, rgba(245,158,11,0.4), transparent 70%);"></div>
 
           <!-- Vidas (esquina) -->
           <div class="absolute top-2.5 left-3 z-10 flex items-center gap-1" title="Vidas">
@@ -299,7 +299,7 @@ export default {
 
               <!-- Nombre al acertar / perder -->
               <div v-if="answered" class="text-center -mt-0.5">
-                <p :class="lastResultOk ? 'text-emerald-400' : 'text-white'" class="font-display font-extrabold text-lg leading-tight">{{ current?.name }}</p>
+                <p :class="lastResultOk ? 'text-emerald-400' : 'text-white'" class="font-display font-bold text-lg leading-tight">{{ current?.name }}</p>
                 <p v-if="!lastResultOk && lives === 0" class="text-rose-400/80 text-xs mt-0.5">No lo adivinaste</p>
               </div>
               <p v-else class="text-slate-300 text-sm font-medium">¿Quién es este jugador?</p>
@@ -321,7 +321,7 @@ export default {
               <input v-model="guess" @focus="suggestOpen=true" @input="suggestOpen = (guess?.length||0) >= 3; selectedIndex=-1"
                      @keydown.down.prevent="moveSelection(1)" @keydown.up.prevent="moveSelection(-1)" @keydown.enter.prevent="onEnterKey"
                      type="text" placeholder="Escribí el nombre del jugador..."
-                     class="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30" />
+                     class="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300/30" />
               <div v-if="suggestOpen && suggestions.length>0" class="absolute z-30 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl max-h-56 overflow-auto">
                 <ul>
                   <li v-for="(p,idx) in suggestions" :key="p.id" @click.prevent="chooseSuggestion(p)"
@@ -334,7 +334,7 @@ export default {
               </div>
             </div>
             <div class="flex items-center justify-center mt-2">
-              <button type="submit" :disabled="(guess?.length || 0) < 3" class="rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 text-white px-6 py-2 text-sm font-bold disabled:opacity-40 transition shadow-lg shadow-emerald-500/20">Adivinar</button>
+              <button type="submit" :disabled="(guess?.length || 0) < 3" class="rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-900 px-6 py-2 text-sm font-bold disabled:opacity-40 transition shadow-lg shadow-amber-500/25">Adivinar</button>
             </div>
           </form>
         </div>
