@@ -29,9 +29,12 @@ export function shareBaseUrl() {
  * @param {number} opts.accuracy - Precisión 0-100
  * @param {number} opts.maxStreak- Mejor racha de aciertos seguidos
  * @param {boolean} opts.won     - Si ganó (cambia el call-to-action)
+ * @param {string} opts.refCode - Código de referido propio (opcional). Si viene, el link
+ *                                 apunta a /register?ref=CODE en vez de la home: cada
+ *                                 resultado compartido se vuelve una invitación con premio.
  * @returns {string}
  */
-export function buildShareText({ gameName = '', corrects = 0, total = 0, accuracy = 0, maxStreak = 0, won = false } = {}) {
+export function buildShareText({ gameName = '', corrects = 0, total = 0, accuracy = 0, maxStreak = 0, won = false, refCode = '' } = {}) {
   const t = Math.max(total || 0, 1)
   const got = Math.max(0, Math.min(corrects || 0, t))
   // Barra de emojis: 🟩 acierto / ⬛ fallado, en filas de a 10 para no romper el salto de línea
@@ -40,12 +43,13 @@ export function buildShareText({ gameName = '', corrects = 0, total = 0, accurac
   const rows = []
   for (let i = 0; i < cells.length; i += 10) rows.push(cells.slice(i, i + 10).join(''))
   const name = gameName ? ` · ${gameName}` : ''
+  const link = refCode ? `${shareBaseUrl()}/register?ref=${encodeURIComponent(refCode)}` : shareBaseUrl()
   return [
     `GOALDEMY ⚽${name}`,
     rows.join('\n'),
     `✅ ${got}/${t}   🎯 ${accuracy}%   🔥 x${maxStreak || 0}`,
     won ? '¿Podés superarme? 👇' : '¿Le ganás a mi intento? 👇',
-    shareBaseUrl(),
+    link,
   ].join('\n')
 }
 

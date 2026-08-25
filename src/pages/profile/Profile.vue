@@ -15,6 +15,7 @@ import ConnectionsCard from '../../components/profile/ConnectionsCard.vue';
 import CommunityCard from '../../components/profile/CommunityCard.vue';
 import LoadoutShowcase from '../../components/profile/LoadoutShowcase.vue';
 import ProfileIdentityCard from '../../components/profile/ProfileIdentityCard.vue';
+import ReferralCard from '../../components/profile/ReferralCard.vue';
 import { findTeamByName, findPlayerByName } from '../../services/players';
 import { getEquippedCosmetics, bannerStyle } from '../../services/cosmetics';
 import { getPlanBadge } from '../../services/premium';
@@ -25,7 +26,7 @@ let unsubscribeAuth = () => {};
 
 export default {
   name: 'Profile',
-  components: { AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard, LoadoutShowcase, ProfileIdentityCard },
+  components: { AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard, LoadoutShowcase, ProfileIdentityCard, ReferralCard },
   data() {
     return {
       user: {
@@ -467,6 +468,9 @@ export default {
             </template>
           </div>
         </div>
+
+        <!-- Invitá a un amigo (referidos) -->
+        <ReferralCard v-if="isSelf" />
 
         <!-- 1. Logros destacados -->
         <AchievementsCard

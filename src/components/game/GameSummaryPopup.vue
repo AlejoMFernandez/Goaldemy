@@ -4,6 +4,7 @@ import { soundManager } from '@/services/sounds'
 import { setSuppressOverlays, notificationsState, shiftAchievementQueue } from '@/stores/notifications'
 import { friendlyNameForSlug } from '@/services/games'
 import { buildShareText, shareOrCopy } from '@/services/share'
+import { getAuthUser } from '@/services/auth'
 
 export default {
   name: 'GameSummaryPopup',
@@ -115,6 +116,7 @@ export default {
         accuracy: accuracy.value,
         maxStreak: props.maxStreak,
         won: won.value,
+        refCode: getAuthUser()?.referral_code || '',
       })
       const result = await shareOrCopy(text)
       if (result === 'copied') {

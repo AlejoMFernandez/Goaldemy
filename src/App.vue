@@ -14,6 +14,7 @@ import { authReady } from './services/auth';
 import { setSuppressOverlays } from './stores/notifications';
 import { installPresence, setPresenceGame } from './services/presence';
 import { sidebarState } from './stores/sidebar';
+import { captureReferralFromUrl } from './services/referral';
 
 export default {
   name: 'App',
@@ -69,6 +70,9 @@ export default {
     }
   },
   async mounted() {
+    // Referidos: si llegó con ?ref=CODIGO (link compartido por otro usuario), lo
+    // guardamos ANTES de que arranque nada más — funciona aunque todavía no haya sesión.
+    captureReferralFromUrl()
     // Track desktop breakpoint para reservar el ancho de la sidebar.
     this._mqlSidebar = window.matchMedia('(min-width: 1024px)')
     this.isLg = this._mqlSidebar.matches
@@ -86,6 +90,9 @@ export default {
     // Reto del día: si el usuario venía de jugar como invitado y ahora está logueado,
     // otorgar de verdad la XP + Fichas que se le mostraron (cierra el loop del funnel).
     import('./services/daily-reto').then(m => m.claimPendingRetoReward?.()).catch(() => {})
+    // Referidos: si vino con un código pendiente y ya está logueado + verificado,
+    // reparte las Fichas a él y a quien lo invitó (cierra el loop del share incentivado).
+    import('./services/referral').then(m => m.claimPendingReferral?.()).catch(() => {})
     installPresence()
     this.$watch(() => this.$route?.path, (path) => {
       setSuppressOverlays(false)
