@@ -143,7 +143,7 @@ defineExpose({ reload: load })
   <button
     type="button"
     @click="openDetail"
-    class="group relative w-full text-left overflow-hidden rounded-2xl border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.10] via-slate-900/60 to-cyan-500/[0.05] p-5 transition-all hover:border-amber-500/40 active:scale-[0.99]"
+    class="group relative w-full text-left overflow-hidden rounded-2xl border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.10] via-slate-900/60 to-amber-600/[0.05] p-5 transition-all hover:border-amber-500/40 active:scale-[0.99]"
   >
     <!-- brillo decorativo -->
     <div class="pointer-events-none absolute -top-16 -right-10 w-48 h-48 rounded-full bg-amber-500/10 blur-3xl"></div>
@@ -153,7 +153,7 @@ defineExpose({ reload: load })
         <div class="w-11 h-11 rounded-2xl grid place-items-center text-2xl bg-amber-500/15 border border-amber-400/30 shadow-lg shadow-amber-500/10">🎟️</div>
         <div>
           <div class="flex items-center gap-2">
-            <h2 class="font-display font-extrabold text-white text-lg leading-tight">{{ seasonName }}</h2>
+            <h2 class="font-display font-bold text-white text-lg leading-tight">{{ seasonName }}</h2>
             <span v-if="pass.is_premium" class="rounded-full bg-amber-500/15 border border-amber-500/40 px-2 py-0.5 text-[10px] font-bold text-amber-300">⭐ PRO</span>
           </div>
           <div class="text-[11px] text-slate-400 capitalize mt-0.5">{{ monthLabel }}</div>
@@ -166,7 +166,7 @@ defineExpose({ reload: load })
           <svg class="w-3.5 h-3.5 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <span class="tabular-nums">{{ daysLeft }}</span> {{ daysLeft === 1 ? 'día' : 'días' }}
         </div>
-        <div v-if="claimableCount > 0" class="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 px-2.5 py-1 text-[11px] font-bold text-emerald-300" style="animation: claim-pulse 2s ease-in-out infinite">
+        <div v-if="claimableCount > 0" class="inline-flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-300/40 px-2.5 py-1 text-[11px] font-bold text-amber-300" style="animation: claim-pulse 2s ease-in-out infinite">
           {{ claimableCount }} para reclamar
         </div>
       </div>
@@ -179,7 +179,7 @@ defineExpose({ reload: load })
       <div class="relative mt-4">
         <div class="flex items-end justify-between mb-1.5">
           <div class="flex items-baseline gap-1.5">
-            <span class="font-display font-extrabold text-2xl text-white tabular-nums">{{ points }}</span>
+            <span class="font-display font-bold text-2xl text-white tabular-nums">{{ points }}</span>
             <span class="text-xs text-slate-400 font-semibold">puntos</span>
           </div>
           <div v-if="nextTier" class="text-[11px] text-slate-400">
@@ -199,7 +199,7 @@ defineExpose({ reload: load })
       <!-- De dónde salen los puntos (claro y gráfico) -->
       <div class="relative mt-3 flex items-center gap-2">
         <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Sumás jugando</span>
-        <span class="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 text-[11px] font-bold text-emerald-300">🏆 +3 ganar</span>
+        <span class="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2 py-1 text-[11px] font-bold text-amber-300">🏆 +3 ganar</span>
         <span class="inline-flex items-center gap-1 rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-[11px] font-semibold text-slate-300">🎮 +1 jugar</span>
       </div>
 
@@ -229,7 +229,7 @@ defineExpose({ reload: load })
           <div class="relative w-full max-w-5xl rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl">
 
             <!-- Header -->
-            <div class="relative overflow-hidden rounded-t-2xl border-b border-white/10 bg-gradient-to-r from-amber-500/[0.12] to-cyan-500/[0.06] p-5">
+            <div class="relative overflow-hidden rounded-t-2xl border-b border-white/10 bg-gradient-to-r from-amber-500/[0.12] to-amber-600/[0.06] p-5">
               <div class="pointer-events-none absolute -top-12 right-10 w-40 h-40 rounded-full bg-amber-500/15 blur-3xl"></div>
               <button @click="detailOpen = false" class="absolute top-4 right-4 text-slate-400 hover:text-white transition z-10">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -237,7 +237,7 @@ defineExpose({ reload: load })
               <div class="relative flex items-center gap-3 pr-10">
                 <div class="w-12 h-12 rounded-2xl grid place-items-center text-2xl bg-amber-500/15 border border-amber-400/30">🎟️</div>
                 <div class="flex-1 min-w-0">
-                  <h2 class="font-display font-extrabold text-white text-xl leading-tight">{{ seasonName }}</h2>
+                  <h2 class="font-display font-bold text-white text-xl leading-tight">{{ seasonName }}</h2>
                   <div class="text-xs text-slate-400 capitalize">{{ monthLabel }} · <span class="text-amber-300 font-bold">{{ points }} puntos</span></div>
                 </div>
                 <!-- Días restantes -->
@@ -255,7 +255,7 @@ defineExpose({ reload: load })
                 <div class="mt-1.5 flex items-center justify-between text-[11px]">
                   <span class="text-slate-400">Nivel <span class="text-white font-bold">{{ currentTierNum }}</span> / {{ tiers.length }}</span>
                   <span class="inline-flex items-center gap-2 text-slate-400">
-                    <span class="inline-flex items-center gap-1 text-emerald-300 font-semibold">🏆 +3 ganar</span>
+                    <span class="inline-flex items-center gap-1 text-amber-300 font-semibold">🏆 +3 ganar</span>
                     <span class="inline-flex items-center gap-1">🎮 +1 jugar</span>
                   </span>
                 </div>
@@ -308,7 +308,7 @@ defineExpose({ reload: load })
                         <div class="text-[9px] font-bold text-emerald-300 mt-0.5">×{{ rewardFor(tier, 'free').qty }}</div>
                       </div>
                       <div v-else-if="rewardFor(tier, 'free').xp > 0">
-                        <div class="font-display font-extrabold text-lg leading-none text-emerald-300">+{{ rewardFor(tier, 'free').xp }}</div>
+                        <div class="font-display font-bold text-lg leading-none text-emerald-300">+{{ rewardFor(tier, 'free').xp }}</div>
                         <div class="text-[9px] text-slate-400 uppercase tracking-wider mt-0.5">XP</div>
                       </div>
                       <div v-else class="text-slate-600 text-lg">—</div>
@@ -355,7 +355,7 @@ defineExpose({ reload: load })
                         <div class="text-[9px] font-bold text-amber-300 mt-0.5">×{{ rewardFor(tier, 'premium').qty }}</div>
                       </div>
                       <div v-else-if="rewardFor(tier, 'premium').xp > 0">
-                        <div class="font-display font-extrabold text-lg leading-none text-amber-300">+{{ rewardFor(tier, 'premium').xp }}</div>
+                        <div class="font-display font-bold text-lg leading-none text-amber-300">+{{ rewardFor(tier, 'premium').xp }}</div>
                         <div class="text-[9px] text-slate-400 uppercase tracking-wider mt-0.5">XP</div>
                       </div>
                       <div v-else class="text-slate-600 text-lg">—</div>
