@@ -145,26 +145,26 @@ function optionClass(opt) {
 
     <!-- LOADING -->
     <div v-if="state.phase === 'loading'" class="flex flex-col items-center justify-center py-24 gap-4">
-      <div class="h-10 w-10 rounded-full border-4 border-cyan-400/30 border-t-cyan-400 animate-spin"></div>
+      <div class="h-10 w-10 rounded-full border-4 border-amber-300/30 border-t-amber-300 animate-spin"></div>
       <span class="text-slate-400 text-sm">Preparando el reto de hoy…</span>
     </div>
 
     <!-- INTRO -->
     <div v-else-if="state.phase === 'intro'" class="text-center py-8">
-      <div class="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-cyan-300 mb-5">
+      <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-300 mb-5">
         <span class="relative flex h-2 w-2">
-          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
-          <span class="relative inline-flex h-2 w-2 rounded-full bg-cyan-400"></span>
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-300 opacity-75"></span>
+          <span class="relative inline-flex h-2 w-2 rounded-full bg-amber-300"></span>
         </span>
         Reto del día
       </div>
-      <h1 class="font-display text-4xl md:text-5xl font-extrabold text-white leading-tight mb-3">{{ state.game?.label }}</h1>
+      <h1 class="font-display text-4xl md:text-5xl font-bold text-white leading-tight mb-3">{{ state.game?.label }}</h1>
       <p class="text-slate-300 text-base mb-1">{{ state.total }} preguntas · sin cuenta · un intento por día</p>
       <p class="text-slate-500 text-sm mb-8">Todos juegan <strong class="text-slate-300">el mismo reto</strong> hoy. ¿Cuánto sacás?</p>
-      <button @click="start" class="w-full max-w-xs mx-auto rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 text-white py-4 text-lg font-bold transition shadow-lg shadow-emerald-500/25 active:scale-[0.98]">
+      <button @click="start" class="w-full max-w-xs mx-auto rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-900 py-4 text-lg font-bold transition shadow-lg shadow-amber-500/25 active:scale-[0.98]">
         Jugar ahora
       </button>
-      <p class="text-slate-500 text-xs mt-6">¿Ya tenés cuenta? <RouterLink to="/login" class="text-cyan-400 hover:underline">Iniciá sesión</RouterLink></p>
+      <p class="text-slate-500 text-xs mt-6">¿Ya tenés cuenta? <RouterLink to="/login" class="text-amber-300 hover:underline">Iniciá sesión</RouterLink></p>
     </div>
 
     <!-- PLAYING -->
@@ -174,16 +174,16 @@ function optionClass(opt) {
         <span class="font-display text-sm font-bold text-white">{{ state.index + 1 }}<span class="text-slate-500">/{{ state.total }}</span></span>
       </div>
       <div class="h-1.5 rounded-full bg-black/30 overflow-hidden mb-6">
-        <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-300" :style="{ width: progressPct + '%' }"></div>
+        <div class="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-500 transition-all duration-300" :style="{ width: progressPct + '%' }"></div>
       </div>
       <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-center mb-5 shadow-2xl">
         <div class="w-28 h-28 mx-auto mb-4 rounded-2xl overflow-hidden bg-slate-800/60 border border-white/10 grid place-items-center">
           <img v-if="current.player.image && !state.imgError" :src="current.player.image" :alt="current.player.name" class="w-full h-full object-cover" @error="state.imgError = true" />
           <span v-else class="font-display text-3xl font-bold text-slate-500">{{ (current.player.name || '?').slice(0,1) }}</span>
         </div>
-        <h2 class="font-display text-2xl font-extrabold text-white leading-tight">{{ current.player.name }}</h2>
+        <h2 class="font-display text-2xl font-bold text-white leading-tight">{{ current.player.name }}</h2>
         <p v-if="current.player.teamName" class="text-slate-400 text-sm mt-0.5">{{ current.player.teamName }}</p>
-        <p class="text-cyan-300/90 text-sm mt-3 font-semibold">{{ state.game?.prompt }}</p>
+        <p class="text-amber-300/90 text-sm mt-3 font-semibold">{{ state.game?.prompt }}</p>
       </div>
       <div class="grid grid-cols-1 gap-2.5">
         <button v-for="opt in current.options" :key="opt" @click="answer(opt)" :disabled="state.locked"
@@ -199,7 +199,7 @@ function optionClass(opt) {
         <!-- Banner -->
         <div :class="['px-5 py-4 text-center border-b', won ? 'bg-gradient-to-r from-emerald-500/15 to-cyan-500/10 border-emerald-500/25' : 'bg-gradient-to-r from-amber-500/15 to-orange-500/10 border-amber-500/25']">
           <p class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Reto del día · {{ state.game?.label }}</p>
-          <h2 :class="['font-display text-3xl font-extrabold', won ? 'text-emerald-400' : 'text-amber-400']">{{ won ? '¡Bien jugado!' : '¡Casi!' }}</h2>
+          <h2 :class="['font-display text-3xl font-bold', won ? 'text-emerald-400' : 'text-amber-400']">{{ won ? '¡Bien jugado!' : '¡Casi!' }}</h2>
           <div class="font-display text-lg font-bold text-white mt-1">{{ state.corrects }}<span class="text-slate-500">/{{ state.total }}</span></div>
           <div class="flex flex-wrap justify-center gap-1 mt-2">
             <span v-for="(ok, i) in state.answers" :key="i" class="text-base leading-none">{{ ok ? '🟩' : '⬛' }}</span>
@@ -220,11 +220,11 @@ function optionClass(opt) {
           <div class="grid grid-cols-2 gap-3">
             <div class="reward-card rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-center">
               <div class="text-[10px] uppercase tracking-wider text-emerald-300/80 mb-1">XP ganada</div>
-              <div class="font-display text-3xl font-extrabold text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.35)]">+{{ state.animXp }}</div>
+              <div class="font-display text-3xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.35)]">+{{ state.animXp }}</div>
             </div>
             <div class="reward-card rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-center">
               <div class="text-[10px] uppercase tracking-wider text-amber-300/80 mb-1">Fichas</div>
-              <div class="font-display text-3xl font-extrabold text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.35)]">
+              <div class="font-display text-3xl font-bold text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.35)]">
                 <span class="mr-0.5">🪙</span>+{{ state.animFichas }}
               </div>
             </div>
@@ -243,7 +243,7 @@ function optionClass(opt) {
               <span v-else class="text-[10px] text-slate-500">faltan {{ rewards.remaining }} XP</span>
             </div>
             <div class="h-2.5 rounded-full bg-black/40 overflow-hidden">
-              <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400" :style="{ width: state.animBar + '%', transition: 'width 0.3s' }"></div>
+              <div class="h-full rounded-full bg-gradient-to-r from-amber-300 via-amber-500 to-amber-600" :style="{ width: state.animBar + '%', transition: 'width 0.3s' }"></div>
             </div>
           </div>
 
@@ -273,14 +273,14 @@ function optionClass(opt) {
             <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-amber-500/15 border border-amber-400/30 grid place-items-center">
               <svg class="w-7 h-7 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 118 0v4"/></svg>
             </div>
-            <h3 class="font-display text-xl font-extrabold text-white mb-1">Tus recompensas te esperan</h3>
+            <h3 class="font-display text-xl font-bold text-white mb-1">Tus recompensas te esperan</h3>
             <p class="text-slate-300 text-sm mb-4">
               Creá tu cuenta gratis y reclamá
               <strong class="text-emerald-400">+{{ rewards.xp }} XP</strong>,
               <strong class="text-amber-400">{{ rewards.fichas }} Fichas</strong>
               y guardá tu racha para siempre.
             </p>
-            <RouterLink to="/register" class="block w-full rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 text-white py-3 text-sm font-bold transition shadow-lg shadow-emerald-500/25 mb-2">
+            <RouterLink to="/register" class="block w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-900 py-3 text-sm font-bold transition shadow-lg shadow-amber-500/25 mb-2">
               Crear cuenta gratis y reclamar
             </RouterLink>
             <RouterLink to="/login" class="block text-slate-400 hover:text-white text-xs">Ya tengo cuenta</RouterLink>
