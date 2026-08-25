@@ -191,7 +191,7 @@ export default {
                   <div class="w-20 h-20 rounded-full bg-gradient-to-br from-slate-700 to-slate-900"></div>
                 </div>
                 <div v-else-if="current.type === 'banner'" :class="['w-24 h-16 rounded-xl border border-white/15', bannerStyle(current.styleKey)]"></div>
-                <div v-else class="px-3"><div class="font-display font-extrabold text-xl" :class="theme.text">{{ current.name }}</div></div>
+                <div v-else class="px-3"><div class="font-display font-bold text-xl" :class="theme.text">{{ current.name }}</div></div>
               </div>
             </div>
 
@@ -206,7 +206,7 @@ export default {
           <!-- Texto -->
           <div class="mb-2 transition-all duration-500" :class="phase >= 2 ? 'opacity-100' : 'opacity-0'">
             <div class="font-display text-xs font-bold uppercase mb-3 tracking-wider" :class="theme.text">{{ typeLabel }} desbloqueado</div>
-            <h2 class="font-display text-3xl font-extrabold text-white mb-2">{{ current.name }}</h2>
+            <h2 class="font-display text-3xl font-bold text-white mb-2">{{ current.name }}</h2>
           </div>
 
           <!-- Cómo lo conseguiste -->
@@ -236,7 +236,7 @@ export default {
             </button>
 
             <button @click="primary"
-                    class="rounded-2xl px-8 py-3.5 font-display font-bold text-base text-white bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-95 shadow-lg shadow-emerald-500/25 transition-all duration-200"
+                    class="rounded-2xl px-8 py-3.5 font-display font-bold text-base text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 shadow-lg shadow-amber-500/25 transition-all duration-200"
                     style="animation: claim-pulse 2s ease-in-out infinite">
               {{ index < total - 1 ? 'Siguiente' : (total > 1 ? 'Listo' : 'Continuar') }}
             </button>
