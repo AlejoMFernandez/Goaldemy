@@ -136,7 +136,7 @@ watch(() => notificationsState.proWelcome, (pw) => {
               :style="rp >= 3 ? 'animation: scale-spring 0.6s var(--ease-bounce) both' : 'opacity:0'">
               <div v-if="rp >= 3" class="pointer-events-none absolute -inset-4 rounded-full bg-fuchsia-400/30 blur-2xl" style="animation: evolution-flash 0.7s ease both"></div>
               <img v-if="newTier?.image" :src="newTier.image" class="relative w-28 h-28 object-contain drop-shadow-[0_0_22px_rgba(232,121,249,0.55)]" :alt="newTier.label" />
-              <span class="relative text-xl font-display font-extrabold mt-2" :class="newTierColor">{{ newTier?.label }}</span>
+              <span class="relative text-xl font-display font-bold mt-2" :class="newTierColor">{{ newTier?.label }}</span>
             </div>
           </div>
 
@@ -164,11 +164,11 @@ watch(() => notificationsState.proWelcome, (pw) => {
               {{ isMilestone ? '¡Hito Alcanzado!' : '¡Subiste de Nivel!' }}
             </div>
             <div class="flex items-center justify-center gap-4">
-              <span class="text-5xl font-display font-extrabold text-slate-500 line-through decoration-2">{{ current.oldLevel }}</span>
+              <span class="text-5xl font-display font-bold text-slate-500 line-through decoration-2">{{ current.oldLevel }}</span>
               <svg class="w-8 h-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
-              <span class="text-7xl font-display font-extrabold text-yellow-400"
+              <span class="text-7xl font-display font-bold text-yellow-400"
                 :style="lp >= 1 ? 'animation: level-morph 0.6s var(--ease-bounce) both' : ''">{{ current.newLevel }}</span>
             </div>
           </div>
@@ -186,12 +186,12 @@ watch(() => notificationsState.proWelcome, (pw) => {
 
           <!-- Desbloqueaste JUEGOS (los cosméticos los revela el carrusel grande) -->
           <div v-if="lp >= 2 && gameUnlocks.length" class="mb-4 w-full">
-            <p class="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold mb-2">Nuevo juego desbloqueado</p>
+            <p class="text-[10px] uppercase tracking-wider text-amber-300 font-semibold mb-2">Nuevo juego desbloqueado</p>
             <div class="grid gap-2" :class="gameUnlocks.length === 1 ? 'grid-cols-1' : 'grid-cols-2'">
               <div
                 v-for="(r, ri) in gameUnlocks"
                 :key="'g' + ri"
-                class="flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] p-2.5"
+                class="flex items-center gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-2.5"
                 :style="`animation: slide-up 0.35s ease ${0.08 * ri}s both`"
               >
                 <img :src="`/games/${r.slug}.svg`" class="w-9 h-9 object-contain shrink-0" alt="" />
@@ -206,7 +206,7 @@ watch(() => notificationsState.proWelcome, (pw) => {
             <div class="relative px-1">
               <!-- Riel base + tramo ya conquistado (emerald) que se desvanece hacia lo bloqueado -->
               <div class="absolute top-[22px] left-3 right-3 h-[3px] rounded-full bg-white/10"></div>
-              <div class="absolute top-[22px] left-3 h-[3px] w-10 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-400/0"></div>
+              <div class="absolute top-[22px] left-3 h-[3px] w-10 rounded-full bg-gradient-to-r from-amber-300 to-amber-300/0"></div>
               <div class="relative flex items-start justify-between">
                 <div
                   v-for="(r, ri) in upcoming"
@@ -241,7 +241,7 @@ watch(() => notificationsState.proWelcome, (pw) => {
                         <div class="text-center">
                           <div class="text-[9px] uppercase tracking-wide text-slate-400">{{ typeLabelOf(r) }}</div>
                           <div class="text-sm font-bold text-white leading-tight">{{ r.name || r.label }}</div>
-                          <div class="text-[11px] font-semibold text-emerald-300 mt-0.5">Se desbloquea en nivel {{ r.level }}</div>
+                          <div class="text-[11px] font-semibold text-amber-300 mt-0.5">Se desbloquea en nivel {{ r.level }}</div>
                         </div>
                       </div>
                       <div class="w-2.5 h-2.5 bg-slate-950 border-r border-b border-white/15 rotate-45 mx-auto -mt-[6px]"></div>
