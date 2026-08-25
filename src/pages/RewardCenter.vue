@@ -165,7 +165,7 @@ export default {
         <span class="grid place-items-center w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
         </span>
-        <h1 class="font-display font-extrabold text-white text-xl">Recompensas</h1>
+        <h1 class="font-display font-bold text-white text-xl">Recompensas</h1>
       </div>
       <router-link to="/play/points" class="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5 transition">
         ← Juegos
@@ -180,12 +180,12 @@ export default {
           :key="t.key"
           @click="activeTab = t.key"
           class="relative rounded-xl px-2 py-2 text-sm font-bold transition-all"
-          :class="activeTab === t.key ? 'bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-white ring-1 ring-emerald-400/30' : 'text-slate-400 hover:text-slate-200'"
+          :class="activeTab === t.key ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/20 text-white ring-1 ring-amber-300/30' : 'text-slate-400 hover:text-slate-200'"
         >
           {{ t.label }}
           <span
             v-if="t.count > 0"
-            class="absolute -top-1 -right-1 grid place-items-center min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold leading-none ring-2 ring-slate-900"
+            class="absolute -top-1 -right-1 grid place-items-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none ring-2 ring-slate-900"
           >{{ t.count > 9 ? '9+' : t.count }}</span>
         </button>
       </div>
@@ -208,19 +208,19 @@ export default {
       <div
         class="relative overflow-hidden rounded-2xl border p-5 transition-all"
         :class="dailyReward.available
-          ? 'border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-slate-900/40 to-cyan-500/5'
+          ? 'border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-slate-900/40 to-amber-600/5'
           : 'border-white/10 bg-white/[0.03]'"
       >
         <div class="flex items-center gap-4">
           <div
             class="w-14 h-14 rounded-2xl grid place-items-center text-2xl border shrink-0"
-            :class="dailyReward.available ? 'bg-emerald-500/15 border-emerald-400/30' : 'bg-white/5 border-white/10 opacity-60'"
+            :class="dailyReward.available ? 'bg-amber-500/15 border-amber-300/30' : 'bg-white/5 border-white/10 opacity-60'"
           >
             <PowerupIcon v-if="dailyReward.reward_kind === 'powerup'" :type="dailyReward.reward_powerup" :size="46" />
             <span v-else>⭐</span>
           </div>
           <div class="flex-1 min-w-0">
-            <div class="text-[10px] uppercase tracking-wider text-emerald-400/80 font-semibold">Recompensa diaria</div>
+            <div class="text-[10px] uppercase tracking-wider text-amber-300/80 font-semibold">Recompensa diaria</div>
             <div class="font-display font-bold text-white text-lg leading-tight">
               <template v-if="dailyReward.reward_kind === 'powerup'">{{ powerupLabel(dailyReward.reward_powerup) }} ×{{ dailyReward.amount }}</template>
               <template v-else>+{{ dailyReward.amount || 100 }} XP</template>
@@ -233,7 +233,7 @@ export default {
             v-if="dailyReward.available"
             @click="handleClaimDailyReward"
             :disabled="claiming === 'daily'"
-            class="shrink-0 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-95 text-white px-5 py-2.5 text-sm font-bold transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-60"
+            class="shrink-0 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 text-slate-900 px-5 py-2.5 text-sm font-bold transition-all shadow-lg shadow-amber-500/25 disabled:opacity-60"
             style="animation: claim-pulse 2s ease-in-out infinite"
           >
             Reclamar
@@ -284,7 +284,7 @@ export default {
                 <div class="mt-2 flex items-center gap-2">
                   <div class="flex-1 h-1.5 rounded-full bg-black/30 overflow-hidden">
                     <div
-                      class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-500"
+                      class="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-500 transition-all duration-500"
                       :style="{ width: Math.min(100, (c.progress / c.target) * 100) + '%' }"
                     ></div>
                   </div>
@@ -298,7 +298,7 @@ export default {
               v-if="c.progress >= c.target"
               @click="handleClaimChallenge(c)"
               :disabled="claiming === c.code"
-              class="mt-3 w-full rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-[0.98] text-white py-2 text-sm font-bold transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-60"
+              class="mt-3 w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-[0.98] text-slate-900 py-2 text-sm font-bold transition-all shadow-lg shadow-amber-500/25 disabled:opacity-60"
             >
               Reclamar recompensa
             </button>
@@ -306,11 +306,11 @@ export default {
         </div>
 
         <!-- Todos los retos del día completados (estilo AFK Journey) -->
-        <div v-else-if="allChallengesDone" class="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.07] to-cyan-500/[0.04] p-8 text-center">
+        <div v-else-if="allChallengesDone" class="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.07] to-amber-600/[0.04] p-8 text-center">
           <div class="text-4xl mb-3">🎉</div>
           <p class="font-display font-bold text-white">¡Completaste todos los retos de hoy!</p>
           <p class="text-sm text-slate-400 mt-1">Volvé mañana para nuevos desafíos.</p>
-          <div class="mt-3 inline-flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
+          <div class="mt-3 inline-flex items-center gap-1.5 text-xs text-amber-300 font-semibold">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             Se reinician a medianoche
           </div>
@@ -369,7 +369,7 @@ export default {
                 <div class="text-[10px] font-bold text-amber-300 mt-0.5">×{{ c.reward_powerup_qty }}</div>
               </div>
               <div v-if="c.reward_xp > 0" class="mt-0.5">
-                <span class="font-display font-extrabold text-base leading-none text-emerald-300">+{{ c.reward_xp }}</span>
+                <span class="font-display font-bold text-base leading-none text-emerald-300">+{{ c.reward_xp }}</span>
                 <span class="text-[9px] text-slate-400 uppercase tracking-wider ml-0.5">XP</span>
               </div>
             </div>
@@ -400,14 +400,14 @@ export default {
         <div class="flex items-center justify-between">
           <h2 class="font-display font-bold text-white text-lg">
             Pendientes
-            <span class="ml-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold">
+            <span class="ml-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold">
               {{ unclaimedCount }}
             </span>
           </h2>
           <button
             v-if="unclaimedCount > 1"
             @click="handleClaimAll"
-            class="rounded-lg px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-emerald-500/20"
+            class="rounded-lg px-4 py-2 text-sm font-bold text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-amber-500/25"
             style="animation: claim-pulse 2s ease-in-out infinite"
           >
             Reclamar todo
