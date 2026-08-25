@@ -185,7 +185,7 @@ export default {
           {{ t.label }}
           <span
             v-if="t.count > 0"
-            class="absolute -top-1 -right-1 grid place-items-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none ring-2 ring-slate-900"
+            class="absolute -top-1 -right-1 grid place-items-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-slate-900 text-[10px] font-bold leading-none ring-2 ring-slate-900"
           >{{ t.count > 9 ? '9+' : t.count }}</span>
         </button>
       </div>
