@@ -82,7 +82,7 @@ export default {
     <div v-if="!reward.claimed" class="shrink-0">
       <button
         @click="$emit('claim', reward.id)"
-        class="rounded-lg px-3 py-1.5 text-xs font-display font-bold text-white bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-95 transition-all"
+        class="rounded-lg px-3 py-1.5 text-xs font-display font-bold text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 transition-all"
       >
         +{{ points }} XP
       </button>

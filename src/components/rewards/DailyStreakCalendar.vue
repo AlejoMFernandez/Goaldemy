@@ -104,7 +104,7 @@ export default {
         <div>
           <h3 class="font-display font-bold text-white text-sm">Racha diaria</h3>
           <p class="text-xs text-slate-400">
-            <span class="text-emerald-400 font-semibold">{{ currentStreak }}</span> días consecutivos
+            <span class="text-amber-300 font-semibold">{{ currentStreak }}</span> días consecutivos
           </p>
         </div>
       </div>
@@ -112,7 +112,7 @@ export default {
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span class="font-mono tabular-nums text-emerald-400 font-semibold">{{ timeLeft }}</span>
+        <span class="font-mono tabular-nums text-amber-300 font-semibold">{{ timeLeft }}</span>
       </div>
     </div>
 
@@ -125,7 +125,7 @@ export default {
           class="flex flex-col items-center gap-1.5"
         >
           <!-- Day label -->
-          <span class="text-[10px] uppercase tracking-wider font-semibold" :class="day.isToday ? 'text-emerald-400' : 'text-slate-500'">
+          <span class="text-[10px] uppercase tracking-wider font-semibold" :class="day.isToday ? 'text-amber-300' : 'text-slate-500'">
             {{ day.label }}
           </span>
 
@@ -138,7 +138,7 @@ export default {
               day.played || day.claimed
                 ? 'bg-emerald-500/15 border border-emerald-500/30'
                 : day.canClaim
-                  ? 'bg-emerald-500/20 border-2 border-emerald-400/60 hover:scale-105 cursor-pointer'
+                  ? 'bg-amber-500/20 border-2 border-amber-300/60 hover:scale-105 cursor-pointer'
                   : day.isFuture
                     ? 'bg-white/3 border border-white/8'
                     : 'bg-white/5 border border-white/10',
@@ -155,7 +155,7 @@ export default {
 
             <!-- Claimable -->
             <template v-else-if="day.canClaim">
-              <svg class="w-6 h-6 text-emerald-300" fill="currentColor" viewBox="0 0 24 24">
+              <svg class="w-6 h-6 text-amber-300" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
               </svg>
             </template>
@@ -176,7 +176,7 @@ export default {
           </button>
 
           <!-- XP reward -->
-          <span class="text-[9px] font-semibold tabular-nums" :class="day.played || day.claimed ? 'text-emerald-400' : day.canClaim ? 'text-emerald-300' : 'text-slate-600'">
+          <span class="text-[9px] font-semibold tabular-nums" :class="day.played || day.claimed ? 'text-emerald-400' : day.canClaim ? 'text-amber-300' : 'text-slate-600'">
             +{{ day.xp }}
           </span>
         </div>
