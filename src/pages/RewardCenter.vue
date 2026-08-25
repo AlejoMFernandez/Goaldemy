@@ -264,7 +264,7 @@ export default {
             :key="c.code"
             class="relative rounded-2xl border p-4 transition-all"
             :class="c.progress >= c.target
-              ? 'border-emerald-500/30 bg-emerald-500/[0.06]'
+              ? 'border-amber-500/30 bg-amber-500/[0.06]'
               : 'border-white/10 bg-white/[0.03]'"
           >
             <div class="flex items-center gap-3">
