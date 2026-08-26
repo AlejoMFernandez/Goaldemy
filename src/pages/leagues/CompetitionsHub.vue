@@ -24,8 +24,8 @@ export default {
     <div class="container mx-auto max-w-6xl">
       <!-- Page header -->
       <header class="mb-8">
-        <span class="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">Explorá</span>
-        <h1 class="mt-1 text-3xl sm:text-4xl font-display font-extrabold text-white">Competiciones</h1>
+        <span class="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-300/80">Explorá</span>
+        <h1 class="mt-1 text-3xl sm:text-4xl font-display font-bold text-white">Competiciones</h1>
         <p class="mt-1.5 text-slate-400 text-sm sm:text-base">Ligas, copas y torneos — tablas, goleadores y brackets en un solo lugar.</p>
       </header>
 
