@@ -80,8 +80,8 @@
             :key="tab.id"
             @click="activeTab = tab.id"
             class="px-6 py-4 text-sm font-semibold transition-all flex-shrink-0"
-            :class="activeTab === tab.id 
-              ? 'bg-cyan-600/90 text-white' 
+            :class="activeTab === tab.id
+              ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-slate-900'
               : 'text-slate-400 hover:text-white hover:bg-slate-700/50'"
           >
             <svg v-if="tab.id === 'overview'" class="w-4 h-4 inline mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
@@ -182,7 +182,7 @@
                 Posición en la Liga
               </h3>
               <div v-if="tablePosition" class="text-center py-6">
-                <div class="text-5xl font-bold text-cyan-400 mb-2">{{ tablePosition.idx }}</div>
+                <div class="text-5xl font-bold text-blue-400 mb-2">{{ tablePosition.idx }}</div>
                 <div class="text-slate-400 mb-4">{{ tablePosition.pts }} puntos</div>
                 <div class="flex justify-center gap-6 text-sm">
                   <div>
@@ -207,7 +207,7 @@
             <!-- Stadium Info -->
             <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
               <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                <svg class="w-5 h-5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
+                <svg class="w-5 h-5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
                 Estadio
               </h3>
               <div class="py-4">
@@ -237,7 +237,7 @@
             <!-- Header -->
             <div class="text-center mb-5">
               <h2 class="text-xl font-bold text-white">Último 11 Titular</h2>
-              <span class="text-sm text-slate-400">Formación: <span class="text-cyan-400 font-bold">{{ lastLineup.formation }}</span></span>
+              <span class="text-sm text-slate-400">Formación: <span class="text-blue-400 font-bold">{{ lastLineup.formation }}</span></span>
             </div>
 
             <!-- Tactical Pitch (no photos, clean position circles) -->
@@ -304,7 +304,7 @@
               <template v-for="group in teamData.squad.squad" :key="group.title">
                 <!-- Position group header -->
                 <div class="px-4 py-2.5 bg-white/5 border-b border-white/10 flex items-center gap-2">
-                  <span class="w-0.5 h-4 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                  <span class="w-0.5 h-4 rounded-full bg-blue-500 flex-shrink-0"></span>
                   <h3 class="text-xs font-bold uppercase tracking-widest text-slate-200">
                     {{ group.title === 'coach' ? 'CUERPO TÉCNICO' :
                        group.title === 'keepers' ? 'ARQUEROS' :
@@ -336,7 +336,7 @@
                   <span class="text-xs text-slate-500 w-8 text-right flex-shrink-0">{{ player.age }}a</span>
                   <!-- Stats -->
                   <div class="flex items-center gap-1.5 w-14 justify-end flex-shrink-0">
-                    <span v-if="player.goals > 0" class="text-[11px] text-emerald-400 font-semibold">⚽{{ player.goals }}</span>
+                    <span v-if="player.goals > 0" class="text-[11px] text-blue-400 font-semibold">⚽{{ player.goals }}</span>
                     <span v-if="player.assists > 0" class="text-[11px] text-blue-400 font-semibold">🅰️{{ player.assists }}</span>
                   </div>
                 </div>
@@ -415,7 +415,7 @@
         <div v-if="activeTab === 'penia'" class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-4 md:p-6">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
             <h2 class="text-xl font-bold flex items-center gap-2">
-              <svg class="w-5 h-5 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/></svg>
+              <svg class="w-5 h-5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/></svg>
               Peña de Goaldemy
             </h2>
             <PeriodTabs v-model="peniaPeriod" />
@@ -431,13 +431,13 @@
             <router-link
               v-for="(m, idx) in peniaMembers" :key="m.userId" :to="`/u/${m.userId}`"
               class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-white/5"
-              :class="m.userId === meId ? 'bg-violet-500/10 border border-violet-400/25' : ''"
+              :class="m.userId === meId ? 'bg-blue-500/10 border border-blue-400/25' : ''"
             >
               <span class="w-6 text-center text-xs font-bold shrink-0" :class="idx < 3 ? 'text-amber-400' : 'text-slate-500'">{{ idx + 1 }}</span>
               <img v-if="m.avatarUrl" :src="m.avatarUrl" class="w-8 h-8 rounded-lg object-cover shrink-0" alt="" />
               <div v-else class="w-8 h-8 rounded-lg bg-slate-700 grid place-items-center text-slate-300 text-xs font-bold shrink-0">{{ ((m.displayName || '?').trim()[0] || '?').toUpperCase() }}</div>
               <span class="flex-1 min-w-0 text-sm font-medium text-white truncate">{{ m.displayName || 'Usuario' }}</span>
-              <span class="text-sm font-bold text-violet-300 tabular-nums shrink-0">{{ m.xp.toLocaleString('es-AR') }} XP</span>
+              <span class="text-sm font-bold text-blue-300 tabular-nums shrink-0">{{ m.xp.toLocaleString('es-AR') }} XP</span>
             </router-link>
           </div>
         </div>
