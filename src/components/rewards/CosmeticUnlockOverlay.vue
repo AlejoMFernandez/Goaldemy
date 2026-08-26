@@ -3,8 +3,8 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { notificationsState, shiftCosmeticQueue, setCosmeticActive } from '@/stores/notifications'
 import { soundManager } from '@/services/sounds'
 import { triggerConfetti } from '@/services/confetti'
-import { frameStyle, bannerStyle, iconBgStyle, equipCosmetic } from '@/services/cosmetics'
-import CosmeticIcon from './CosmeticIcon.vue'
+import { equipCosmetic } from '@/services/cosmetics'
+import CosmeticPreview from './CosmeticPreview.vue'
 import RarityGem from './RarityGem.vue'
 
 const TYPE_LABEL = { frame: 'Borde', title: 'Título', icon: 'Ícono', banner: 'Banner' }
@@ -23,7 +23,7 @@ const RARITY_RANK = { common: 0, rare: 1, epic: 2, legendary: 3 }
 
 export default {
   name: 'CosmeticUnlockOverlay',
-  components: { CosmeticIcon, RarityGem },
+  components: { CosmeticPreview, RarityGem },
   setup() {
     // Con 1 sola recompensa: un sobre → lo abrís → pantalla de detalle grande.
     // Con varias: una GRILLA de sobres individuales (estilo caja de Overwatch /
@@ -62,7 +62,6 @@ export default {
     const revealedCount = computed(() => items.value.filter(it => revealed.value[it.code]).length)
     const allRevealed = computed(() => total.value > 0 && revealedCount.value === total.value)
     function themeFor(item) { return RARITY_THEME[item?.rarity] || RARITY_THEME.common }
-    function typeLabelFor(item) { return TYPE_LABEL[item?.type] || 'Cosmético' }
 
     function canShow() {
       // Prioridad: bienvenida PRO → logros → COSMÉTICOS → nivel/rango.
@@ -168,8 +167,7 @@ export default {
     return {
       items, phase, busy, active, current, total, theme, typeLabel, isEquipped,
       unboxed, cracking, batchTheme, equipped, revealed, revealedCount, allRevealed,
-      equipItem, close, openPack, revealCard, themeFor, typeLabelFor,
-      frameStyle, bannerStyle, iconBgStyle,
+      equipItem, close, openPack, revealCard, themeFor,
     }
   }
 }
@@ -217,20 +215,13 @@ export default {
               </span>
             </div>
 
-            <div class="relative mb-6 transition-all duration-500" :class="phase >= 1 ? 'opacity-100' : 'opacity-0'"
+            <div class="relative mb-6 grid place-items-center transition-all duration-500" :class="phase >= 1 ? 'opacity-100' : 'opacity-0'"
                  style="animation: scale-spring 0.5s var(--ease-bounce, cubic-bezier(0.34,1.56,0.64,1)) both">
-              <div v-if="current.type === 'icon'" class="w-36 h-36 grid place-items-center"
-                   :style="phase >= 2 ? `filter: drop-shadow(0 0 26px ${theme.glow}); animation: glow-pulse 2s ease-in-out infinite` : `filter: drop-shadow(0 0 16px ${theme.glow})`">
-                <CosmeticIcon :iconKey="current.styleKey" :rarity="current.rarity" :size="140" />
-              </div>
-              <div v-else class="w-32 h-32 rounded-3xl grid place-items-center border-2" :class="theme.ringBorder"
-                   :style="phase >= 2 ? `animation: glow-pulse 2s ease-in-out infinite; box-shadow: 0 0 40px ${theme.glow}` : `box-shadow: 0 0 24px ${theme.glow}`">
-                <div v-if="current.type === 'frame'" :class="['rounded-full', frameStyle(current.styleKey).wrap, frameStyle(current.styleKey).pad]">
-                  <div class="w-20 h-20 rounded-full bg-gradient-to-br from-slate-700 to-slate-900"></div>
-                </div>
-                <div v-else-if="current.type === 'banner'" :class="['w-24 h-16 rounded-xl border border-white/15', bannerStyle(current.styleKey)]"></div>
-                <div v-else class="px-3"><div class="font-display font-bold text-xl" :class="theme.text">{{ current.name }}</div></div>
-              </div>
+              <CosmeticPreview
+                :type="current.type" :style-key="current.styleKey" :rarity="current.rarity" :name="current.name"
+                :glow="theme.glow" :ring-border="theme.ringBorder" :text-class="theme.text"
+                :size="150" :animated="phase >= 2"
+              />
             </div>
 
             <div class="mb-2 transition-all duration-500" :class="phase >= 2 ? 'opacity-100' : 'opacity-0'">
@@ -290,19 +281,16 @@ export default {
                   </svg>
                 </button>
 
-                <!-- Cara revelada -->
-                <div class="pack-face pack-face-back absolute inset-0 rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 p-2 bg-slate-900/90"
-                     :class="themeFor(item).ringBorder"
-                     :style="revealed[item.code] ? `box-shadow: 0 0 24px ${themeFor(item).glow}` : ''">
+                <!-- Cara revelada: sin caja dura — un halo radial detrás y la pieza -->
+                <!-- (ícono/anillo/cinta) con SU propia silueta, no un rectángulo genérico. -->
+                <div class="pack-face pack-face-back absolute inset-0 rounded-2xl flex flex-col items-center justify-center gap-1 p-2"
+                     :style="revealed[item.code] ? `background: radial-gradient(circle at 50% 40%, ${themeFor(item).glow}, transparent 72%)` : ''">
                   <RarityGem :rarity="item.rarity" :size="11" />
-                  <div v-if="item.type === 'icon'" class="w-12 h-12 grid place-items-center">
-                    <CosmeticIcon :iconKey="item.styleKey" :rarity="item.rarity" :size="44" />
-                  </div>
-                  <div v-else-if="item.type === 'frame'" :class="['rounded-full', frameStyle(item.styleKey).wrap, frameStyle(item.styleKey).pad]">
-                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-slate-700 to-slate-900"></div>
-                  </div>
-                  <div v-else-if="item.type === 'banner'" :class="['w-14 h-9 rounded-lg border border-white/15', bannerStyle(item.styleKey)]"></div>
-                  <div v-else class="font-display font-bold text-sm" :class="themeFor(item).text">{{ item.name }}</div>
+                  <CosmeticPreview
+                    :type="item.type" :style-key="item.styleKey" :rarity="item.rarity" :name="item.name"
+                    :glow="themeFor(item).glow" :ring-border="themeFor(item).ringBorder" :text-class="themeFor(item).text"
+                    :size="52"
+                  />
                   <p class="text-[10px] font-semibold text-white leading-tight text-center line-clamp-2">{{ item.name }}</p>
                   <button
                     v-if="revealed[item.code]"
