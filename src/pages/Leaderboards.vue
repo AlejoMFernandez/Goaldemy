@@ -6,6 +6,8 @@ import GameFilter from '../components/leaderboard/GameFilter.vue'
 import { getLeaderboard, fetchLevelThresholds, computeLevelFromXp } from '../services/xp'
 import { fetchGames } from '../services/games'
 import { getEquippedCosmeticsBatch } from '../services/cosmetics'
+import { getFanbaseLeaderboard } from '../services/fanbase'
+import { findTeamByName } from '../services/players'
 
 export default {
   name: 'Leaderboards',
@@ -21,6 +23,11 @@ export default {
       loading: false,
       meId: '',
       _loadingLeaderboard: false,
+      // Peñas (ranking de hinchadas por XP)
+      view: 'players',   // 'players' | 'penias'
+      peniaPeriod: 'weekly',
+      penias: [],
+      peniasLoading: false,
     }
   },
   async mounted() {
@@ -29,6 +36,16 @@ export default {
     this.load()
   },
   methods: {
+    teamLink(team) { return findTeamByName(team)?.id ? `/team/${findTeamByName(team).id}` : null },
+    async loadPenias() {
+      this.peniasLoading = true
+      try { this.penias = await getFanbaseLeaderboard(this.peniaPeriod) }
+      finally { this.peniasLoading = false }
+    },
+    switchView(v) {
+      this.view = v
+      if (v === 'penias' && !this.penias.length) this.loadPenias()
+    },
     async loadGames() {
       try {
         const all = await fetchGames()
@@ -131,29 +148,59 @@ export default {
         <p class="text-xs text-slate-500">Los mejores de Goaldemy</p>
       </div>
     </div>
-    <div class="mb-3 flex justify-between flex-col sm:flex-row gap-3 px-4 sm:px-0">
-      <PeriodTabs v-model="period" @update:modelValue="page=0; load()" />
-      <GameFilter v-model="gameId" :games="games" @update:modelValue="page=0; load()" />
+    <div class="mb-4 px-4 sm:px-0 inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+      <button @click="switchView('players')" :class="['px-3 py-1.5 text-sm rounded-lg transition', view==='players' ? 'bg-violet-500 text-white' : 'text-slate-300 hover:text-white']">Jugadores</button>
+      <button @click="switchView('penias')" :class="['px-3 py-1.5 text-sm rounded-lg transition', view==='penias' ? 'bg-violet-500 text-white' : 'text-slate-300 hover:text-white']">Peñas</button>
     </div>
-    <div class="px-4 sm:px-0">
-      <LeaderboardTable :rows="rows" :loading="loading" :podium="page === 0" :me-id="meId" />
-    </div>
-    <div class="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-0">
-      <div class="flex items-center gap-2 text-xs sm:text-sm text-slate-300 flex-wrap">
-        <span>Mostrar</span>
-        <select v-model.number="limit" @change="page = 0; load()" class="rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20 hover:bg-white/10 text-xs sm:text-sm">
-          <option :value="10">10</option>
-          <option :value="25">25</option>
-          <option :value="50">50</option>
-          <option :value="100">100</option>
-        </select>
-        <span>por página</span>
+
+    <template v-if="view === 'players'">
+      <div class="mb-3 flex justify-between flex-col sm:flex-row gap-3 px-4 sm:px-0">
+        <PeriodTabs v-model="period" @update:modelValue="page=0; load()" />
+        <GameFilter v-model="gameId" :games="games" @update:modelValue="page=0; load()" />
       </div>
-      <div class="flex items-center gap-2 w-full sm:w-auto">
-        <button class="flex-1 sm:flex-initial px-3 py-1.5 text-xs sm:text-sm rounded bg-white/5 border border-white/10 disabled:opacity-50" :disabled="page===0 || loading" @click="prevPage">Anterior</button>
-        <button class="flex-1 sm:flex-initial px-3 py-1.5 text-xs sm:text-sm rounded bg-white/5 border border-white/10 disabled:opacity-50" :disabled="rows.length < limit || loading" @click="nextPage">Siguiente</button>
+      <div class="px-4 sm:px-0">
+        <LeaderboardTable :rows="rows" :loading="loading" :podium="page === 0" :me-id="meId" />
       </div>
-    </div>
+      <div class="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-0">
+        <div class="flex items-center gap-2 text-xs sm:text-sm text-slate-300 flex-wrap">
+          <span>Mostrar</span>
+          <select v-model.number="limit" @change="page = 0; load()" class="rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20 hover:bg-white/10 text-xs sm:text-sm">
+            <option :value="10">10</option>
+            <option :value="25">25</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+          <span>por página</span>
+        </div>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <button class="flex-1 sm:flex-initial px-3 py-1.5 text-xs sm:text-sm rounded bg-white/5 border border-white/10 disabled:opacity-50" :disabled="page===0 || loading" @click="prevPage">Anterior</button>
+          <button class="flex-1 sm:flex-initial px-3 py-1.5 text-xs sm:text-sm rounded bg-white/5 border border-white/10 disabled:opacity-50" :disabled="rows.length < limit || loading" @click="nextPage">Siguiente</button>
+        </div>
+      </div>
+    </template>
+
+    <template v-else>
+      <div class="mb-3 px-4 sm:px-0">
+        <PeriodTabs v-model="peniaPeriod" @update:modelValue="loadPenias" />
+      </div>
+      <div class="px-4 sm:px-0">
+        <div v-if="peniasLoading" class="py-10 text-center text-slate-400 text-sm">Cargando…</div>
+        <div v-else-if="!penias.length" class="py-10 text-center text-slate-400 text-sm">Todavía no hay peñas activas este período</div>
+        <div v-else class="rounded-2xl border border-white/10 divide-y divide-white/5 overflow-hidden">
+          <component :is="teamLink(p.team) ? 'RouterLink' : 'div'" :to="teamLink(p.team) || undefined"
+            v-for="(p, idx) in penias" :key="p.team"
+            class="flex items-center gap-3 px-4 py-3 bg-white/[0.02] hover:bg-white/[0.05] transition"
+          >
+            <span class="w-6 text-center text-sm font-bold shrink-0" :class="idx < 3 ? 'text-amber-400' : 'text-slate-500'">{{ idx + 1 }}</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold text-white truncate">{{ p.team }}</div>
+              <div class="text-[11px] text-slate-400">{{ p.activeCount }} activos de {{ p.memberCount }} hinchas</div>
+            </div>
+            <div class="text-sm font-bold text-violet-300 tabular-nums shrink-0">{{ p.totalXp.toLocaleString('es-AR') }} XP</div>
+          </component>
+        </div>
+      </div>
+    </template>
   </section>
 </template>
 

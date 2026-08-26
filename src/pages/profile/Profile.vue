@@ -65,6 +65,7 @@ export default {
       messagesCount: 0,
       discussionsStartedCount: 0,
       favTeamLogo: '',
+      favTeamId: '',
       favPlayerImage: '',
       socials: [],
       conn: { state: 'none', row: null },
@@ -168,6 +169,7 @@ export default {
         try {
           const team = this.user?.favorite_team ? findTeamByName(this.user.favorite_team) : null
           this.favTeamLogo = team?.logo || ''
+          this.favTeamId = team?.id || ''
         } catch {}
         try {
           const player = this.user?.favorite_player ? findPlayerByName(this.user.favorite_player) : null
@@ -423,13 +425,19 @@ export default {
               </div>
               <div class="min-w-0 w-full"><p class="text-[9px] uppercase tracking-wider text-violet-400/70 font-semibold">Jugador</p><p class="text-xs text-white font-medium truncate">{{ user.favorite_player }}</p></div>
             </div>
-            <div v-if="user.favorite_team" class="rounded-xl border border-white/10 bg-white/[0.03] p-3 flex flex-col items-center text-center gap-2">
+            <component :is="favTeamId ? 'RouterLink' : 'div'" :to="favTeamId ? `/team/${favTeamId}` : undefined"
+                 v-if="user.favorite_team" class="rounded-xl border border-white/10 bg-white/[0.03] p-3 flex flex-col items-center text-center gap-2"
+                 :class="favTeamId ? 'hover:border-purple-400/30 hover:bg-white/[0.06] transition' : ''">
               <div class="w-16 h-16 rounded-xl overflow-hidden bg-slate-800/50 grid place-items-center ring-1 ring-white/10">
                 <img v-if="favTeamLogo" :src="favTeamLogo" alt="" class="h-full w-full object-contain p-1.5" />
                 <svg v-else class="w-6 h-6 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2L3 7v6c0 3.5 3 6 7 9 4-3 7-5.5 7-9V7l-7-5z" clip-rule="evenodd"/></svg>
               </div>
-              <div class="min-w-0 w-full"><p class="text-[9px] uppercase tracking-wider text-purple-400/70 font-semibold">Equipo</p><p class="text-xs text-white font-medium truncate">{{ user.favorite_team }}</p></div>
-            </div>
+              <div class="min-w-0 w-full">
+                <p class="text-[9px] uppercase tracking-wider text-purple-400/70 font-semibold">Equipo</p>
+                <p class="text-xs text-white font-medium truncate">{{ user.favorite_team }}</p>
+                <p v-if="favTeamId" class="text-[9px] text-violet-300/80 mt-0.5">Ver peña →</p>
+              </div>
+            </component>
           </div>
         </div>
 

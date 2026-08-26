@@ -89,6 +89,7 @@
             <svg v-else-if="tab.id === 'lineup'" class="w-4 h-4 inline mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6.878V6a2.25 2.25 0 0 1 2.25-2.25h7.5A2.25 2.25 0 0 1 18 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 0 0 4.5 9v.878m13.5-3A2.25 2.25 0 0 1 19.5 9v.878m0 0a2.246 2.246 0 0 0-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0 1 21 12v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6c0-.98.626-1.813 1.5-2.122"/></svg>
             <svg v-else-if="tab.id === 'squad'" class="w-4 h-4 inline mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
             <svg v-else-if="tab.id === 'stats'" class="w-4 h-4 inline mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
+            <svg v-else-if="tab.id === 'penia'" class="w-4 h-4 inline mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/></svg>
             {{ tab.label }}
           </button>
         </div>
@@ -410,6 +411,37 @@
           </div>
         </div>
 
+        <!-- Peña Tab: hinchas de Goaldemy que eligieron este equipo -->
+        <div v-if="activeTab === 'penia'" class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-4 md:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 class="text-xl font-bold flex items-center gap-2">
+              <svg class="w-5 h-5 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/></svg>
+              Peña de Goaldemy
+            </h2>
+            <PeriodTabs v-model="peniaPeriod" />
+          </div>
+          <p class="text-sm text-slate-400 mb-4">Hinchas de {{ teamData?.name }} en Goaldemy, rankeados por XP del período.</p>
+
+          <div v-if="peniaLoading" class="py-10 text-center text-slate-400 text-sm">Cargando…</div>
+          <div v-else-if="!peniaMembers.length" class="py-10 text-center">
+            <p class="text-slate-300 text-sm font-medium">Todavía no hay hinchas de {{ teamData?.name }} en Goaldemy</p>
+            <p class="text-slate-500 text-xs mt-1">Elegilo como equipo favorito en tu perfil para ser el primero</p>
+          </div>
+          <div v-else class="space-y-1">
+            <router-link
+              v-for="(m, idx) in peniaMembers" :key="m.userId" :to="`/u/${m.userId}`"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-white/5"
+              :class="m.userId === meId ? 'bg-violet-500/10 border border-violet-400/25' : ''"
+            >
+              <span class="w-6 text-center text-xs font-bold shrink-0" :class="idx < 3 ? 'text-amber-400' : 'text-slate-500'">{{ idx + 1 }}</span>
+              <img v-if="m.avatarUrl" :src="m.avatarUrl" class="w-8 h-8 rounded-lg object-cover shrink-0" alt="" />
+              <div v-else class="w-8 h-8 rounded-lg bg-slate-700 grid place-items-center text-slate-300 text-xs font-bold shrink-0">{{ ((m.displayName || '?').trim()[0] || '?').toUpperCase() }}</div>
+              <span class="flex-1 min-w-0 text-sm font-medium text-white truncate">{{ m.displayName || 'Usuario' }}</span>
+              <span class="text-sm font-bold text-violet-300 tabular-nums shrink-0">{{ m.xp.toLocaleString('es-AR') }} XP</span>
+            </router-link>
+          </div>
+        </div>
+
         <!-- Fixtures Tab -->
         <div v-if="activeTab === 'fixtures'" class="space-y-6">
           <!-- Partidos en Vivo -->
@@ -524,9 +556,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { getTeamDetails } from '../services/fotmob';
+import { getFanbaseMembers } from '../services/fanbase';
+import { getAuthUser } from '../services/auth';
+import PeriodTabs from '../components/leaderboard/PeriodTabs.vue';
 
 // Mapeo de códigos de FotMob a códigos ISO de países
 const countryCodeMap = {
@@ -626,8 +661,26 @@ const tabs = [
   { id: 'fixtures', label: 'Partidos' },
   { id: 'lineup', label: 'Último 11' },
   { id: 'squad', label: 'Plantilla' },
-  { id: 'stats', label: 'Estadísticas' }
+  { id: 'stats', label: 'Estadísticas' },
+  { id: 'penia', label: 'Peña' },
 ];
+
+// Peña: hinchas de Goaldemy que eligieron este equipo como favorito
+// (user_profiles.favorite_team), rankeados por XP del período.
+const meId = getAuthUser()?.id || null
+const peniaPeriod = ref('weekly')
+const peniaMembers = ref([])
+const peniaLoading = ref(false)
+async function loadPenia() {
+  const teamName = teamData.value?.name
+  if (!teamName) { peniaMembers.value = []; return }
+  peniaLoading.value = true
+  try { peniaMembers.value = await getFanbaseMembers(teamName, peniaPeriod.value) }
+  finally { peniaLoading.value = false }
+}
+watch([() => activeTab.value, () => teamData.value?.name, peniaPeriod], ([tab, name]) => {
+  if (tab === 'penia' && name) loadPenia()
+}, { immediate: true })
 
 // Último 11 titular
 const lastLineup = computed(() => {
