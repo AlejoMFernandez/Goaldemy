@@ -46,6 +46,7 @@ const CompetitionPage = () => import('../pages/leagues/CompetitionPage.vue');
 const TeamPage = () => import('../pages/TeamPage.vue');
 const Pricing = () => import('../pages/Pricing.vue');
 const DailyChallenge = () => import('../pages/DailyChallenge.vue');
+const Career = () => import('../pages/Career.vue');
 
 const routes = [
     { path: '/', component: Landing, meta: { zone: 'hub' } },
@@ -94,6 +95,8 @@ const routes = [
     { path: '/pricing', component: Pricing, meta: { zone: 'hub' } },
     // Reto del día — funnel público sin login (entrada de marketing / streamers)
     { path: '/reto', component: DailyChallenge, meta: { zone: 'play' } },
+    // Modo Carrera — funnel público sin login, estilo Copero (viral, sesión corta)
+    { path: '/carrera', component: Career, meta: { zone: 'play' } },
     // 404 fallback
     { path: '/:pathMatch(.*)*', component: NotFound, meta: { zone: 'hub' } },
 ]

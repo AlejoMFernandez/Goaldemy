@@ -90,6 +90,8 @@ export default {
     // Reto del día: si el usuario venía de jugar como invitado y ahora está logueado,
     // otorgar de verdad la XP + Fichas que se le mostraron (cierra el loop del funnel).
     import('./services/daily-reto').then(m => m.claimPendingRetoReward?.()).catch(() => {})
+    // Modo Carrera: mismo cierre de loop que el Reto del día, para invitados que se registran.
+    import('./services/career').then(m => m.claimPendingCareerReward?.()).catch(() => {})
     // Referidos: si vino con un código pendiente y ya está logueado + verificado,
     // reparte las Fichas a él y a quien lo invitó (cierra el loop del share incentivado).
     import('./services/referral').then(m => m.claimPendingReferral?.()).catch(() => {})

@@ -35,6 +35,7 @@ export default {
           <ul class="space-y-2 text-sm">
             <li><RouterLink to="/play/points" class="text-slate-400 hover:text-emerald-400 transition">Jugar por Puntos</RouterLink></li>
             <li><RouterLink to="/reto" class="text-slate-400 hover:text-emerald-400 transition">Reto del día</RouterLink></li>
+            <li><RouterLink to="/carrera" class="text-slate-400 hover:text-emerald-400 transition">Modo Carrera</RouterLink></li>
             <li><RouterLink to="/leaderboards" class="text-slate-400 hover:text-emerald-400 transition">Ranking</RouterLink></li>
             <li><RouterLink to="/profile" class="text-slate-400 hover:text-emerald-400 transition">Mi Perfil</RouterLink></li>
           </ul>
