@@ -25,14 +25,15 @@ export default {
   name: 'CosmeticUnlockOverlay',
   components: { CosmeticIcon, RarityGem },
   setup() {
-    // Carrusel estilo Fortnite: se muestran TODOS los cosméticos desbloqueados
-    // de una tanda y se navegan con flechas. Cada uno se puede Equipar directo.
+    // Con 1 sola recompensa: un sobre → lo abrís → pantalla de detalle grande.
+    // Con varias: una GRILLA de sobres individuales (estilo caja de Overwatch /
+    // cofres Hextech de LoL) — cada uno se abre por separado, a su propio ritmo.
     const items = ref([])        // tanda actual en pantalla
-    const index = ref(0)         // tarjeta visible
-    const phase = ref(0)         // fases de la animación de entrada
+    const phase = ref(0)         // fases de la animación de entrada (solo detalle de 1)
     const busy = ref(false)      // equipando
     const equipped = ref({})     // code → true (ya equipado en esta escena)
-    const unboxed = ref(false)   // false = sobre cerrado (suspenso), true = ya reveló el contenido
+    const revealed = ref({})     // code → true (ya se abrió esa carta, modo grilla)
+    const unboxed = ref(false)   // (modo 1 sola) false = sobre cerrado, true = ya reveló
     const cracking = ref(false)  // animación de apertura en curso (entre el tap y la revelación)
     let phaseTimers = []
 
@@ -42,8 +43,8 @@ export default {
     }
 
     const active = computed(() => items.value.length > 0)
-    const current = computed(() => items.value[index.value] || null)
     const total = computed(() => items.value.length)
+    const current = computed(() => items.value[0] || null) // solo se usa en el modo "1 sola"
     const theme = computed(() => RARITY_THEME[current.value?.rarity] || RARITY_THEME.epic)
     // Rareza más alta de la tanda: define el brillo del sobre cerrado (el "teaser").
     const batchRarity = computed(() => {
@@ -56,6 +57,12 @@ export default {
     const batchTheme = computed(() => RARITY_THEME[batchRarity.value] || RARITY_THEME.common)
     const typeLabel = computed(() => TYPE_LABEL[current.value?.type] || 'Cosmético')
     const isEquipped = computed(() => !!(current.value && equipped.value[current.value.code]))
+
+    // Modo grilla (2+ recompensas)
+    const revealedCount = computed(() => items.value.filter(it => revealed.value[it.code]).length)
+    const allRevealed = computed(() => total.value > 0 && revealedCount.value === total.value)
+    function themeFor(item) { return RARITY_THEME[item?.rarity] || RARITY_THEME.common }
+    function typeLabelFor(item) { return TYPE_LABEL[item?.type] || 'Cosmético' }
 
     function canShow() {
       // Prioridad: bienvenida PRO → logros → COSMÉTICOS → nivel/rango.
@@ -75,8 +82,8 @@ export default {
       if (!drained.length) return
 
       items.value = drained
-      index.value = 0
       equipped.value = {}
+      revealed.value = {}
       phase.value = 0
       unboxed.value = false
       cracking.value = false
@@ -84,8 +91,8 @@ export default {
       soundManager.play('notify') // ding sutil: "tenés algo esperando"
     }
 
-    // El usuario toca el sobre cerrado: arranca la apertura (suspenso corto) y
-    // recién ahí dispara la misma secuencia de reveal + confeti que ya existía.
+    // Modo "1 sola": el usuario toca el sobre cerrado → apertura (suspenso corto) →
+    // pantalla de detalle grande con la secuencia de reveal + confeti de siempre.
     function openPack() {
       if (cracking.value || unboxed.value) return
       cracking.value = true
@@ -104,39 +111,34 @@ export default {
       }, 550))
     }
 
-    function go(delta) {
-      const n = index.value + delta
-      if (n < 0 || n >= total.value) return
-      index.value = n
-      soundManager.play('claim')   // sonido sutil al cambiar; el confeti se reserva a apertura/equipar
+    // Modo grilla: cada carta se abre de forma independiente al tocarla.
+    function revealCard(item, event) {
+      if (!item || revealed.value[item.code]) return
+      revealed.value = { ...revealed.value, [item.code]: true }
+      soundManager.play('starReveal')
+      const rect = event?.currentTarget?.getBoundingClientRect?.()
+      const origin = rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : null
+      triggerConfetti({ particleCount: 34, colors: themeFor(item).confetti, origin })
     }
 
-    async function equipCurrent() {
-      const c = current.value
-      if (!c || busy.value || equipped.value[c.code]) return
+    async function equipItem(item) {
+      if (!item || busy.value || equipped.value[item.code]) return
       busy.value = true
       try {
-        const res = await equipCosmetic(c.code)
+        const res = await equipCosmetic(item.code)
         if (res && res.ok !== false) {
-          equipped.value = { ...equipped.value, [c.code]: true }
+          equipped.value = { ...equipped.value, [item.code]: true }
           soundManager.play('claim')
-          triggerConfetti({ particleCount: 45, colors: theme.value.confetti })
         }
       } catch { /* noop */ }
       busy.value = false
     }
 
-    function primary() {
-      // "Continuar": avanza; en el último cierra la escena.
-      if (index.value < total.value - 1) { go(1); return }
-      close()
-    }
-
     function close() {
       clearTimers()
       items.value = []
-      index.value = 0
       equipped.value = {}
+      revealed.value = {}
       phase.value = 0
       unboxed.value = false
       cracking.value = false
@@ -164,9 +166,9 @@ export default {
     })
 
     return {
-      items, index, phase, busy, active, current, total, theme, typeLabel, isEquipped,
-      unboxed, cracking, batchRarity, batchTheme,
-      go, equipCurrent, primary, close, openPack,
+      items, phase, busy, active, current, total, theme, typeLabel, isEquipped,
+      unboxed, cracking, batchTheme, equipped, revealed, revealedCount, allRevealed,
+      equipItem, close, openPack, revealCard, themeFor, typeLabelFor,
       frameStyle, bannerStyle, iconBgStyle,
     }
   }
@@ -176,76 +178,53 @@ export default {
 <template>
   <Teleport to="body">
     <Transition name="overlay-fade">
-      <div v-if="active" class="fixed inset-0 z-[60] grid place-items-center p-4" @click.self="unboxed && close()">
+      <div v-if="active" class="fixed inset-0 z-[60] grid place-items-center p-4 overflow-y-auto"
+           @click.self="(total === 1 ? unboxed : allRevealed) && close()">
         <div class="absolute inset-0 bg-black/85 backdrop-blur-md"></div>
 
-        <!-- SOBRE CERRADO: el momento de incertidumbre antes de revelar. El contenido -->
-        <!-- ya está decidido server-side; esto es puesta en escena, no azar real. -->
-        <div v-if="!unboxed" class="relative flex flex-col items-center text-center">
-          <p class="mb-5 text-xs font-bold uppercase tracking-wider" :class="batchTheme.text">
-            {{ total > 1 ? `${total} recompensas esperándote` : 'Tenés una recompensa' }}
-          </p>
-          <button
-            type="button"
-            @click="openPack"
-            :disabled="cracking"
-            class="pack-box relative w-40 h-48 grid place-items-center rounded-3xl border-2 transition-transform active:scale-95"
-            :class="[batchTheme.ringBorder, cracking ? 'pack-cracking' : 'pack-idle']"
-            :style="`box-shadow: 0 0 42px ${batchTheme.glow}, inset 0 0 30px ${batchTheme.glow}`"
-          >
-            <div class="pack-sheen absolute inset-0 rounded-3xl overflow-hidden"></div>
-            <svg class="w-16 h-16 relative" :class="batchTheme.text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M4 7.5l8 4.5 8-4.5" />
-            </svg>
-          </button>
-          <p class="mt-5 text-sm font-semibold text-white" :style="cracking ? '' : 'animation: pulse-soft 1.6s ease-in-out infinite'">
-            {{ cracking ? 'Abriendo…' : 'Tocá para abrir' }}
-          </p>
-        </div>
-
-        <!-- REVELACIÓN: la secuencia existente, sin cambios -->
-        <div v-else class="relative flex flex-col items-center text-center max-w-md w-full">
-          <!-- Contador de la tanda -->
-          <div v-if="total > 1" class="mb-3 transition-all duration-500" :class="phase >= 1 ? 'opacity-100' : 'opacity-0'">
-            <span class="text-xs font-bold text-slate-300 bg-white/5 border border-white/10 rounded-full px-3 py-1">
-              {{ index + 1 }} de {{ total }} desbloqueados
-            </span>
-          </div>
-
-          <!-- Etiqueta de rareza -->
-          <div class="mb-4 transition-all duration-500" :class="phase >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'">
-            <span class="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-extrabold uppercase tracking-wider backdrop-blur"
-                  :class="[theme.ringBorder, theme.text]"
-                  :style="`box-shadow: 0 0 18px ${theme.glow}`">
-              <RarityGem :rarity="current.rarity" :size="15" />
-              {{ theme.label }}
-            </span>
-          </div>
-
-          <!-- Preview con flechas a los costados -->
-          <div class="relative mb-6 flex items-center gap-4">
-            <!-- Flecha izquierda -->
-            <button v-if="total > 1" @click="go(-1)" :disabled="index === 0"
-                    class="shrink-0 grid place-items-center w-11 h-11 rounded-full border border-white/15 bg-white/5 text-white transition hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed"
-                    :class="phase >= 2 ? 'opacity-100' : 'opacity-0'">
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        <!-- ═══ MODO "1 SOLA": sobre → detalle grande (sin cambios de comportamiento) ═══ -->
+        <template v-if="total === 1">
+          <!-- SOBRE CERRADO -->
+          <div v-if="!unboxed" class="relative flex flex-col items-center text-center">
+            <p class="mb-5 text-xs font-bold uppercase tracking-wider" :class="batchTheme.text">Tenés una recompensa</p>
+            <button
+              type="button"
+              @click="openPack"
+              :disabled="cracking"
+              class="pack-box relative w-40 h-48 grid place-items-center rounded-3xl border-2 transition-transform active:scale-95"
+              :class="[batchTheme.ringBorder, cracking ? 'pack-cracking' : 'pack-idle']"
+              :style="`box-shadow: 0 0 42px ${batchTheme.glow}, inset 0 0 30px ${batchTheme.glow}`"
+            >
+              <div class="pack-sheen absolute inset-0 rounded-3xl overflow-hidden"></div>
+              <svg class="w-16 h-16 relative" :class="batchTheme.text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M4 7.5l8 4.5 8-4.5" />
+              </svg>
             </button>
+            <p class="mt-5 text-sm font-semibold text-white" :style="cracking ? '' : 'animation: pulse-soft 1.6s ease-in-out infinite'">
+              {{ cracking ? 'Abriendo…' : 'Tocá para abrir' }}
+            </p>
+          </div>
 
-            <!-- Tarjeta del cosmético (se re-anima al cambiar de índice) -->
-            <div :key="index"
-                 class="relative transition-all duration-500"
-                 :class="phase >= 1 ? 'opacity-100' : 'opacity-0'"
+          <!-- DETALLE REVELADO -->
+          <div v-else class="relative flex flex-col items-center text-center max-w-md w-full">
+            <div class="mb-4 transition-all duration-500" :class="phase >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'">
+              <span class="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-extrabold uppercase tracking-wider backdrop-blur"
+                    :class="[theme.ringBorder, theme.text]"
+                    :style="`box-shadow: 0 0 18px ${theme.glow}`">
+                <RarityGem :rarity="current.rarity" :size="15" />
+                {{ theme.label }}
+              </span>
+            </div>
+
+            <div class="relative mb-6 transition-all duration-500" :class="phase >= 1 ? 'opacity-100' : 'opacity-0'"
                  style="animation: scale-spring 0.5s var(--ease-bounce, cubic-bezier(0.34,1.56,0.64,1)) both">
-              <!-- ICON -->
               <div v-if="current.type === 'icon'" class="w-36 h-36 grid place-items-center"
                    :style="phase >= 2 ? `filter: drop-shadow(0 0 26px ${theme.glow}); animation: glow-pulse 2s ease-in-out infinite` : `filter: drop-shadow(0 0 16px ${theme.glow})`">
                 <CosmeticIcon :iconKey="current.styleKey" :rarity="current.rarity" :size="140" />
               </div>
-              <!-- Resto: contenedor con borde + glow por rareza -->
               <div v-else class="w-32 h-32 rounded-3xl grid place-items-center border-2" :class="theme.ringBorder"
                    :style="phase >= 2 ? `animation: glow-pulse 2s ease-in-out infinite; box-shadow: 0 0 40px ${theme.glow}` : `box-shadow: 0 0 24px ${theme.glow}`">
-                <!-- FRAME: el borde SOLO, alrededor de un disco liso -->
                 <div v-if="current.type === 'frame'" :class="['rounded-full', frameStyle(current.styleKey).wrap, frameStyle(current.styleKey).pad]">
                   <div class="w-20 h-20 rounded-full bg-gradient-to-br from-slate-700 to-slate-900"></div>
                 </div>
@@ -254,52 +233,103 @@ export default {
               </div>
             </div>
 
-            <!-- Flecha derecha -->
-            <button v-if="total > 1" @click="go(1)" :disabled="index === total - 1"
-                    class="shrink-0 grid place-items-center w-11 h-11 rounded-full border border-white/15 bg-white/5 text-white transition hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed"
-                    :class="phase >= 2 ? 'opacity-100' : 'opacity-0'">
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-            </button>
-          </div>
+            <div class="mb-2 transition-all duration-500" :class="phase >= 2 ? 'opacity-100' : 'opacity-0'">
+              <div class="font-display text-xs font-bold uppercase mb-3 tracking-wider" :class="theme.text">{{ typeLabel }} desbloqueado</div>
+              <h2 class="font-display text-3xl font-bold text-white mb-2">{{ current.name }}</h2>
+            </div>
 
-          <!-- Texto -->
-          <div class="mb-2 transition-all duration-500" :class="phase >= 2 ? 'opacity-100' : 'opacity-0'">
-            <div class="font-display text-xs font-bold uppercase mb-3 tracking-wider" :class="theme.text">{{ typeLabel }} desbloqueado</div>
-            <h2 class="font-display text-3xl font-bold text-white mb-2">{{ current.name }}</h2>
-          </div>
+            <div v-if="current.reason" class="mb-5 -mt-1 max-w-xs transition-all duration-400" :class="phase >= 3 ? 'opacity-100' : 'opacity-0'">
+              <p class="text-sm text-slate-300"><span class="text-slate-500">Lo conseguiste por:</span> <span class="font-semibold text-white">{{ current.reason }}</span></p>
+            </div>
 
-          <!-- Cómo lo conseguiste -->
-          <div v-if="current.reason" class="mb-5 -mt-1 max-w-xs transition-all duration-400" :class="phase >= 3 ? 'opacity-100' : 'opacity-0'">
-            <p class="text-sm text-slate-300"><span class="text-slate-500">Lo conseguiste por:</span> <span class="font-semibold text-white">{{ current.reason }}</span></p>
-          </div>
+            <div class="flex items-center gap-3 transition-all duration-400" :class="phase >= 4 ? 'opacity-100' : 'opacity-0'">
+              <button @click="equipItem(current)" :disabled="busy || isEquipped"
+                      class="rounded-2xl px-6 py-3.5 font-display font-bold text-base transition-all duration-200 border"
+                      :class="isEquipped
+                        ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300'
+                        : 'border-white/15 bg-white/5 text-white hover:bg-white/10 active:scale-95'">
+                <span v-if="isEquipped" class="flex items-center gap-2">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  Equipado
+                </span>
+                <span v-else>{{ busy ? 'Equipando…' : 'Equipar' }}</span>
+              </button>
 
-          <!-- Puntos (dots) -->
-          <div v-if="total > 1" class="mb-4 flex items-center justify-center gap-1.5 transition-all duration-400" :class="phase >= 4 ? 'opacity-100' : 'opacity-0'">
-            <button v-for="(it, i) in items" :key="it.code" @click="index = i"
-                    class="h-2 rounded-full transition-all"
-                    :class="i === index ? 'w-5 bg-white' : 'w-2 bg-white/30 hover:bg-white/50'"></button>
+              <button @click="close"
+                      class="rounded-2xl px-8 py-3.5 font-display font-bold text-base text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 shadow-lg shadow-amber-500/25 transition-all duration-200"
+                      style="animation: claim-pulse 2s ease-in-out infinite">
+                Continuar
+              </button>
+            </div>
           </div>
+        </template>
 
-          <!-- Botones: Equipar + Continuar -->
-          <div class="flex items-center gap-3 transition-all duration-400" :class="phase >= 4 ? 'opacity-100' : 'opacity-0'">
-            <button @click="equipCurrent" :disabled="busy || isEquipped"
-                    class="rounded-2xl px-6 py-3.5 font-display font-bold text-base transition-all duration-200 border"
-                    :class="isEquipped
+        <!-- ═══ MODO GRILLA (2+): un sobre por recompensa, se abren de a uno ═══ -->
+        <div v-else class="relative flex flex-col items-center text-center max-w-2xl w-full py-6">
+          <p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-300">
+            {{ revealedCount }} de {{ total }} abiertas
+          </p>
+          <p class="mb-6 text-sm text-slate-400">Tocá cada sobre para ver qué te tocó</p>
+
+          <div class="grid gap-4 justify-center w-full" style="grid-template-columns: repeat(auto-fit, minmax(120px, 140px));">
+            <div v-for="item in items" :key="item.code" class="pack-flip" :class="{ 'is-flipped': revealed[item.code] }">
+              <div class="pack-flip-inner relative w-full aspect-[3/4]">
+
+                <!-- Cara cerrada -->
+                <button
+                  type="button"
+                  @click="revealCard(item, $event)"
+                  class="pack-face pack-face-front absolute inset-0 rounded-2xl border-2 grid place-items-center pack-idle"
+                  :class="themeFor(item).ringBorder"
+                  :style="`box-shadow: 0 0 26px ${themeFor(item).glow}, inset 0 0 20px ${themeFor(item).glow}`"
+                >
+                  <div class="pack-sheen absolute inset-0 rounded-2xl overflow-hidden"></div>
+                  <svg class="w-9 h-9 relative" :class="themeFor(item).text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M4 7.5l8 4.5 8-4.5" />
+                  </svg>
+                </button>
+
+                <!-- Cara revelada -->
+                <div class="pack-face pack-face-back absolute inset-0 rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 p-2 bg-slate-900/90"
+                     :class="themeFor(item).ringBorder"
+                     :style="revealed[item.code] ? `box-shadow: 0 0 24px ${themeFor(item).glow}` : ''">
+                  <RarityGem :rarity="item.rarity" :size="11" />
+                  <div v-if="item.type === 'icon'" class="w-12 h-12 grid place-items-center">
+                    <CosmeticIcon :iconKey="item.styleKey" :rarity="item.rarity" :size="44" />
+                  </div>
+                  <div v-else-if="item.type === 'frame'" :class="['rounded-full', frameStyle(item.styleKey).wrap, frameStyle(item.styleKey).pad]">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-slate-700 to-slate-900"></div>
+                  </div>
+                  <div v-else-if="item.type === 'banner'" :class="['w-14 h-9 rounded-lg border border-white/15', bannerStyle(item.styleKey)]"></div>
+                  <div v-else class="font-display font-bold text-sm" :class="themeFor(item).text">{{ item.name }}</div>
+                  <p class="text-[10px] font-semibold text-white leading-tight text-center line-clamp-2">{{ item.name }}</p>
+                  <button
+                    v-if="revealed[item.code]"
+                    @click="equipItem(item)"
+                    :disabled="busy || !!equipped[item.code]"
+                    class="mt-0.5 rounded-full px-2.5 py-1 text-[10px] font-bold border transition"
+                    :class="equipped[item.code]
                       ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300'
-                      : 'border-white/15 bg-white/5 text-white hover:bg-white/10 active:scale-95'">
-              <span v-if="isEquipped" class="flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                Equipado
-              </span>
-              <span v-else>{{ busy ? 'Equipando…' : 'Equipar' }}</span>
-            </button>
-
-            <button @click="primary"
-                    class="rounded-2xl px-8 py-3.5 font-display font-bold text-base text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 shadow-lg shadow-amber-500/25 transition-all duration-200"
-                    style="animation: claim-pulse 2s ease-in-out infinite">
-              {{ index < total - 1 ? 'Siguiente' : (total > 1 ? 'Listo' : 'Continuar') }}
-            </button>
+                      : 'border-white/15 bg-white/5 text-white hover:bg-white/10'">
+                    {{ equipped[item.code] ? 'Equipado ✓' : 'Equipar' }}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
+
+          <button
+            @click="close"
+            :disabled="!allRevealed"
+            class="mt-8 rounded-2xl px-8 py-3.5 font-display font-bold text-base transition-all duration-200"
+            :class="allRevealed
+              ? 'text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 shadow-lg shadow-amber-500/25'
+              : 'text-slate-500 bg-white/5 border border-white/10 cursor-not-allowed'"
+            :style="allRevealed ? 'animation: claim-pulse 2s ease-in-out infinite' : ''"
+          >
+            {{ allRevealed ? 'Continuar' : `Abrí las ${total - revealedCount} que faltan` }}
+          </button>
         </div>
       </div>
     </Transition>
@@ -312,7 +342,7 @@ export default {
 .overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
 
 /* Sobre cerrado: bg sutil + respiración lenta para invitar al tap */
-.pack-box { background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(0,0,0,0.25)); cursor: pointer; }
+.pack-box, .pack-face-front { background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(0,0,0,0.25)); cursor: pointer; }
 .pack-idle { animation: pack-breathe 2.2s ease-in-out infinite, pack-wiggle 4.5s ease-in-out infinite; }
 .pack-cracking { animation: pack-shake 0.5s ease-in-out; cursor: default; }
 @keyframes pack-breathe {
@@ -342,7 +372,18 @@ export default {
   50% { opacity: 1; }
 }
 
+/* Grilla de sobres (2+ recompensas): cada carta se "da vuelta" al tocarla. */
+.pack-flip { perspective: 1200px; }
+.pack-flip-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.55s var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+.pack-flip.is-flipped .pack-flip-inner { transform: rotateY(180deg); }
+.pack-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.pack-face-back { transform: rotateY(180deg); }
+
 @media (prefers-reduced-motion: reduce) {
   .pack-idle, .pack-cracking, .pack-sheen { animation: none; }
+  .pack-flip-inner { transition: none; }
 }
 </style>

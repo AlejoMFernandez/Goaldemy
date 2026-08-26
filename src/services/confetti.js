@@ -102,11 +102,23 @@ function burst({ x, y, count = 80, colors, spread = 1 }) {
   if (!animFrame) animFrame = requestAnimationFrame(tick)
 }
 
+/**
+ * @param {Object} options
+ * @param {{x:number,y:number}} [options.origin] - Punto de origen en píxeles (ej: el
+ *   centro de una carta que se acaba de revelar). Si no viene, usa el patrón de
+ *   siempre (dos ráfagas arriba a los costados).
+ */
 export function triggerConfetti(options = {}) {
   const {
     particleCount = 80,
     colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4'],
+    origin = null,
   } = options
+
+  if (origin) {
+    burst({ x: origin.x, y: origin.y, count: particleCount, colors, spread: 0.7 })
+    return
+  }
 
   const w = window.innerWidth
   const h = window.innerHeight
