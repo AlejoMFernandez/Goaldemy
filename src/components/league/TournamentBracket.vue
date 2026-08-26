@@ -122,7 +122,7 @@ export default {
             <div
               v-for="m in round.matches"
               :key="m.id"
-              class="tb-match relative surface-flat p-2.5 transition hover:border-blue-400/30"
+              class="tb-match relative surface-flat p-2.5 transition"
             >
               <!-- home -->
               <div class="flex items-center gap-2" :class="winnerSide(m) === 'away' ? 'opacity-45' : ''">
@@ -160,3 +160,9 @@ export default {
     </div>
   </div>
 </template>
+
+<style scoped>
+.tb-match:hover {
+  border-color: color-mix(in srgb, var(--data-500) 30%, transparent);
+}
+</style>
