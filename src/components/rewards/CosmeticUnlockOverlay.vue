@@ -291,7 +291,7 @@ export default {
                     :glow="themeFor(item).glow" :ring-border="themeFor(item).ringBorder" :text-class="themeFor(item).text"
                     :size="52"
                   />
-                  <p class="text-[10px] font-semibold text-white leading-tight text-center line-clamp-2">{{ item.name }}</p>
+                  <p v-if="item.type !== 'title'" class="text-[10px] font-semibold text-white leading-tight text-center line-clamp-2">{{ item.name }}</p>
                   <button
                     v-if="revealed[item.code]"
                     @click="equipItem(item)"
