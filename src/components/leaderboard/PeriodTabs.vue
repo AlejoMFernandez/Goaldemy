@@ -14,7 +14,7 @@ function setVal(v) { emit('update:modelValue', v) }
 <template>
   <div class="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
     <button v-for="opt in options" :key="opt.value" @click="setVal(opt.value)"
-      :class="['px-3 py-1.5 text-sm rounded-lg transition', modelValue===opt.value ? 'bg-emerald-500 text-white' : 'text-slate-200 hover:text-white']">
+      :class="['px-3 py-1.5 text-sm rounded-lg transition', modelValue===opt.value ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-slate-900' : 'text-slate-200 hover:text-white']">
       {{ opt.label }}
     </button>
   </div>

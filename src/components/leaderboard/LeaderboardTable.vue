@@ -60,12 +60,12 @@ function levelClass(lvl) {
                 </div>
               </div>
             </div>
-            <div class="absolute -top-2.5 -right-2.5 size-7 rounded-full grid place-items-center font-display font-extrabold text-sm bg-slate-950 border-2 border-slate-900 shadow-lg" :class="MEDAL[c.rank].text">{{ c.rank }}</div>
+            <div class="absolute -top-2.5 -right-2.5 size-7 rounded-full grid place-items-center font-display font-bold text-sm bg-slate-950 border-2 border-slate-900 shadow-lg" :class="MEDAL[c.rank].text">{{ c.rank }}</div>
           </RouterLink>
           <div class="mt-2.5 text-center min-w-0 w-full px-1">
             <div class="font-bold text-white text-xs sm:text-sm truncate">{{ name(c.r) }}</div>
             <div class="text-[11px] font-semibold" :class="MEDAL[c.rank].text">Nivel {{ c.r.level ?? '—' }}</div>
-            <div class="font-display font-extrabold text-white tabular-nums text-sm">{{ (c.r.total_xp || 0).toLocaleString() }}<span class="text-[9px] text-slate-500 ml-0.5">XP</span></div>
+            <div class="font-display font-bold text-white tabular-nums text-sm">{{ (c.r.total_xp || 0).toLocaleString() }}<span class="text-[9px] text-slate-500 ml-0.5">XP</span></div>
           </div>
           <div class="w-full mt-2 rounded-t-lg bg-gradient-to-b border-t-2" :class="[MEDAL[c.rank].ped, c.rank === 1 ? 'h-12' : (c.rank === 2 ? 'h-8' : 'h-5')]"></div>
         </div>
@@ -75,7 +75,7 @@ function levelClass(lvl) {
       <div class="space-y-1.5">
         <RouterLink v-for="r in ladderRows" :key="r.user_id" :to="'/u/' + r.user_id"
           class="flex items-center gap-2.5 sm:gap-3 rounded-xl border px-2.5 sm:px-3 py-2 transition"
-          :class="r.user_id === meId ? 'border-emerald-400/50 bg-emerald-500/[0.12]' : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.05]'">
+          :class="r.user_id === meId ? 'border-blue-400/50 bg-blue-500/[0.12]' : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.05]'">
           <span class="w-6 sm:w-7 text-center font-display font-bold text-slate-400 tabular-nums shrink-0">{{ r.rank }}</span>
           <div :class="[frameStyle(r.frameKey).wrap, frameStyle(r.frameKey).pad, 'rounded-lg shrink-0']">
             <div :class="['size-8 sm:size-9 rounded-md overflow-hidden grid place-items-center text-xs font-bold text-white', r.iconGlyph ? iconThemeBg(r.iconGlyph) : iconBgStyle(r.iconBg)]">
@@ -85,7 +85,7 @@ function levelClass(lvl) {
             </div>
           </div>
           <span class="flex-1 min-w-0 truncate text-sm text-white font-medium">
-            {{ name(r) }}<span v-if="r.user_id === meId" class="text-[10px] text-emerald-300 ml-1 font-bold">(vos)</span>
+            {{ name(r) }}<span v-if="r.user_id === meId" class="text-[10px] text-blue-300 ml-1 font-bold">(vos)</span>
           </span>
           <span class="inline-flex items-center rounded-lg px-1.5 py-0.5 text-[10px] sm:text-xs font-bold border shrink-0" :class="levelClass(r.level)">{{ r.level ?? '—' }}</span>
           <span class="font-display font-bold text-white tabular-nums text-xs sm:text-sm w-14 sm:w-16 text-right shrink-0">{{ (r.total_xp || 0).toLocaleString() }}</span>
