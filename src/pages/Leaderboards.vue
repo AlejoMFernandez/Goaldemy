@@ -149,8 +149,8 @@ export default {
       </div>
     </div>
     <div class="mb-4 px-4 sm:px-0 inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
-      <button @click="switchView('players')" :class="['px-3 py-1.5 text-sm rounded-lg transition', view==='players' ? 'bg-violet-500 text-white' : 'text-slate-300 hover:text-white']">Jugadores</button>
-      <button @click="switchView('penias')" :class="['px-3 py-1.5 text-sm rounded-lg transition', view==='penias' ? 'bg-violet-500 text-white' : 'text-slate-300 hover:text-white']">Peñas</button>
+      <button @click="switchView('players')" :class="['px-3 py-1.5 text-sm rounded-lg transition', view==='players' ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-slate-900' : 'text-slate-300 hover:text-white']">Jugadores</button>
+      <button @click="switchView('penias')" :class="['px-3 py-1.5 text-sm rounded-lg transition', view==='penias' ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-slate-900' : 'text-slate-300 hover:text-white']">Peñas</button>
     </div>
 
     <template v-if="view === 'players'">
@@ -186,7 +186,7 @@ export default {
       <div class="px-4 sm:px-0">
         <div v-if="peniasLoading" class="py-10 text-center text-slate-400 text-sm">Cargando…</div>
         <div v-else-if="!penias.length" class="py-10 text-center text-slate-400 text-sm">Todavía no hay peñas activas este período</div>
-        <div v-else class="rounded-2xl border border-white/10 divide-y divide-white/5 overflow-hidden">
+        <div v-else class="surface-flat divide-y divide-white/5 overflow-hidden">
           <component :is="teamLink(p.team) ? 'RouterLink' : 'div'" :to="teamLink(p.team) || undefined"
             v-for="(p, idx) in penias" :key="p.team"
             class="flex items-center gap-3 px-4 py-3 bg-white/[0.02] hover:bg-white/[0.05] transition"
@@ -196,7 +196,7 @@ export default {
               <div class="text-sm font-semibold text-white truncate">{{ p.team }}</div>
               <div class="text-[11px] text-slate-400">{{ p.activeCount }} activos de {{ p.memberCount }} hinchas</div>
             </div>
-            <div class="text-sm font-bold text-violet-300 tabular-nums shrink-0">{{ p.totalXp.toLocaleString('es-AR') }} XP</div>
+            <div class="text-sm font-bold text-blue-300 tabular-nums shrink-0">{{ p.totalXp.toLocaleString('es-AR') }} XP</div>
           </component>
         </div>
       </div>
