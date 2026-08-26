@@ -29,7 +29,7 @@
                     <div>
                         <select
                             v-model="selectedLeague"
-                            class="w-full bg-slate-700/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                            class="w-full bg-slate-700/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="all">Todas las ligas</option>
                             <option v-for="league in availableLeagues" :key="league.id" :value="league.id">{{ league.name }}</option>
@@ -92,7 +92,7 @@
                         <div class="flex-1">
                             <h3 class="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{{ team.name }}</h3>
                             <p class="text-sm text-slate-400">{{ team.players?.length || 0 }} jugadores</p>
-                            <p class="text-xs text-cyan-300 mt-1">{{ getTeamLeagueName(team.id) || 'Liga sin asignar' }}</p>
+                            <p class="text-xs text-blue-300 mt-1">{{ getTeamLeagueName(team.id) || 'Liga sin asignar' }}</p>
                         </div>
                     </div>
 
@@ -135,14 +135,14 @@
                             <div>
                                 <h3 class="text-lg font-semibold text-white">{{ team.name }}</h3>
                                 <p class="text-sm text-slate-400">{{ team.players?.length || 0 }} jugadores</p>
-                                <p class="text-xs text-cyan-300 mt-1">{{ getTeamLeagueName(team.id) || 'Liga sin asignar' }}</p>
+                                <p class="text-xs text-blue-300 mt-1">{{ getTeamLeagueName(team.id) || 'Liga sin asignar' }}</p>
                             </div>
                         </div>
-                        <svg 
+                        <svg
                             class="w-6 h-6 text-slate-400 transition-transform"
                             :class="{ 'rotate-180': expandedTeams.has(team.id) }"
-                            fill="none" 
-                            stroke="currentColor" 
+                            fill="none"
+                            stroke="currentColor"
                             viewBox="0 0 24 24"
                         >
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
