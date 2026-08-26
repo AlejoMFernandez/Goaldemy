@@ -115,7 +115,7 @@ export default {
         <div class="kb-hdr">{{ col.label }}</div>
         <div class="kb-slots">
           <div v-for="m in col.matches" :key="m.key" class="kb-slot">
-            <div class="kb-card" :class="{ 'kb-tbd': m.tbd }">
+            <div class="kb-card surface-flat" :class="{ 'kb-tbd': m.tbd }">
               <div class="kb-row" :class="{ 'kb-win': isWinner(m,'home'), 'kb-lose': isLoser(m,'home') }">
                 <img :src="logo(m.homeId)" :alt="m.home" class="kb-flag" @error="onImgError" />
                 <span class="kb-name">{{ m.homeShort }}</span>
@@ -135,7 +135,7 @@ export default {
       <div class="kb-center">
         <div class="kb-trophy">🏆</div>
         <div class="kb-final-label">FINAL</div>
-        <div v-if="final" class="kb-card kb-final" :class="{ 'kb-tbd': final.tbd }">
+        <div v-if="final" class="kb-card kb-final surface-flat" :class="{ 'kb-tbd': final.tbd }">
           <div class="kb-row" :class="{ 'kb-win': isWinner(final,'home'), 'kb-lose': isLoser(final,'home') }">
             <img :src="logo(final.homeId)" :alt="final.home" class="kb-flag" @error="onImgError" />
             <span class="kb-name">{{ final.home }}</span>
@@ -147,7 +147,7 @@ export default {
             <span class="kb-score">{{ final.awayScore }}</span>
           </div>
         </div>
-        <div v-else class="kb-card kb-final kb-tbd">
+        <div v-else class="kb-card kb-final kb-tbd surface-flat">
           <div class="kb-row"><span class="kb-name">Por definir</span></div>
           <div class="kb-row"><span class="kb-name">Por definir</span></div>
         </div>
@@ -171,7 +171,7 @@ export default {
         <div class="kb-hdr">{{ col.label }}</div>
         <div class="kb-slots">
           <div v-for="m in col.matches" :key="m.key" class="kb-slot">
-            <div class="kb-card" :class="{ 'kb-tbd': m.tbd }">
+            <div class="kb-card surface-flat" :class="{ 'kb-tbd': m.tbd }">
               <div class="kb-row" :class="{ 'kb-win': isWinner(m,'home'), 'kb-lose': isLoser(m,'home') }">
                 <img :src="logo(m.homeId)" :alt="m.home" class="kb-flag" @error="onImgError" />
                 <span class="kb-name">{{ m.homeShort }}</span>
@@ -228,9 +228,6 @@ export default {
   position: relative;
   width: 100%;
   border-radius: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(15, 23, 42, 0.75);
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.22);
   overflow: hidden;
 }
 .kb-row {

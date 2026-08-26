@@ -12,7 +12,7 @@
             <h1 class="text-3xl font-bold text-white mb-0">{{ comp?.name || 'Competición' }}</h1>
             <div class="flex items-center gap-2 mt-0.5">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <p class="text-cyan-400 text-sm font-medium mb-0">{{ comp?.tagline || comp?.country || '' }}</p>
+              <p class="text-blue-400 text-sm font-medium mb-0">{{ comp?.tagline || comp?.country || '' }}</p>
             </div>
           </div>
         </div>
@@ -20,7 +20,7 @@
 
       <!-- Loading -->
       <div v-if="loading" class="text-center py-20">
-        <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         <p class="mt-4 text-slate-300">Cargando datos…</p>
       </div>
 
@@ -34,17 +34,17 @@
       <!-- Tabs (solo si hay fase de eliminación) -->
       <div v-if="hasKnockout" class="mb-5 inline-flex rounded-xl border border-white/10 bg-slate-900/60 p-1">
         <button @click="view='bracket'" class="rounded-lg px-4 py-1.5 text-sm font-semibold transition"
-          :class="view==='bracket' ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow' : 'text-slate-300 hover:text-white'">
+          :class="view==='bracket' ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-slate-900 shadow' : 'text-slate-300 hover:text-white'">
           Llaves
         </button>
         <button @click="view='grupos'" class="rounded-lg px-4 py-1.5 text-sm font-semibold transition"
-          :class="view==='grupos' ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow' : 'text-slate-300 hover:text-white'">
+          :class="view==='grupos' ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-slate-900 shadow' : 'text-slate-300 hover:text-white'">
           Tabla
         </button>
       </div>
 
       <!-- Bracket / Fase final -->
-      <div v-if="view==='bracket' && hasKnockout" class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800/40 to-slate-900 backdrop-blur shadow-2xl p-5">
+      <div v-if="view==='bracket' && hasKnockout" class="surface-flat p-5">
         <div class="mb-4 flex items-center gap-2">
           <h2 class="text-xl font-bold text-white">Fase de eliminación</h2>
           <span class="text-xs text-slate-500">Deslizá si no entra en pantalla →</span>
@@ -57,9 +57,9 @@
       <div v-show="view==='grupos' || !hasKnockout" class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <!-- Tabla de Posiciones / Grupos -->
         <div class="xl:col-span-2">
-          <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800/40 to-slate-900 backdrop-blur shadow-2xl overflow-hidden">
+          <div class="surface-flat overflow-hidden">
             <div class="flex items-center gap-3 border-b border-white/10 px-6 py-4">
-              <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-400/25 bg-emerald-500/10 text-emerald-300">
+              <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-blue-400/25 bg-blue-500/10 text-blue-300">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M2 20h20"/></svg>
               </div>
               <div>
@@ -72,7 +72,7 @@
             <template v-if="leagueData?.table?.tables?.length">
               <div v-for="group in leagueData.table.tables" :key="group.name" class="border-b border-white/10 last:border-b-0">
                 <div class="px-6 py-2.5 bg-slate-800/40">
-                  <span class="text-sm font-bold text-cyan-300">{{ group.name }}</span>
+                  <span class="text-sm font-bold text-blue-300">{{ group.name }}</span>
                 </div>
                 <div class="overflow-x-auto">
                   <table class="w-full">
@@ -86,7 +86,7 @@
                         <th class="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase w-10">E</th>
                         <th class="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase w-10">P</th>
                         <th class="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase w-10">DG</th>
-                        <th class="text-center py-2.5 px-2 text-xs font-semibold text-emerald-300 uppercase w-12 font-bold">PTS</th>
+                        <th class="text-center py-2.5 px-2 text-xs font-semibold text-blue-300 uppercase w-12 font-bold">PTS</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -98,7 +98,7 @@
                         <td class="py-2 px-4">
                           <router-link :to="`/team/${team.id}`" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
                             <img :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${team.id}.png`" :alt="team.name" class="w-6 h-6 object-contain flex-shrink-0" @error="handleImageError" />
-                            <span class="font-medium text-white text-sm truncate group-hover:text-cyan-300 transition-colors">{{ team.name }}</span>
+                            <span class="font-medium text-white text-sm truncate group-hover:text-blue-300 transition-colors">{{ team.name }}</span>
                           </router-link>
                         </td>
                         <td class="text-center py-2 px-2 text-slate-400 text-xs">{{ team.played }}</td>
@@ -132,7 +132,7 @@
                       <th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase w-12">E</th>
                       <th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase w-12">P</th>
                       <th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase w-12">DG</th>
-                      <th class="text-center py-3 px-2 text-xs font-semibold text-emerald-300 uppercase w-16 font-bold">PTS</th>
+                      <th class="text-center py-3 px-2 text-xs font-semibold text-blue-300 uppercase w-16 font-bold">PTS</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -144,7 +144,7 @@
                       <td class="py-2.5 px-4">
                         <router-link :to="`/team/${team.id}`" class="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
                           <img :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${team.id}.png`" :alt="team.name" class="w-6 h-6 object-contain flex-shrink-0" @error="handleImageError" />
-                          <span class="font-medium text-white text-sm truncate max-w-[180px] group-hover:text-cyan-300 transition-colors">{{ team.name }}</span>
+                          <span class="font-medium text-white text-sm truncate max-w-[180px] group-hover:text-blue-300 transition-colors">{{ team.name }}</span>
                         </router-link>
                       </td>
                       <td class="text-center py-2.5 px-2 text-slate-400 text-xs">{{ team.played }}</td>
@@ -178,7 +178,7 @@
           <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800/40 to-slate-900 backdrop-blur shadow-2xl overflow-hidden">
             <div class="border-b border-white/10 px-5 py-3">
               <div class="flex items-center gap-3 mb-2.5">
-                <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-400/25 bg-cyan-500/10 text-cyan-300">
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-blue-400/25 bg-blue-500/10 text-blue-300">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
                 </div>
                 <div>
@@ -233,7 +233,7 @@
           <!-- Goleadores -->
           <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800/40 to-slate-900 backdrop-blur shadow-2xl overflow-hidden">
             <div class="flex items-center gap-3 border-b border-white/10 px-5 py-3.5">
-              <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-400/25 bg-emerald-500/10 text-emerald-300">
+              <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-blue-400/25 bg-blue-500/10 text-blue-300">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 7.5l4 2.9-1.5 4.7h-5L8 10.4z"/><path d="M12 2.5v5M2.8 9.7l4.7 1M5.9 20l3-4M18.1 20l-3-4M21.2 9.7l-4.7 1"/></svg>
               </div>
               <div>
@@ -246,10 +246,10 @@
                 <div class="text-slate-500 font-bold text-sm w-6">{{ idx + 1 }}</div>
                 <img v-if="player.teamId" :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${player.teamId}.png`" :alt="player.teamName" class="w-6 h-6 object-contain" @error="handleImageError" />
                 <div class="flex-grow min-w-0">
-                  <div class="font-semibold text-white text-sm truncate group-hover:text-cyan-300 transition-colors">{{ player.name }}</div>
+                  <div class="font-semibold text-white text-sm truncate group-hover:text-blue-300 transition-colors">{{ player.name }}</div>
                   <div class="text-xs text-slate-400 truncate">{{ player.teamName }}</div>
                 </div>
-                <div class="font-display text-xl font-extrabold text-emerald-300 tabular-nums">{{ player.goals }}</div>
+                <div class="font-display text-xl font-bold text-blue-300 tabular-nums">{{ player.goals }}</div>
               </div>
             </div>
             <div v-else class="text-slate-400 text-center py-8 text-sm">Los goleadores se actualizan durante el torneo</div>
@@ -258,7 +258,7 @@
           <!-- Asistidores -->
           <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800/40 to-slate-900 backdrop-blur shadow-2xl overflow-hidden">
             <div class="flex items-center gap-3 border-b border-white/10 px-5 py-3.5">
-              <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-400/25 bg-cyan-500/10 text-cyan-300">
+              <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-blue-400/25 bg-blue-500/10 text-blue-300">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>
               </div>
               <div>
@@ -271,10 +271,10 @@
                 <div class="text-slate-500 font-bold text-sm w-6">{{ idx + 1 }}</div>
                 <img v-if="player.teamId" :src="`https://images.fotmob.com/image_resources/logo/teamlogo/${player.teamId}.png`" :alt="player.teamName" class="w-6 h-6 object-contain" @error="handleImageError" />
                 <div class="flex-grow min-w-0">
-                  <div class="font-semibold text-white text-sm truncate group-hover:text-cyan-300 transition-colors">{{ player.name }}</div>
+                  <div class="font-semibold text-white text-sm truncate group-hover:text-blue-300 transition-colors">{{ player.name }}</div>
                   <div class="text-xs text-slate-400 truncate">{{ player.teamName }}</div>
                 </div>
-                <div class="font-display text-xl font-extrabold text-cyan-300 tabular-nums">{{ player.assists }}</div>
+                <div class="font-display text-xl font-bold text-blue-300 tabular-nums">{{ player.assists }}</div>
               </div>
             </div>
             <div v-else class="text-slate-400 text-center py-8 text-sm">Las asistencias se actualizan durante el torneo</div>

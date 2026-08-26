@@ -24,8 +24,8 @@ export default {
     <div class="container mx-auto max-w-6xl">
       <!-- Page header -->
       <header class="mb-8">
-        <span class="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">Explorá</span>
-        <h1 class="mt-1 text-3xl sm:text-4xl font-display font-extrabold text-white">Competiciones</h1>
+        <span class="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-300/80">Explorá</span>
+        <h1 class="mt-1 text-3xl sm:text-4xl font-display font-bold text-white">Competiciones</h1>
         <p class="mt-1.5 text-slate-400 text-sm sm:text-base">Ligas, copas y torneos — tablas, goleadores y brackets en un solo lugar.</p>
       </header>
 
@@ -52,7 +52,7 @@ export default {
                 </span>
                 <span v-if="featured.bracket" class="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-300">Con bracket</span>
               </div>
-              <h2 class="mt-2 text-2xl sm:text-3xl font-display font-extrabold text-white">{{ featured.name }}</h2>
+              <h2 class="mt-2 text-2xl sm:text-3xl font-display font-bold text-white">{{ featured.name }}</h2>
               <p class="mt-0.5 text-amber-200/80 text-sm font-medium">{{ featured.tagline || featured.country }}</p>
             </div>
             <div class="flex-none">

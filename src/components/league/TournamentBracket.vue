@@ -112,7 +112,7 @@ export default {
         <div v-for="round in rounds" :key="round.key" class="tb-col flex flex-col" :style="{ minWidth: '230px' }">
           <!-- Round header -->
           <div class="mb-3 flex items-center gap-2">
-            <span class="h-4 w-1 rounded-full bg-gradient-to-b from-emerald-400 to-cyan-400"></span>
+            <span class="h-4 w-1 rounded-full bg-gradient-to-b from-blue-400 to-blue-500"></span>
             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300">{{ round.label }}</span>
             <span class="ml-auto text-[10px] text-slate-600">{{ round.matches.length }}</span>
           </div>
@@ -122,7 +122,7 @@ export default {
             <div
               v-for="m in round.matches"
               :key="m.id"
-              class="tb-match relative rounded-xl border border-white/10 bg-slate-900/70 p-2.5 shadow-lg transition hover:border-emerald-400/30"
+              class="tb-match relative surface-flat p-2.5 transition"
             >
               <!-- home -->
               <div class="flex items-center gap-2" :class="winnerSide(m) === 'away' ? 'opacity-45' : ''">
@@ -160,3 +160,9 @@ export default {
     </div>
   </div>
 </template>
+
+<style scoped>
+.tb-match:hover {
+  border-color: color-mix(in srgb, var(--data-500) 30%, transparent);
+}
+</style>
