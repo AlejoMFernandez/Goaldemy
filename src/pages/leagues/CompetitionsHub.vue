@@ -52,7 +52,7 @@ export default {
                 </span>
                 <span v-if="featured.bracket" class="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-300">Con bracket</span>
               </div>
-              <h2 class="mt-2 text-2xl sm:text-3xl font-display font-extrabold text-white">{{ featured.name }}</h2>
+              <h2 class="mt-2 text-2xl sm:text-3xl font-display font-bold text-white">{{ featured.name }}</h2>
               <p class="mt-0.5 text-amber-200/80 text-sm font-medium">{{ featured.tagline || featured.country }}</p>
             </div>
             <div class="flex-none">
