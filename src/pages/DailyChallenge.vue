@@ -11,6 +11,8 @@ import { reactive, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getTodaysReto, getRetoResult, saveRetoResult, computeRetoRewards, setPendingRetoClaim, RETO_SHARE_NAME } from '../services/daily-reto'
 import { buildShareText, shareOrCopy } from '../services/share'
+import { getAuthUser } from '../services/auth'
+import { getRetoDuelBoard, sendDuelChallenge } from '../services/duels'
 
 const state = reactive({
   phase: 'loading',      // loading | intro | playing | result
@@ -31,6 +33,10 @@ const state = reactive({
   animXp: 0,
   animFichas: 0,
   animBar: 0,
+  // Duelo asíncrono: solo aplica a usuarios logueados (los invitados no tienen amigos todavía)
+  duelBoard: [],
+  duelLoading: false,
+  duelBusyId: null,
 })
 
 const current = computed(() => state.questions[state.index] || null)
@@ -109,6 +115,23 @@ function enterResult() {
   animateTo(r.xp, v => { state.animXp = v })
   animateTo(r.fichas, v => { state.animFichas = v })
   animateTo(r.pct, v => { state.animBar = v }, 1100)
+  loadDuelBoard()
+}
+
+// Si ya tenés cuenta, mostramos cómo les fue hoy a tus amigos con el mismo reto
+// (y a quién todavía le falta jugar, para poder desafiarlo).
+async function loadDuelBoard() {
+  if (!getAuthUser()?.id) return
+  state.duelLoading = true
+  try { state.duelBoard = await getRetoDuelBoard() }
+  finally { state.duelLoading = false }
+}
+
+async function challengeFriend(friendId) {
+  if (state.duelBusyId) return
+  state.duelBusyId = friendId
+  try { await sendDuelChallenge(friendId) }
+  finally { state.duelBusyId = null }
 }
 
 function animateTo(target, setter, ms = 900) {
@@ -284,6 +307,24 @@ function optionClass(opt) {
               Crear cuenta gratis y reclamar
             </RouterLink>
             <RouterLink to="/login" class="block text-slate-400 hover:text-white text-xs">Ya tengo cuenta</RouterLink>
+          </div>
+
+          <!-- Duelo asíncrono: cómo les fue a tus amigos con el MISMO reto de hoy -->
+          <div v-if="getAuthUser()?.id && state.duelBoard.length" class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <p class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-2.5">Tus amigos hoy</p>
+            <div class="space-y-1.5">
+              <div v-for="f in state.duelBoard" :key="f.friendId" class="flex items-center justify-between gap-2 text-sm">
+                <span class="text-slate-200 truncate">{{ f.displayName || 'Usuario' }}</span>
+                <span v-if="f.played" class="font-semibold shrink-0"
+                      :class="state.corrects > f.corrects ? 'text-emerald-400' : state.corrects < f.corrects ? 'text-red-400' : 'text-amber-300'">
+                  {{ f.corrects }}/{{ f.total }} · {{ state.corrects > f.corrects ? 'le ganás' : state.corrects < f.corrects ? 'te gana' : 'empate' }}
+                </span>
+                <button v-else @click="challengeFriend(f.friendId)" :disabled="state.duelBusyId === f.friendId"
+                        class="shrink-0 rounded-lg border border-amber-400/30 bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition">
+                  {{ state.duelBusyId === f.friendId ? 'Enviando…' : 'Desafiar' }}
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Compartir + volver mañana -->

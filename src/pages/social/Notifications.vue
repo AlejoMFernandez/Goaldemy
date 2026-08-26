@@ -122,10 +122,14 @@ export default {
                     <router-link :to="`/u/${n.from_user}`" class="hover:underline">{{ who(n.from_user) }}</router-link>&nbsp;canceló la conexión
                   </template>
                 </template>
+                <template v-else-if="n.type==='duel_challenge'">
+                  <router-link :to="`/u/${n.from_user}`" class="hover:underline">{{ who(n.from_user) }}</router-link>&nbsp;te desafió al Reto del día ⚔️
+                </template>
                 <template v-else>Notificación</template>
               </div>
               <div class="text-[11px] text-slate-400">{{ fmtWhenFull(n.created_at) }}</div>
             </div>
+            <router-link v-if="n.type==='duel_challenge'" to="/reto" class="shrink-0 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition">Jugar</router-link>
             <!-- Right-side stripe for unread -->
             <div v-if="!n.read" class="absolute right-0 top-0 h-full w-1 bg-sky-400 rounded-r"></div>
           </template>
