@@ -16,6 +16,11 @@ const RARITY_THEME = {
   legendary: { glow: 'rgba(251,191,36,0.55)',  text: 'text-amber-300',   ringBorder: 'border-amber-400/50',   confetti: ['#fbbf24', '#f59e0b', '#fde047', '#fff7ed'],   label: 'Legendario' },
 }
 
+// Orden de rareza para elegir el "brillo" del sobre cerrado: si la tanda trae
+// una legendaria, el sobre ya lo insinúa (como el destello de un cofre de
+// Clash Royale antes de abrirlo) aunque el contenido sea 100% determinístico.
+const RARITY_RANK = { common: 0, rare: 1, epic: 2, legendary: 3 }
+
 export default {
   name: 'CosmeticUnlockOverlay',
   components: { CosmeticIcon, RarityGem },
@@ -27,6 +32,8 @@ export default {
     const phase = ref(0)         // fases de la animación de entrada
     const busy = ref(false)      // equipando
     const equipped = ref({})     // code → true (ya equipado en esta escena)
+    const unboxed = ref(false)   // false = sobre cerrado (suspenso), true = ya reveló el contenido
+    const cracking = ref(false)  // animación de apertura en curso (entre el tap y la revelación)
     let phaseTimers = []
 
     function clearTimers() {
@@ -38,6 +45,15 @@ export default {
     const current = computed(() => items.value[index.value] || null)
     const total = computed(() => items.value.length)
     const theme = computed(() => RARITY_THEME[current.value?.rarity] || RARITY_THEME.epic)
+    // Rareza más alta de la tanda: define el brillo del sobre cerrado (el "teaser").
+    const batchRarity = computed(() => {
+      let best = 'common'
+      for (const it of items.value) {
+        if ((RARITY_RANK[it.rarity] || 0) > (RARITY_RANK[best] || 0)) best = it.rarity
+      }
+      return best
+    })
+    const batchTheme = computed(() => RARITY_THEME[batchRarity.value] || RARITY_THEME.common)
     const typeLabel = computed(() => TYPE_LABEL[current.value?.type] || 'Cosmético')
     const isEquipped = computed(() => !!(current.value && equipped.value[current.value.code]))
 
@@ -62,16 +78,30 @@ export default {
       index.value = 0
       equipped.value = {}
       phase.value = 0
+      unboxed.value = false
+      cracking.value = false
       setCosmeticActive(true)   // la subida de nivel espera hasta que cerremos esto
+      soundManager.play('notify') // ding sutil: "tenés algo esperando"
+    }
 
-      nextTick(() => {
-        phaseTimers.push(setTimeout(() => { phase.value = 1 }, 50))
-        phaseTimers.push(setTimeout(() => { phase.value = 2 }, 450))
-        phaseTimers.push(setTimeout(() => { phase.value = 3 }, 850))
-        phaseTimers.push(setTimeout(() => { phase.value = 4 }, 1150))
-        soundManager.play('achievement')
-        triggerConfetti({ particleCount: 80, colors: theme.value.confetti })
-      })
+    // El usuario toca el sobre cerrado: arranca la apertura (suspenso corto) y
+    // recién ahí dispara la misma secuencia de reveal + confeti que ya existía.
+    function openPack() {
+      if (cracking.value || unboxed.value) return
+      cracking.value = true
+      soundManager.play('combo') // riser corto de tensión mientras "cruje" el sobre
+      phaseTimers.push(setTimeout(() => {
+        unboxed.value = true
+        cracking.value = false
+        nextTick(() => {
+          phaseTimers.push(setTimeout(() => { phase.value = 1 }, 50))
+          phaseTimers.push(setTimeout(() => { phase.value = 2 }, 450))
+          phaseTimers.push(setTimeout(() => { phase.value = 3 }, 850))
+          phaseTimers.push(setTimeout(() => { phase.value = 4 }, 1150))
+          soundManager.play('achievement')
+          triggerConfetti({ particleCount: 80, colors: theme.value.confetti })
+        })
+      }, 550))
     }
 
     function go(delta) {
@@ -108,6 +138,8 @@ export default {
       index.value = 0
       equipped.value = {}
       phase.value = 0
+      unboxed.value = false
+      cracking.value = false
       if (notificationsState.cosmeticQueue.length > 0) {
         // Quedan más cosméticos: seguimos "activos" y mostramos otra tanda.
         phaseTimers.push(setTimeout(showBatch, 400))
@@ -133,7 +165,8 @@ export default {
 
     return {
       items, index, phase, busy, active, current, total, theme, typeLabel, isEquipped,
-      go, equipCurrent, primary, close,
+      unboxed, cracking, batchRarity, batchTheme,
+      go, equipCurrent, primary, close, openPack,
       frameStyle, bannerStyle, iconBgStyle,
     }
   }
@@ -143,10 +176,36 @@ export default {
 <template>
   <Teleport to="body">
     <Transition name="overlay-fade">
-      <div v-if="active" class="fixed inset-0 z-[60] grid place-items-center p-4" @click.self="close">
+      <div v-if="active" class="fixed inset-0 z-[60] grid place-items-center p-4" @click.self="unboxed && close()">
         <div class="absolute inset-0 bg-black/85 backdrop-blur-md"></div>
 
-        <div class="relative flex flex-col items-center text-center max-w-md w-full">
+        <!-- SOBRE CERRADO: el momento de incertidumbre antes de revelar. El contenido -->
+        <!-- ya está decidido server-side; esto es puesta en escena, no azar real. -->
+        <div v-if="!unboxed" class="relative flex flex-col items-center text-center">
+          <p class="mb-5 text-xs font-bold uppercase tracking-wider" :class="batchTheme.text">
+            {{ total > 1 ? `${total} recompensas esperándote` : 'Tenés una recompensa' }}
+          </p>
+          <button
+            type="button"
+            @click="openPack"
+            :disabled="cracking"
+            class="pack-box relative w-40 h-48 grid place-items-center rounded-3xl border-2 transition-transform active:scale-95"
+            :class="[batchTheme.ringBorder, cracking ? 'pack-cracking' : 'pack-idle']"
+            :style="`box-shadow: 0 0 42px ${batchTheme.glow}, inset 0 0 30px ${batchTheme.glow}`"
+          >
+            <div class="pack-sheen absolute inset-0 rounded-3xl overflow-hidden"></div>
+            <svg class="w-16 h-16 relative" :class="batchTheme.text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M4 7.5l8 4.5 8-4.5" />
+            </svg>
+          </button>
+          <p class="mt-5 text-sm font-semibold text-white" :style="cracking ? '' : 'animation: pulse-soft 1.6s ease-in-out infinite'">
+            {{ cracking ? 'Abriendo…' : 'Tocá para abrir' }}
+          </p>
+        </div>
+
+        <!-- REVELACIÓN: la secuencia existente, sin cambios -->
+        <div v-else class="relative flex flex-col items-center text-center max-w-md w-full">
           <!-- Contador de la tanda -->
           <div v-if="total > 1" class="mb-3 transition-all duration-500" :class="phase >= 1 ? 'opacity-100' : 'opacity-0'">
             <span class="text-xs font-bold text-slate-300 bg-white/5 border border-white/10 rounded-full px-3 py-1">
@@ -251,4 +310,39 @@ export default {
 .overlay-fade-enter-active { transition: opacity 0.3s ease; }
 .overlay-fade-leave-active { transition: opacity 0.25s ease; }
 .overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
+
+/* Sobre cerrado: bg sutil + respiración lenta para invitar al tap */
+.pack-box { background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(0,0,0,0.25)); cursor: pointer; }
+.pack-idle { animation: pack-breathe 2.2s ease-in-out infinite, pack-wiggle 4.5s ease-in-out infinite; }
+.pack-cracking { animation: pack-shake 0.5s ease-in-out; cursor: default; }
+@keyframes pack-breathe {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.18); }
+}
+@keyframes pack-wiggle {
+  0%, 92%, 100% { transform: rotate(0deg); }
+  94% { transform: rotate(-2deg); }
+  97% { transform: rotate(2deg); }
+}
+@keyframes pack-shake {
+  0% { transform: scale(1) rotate(0deg); }
+  20% { transform: scale(1.03) rotate(-3deg); }
+  40% { transform: scale(1.05) rotate(3deg); }
+  60% { transform: scale(1.08) rotate(-4deg); }
+  80% { transform: scale(1.15) rotate(2deg); }
+  100% { transform: scale(1.5) rotate(0deg); opacity: 0; }
+}
+.pack-sheen { background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.25) 48%, transparent 66%); background-size: 220% 220%; animation: pack-sheen-sweep 2.8s ease-in-out infinite; }
+@keyframes pack-sheen-sweep {
+  0% { background-position: 120% 0%; }
+  55%, 100% { background-position: -20% 0%; }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pack-idle, .pack-cracking, .pack-sheen { animation: none; }
+}
 </style>
