@@ -1,5 +1,5 @@
-// RANGOS (tiers) de Goaldemy. Paleta "escalera de prestigio" (Propuesta A):
-// bronce → plata → oro (metales) → esmeralda → cian → campeón (marca Goaldemy).
+// RANGOS (tiers) de Fulvo. Paleta "escalera de prestigio" (Propuesta A):
+// bronce → plata → oro (metales) → esmeralda → cian → campeón (marca Fulvo).
 export const TIERS = [
   { key: 'aficionado', label: 'Aficionado', minLevel: 1, maxLevel: 9, color: 'bronze', emoji: '🥉', image: '/badges/aficionado.svg' },
   { key: 'juvenil', label: 'Juvenil', minLevel: 10, maxLevel: 19, color: 'silver', emoji: '🥈', image: '/badges/juvenil.svg' },

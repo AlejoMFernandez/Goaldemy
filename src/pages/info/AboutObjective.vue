@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import GoaldemyLogo from '../../components/GoaldemyLogo.vue'
+import FulvoLogo from '../../components/FulvoLogo.vue'
 </script>
 
 <template>

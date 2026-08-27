@@ -4,7 +4,7 @@
             <!-- Header -->
             <div class="mb-8">
                 <h1 class="text-4xl font-bold text-white mb-2">Panel de Administración</h1>
-                <p class="text-slate-400">Gestión completa de GOALDEMY</p>
+                <p class="text-slate-400">Gestión completa de FULVO</p>
             </div>
 
             <!-- Loading State -->

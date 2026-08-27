@@ -145,7 +145,7 @@ export default {
       </span>
       <div>
         <h1 class="font-display font-bold text-white text-lg leading-tight">Ranking global</h1>
-        <p class="text-xs text-slate-500">Los mejores de Goaldemy</p>
+        <p class="text-xs text-slate-500">Los mejores de Fulvo</p>
       </div>
     </div>
     <div class="mb-4 px-4 sm:px-0 inline-flex rounded-xl border border-white/10 bg-white/5 p-1">

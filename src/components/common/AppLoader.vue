@@ -1,12 +1,12 @@
 <script setup>
-import GoaldemyLogo from '../GoaldemyLogo.vue'
+import FulvoLogo from '../FulvoLogo.vue'
 </script>
 
 <template>
   <section class="min-h-[40vh] flex flex-col items-center justify-center gap-6">
     <!-- Animated Logo -->
     <div class="animate-pulse">
-      <GoaldemyLogo variant="icon" size="lg" />
+      <FulvoLogo variant="icon" size="lg" />
     </div>
     
     <!-- Loading dots animation -->

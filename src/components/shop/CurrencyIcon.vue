@@ -1,6 +1,6 @@
 <script setup>
 /**
- * Íconos SVG únicos de las monedas de Goaldemy (reemplazan los emojis ⚽/🏆):
+ * Íconos SVG únicos de las monedas de Fulvo (reemplazan los emojis ⚽/🏆):
  *  • fichas  — moneda blanda: ficha/token esmeralda con pelota de fútbol.
  *  • balones — moneda dura: Balón de Oro (esfera dorada sobre pedestal).
  * IDs de gradiente únicos por instancia para no colisionar cuando hay varios.

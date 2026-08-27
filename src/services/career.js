@@ -4,7 +4,7 @@
  * El fenómeno viral del momento (Copero) no gana por ser un juego de habilidad:
  * gana por fricción cero, sesión de ~2 minutos, y un resultado final que da
  * orgullo o vergüenza compartible ("¿podés superar mi carrera?"). Este motor
- * reproduce ese mecanismo pero corriendo DENTRO del ecosistema de Goaldemy:
+ * reproduce ese mecanismo pero corriendo DENTRO del ecosistema de Fulvo:
  * usa la base real de equipos (players.js), entrega XP/Fichas al terminar,
  * y el resultado se comparte con el mismo motor viral que el Reto del día.
  *
@@ -321,7 +321,7 @@ export function finalizeCareer(state) {
 export function buildCareerShareText(summary, refCode = '') {
   const link = refCode ? `${shareBaseUrl()}/register?ref=${encodeURIComponent(refCode)}` : `${shareBaseUrl()}/carrera`
   return [
-    `GOALDEMY ⚽ · Modo Carrera`,
+    `FULVO ⚽ · Modo Carrera`,
     `${summary.grade.label} — ${summary.name}`,
     `⚽ ${summary.totals.goals} goles   🅰️ ${summary.totals.assists} asistencias   🏟 ${summary.totals.apps} partidos`,
     `🏆 ${summary.trophies.length} títulos   📈 pico de ${summary.peakRating} de rating   💰 €${summary.peakValueM}M`,

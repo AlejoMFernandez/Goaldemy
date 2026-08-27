@@ -566,7 +566,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
     <div class="relative z-10 max-w-5xl mx-auto px-6 mb-24">
       <div class="text-center mb-10">
         <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3">{{ state.isAuthenticated ? 'Mejorá tu plan' : 'Elegí tu plan' }}</h2>
-        <p class="text-slate-400 text-sm max-w-md mx-auto">Más desafíos, power-ups y bonus de XP para dominar Goaldemy</p>
+        <p class="text-slate-400 text-sm max-w-md mx-auto">Más desafíos, power-ups y bonus de XP para dominar Fulvo</p>
       </div>
       <div v-if="sortedPlans.length" class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <PlanCard

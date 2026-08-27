@@ -127,7 +127,7 @@ onMounted(async () => {
       <div class="relative max-w-5xl mx-auto px-4 pt-12 pb-6 text-center">
         <h1 class="text-3xl sm:text-4xl font-extrabold mb-3">Elegí tu plan</h1>
         <p class="text-slate-400 max-w-lg mx-auto">
-          Más XP, power-ups, cosméticos exclusivos y el Pase de Batalla PRO para dominar Goaldemy. Cancelá cuando quieras.
+          Más XP, power-ups, cosméticos exclusivos y el Pase de Batalla PRO para dominar Fulvo. Cancelá cuando quieras.
         </p>
       </div>
     </div>
@@ -315,7 +315,7 @@ onMounted(async () => {
                     />
                     <p v-if="emailError" class="text-xs text-red-400 mt-1.5">{{ emailError }}</p>
                     <p v-else class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
-                      Usá el e-mail con el que iniciás sesión en Mercado Pago. Tu plan de Goaldemy se activa igual en <strong class="text-slate-400">{{ accountEmail }}</strong>.
+                      Usá el e-mail con el que iniciás sesión en Mercado Pago. Tu plan de Fulvo se activa igual en <strong class="text-slate-400">{{ accountEmail }}</strong>.
                     </p>
                   </div>
                 </Transition>

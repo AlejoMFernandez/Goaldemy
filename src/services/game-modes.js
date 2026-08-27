@@ -1,7 +1,7 @@
 /**
  * SERVICIO DE MODOS DE JUEGO
  * 
- * Gestiona los diferentes modos de juego de Goaldemy:
+ * Gestiona los diferentes modos de juego de Fulvo:
  * - NORMAL: Juego libre, otorga XP
  * - FREE: Juego de práctica, NO otorga XP
  * - CHALLENGE: Desafío diario, 1 intento por día por juego

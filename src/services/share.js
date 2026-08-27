@@ -2,7 +2,7 @@
  * SERVICIO DE COMPARTIR (motor viral)
  *
  * Genera el texto estilo Wordle que el jugador comparte en X / WhatsApp / IG.
- * NO revela respuestas: solo una barra de emojis con el puntaje + el link a Goaldemy.
+ * NO revela respuestas: solo una barra de emojis con el puntaje + el link a Fulvo.
  * Cada resultado compartido es un cartel publicitario gratis de la app.
  *
  * Usado por GameSummaryPopup (juegos logueados) y la página /reto (invitados).
@@ -11,6 +11,9 @@
 /**
  * Origen real del sitio para el link compartido. Soporta dominio propio a futuro;
  * en dev (localhost/con puerto) cae al dominio de producción.
+ * TODO(rebrand Fulvo): pisar por 'https://fulvo.com.ar' (o el dominio final) en
+ * cuanto esté comprado y apuntando en Vercel — hoy sigue en goaldemy.vercel.app
+ * a propósito para no romper los links que ya se compartieron.
  */
 export function shareBaseUrl() {
   try {
@@ -45,7 +48,7 @@ export function buildShareText({ gameName = '', corrects = 0, total = 0, accurac
   const name = gameName ? ` · ${gameName}` : ''
   const link = refCode ? `${shareBaseUrl()}/register?ref=${encodeURIComponent(refCode)}` : shareBaseUrl()
   return [
-    `GOALDEMY ⚽${name}`,
+    `FULVO ⚽${name}`,
     rows.join('\n'),
     `✅ ${got}/${t}   🎯 ${accuracy}%   🔥 x${maxStreak || 0}`,
     won ? '¿Podés superarme? 👇' : '¿Le ganás a mi intento? 👇',
@@ -60,7 +63,7 @@ export function buildShareText({ gameName = '', corrects = 0, total = 0, accurac
 export async function shareOrCopy(text) {
   try {
     if (navigator.share) {
-      await navigator.share({ title: 'GOALDEMY', text })
+      await navigator.share({ title: 'FULVO', text })
       return 'shared'
     }
   } catch (e) {

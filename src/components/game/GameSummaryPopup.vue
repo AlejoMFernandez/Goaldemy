@@ -92,7 +92,7 @@ export default {
 
     // --- Compartir resultado (efecto Wordle) -------------------------------
     // Genera un texto listo para pegar en X / WhatsApp / IG. NO revela respuestas:
-    // solo una barra de emojis con el puntaje + el link a Goaldemy. Este es el
+    // solo una barra de emojis con el puntaje + el link a Fulvo. Este es el
     // motor viral de la app (cada jugador se vuelve un cartel gratis).
     const shared = ref(false)
 

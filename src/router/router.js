@@ -30,7 +30,7 @@ const FootballGrid = () => import('../pages/games/FootballGrid.vue');
 const StatChallenge = () => import('../pages/games/StatChallenge.vue');
 const Leaderboards = () => import('../pages/Leaderboards.vue');
 const AboutMe = () => import('../pages/info/AboutMe.vue');
-const AboutGoaldemy = () => import('../pages/info/AboutGoaldemy.vue');
+const AboutFulvo = () => import('../pages/info/AboutFulvo.vue');
 const AboutObjective = () => import('../pages/info/AboutObjective.vue');
 const NotFound = () => import('../pages/NotFound.vue');
 const PlayPoints = () => import('../pages/PlayPoints.vue');
@@ -84,7 +84,7 @@ const routes = [
     { path: '/admin', component: AdminPanel, meta: { requiresAuth: true, requiresAdmin: true, zone: 'data' } },
     // About / Info
     { path: '/about/me', component: AboutMe, meta: { zone: 'hub' } },
-    { path: '/about/goaldemy', component: AboutGoaldemy, meta: { zone: 'hub' } },
+    { path: '/about/fulvo', component: AboutFulvo, meta: { zone: 'hub' } },
     { path: '/about/objetivo', component: AboutObjective, meta: { zone: 'hub' } },
     // Play landing pages
     { path: '/play/points', component: PlayPoints, meta: { requiresAuth: true, zone: 'hub' } },

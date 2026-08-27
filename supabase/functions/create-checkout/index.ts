@@ -33,7 +33,7 @@ serve(async (req) => {
     }
 
     // Mail de facturación opcional: permite pagar con una cuenta de Mercado Pago
-    // cuyo e-mail sea distinto al de Goaldemy. Si no viene o es inválido, usamos el de la cuenta.
+    // cuyo e-mail sea distinto al de Fulvo. Si no viene o es inválido, usamos el de la cuenta.
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (billing_email && !emailRe.test(String(billing_email).trim())) {
       return new Response(JSON.stringify({ error: 'El e-mail de facturación no es válido' }), {
@@ -88,7 +88,7 @@ async function createMercadoPagoCheckout(plan: any, user: any, frontendUrl: stri
   if (!accessToken) throw new Error('MERCADOPAGO_ACCESS_TOKEN no configurado')
 
   const body = {
-    reason: `Goaldemy ${plan.name}`,
+    reason: `Fulvo ${plan.name}`,
     auto_recurring: {
       frequency: 1,
       frequency_type: 'months',

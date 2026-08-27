@@ -65,8 +65,8 @@ export default {
   </RouterLink>
   <div class="w-full max-w-md">
     <div class="text-center mb-6">
-      <img src="/iconclaro.png" alt="Goaldemy" class="mx-auto h-auto w-12 mb-2" />
-      <h1 class="text-2xl font-bold">Iniciar sesión en GOALDEMY</h1>
+      <img src="/iconclaro.png" alt="Fulvo" class="mx-auto h-auto w-12 mb-2" />
+      <h1 class="text-2xl font-bold">Iniciar sesión en FULVO</h1>
       <p class="text-slate-300 text-sm">Volvé a jugar y seguir sumando XP</p>
     </div>
 

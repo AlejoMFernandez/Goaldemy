@@ -1,5 +1,5 @@
 <script setup>
-import GoaldemyLogo from '../../components/GoaldemyLogo.vue'
+import FulvoLogo from '../../components/FulvoLogo.vue'
 </script>
 
 <template>
@@ -25,13 +25,13 @@ import GoaldemyLogo from '../../components/GoaldemyLogo.vue'
           <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-sm p-8 text-center sticky top-24">
             <img
               src="/me.jpeg"
-              alt="Foto del creador de GOALDEMY"
+              alt="Foto del creador de FULVO"
               class="w-40 h-40 mx-auto rounded-full object-cover ring-4 ring-white/10 mb-4 shadow-2xl"
               loading="lazy"
             />
             <h2 class="text-white font-bold text-xl tracking-tight mb-2">Alejo Fernández</h2>
             <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold text-cyan-300 border border-cyan-400/30 bg-cyan-500/10">
-              Creador de GOALDEMY
+              Creador de FULVO
             </span>
             <p class="mt-6 text-slate-300 text-sm leading-relaxed">
               Desarrollador y fanático del fútbol. Creo productos que combinan aprendizaje, diseño y comunidad.
@@ -84,7 +84,7 @@ import GoaldemyLogo from '../../components/GoaldemyLogo.vue'
         <article class="lg:col-span-2 space-y-8">
           <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-sm p-8">
             <p class="text-slate-300 leading-relaxed mb-6">
-              <strong>GOALDEMY</strong> nació como un proyecto personal para aprender mientras jugaba. La idea era simple: usar el fútbol 
+              <strong>FULVO</strong> nació como un proyecto personal para aprender mientras jugaba. La idea era simple: usar el fútbol
               como excusa para entrenar memoria, estimación y reconocimiento visual.
             </p>
 

@@ -50,7 +50,7 @@ export default {
   </RouterLink>
   <div class="w-full max-w-md">
     <div class="text-center mb-6">
-      <img src="/iconclaro.png" alt="Goaldemy" class="mx-auto h-auto w-12 mb-2" />
+      <img src="/iconclaro.png" alt="Fulvo" class="mx-auto h-auto w-12 mb-2" />
       <h1 class="text-2xl font-bold">Restablecer contraseña</h1>
       <p class="text-slate-300 text-sm">Ingresá una nueva contraseña para tu cuenta.</p>
     </div>

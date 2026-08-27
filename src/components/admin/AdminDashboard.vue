@@ -1,7 +1,7 @@
 <script setup>
 /**
  * ADMIN — DASHBOARD
- * KPIs que sirven para gestionar Goaldemy: ingresos (MRR), suscriptores
+ * KPIs que sirven para gestionar Fulvo: ingresos (MRR), suscriptores
  * PRO, conversión, actividad (DAU / partidas), altas por día, mix por
  * plan y proveedor, top juegos y top XP. Una sola llamada al RPC
  * get_admin_dashboard (ver supabase/mejoras11-admin-dashboard.sql).

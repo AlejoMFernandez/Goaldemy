@@ -11,7 +11,7 @@ import { listIncomingRequests, acceptRequest, blockRequest } from '../services/c
 import { getPublicProfilesByIds } from '../services/user-profiles';
 import { getEquippedCosmeticsBatch } from '../services/cosmetics';
 import { isAdmin } from '../services/admin';
-import GoaldemyLogo from './GoaldemyLogo.vue';
+import FulvoLogo from './FulvoLogo.vue';
 import UserAvatar from './common/UserAvatar.vue';
 import GlobalSearchResults from './GlobalSearchResults.vue';
 import { getUnclaimedCount } from '../stores/notifications';
@@ -21,7 +21,7 @@ export default {
   name: 'AppNavBar',
   components: {
     RouterLink,
-    GoaldemyLogo,
+    FulvoLogo,
     UserAvatar,
     GlobalSearchResults
   },
@@ -456,7 +456,7 @@ export default {
         <div class="border-b border-white/10 bg-gradient-to-b from-slate-900/70 to-slate-900/30 backdrop-blur supports-[backdrop-filter]:bg-slate-900/40">
             <nav class="container mx-auto flex items-center justify-between px-4 py-4 gap-3">
                 <RouterLink to="/" class="flex-none">
-                    <GoaldemyLogo variant="full" size="sm" :animated="true" />
+                    <FulvoLogo variant="full" size="sm" :animated="true" />
                 </RouterLink>
                 <!-- Mobile controls: notifications + menu button -->
                 <div class="lg:hidden flex items-center gap-2 flex-1 justify-end">
@@ -527,8 +527,8 @@ export default {
                                 <div class="nav-menu-item-title">Equipos y Jugadores</div>
                                 <p class="nav-menu-item-sub">Explorá plantillas, valores y datos.</p>
                             </RouterLink>
-                            <RouterLink @click="infoOpen=false" to="/about/goaldemy" class="nav-menu-item">
-                                <div class="nav-menu-item-title">¿Qué es Goaldemy?</div>
+                            <RouterLink @click="infoOpen=false" to="/about/fulvo" class="nav-menu-item">
+                                <div class="nav-menu-item-title">¿Qué es Fulvo?</div>
                                 <p class="nav-menu-item-sub">La idea detrás de la plataforma.</p>
                             </RouterLink>
                             <RouterLink @click="infoOpen=false" to="/about/objetivo" class="nav-menu-item">
@@ -796,7 +796,7 @@ export default {
                                                         <ul class="mt-1 pl-3 flex flex-col gap-1 text-slate-300">
                                                             <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/teams">Equipos y Jugadores</RouterLink></li>
                                                             <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/about/me">¿Quién soy?</RouterLink></li>
-                                                            <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/about/goaldemy">¿Qué es Goaldemy?</RouterLink></li>
+                                                            <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/about/fulvo">¿Qué es Fulvo?</RouterLink></li>
                                                             <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/about/objetivo">Objetivo</RouterLink></li>
                                                         </ul>
                                                     </details>

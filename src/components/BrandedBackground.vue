@@ -1,5 +1,5 @@
 <script setup>
-// Branded pattern background - identidad visual distintiva de GOALDEMY
+// Branded pattern background - identidad visual distintiva de FULVO
 </script>
 
 <template>

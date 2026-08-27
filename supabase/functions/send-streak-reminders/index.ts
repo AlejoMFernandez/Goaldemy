@@ -4,8 +4,8 @@
 //
 // Secrets necesarios (Project Settings > Edge Functions > Secrets):
 //   RESEND_API_KEY      - cuenta en resend.com con un dominio verificado
-//   STREAK_EMAIL_FROM    - ej: "Goaldemy <hola@tudominio.com>" (debe matchear el dominio de Resend)
-//   FRONTEND_URL          - ej: https://goaldemy.vercel.app (para el botón "Jugar ahora")
+//   STREAK_EMAIL_FROM    - ej: "Fulvo <hola@tudominio.com>" (debe matchear el dominio de Resend)
+//   FRONTEND_URL          - ej: https://fulvo.com.ar (para el botón "Jugar ahora")
 //   CRON_SECRET           - string cualquiera; el mismo valor va en el header del cron
 // SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY ya vienen inyectados automáticamente.
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
@@ -31,7 +31,8 @@ serve(async (req) => {
 
     const resendKey = Deno.env.get('RESEND_API_KEY')
     if (!resendKey) throw new Error('RESEND_API_KEY no configurado')
-    const from = Deno.env.get('STREAK_EMAIL_FROM') || 'Goaldemy <onboarding@resend.dev>'
+    const from = Deno.env.get('STREAK_EMAIL_FROM') || 'Fulvo <onboarding@resend.dev>'
+    // TODO(rebrand Fulvo): pisar por 'https://fulvo.com.ar' en cuanto el dominio esté andando.
     const frontendUrl = Deno.env.get('FRONTEND_URL') || 'https://goaldemy.vercel.app'
 
     const supabase = createClient(
@@ -75,17 +76,17 @@ async function sendReminderEmail({ resendKey, from, frontendUrl, to, name, strea
   const html = `
     <div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 480px; margin: 0 auto; background:#0f172a; color:#e2e8f0; border-radius:16px; overflow:hidden;">
       <div style="padding: 28px 28px 8px;">
-        <p style="font-size:13px; letter-spacing:0.06em; text-transform:uppercase; color:#fbbf24; font-weight:700; margin:0 0 12px;">GOALDEMY ⚽</p>
+        <p style="font-size:13px; letter-spacing:0.06em; text-transform:uppercase; color:#fbbf24; font-weight:700; margin:0 0 12px;">FULVO ⚽</p>
         <h1 style="font-size:22px; margin:0 0 12px; color:#fff;">¡Che ${firstName}, no dejes que se corte!</h1>
         <p style="font-size:15px; line-height:1.6; color:#cbd5e1; margin:0 0 20px;">
-          Llevás <strong style="color:#fbbf24;">${streak} días seguidos</strong> jugando en Goaldemy.
+          Llevás <strong style="color:#fbbf24;">${streak} días seguidos</strong> jugando en Fulvo.
           Si hoy no jugás al menos un desafío, mañana arrancás de cero.
         </p>
         <a href="${frontendUrl}/play/points" style="display:inline-block; background:linear-gradient(90deg,#f59e0b,#d97706); color:#0f172a; font-weight:800; text-decoration:none; padding:12px 24px; border-radius:12px; font-size:14px;">
           Jugar ahora y mantener la racha
         </a>
         <p style="font-size:12px; color:#64748b; margin:28px 0 0;">
-          Recibiste este email porque tenés una racha activa en Goaldemy.
+          Recibiste este email porque tenés una racha activa en Fulvo.
         </p>
       </div>
     </div>
