@@ -11,16 +11,13 @@
 /**
  * Origen real del sitio para el link compartido. Soporta dominio propio a futuro;
  * en dev (localhost/con puerto) cae al dominio de producción.
- * TODO(rebrand Fulvo): pisar por 'https://fulvo.com.ar' (o el dominio final) en
- * cuanto esté comprado y apuntando en Vercel — hoy sigue en goaldemy.vercel.app
- * a propósito para no romper los links que ya se compartieron.
  */
 export function shareBaseUrl() {
   try {
     const o = window.location?.origin || ''
     if (o && !/localhost|127\.0\.0\.1|:\d{2,5}$/.test(o)) return o
   } catch {}
-  return 'https://goaldemy.vercel.app'
+  return 'https://fulvo.com.ar'
 }
 
 /**

@@ -32,8 +32,7 @@ serve(async (req) => {
     const resendKey = Deno.env.get('RESEND_API_KEY')
     if (!resendKey) throw new Error('RESEND_API_KEY no configurado')
     const from = Deno.env.get('STREAK_EMAIL_FROM') || 'Fulvo <onboarding@resend.dev>'
-    // TODO(rebrand Fulvo): pisar por 'https://fulvo.com.ar' en cuanto el dominio esté andando.
-    const frontendUrl = Deno.env.get('FRONTEND_URL') || 'https://goaldemy.vercel.app'
+    const frontendUrl = Deno.env.get('FRONTEND_URL') || 'https://fulvo.com.ar'
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
