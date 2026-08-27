@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import GoaldemyLogo from '../../components/GoaldemyLogo.vue'
+import FulvoLogo from '../../components/FulvoLogo.vue'
 </script>
 
 <template>
@@ -13,9 +13,9 @@ import GoaldemyLogo from '../../components/GoaldemyLogo.vue'
     <div class="relative z-10 max-w-6xl mx-auto px-6">
       <!-- Header -->
       <div class="mb-8 flex flex-col items-center text-center">
-        <GoaldemyLogo variant="icon" size="lg" class="mb-4" />
+        <FulvoLogo variant="icon" size="lg" class="mb-4" />
         <h1 class="text-2xl md:text-3xl font-bold text-white mb-3">
-          ¿Qué es GOALDEMY?
+          ¿Qué es FULVO?
         </h1>
         <div class="h-1 w-20 rounded-full bg-gradient-to-r from-cyan-400 to-indigo-400"></div>
       </div>

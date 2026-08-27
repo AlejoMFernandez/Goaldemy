@@ -35,7 +35,7 @@ const textClass = computed(() => sizeConfig[props.size].text)
     <img
       v-if="variant === 'full' || variant === 'icon'"
       src="/iconclaro.png"
-      alt="Goaldemy"
+      alt="Fulvo"
       :class="[
         iconClass,
         'w-auto object-contain drop-shadow-[0_0_10px_rgba(34,211,238,0.25)]',
@@ -53,7 +53,7 @@ const textClass = computed(() => sizeConfig[props.size].text)
       ]"
       style="font-family: 'Montserrat', sans-serif;"
     >
-      <span class="text-white">GOAL</span><span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">DEMY</span>
+      <span class="text-white">FUL</span><span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">VO</span>
     </span>
   </div>
 </template>
