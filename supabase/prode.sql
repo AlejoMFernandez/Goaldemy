@@ -83,3 +83,63 @@ END$$;
 
 REVOKE ALL ON FUNCTION public.submit_prode_pick(TEXT, TEXT, TEXT, TEXT, SMALLINT, SMALLINT, TIMESTAMPTZ, TEXT) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.submit_prode_pick(TEXT, TEXT, TEXT, TEXT, SMALLINT, SMALLINT, TIMESTAMPTZ, TEXT) TO authenticated;
+
+CREATE TABLE IF NOT EXISTS public.prode_champion_picks (
+  user_id          UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  competition      TEXT NOT NULL,
+  team_id          TEXT NOT NULL,
+  team_name        TEXT NOT NULL,
+  locked_at        TIMESTAMPTZ NOT NULL,
+  result           TEXT CHECK (result IN ('win', 'loss')),
+  xp_awarded       SMALLINT,
+  fichas_awarded   SMALLINT,
+  balones_awarded  SMALLINT,
+  settled_at       TIMESTAMPTZ,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, competition)
+);
+
+CREATE INDEX IF NOT EXISTS idx_prode_champion_settlement
+  ON public.prode_champion_picks (competition, settled_at)
+  WHERE settled_at IS NULL;
+
+ALTER TABLE public.prode_champion_picks ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "prode_champion_picks read own" ON public.prode_champion_picks;
+CREATE POLICY "prode_champion_picks read own" ON public.prode_champion_picks
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- RPC cliente: elige (o cambia, hasta el lock) el campeón para un torneo.
+CREATE OR REPLACE FUNCTION public.submit_prode_champion_pick(
+  p_competition TEXT,
+  p_team_id     TEXT,
+  p_team_name   TEXT,
+  p_locked_at   TIMESTAMPTZ
+)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  uid UUID := auth.uid();
+BEGIN
+  IF uid IS NULL THEN
+    RETURN json_build_object('ok', false, 'error', 'auth');
+  END IF;
+  IF p_locked_at <= now() THEN
+    RETURN json_build_object('ok', false, 'error', 'locked');
+  END IF;
+
+  INSERT INTO public.prode_champion_picks (user_id, competition, team_id, team_name, locked_at)
+  VALUES (uid, p_competition, p_team_id, p_team_name, p_locked_at)
+  ON CONFLICT (user_id, competition) DO UPDATE SET
+    team_id   = EXCLUDED.team_id,
+    team_name = EXCLUDED.team_name,
+    locked_at = EXCLUDED.locked_at
+  WHERE public.prode_champion_picks.locked_at > now() AND public.prode_champion_picks.settled_at IS NULL;
+
+  RETURN json_build_object('ok', true);
+END$$;
+
+REVOKE ALL ON FUNCTION public.submit_prode_champion_pick(TEXT, TEXT, TEXT, TIMESTAMPTZ) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.submit_prode_champion_pick(TEXT, TEXT, TEXT, TIMESTAMPTZ) TO authenticated;
