@@ -5,7 +5,8 @@
 El owner pidió gamificar los datos de partidos reales que la app ya trae vía FotMob (hoy usados solo para el hub de competiciones: tabla, goleadores, bracket del Mundial). La idea: que el usuario prediga resultados de partidos y quién sale campeón, y gane XP, Fichas y (en el caso del campeón) Balón de Oro por acertar.
 
 Esto es una feature nueva de punta a punta — no hay nada de "prode" en el código hoy. Se apoya en infraestructura ya existente y validada en esta misma conversación:
-- `src/services/fotmob.js` — datos de partidos en vivo (fixtures, resultados, bracket) para las ligas marcadas `active: true` en `LEAGUES` (hoy, el Mundial).
+- `src/services/fotmob.js` — datos de partidos en vivo (fixtures, resultados, bracket) por id de liga de FotMob.
+- `src/services/competitions.js` — catálogo de competiciones navegables (`COMPETITIONS`), con `slug`, `id` de FotMob, `status` ('live'/'soon') y `bracket` (true si tiene fase eliminatoria con final).
 - El patrón de cron + Edge Function ya usado en `streak-reminder.sql` / `supabase/functions/send-streak-reminders/` para trabajos server-side programados.
 - El sistema de monedas (`award_xp`, `award_fichas`, `add_balones` en `mejoras11-currency-shop.sql`) y de logros (`achievement-triggers.js`).
 
@@ -13,9 +14,11 @@ Esto es una feature nueva de punta a punta — no hay nada de "prode" en el cód
 
 ## Alcance
 
+**Corrección de alcance vs. la primera versión de este spec:** la fuente real de competiciones "vivas" es `src/services/competitions.js` (`COMPETITIONS`, ~24 torneos con `status:'live'`), no el catálogo `LEAGUES` de `fotmob.js` (más chico y desactualizado). El pronóstico de partidos aplica a cualquier competición `status:'live'`; el pick de campeón solo aplica a las que tienen `bracket:true` (Mundial, Copa América, Champions, Libertadores, Sudamericana, Mundial de Clubes, AFC CL, FA Cup, Copa del Rey, Coppa Italia, DFB-Pokal, Coupe de France, EFL Cup, Liga Argentina) — son las que terminan en una final real de la que sale un campeón. Las ligas de todos-contra-todos (`bracket:false`) no tienen pick de campeón en esta versión: el campeón se decide por tabla acumulada a fin de temporada, es una lógica distinta que queda fuera de esta spec.
+
 **Incluye:**
-- Pronóstico de resultado exacto por partido, para los partidos de la competición activa.
-- Pronóstico de campeón del torneo (un pick por usuario y torneo).
+- Pronóstico de resultado exacto por partido, para los partidos de cualquier competición `status:'live'` en `competitions.js`.
+- Pronóstico de campeón del torneo, para las competiciones con `bracket:true` (un pick por usuario y torneo).
 - Liquidación server-side automática contra los resultados reales de FotMob.
 - Recompensas (XP, Fichas, Balón de Oro solo para el campeón) y logros nuevos.
 - Presentación visual de la recompensa potencial ANTES de que el usuario cargue el pronóstico (pedido explícito del owner).
@@ -25,7 +28,8 @@ Esto es una feature nueva de punta a punta — no hay nada de "prode" en el cód
 - Extender el pronóstico a los 14 juegos de trivia (son un sistema de datos congelado, no en vivo — no aplica).
 - Ranking/leaderboard específico de PRODE entre amigos (queda anotado como posible fase 2, no bloquea esta).
 - Ítems nuevos en la tienda gastables con Balón de Oro — la spec solo cubre el lado de "ganar" la moneda, no el catálogo de qué comprar con ella (trabajo aparte de Tienda).
-- Ampliar el pronóstico a ligas pausadas (`active: false`) — se activan solas cuando el owner las prenda en `LEAGUES`, sin cambios de código adicionales.
+- Ampliar el pronóstico a competiciones `status:'soon'` — se activan solas cuando el owner las pase a `'live'` en `competitions.js`, sin cambios de código adicionales.
+- Pick de campeón para competiciones de liga (`bracket:false`, ej. Premier League) — el campeón se decide por tabla acumulada a fin de temporada, lógica distinta que queda fuera de esta spec.
 
 ## Modelo de datos
 
@@ -35,7 +39,7 @@ Dos tablas nuevas en `supabase/prode.sql`, siguiendo el mismo patrón (RLS, `SEC
 prode_picks (
   id            UUID PK default gen_random_uuid(),
   user_id       UUID NOT NULL REFERENCES auth.users(id),
-  competition   TEXT NOT NULL,        -- slug de LEAGUES, ej. 'world-cup'
+  competition   TEXT NOT NULL,        -- slug de competitions.js, ej. 'world-cup'
   match_id      TEXT NOT NULL,        -- id de FotMob (string, no UUID propio)
   home_pick     SMALLINT NOT NULL,
   away_pick     SMALLINT NOT NULL,
@@ -61,6 +65,8 @@ prode_champion_picks (
 ```
 
 RLS: cada usuario lee/escribe solo sus propias filas (`auth.uid() = user_id`), igual que el resto de la app. La liquidación (UPDATE de `points`/`result` + otorgar recompensas) corre exclusivamente vía RPC `SECURITY DEFINER` llamada por la Edge Function con la service role — el cliente nunca escribe `points` ni `result` directamente.
+
+**Nota técnica confirmada contra la base real:** `award_xp()` y `unlock_achievement()` (ya existentes) usan `auth.uid()` internamente — sirven para que un usuario logueado se autootorgue recompensas por sus propias acciones, pero no aceptan un UID explícito, así que no se pueden llamar desde un job server-side sin sesión. `award_fichas(p_uid,...)` y `add_balones(p_uid,...)` sí toman UID explícito y se reutilizan tal cual. Para XP y logros durante la liquidación, las RPCs nuevas de este spec escriben directo en `xp_events` y `user_achievements` (mismas tablas que ya usan `award_xp`/`unlock_achievement`), con el UID que corresponda — restringidas a `service_role`.
 
 ## Pronóstico de partidos
 
@@ -89,7 +95,7 @@ RLS: cada usuario lee/escribe solo sus propias filas (`auth.uid() = user_id`), i
 
 ## Pronóstico de campeón
 
-- **Dónde**: misma pestaña "Pronósticos", sección destacada arriba (antes de la lista de partidos) — un pick es un evento mucho más importante que un partido suelto y visualmente debe sentirse así.
+- **Dónde**: misma pestaña "Pronósticos", sección destacada arriba (antes de la lista de partidos) — solo visible si la competición tiene `bracket:true`. Un pick es un evento mucho más importante que un partido suelto y visualmente debe sentirse así.
 - **Elegir equipo**: grid de los equipos participantes del torneo (derivado de los fixtures ya cargados — no hace falta un endpoint nuevo). Un solo pick por usuario y torneo, vía RPC `submit_prode_champion_pick`.
 - **Lock**: se bloquea en el kickoff del PRIMER partido del torneo — el pick tiene que hacerse a ciegas, sin ninguna información de cómo vienen los grupos. Una vez bloqueado, la UI muestra el pick como "sellado" con el equipo elegido, sin opción de cambiarlo.
 - **Preview de recompensa, en grande** (pedido del owner) — un banner destacado arriba del grid, con el mismo peso visual que el popup de logro desbloqueado del resto de la app:
@@ -114,7 +120,7 @@ FotMob es una fuente externa en vivo — el cliente no puede ser la fuente de ve
 
 - **Nueva Edge Function** `supabase/functions/settle-prode/index.ts` (Deno). Pega directo a `https://www.fotmob.com` (mismo host que usa el proxy `/fotmob` en dev/prod — la función corre server-side, no tiene problema de CORS) reimplementando la mínima porción de `fetchFotMob`/`getAllMatches`/`getPlayoff` necesaria (buildId + `_next/data/.../fixtures.json`).
 - Cada corrida:
-  1. Trae los fixtures de la competición activa.
+  1. Trae los fixtures de cada competición `status:'live'` que tenga picks pendientes (para el pick de campeón, solo las `bracket:true`).
   2. Para cada partido `finished: true` con picks pendientes (`points IS NULL`) en `prode_picks`, calcula puntos, otorga XP/Fichas vía `award_xp`/`award_fichas`, marca `settled_at`.
   3. Si el partido de la FINAL del torneo está `finished: true`, determina el campeón (ganador de esa final) y liquida `prode_champion_picks` pendientes: otorga XP/Fichas/Balón (`award_xp`, `award_fichas`, `add_balones`) + logro `prode_champion` a los que acertaron, marca `result` (`win`/`loss`) a todos.
 - **Cron**: `pg_cron` + `pg_net` disparando la Edge Function cada 15-30 min, mismo bloque comentado que `streak-reminder.sql` (el owner lo descomenta y completa `<PROJECT_REF>`/`<CRON_SECRET>` cuando corra el SQL).
