@@ -4,7 +4,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import { supabase } from '../services/supabase'
 import { getAuthUser } from '../services/auth'
 import { fetchGames, gameRouteForSlug } from '../services/games'
-import { ACTIVE_LEAGUES, getTodayMatches, getUpcomingMatches } from '../services/fotmob'
+import { LEAGUES, ACTIVE_LEAGUES, getTodayMatches, getUpcomingMatches } from '../services/fotmob'
 import { getDailyChallenges, getDailyReward, getMonthlyPass } from '../services/rewards'
 import { getUserLevel } from '../services/xp'
 import { getEquippedCosmetics } from '../services/cosmetics'
@@ -13,6 +13,12 @@ import { getGameUnlockLevel, isGameUnlocked } from '../services/level-rewards'
 import { fetchPlans, getUserPlan } from '../services/premium'
 import UserAvatar from '../components/common/UserAvatar.vue'
 import GameCard from '../components/game/GameCard.vue'
+import MatchTicker from '../components/home/MatchTicker.vue'
+
+// Video de fondo del hero (local, optimizado — ver public/videoshero/).
+// Vacío = se usa el fondo con degradé en vez de video.
+const HERO_VIDEO_SRC = '/videoshero/hero-aerial.mp4'
+const HERO_VIDEO_POSTER = '/videoshero/hero-aerial-poster.jpg'
 // Async: pase, planes y modal de partido bajan en su propio chunk (deps pesadas
 // fuera del bundle inicial de la home). MonthlyPass trae su card + modal + datos.
 const MatchDetailModal = defineAsyncComponent(() => import('../components/match/MatchDetailModal.vue'))
@@ -31,6 +37,8 @@ const state = reactive({
   upcomingMatches: [],
   availability: {},   // por slug: estado del desafío de hoy (win/loss/available) — igual que el índice
   streaks: {},        // por slug: racha de victorias diarias
+  loadingTicker: false,
+  tickerRaw: [],       // partidos crudos de TODAS las ligas (no solo Mundial), para el ticker de arriba
 })
 
 // Dashboard del usuario logueado
@@ -58,6 +66,49 @@ function openMatch(match) {
 }
 
 const hasTodayMatches = computed(() => state.todayByLeague.some(l => l.matches.length > 0))
+
+// Ticker de partidos (arriba de todo, para todos): recorre TODAS las ligas
+// conocidas (no solo ACTIVE_LEAGUES/Mundial) y trae los PRÓXIMOS partidos de
+// cada una — no solo los de hoy, igual que la referencia (Copero también
+// muestra fechas de días siguientes, no exclusivamente "hoy"). Así el ticker
+// siempre tiene contenido aunque hoy no juegue nadie del Mundial.
+async function loadTickerMatches() {
+  state.loadingTicker = true
+  try {
+    const results = await Promise.allSettled(
+      Object.values(LEAGUES).map(l => getUpcomingMatches(l.id, 5).then(matches => ({ league: l, matches })))
+    )
+    state.tickerRaw = results
+      .filter(r => r.status === 'fulfilled')
+      .flatMap(r => r.value.matches.map(m => ({ ...m, league: r.value.league })))
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .slice(0, 24)
+  } catch (e) {
+    console.warn('[Landing] ticker load error', e)
+    state.tickerRaw = []
+  } finally {
+    state.loadingTicker = false
+  }
+}
+
+const tickerMatches = computed(() => state.tickerRaw.map((m, i) => {
+  const parts = (m.status?.score || '').split('-').map(s => s.trim())
+  const [homeScore, awayScore] = parts.length === 2 ? parts : [null, null]
+  const live = !!(m.status?.started && !m.status?.finished)
+  return {
+    id: m.id ?? i,
+    leagueLogo: `https://images.fotmob.com/image_resources/logo/leaguelogo/${m.league.id}.png`,
+    homeId: m.homeTeamId, homeName: m.homeTeam,
+    awayId: m.awayTeamId, awayName: m.awayTeam,
+    homeScore, awayScore,
+    isLive: live,
+    statusText: m.status?.finished ? 'FIN' : new Date(m.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }),
+  }
+}))
+
+// Video de fondo del hero: se descarga solo en pantallas grandes y si el
+// usuario no pidió menos movimiento — nunca se pide el archivo en mobile.
+const showHeroVideo = ref(false)
 
 // Rango/categoría por nivel (fuente única en tiers.js) para el hero
 const tier = computed(() => getTierForLevel(home.level))
@@ -230,8 +281,15 @@ let pollTimer = null
 onMounted(() => {
   load()
   if (state.isAuthenticated) loadUserHome()
+  loadTickerMatches()
   // Refrescar partidos del día cada 60s (marcador + minuto en vivo)
   pollTimer = setInterval(() => loadTodayByLeague(), 60000)
+
+  if (HERO_VIDEO_SRC) {
+    const wideEnough = window.matchMedia('(min-width: 640px)').matches
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    showHeroVideo.value = wideEnough && !reducedMotion
+  }
 })
 onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 </script>
@@ -239,33 +297,45 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 <template>
   <section class="relative min-h-screen overflow-hidden">
 
+    <!-- ══════════════════ Ticker de partidos (arriba de todo, para todos) ══════════════════ -->
+    <MatchTicker :matches="tickerMatches" :loading="state.loadingTicker" />
+
     <!-- ══════════════════ HERO ══════════════════ -->
-    <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-8">
-      <!-- Invitado: hero marketing (no tocar) -->
-      <div v-if="!state.isAuthenticated" class="text-center space-y-6">
-        <div class="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-sm text-amber-300 font-medium slide-up">
-          <span class="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
-          Copa del Mundo 2026 — EN VIVO
-        </div>
-        <h1 class="text-4xl sm:text-6xl font-extrabold text-white tracking-tight leading-[1.1]">
-          Jugá. Aprendé. <span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">Dominá.</span>
+    <!-- Invitado: hero inmersivo full-bleed (video de fondo secundario + degradé) -->
+    <div v-if="!state.isAuthenticated" class="relative overflow-hidden hero-fullbleed min-h-[520px] sm:min-h-[600px] flex items-center justify-center">
+      <div class="absolute inset-0 hero-aurora"></div>
+      <video
+        v-if="HERO_VIDEO_SRC && showHeroVideo"
+        class="absolute inset-0 w-full h-full object-cover hero-video"
+        :src="HERO_VIDEO_SRC"
+        :poster="HERO_VIDEO_POSTER"
+        autoplay muted loop playsinline preload="none"
+      ></video>
+      <div class="absolute inset-0 hero-scrim"></div>
+
+      <div class="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 text-center">
+        <h1 class="font-display text-5xl sm:text-7xl font-bold text-white tracking-tight leading-[0.98]">
+          Jugá. Aprendé.<br />
+          <span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">Dominá.</span>
         </h1>
-        <p class="text-slate-400 max-w-lg mx-auto text-base leading-relaxed">
-          Micro-desafíos de fútbol diarios — ganás XP, subís de rango y competís con el mundo.
+        <p class="text-slate-300 max-w-sm mx-auto text-base sm:text-lg leading-relaxed mt-6">
+          Micro-desafíos diarios de fútbol.
         </p>
-        <div class="flex flex-wrap gap-3 justify-center pt-2">
-          <RouterLink to="/register" class="group rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-7 py-3 font-semibold text-white text-sm transition-all hover:shadow-lg hover:shadow-indigo-500/30 hover:scale-105 active:scale-95">
+        <div class="flex flex-wrap gap-3 justify-center pt-8">
+          <RouterLink to="/register" class="group rounded-xl bg-white px-7 py-3.5 font-semibold text-slate-900 text-sm transition-all hover:shadow-lg hover:shadow-white/20 hover:scale-105 active:scale-95">
             Crear cuenta gratis
             <span class="inline-block ml-1 transition-transform group-hover:translate-x-0.5">→</span>
           </RouterLink>
-          <RouterLink to="/login" class="rounded-xl border border-white/15 px-6 py-3 font-semibold text-slate-200 text-sm transition-all hover:border-white/25 hover:bg-white/5 active:scale-95">
+          <RouterLink to="/login" class="rounded-xl border border-white/20 px-6 py-3.5 font-semibold text-slate-100 text-sm transition-all hover:border-white/35 hover:bg-white/10 active:scale-95">
             Iniciar sesión
           </RouterLink>
         </div>
       </div>
+    </div>
 
-      <!-- Logueado: hero XL estilo lobby (avatar grande + JUGAR + Tu día) -->
-      <div v-else class="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900/70 to-slate-800/40 p-6 sm:p-8 shadow-xl shadow-black/30">
+    <!-- Logueado: hero XL estilo lobby (avatar grande + JUGAR + Tu día) — sin cambios -->
+    <div v-else class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-8">
+      <div class="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900/70 to-slate-800/40 p-6 sm:p-8 shadow-xl shadow-black/30">
         <div class="pointer-events-none absolute -top-24 -right-20 w-72 h-72 rounded-full opacity-20" style="background: radial-gradient(circle, rgba(99,102,241,0.55), transparent 70%);"></div>
         <div class="pointer-events-none absolute -bottom-28 -left-16 w-72 h-72 rounded-full opacity-10" style="background: radial-gradient(circle, rgba(168,85,247,0.5), transparent 70%);"></div>
 
@@ -586,3 +656,64 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
     <MatchDetailModal :match="selectedMatch" :open="matchModalOpen" @close="matchModalOpen = false" />
   </section>
 </template>
+
+<style scoped>
+/* Rompe el max-width/padding de <main> para que el hero ocupe el 100% del viewport. */
+.hero-fullbleed {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}
+/* Fondo del hero de invitado: usado siempre (video, si hay, se superpone encima) */
+.hero-aurora {
+  background: var(--mb-950, #070a1a);
+  overflow: hidden;
+}
+.hero-aurora::before,
+.hero-aurora::after {
+  content: '';
+  position: absolute;
+  width: 60vw;
+  max-width: 520px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: .5;
+}
+.hero-aurora::before {
+  background: radial-gradient(circle, rgba(129,140,248,.55), transparent 70%);
+  top: -18%;
+  left: -12%;
+  animation: hero-drift-a 14s ease-in-out infinite;
+}
+.hero-aurora::after {
+  background: radial-gradient(circle, rgba(192,132,252,.45), transparent 70%);
+  bottom: -20%;
+  right: -10%;
+  animation: hero-drift-b 17s ease-in-out infinite;
+}
+@keyframes hero-drift-a {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(4%, 3%); }
+}
+@keyframes hero-drift-b {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-4%, -3%); }
+}
+/* El video queda como textura secundaria, no protagonista: más oscuro y
+   desaturado, para que el texto sea lo primero que se lea. */
+.hero-video {
+  filter: brightness(.55) saturate(.7) contrast(1.05);
+}
+/* Degradé oscuro por encima del video/aurora: garantiza legibilidad del texto
+   sea cual sea el contenido de fondo. */
+.hero-scrim {
+  background: linear-gradient(180deg, rgba(7,10,26,.65) 0%, rgba(7,10,26,.8) 45%, rgba(7,10,26,.95) 100%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-aurora::before, .hero-aurora::after { animation: none; }
+}
+</style>
