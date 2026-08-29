@@ -32,14 +32,18 @@
       <!-- Content -->
       <div v-else>
       <!-- Tabs (solo si hay fase de eliminación) -->
-      <div v-if="hasKnockout" class="mb-5 inline-flex rounded-xl border border-white/10 bg-slate-900/60 p-1">
-        <button @click="view='bracket'" class="rounded-lg px-4 py-1.5 text-sm font-semibold transition"
+      <div class="mb-5 inline-flex rounded-xl border border-white/10 bg-slate-900/60 p-1">
+        <button v-if="hasKnockout" @click="view='bracket'" class="rounded-lg px-4 py-1.5 text-sm font-semibold transition"
           :class="view==='bracket' ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-slate-900 shadow' : 'text-slate-300 hover:text-white'">
           Llaves
         </button>
         <button @click="view='grupos'" class="rounded-lg px-4 py-1.5 text-sm font-semibold transition"
           :class="view==='grupos' ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-slate-900 shadow' : 'text-slate-300 hover:text-white'">
           Tabla
+        </button>
+        <button @click="view='pronosticos'" class="rounded-lg px-4 py-1.5 text-sm font-semibold transition"
+          :class="view==='pronosticos' ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-slate-900 shadow' : 'text-slate-300 hover:text-white'">
+          Pronósticos
         </button>
       </div>
 
@@ -51,6 +55,13 @@
         </div>
         <KnockoutBracket v-if="leagueData?.playoff" :playoff="leagueData.playoff" />
         <TournamentBracket v-else :matches="leagueData?.allMatches || []" />
+      </div>
+
+      <!-- Pronósticos (PRODE) -->
+      <div v-show="view==='pronosticos'" class="surface-flat p-5">
+        <ProdeChampionPick v-if="comp && isChampionPickEnabled(comp)" :competition="comp.slug" :matches="leagueData?.allMatches || []" />
+        <h2 class="mb-3 text-xl font-bold text-white">Pronósticos de partidos</h2>
+        <ProdeMatchList v-if="comp" :competition="comp.slug" :matches="leagueData?.allMatches || []" />
       </div>
 
       <!-- Tabla + sidebar -->
@@ -293,10 +304,13 @@ import { getLeagueOverview } from '@/services/fotmob.js';
 import { competitionBySlug, LEAGUE_LOGO } from '@/services/competitions.js';
 import TournamentBracket from '@/components/league/TournamentBracket.vue';
 import KnockoutBracket from '@/components/league/KnockoutBracket.vue';
+import ProdeMatchList from '@/components/prode/ProdeMatchList.vue';
+import ProdeChampionPick from '@/components/prode/ProdeChampionPick.vue';
+import { isChampionPickEnabled } from '@/services/prode';
 
 export default {
   name: 'CompetitionPage',
-  components: { TournamentBracket, KnockoutBracket },
+  components: { TournamentBracket, KnockoutBracket, ProdeMatchList, ProdeChampionPick },
   setup() {
     const route = useRoute();
     const comp = computed(() => competitionBySlug(route.params.slug));
@@ -413,7 +427,7 @@ export default {
     return {
       comp, compLogo, leagueData, loading, error, currentRoundIndex, availableRounds, currentRoundName,
       groupedMatchesByDate, previousRound, nextRound, formatMatchTime, handleImageError, onLogoError,
-      view, hasKnockout,
+      view, hasKnockout, isChampionPickEnabled,
     };
   },
 };
