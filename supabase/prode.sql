@@ -143,3 +143,143 @@ END$$;
 
 REVOKE ALL ON FUNCTION public.submit_prode_champion_pick(TEXT, TEXT, TEXT, TIMESTAMPTZ) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.submit_prode_champion_pick(TEXT, TEXT, TEXT, TIMESTAMPTZ) TO authenticated;
+
+-- Igual que unlock_achievement() ya existente, pero con UID explícito para uso
+-- server-side (unlock_achievement() usa auth.uid() y no sirve para un cron).
+CREATE OR REPLACE FUNCTION public.unlock_achievement_for_user(
+  p_uid  UUID,
+  p_code TEXT,
+  p_meta JSONB DEFAULT '{}'::jsonb
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_ach_id   UUID;
+  v_points   INTEGER := 0;
+  v_inserted BOOLEAN := false;
+BEGIN
+  IF p_uid IS NULL THEN RETURN false; END IF;
+
+  SELECT id, points INTO v_ach_id, v_points FROM public.achievements WHERE code = p_code;
+  IF v_ach_id IS NULL THEN RETURN false; END IF;
+
+  INSERT INTO public.user_achievements (user_id, achievement_id, metadata)
+  VALUES (p_uid, v_ach_id, COALESCE(p_meta, '{}'::jsonb))
+  ON CONFLICT (user_id, achievement_id) DO NOTHING;
+
+  GET DIAGNOSTICS v_inserted = ROW_COUNT;
+
+  IF v_inserted THEN
+    INSERT INTO public.xp_events (user_id, game_id, amount, reason, session_id, meta)
+    VALUES (p_uid, NULL, v_points, 'achievement', NULL, jsonb_build_object('achievement', p_code));
+  END IF;
+
+  RETURN v_inserted;
+END$$;
+
+REVOKE ALL ON FUNCTION public.unlock_achievement_for_user(UUID, TEXT, JSONB) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.unlock_achievement_for_user(UUID, TEXT, JSONB) TO service_role;
+
+-- Liquida UN pronóstico de partido ya finalizado. Idempotente: si ya estaba
+-- liquidado (settled_at not null), no hace nada (UPDATE ... WHERE no matchea).
+CREATE OR REPLACE FUNCTION public.settle_prode_match_pick(
+  p_pick_id UUID,
+  p_points  SMALLINT,
+  p_xp      INTEGER,
+  p_fichas  INTEGER
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_uid           UUID;
+  v_competition   TEXT;
+  v_round         TEXT;
+  v_total_correct INTEGER;
+  v_round_total   INTEGER;
+  v_round_perfect INTEGER;
+BEGIN
+  UPDATE public.prode_picks
+  SET points = p_points, xp_awarded = p_xp, fichas_awarded = p_fichas, settled_at = now(), updated_at = now()
+  WHERE id = p_pick_id AND settled_at IS NULL
+  RETURNING user_id, competition, round INTO v_uid, v_competition, v_round;
+
+  IF NOT FOUND THEN RETURN; END IF;
+
+  IF p_xp > 0 THEN
+    INSERT INTO public.xp_events (user_id, game_id, amount, reason, session_id, meta)
+    VALUES (v_uid, NULL, p_xp, 'prode_match', NULL, jsonb_build_object('pick_id', p_pick_id));
+  END IF;
+
+  IF p_fichas > 0 THEN
+    PERFORM public.award_fichas(v_uid, p_fichas, 'prode_match', jsonb_build_object('pick_id', p_pick_id));
+  END IF;
+
+  IF p_points > 0 THEN
+    SELECT count(*) INTO v_total_correct FROM public.prode_picks WHERE user_id = v_uid AND points > 0;
+    IF v_total_correct >= 5  THEN PERFORM public.unlock_achievement_for_user(v_uid, 'prode_5_correct', '{}'::jsonb); END IF;
+    IF v_total_correct >= 10 THEN PERFORM public.unlock_achievement_for_user(v_uid, 'prode_10_correct', '{}'::jsonb); END IF;
+
+    IF v_round IS NOT NULL THEN
+      SELECT count(*), count(*) FILTER (WHERE points = 3)
+        INTO v_round_total, v_round_perfect
+        FROM public.prode_picks
+        WHERE user_id = v_uid AND competition = v_competition AND round = v_round AND settled_at IS NOT NULL;
+      IF v_round_total >= 3 AND v_round_total = v_round_perfect THEN
+        PERFORM public.unlock_achievement_for_user(v_uid, 'prode_perfect_matchday', jsonb_build_object('round', v_round));
+      END IF;
+    END IF;
+  END IF;
+END$$;
+
+REVOKE ALL ON FUNCTION public.settle_prode_match_pick(UUID, SMALLINT, INTEGER, INTEGER) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.settle_prode_match_pick(UUID, SMALLINT, INTEGER, INTEGER) TO service_role;
+
+-- Liquida el pick de campeón de UN usuario para UNA competición. Idempotente
+-- igual que la anterior.
+CREATE OR REPLACE FUNCTION public.settle_prode_champion_pick(
+  p_user_id     UUID,
+  p_competition TEXT,
+  p_won         BOOLEAN,
+  p_xp          INTEGER,
+  p_fichas      INTEGER,
+  p_balones     INTEGER
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE public.prode_champion_picks
+  SET result          = CASE WHEN p_won THEN 'win' ELSE 'loss' END,
+      xp_awarded       = CASE WHEN p_won THEN p_xp ELSE 0 END,
+      fichas_awarded   = CASE WHEN p_won THEN p_fichas ELSE 0 END,
+      balones_awarded  = CASE WHEN p_won THEN p_balones ELSE 0 END,
+      settled_at       = now()
+  WHERE user_id = p_user_id AND competition = p_competition AND settled_at IS NULL;
+
+  IF NOT FOUND THEN RETURN; END IF;
+
+  IF p_won THEN
+    IF p_xp > 0 THEN
+      INSERT INTO public.xp_events (user_id, game_id, amount, reason, session_id, meta)
+      VALUES (p_user_id, NULL, p_xp, 'prode_champion', NULL, jsonb_build_object('competition', p_competition));
+    END IF;
+    IF p_fichas > 0 THEN
+      PERFORM public.award_fichas(p_user_id, p_fichas, 'prode_champion', jsonb_build_object('competition', p_competition));
+    END IF;
+    IF p_balones > 0 THEN
+      PERFORM public.add_balones(p_user_id, p_balones, 'prode_champion', jsonb_build_object('competition', p_competition));
+    END IF;
+    PERFORM public.unlock_achievement_for_user(p_user_id, 'prode_champion', jsonb_build_object('competition', p_competition));
+  END IF;
+END$$;
+
+REVOKE ALL ON FUNCTION public.settle_prode_champion_pick(UUID, TEXT, BOOLEAN, INTEGER, INTEGER, INTEGER) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.settle_prode_champion_pick(UUID, TEXT, BOOLEAN, INTEGER, INTEGER, INTEGER) TO service_role;
