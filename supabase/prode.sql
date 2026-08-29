@@ -295,3 +295,23 @@ VALUES
   ('prode_champion', 'Profeta', 'Acertá quién sale campeón de un torneo completo', 'https://img.icons8.com/fluency/48/trophy.png', 150)
 ON CONFLICT (code) DO UPDATE SET
   name = EXCLUDED.name, description = EXCLUDED.description, icon_url = EXCLUDED.icon_url, points = EXCLUDED.points;
+
+-- ─── (OPCIONAL) Disparo automático cada 20 min con pg_cron + pg_net ─────────
+-- Requiere las extensiones pg_cron y pg_net habilitadas (Database > Extensions)
+-- y la Edge Function settle-prode ya deployada (supabase functions deploy).
+-- Completá los 2 valores marcados <> y descomentá.
+--
+-- SELECT cron.schedule(
+--   'settle-prode-every-20min',
+--   '*/20 * * * *',
+--   $$
+--   SELECT net.http_post(
+--     url := 'https://<PROJECT_REF>.supabase.co/functions/v1/settle-prode',
+--     headers := jsonb_build_object(
+--       'Content-Type', 'application/json',
+--       'x-goaldemy-cron-secret', '<CRON_SECRET>'
+--     ),
+--     body := '{}'::jsonb
+--   )
+--   $$
+-- );
