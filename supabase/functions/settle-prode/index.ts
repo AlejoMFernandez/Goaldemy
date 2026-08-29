@@ -56,43 +56,53 @@ async function getBuildId(): Promise<string | null> {
   return cachedBuildId
 }
 
-async function fetchFixtures(leagueId: number): Promise<Fixture[] | null> {
+async function fetchFotMobData(leagueId: number, tab: 'fixtures' | 'overview'): Promise<any | null> {
   const buildId = await getBuildId()
   if (!buildId) return null
   try {
-    const res = await fetch(`https://www.fotmob.com/_next/data/${buildId}/en/leagues/${leagueId}/fixtures.json`, { headers: { 'User-Agent': UA } })
-    if (!res.ok) return null
+    const url = `https://www.fotmob.com/_next/data/${buildId}/en/leagues/${leagueId}/${tab}.json`
+    let res = await fetch(url, { headers: { 'User-Agent': UA } })
+    if (!res.ok) {
+      if (res.status === 404) {
+        // El buildId cacheado quedó viejo (FotMob redeployó su frontend) — refrescar y reintentar una vez.
+        cachedBuildId = null
+        const retryBuildId = await getBuildId()
+        if (!retryBuildId) return null
+        const retryUrl = `https://www.fotmob.com/_next/data/${retryBuildId}/en/leagues/${leagueId}/${tab}.json`
+        res = await fetch(retryUrl, { headers: { 'User-Agent': UA } })
+        if (!res.ok) return null
+      } else {
+        return null
+      }
+    }
     const raw = await res.json()
-    const data = raw.pageProps || raw
-    const allMatches = data.fixtures?.allMatches || data.allMatches || []
-    return allMatches.map((m: any) => ({
-      id: String(m.id),
-      round: m.roundName ?? null,
-      homeId: String(m.home.id),
-      awayId: String(m.away.id),
-      finished: !!m.status.finished,
-      scoreStr: m.status.scoreStr as string | undefined,
-    }))
+    return raw.pageProps || raw
   } catch (_e) {
     return null
   }
 }
 
+async function fetchFixtures(leagueId: number): Promise<Fixture[] | null> {
+  const data = await fetchFotMobData(leagueId, 'fixtures')
+  if (!data) return null
+  const allMatches = data.fixtures?.allMatches || data.allMatches || []
+  return allMatches.map((m: any) => ({
+    id: String(m.id),
+    round: m.roundName ?? null,
+    homeId: String(m.home.id),
+    awayId: String(m.away.id),
+    finished: !!m.status.finished,
+    scoreStr: m.status.scoreStr as string | undefined,
+  }))
+}
+
 /** ID del equipo campeón, o null si la final todavía no se jugó / FotMob no respondió. */
 async function fetchChampionTeamId(leagueId: number): Promise<string | null> {
-  const buildId = await getBuildId()
-  if (!buildId) return null
-  try {
-    const res = await fetch(`https://www.fotmob.com/_next/data/${buildId}/en/leagues/${leagueId}/overview.json`, { headers: { 'User-Agent': UA } })
-    if (!res.ok) return null
-    const raw = await res.json()
-    const data = raw.pageProps || raw
-    const finalRound = (data.playoff?.rounds || []).find((r: any) => r.stage === 'final')
-    const winner = finalRound?.matchups?.[0]?.winner
-    return winner != null ? String(winner) : null
-  } catch (_e) {
-    return null
-  }
+  const data = await fetchFotMobData(leagueId, 'overview')
+  if (!data) return null
+  const finalRound = (data.playoff?.rounds || []).find((r: any) => r.stage === 'final')
+  const winner = finalRound?.matchups?.[0]?.winner
+  return winner != null ? String(winner) : null
 }
 
 function parseScore(scoreStr: string | undefined): { home: number; away: number } | null {
