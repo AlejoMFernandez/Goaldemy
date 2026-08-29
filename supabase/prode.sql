@@ -203,6 +203,7 @@ DECLARE
   v_total_correct INTEGER;
   v_round_total   INTEGER;
   v_round_perfect INTEGER;
+  v_round_pending INTEGER;
 BEGIN
   UPDATE public.prode_picks
   SET points = p_points, xp_awarded = p_xp, fichas_awarded = p_fichas, settled_at = now(), updated_at = now()
@@ -226,11 +227,13 @@ BEGIN
     IF v_total_correct >= 10 THEN PERFORM public.unlock_achievement_for_user(v_uid, 'prode_10_correct', '{}'::jsonb); END IF;
 
     IF v_round IS NOT NULL THEN
-      SELECT count(*), count(*) FILTER (WHERE points = 3)
-        INTO v_round_total, v_round_perfect
+      SELECT count(*) FILTER (WHERE settled_at IS NOT NULL),
+             count(*) FILTER (WHERE settled_at IS NOT NULL AND points = 3),
+             count(*) FILTER (WHERE settled_at IS NULL)
+        INTO v_round_total, v_round_perfect, v_round_pending
         FROM public.prode_picks
-        WHERE user_id = v_uid AND competition = v_competition AND round = v_round AND settled_at IS NOT NULL;
-      IF v_round_total >= 3 AND v_round_total = v_round_perfect THEN
+        WHERE user_id = v_uid AND competition = v_competition AND round = v_round;
+      IF v_round_pending = 0 AND v_round_total >= 3 AND v_round_total = v_round_perfect THEN
         PERFORM public.unlock_achievement_for_user(v_uid, 'prode_perfect_matchday', jsonb_build_object('round', v_round));
       END IF;
     END IF;
