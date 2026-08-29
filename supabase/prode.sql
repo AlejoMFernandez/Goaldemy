@@ -286,3 +286,12 @@ END$$;
 
 REVOKE ALL ON FUNCTION public.settle_prode_champion_pick(UUID, TEXT, BOOLEAN, INTEGER, INTEGER, INTEGER) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.settle_prode_champion_pick(UUID, TEXT, BOOLEAN, INTEGER, INTEGER, INTEGER) TO service_role;
+
+INSERT INTO public.achievements (code, name, description, icon_url, points)
+VALUES
+  ('prode_5_correct', 'Ojo de pronosticador', 'Acertá 5 pronósticos de partidos en el PRODE', 'https://img.icons8.com/fluency/48/crystal-ball.png', 30),
+  ('prode_10_correct', 'Analista de fútbol', 'Acertá 10 pronósticos de partidos en el PRODE', 'https://img.icons8.com/fluency/48/binoculars.png', 60),
+  ('prode_perfect_matchday', 'Fecha perfecta', 'Acertá el resultado exacto de todos los partidos que pronosticaste en una misma fecha', 'https://img.icons8.com/fluency/48/checked-checkbox.png', 80),
+  ('prode_champion', 'Profeta', 'Acertá quién sale campeón de un torneo completo', 'https://img.icons8.com/fluency/48/trophy.png', 150)
+ON CONFLICT (code) DO UPDATE SET
+  name = EXCLUDED.name, description = EXCLUDED.description, icon_url = EXCLUDED.icon_url, points = EXCLUDED.points;
