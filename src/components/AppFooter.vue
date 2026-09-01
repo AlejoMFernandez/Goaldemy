@@ -12,7 +12,7 @@ export default {
   <footer class="relative border-t border-white/10 bg-gradient-to-t from-slate-900/90 to-slate-900/40 backdrop-blur">
     <div class="container mx-auto px-6 pt-10 pb-24">
       <!-- Main footer content -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
         
         <!-- Brand Column -->
         <div class="space-y-4">
@@ -50,6 +50,16 @@ export default {
             <li><RouterLink to="/about/objetivo" class="text-slate-400 hover:text-cyan-400 transition">Nuestro Objetivo</RouterLink></li>
             <li><RouterLink to="/about/me" class="text-slate-400 hover:text-cyan-400 transition">¿Quién soy?</RouterLink></li>
             <li><a href="mailto:fernandezmalejo@gmail.com" class="text-slate-400 hover:text-cyan-400 transition">Contacto</a></li>
+          </ul>
+        </div>
+
+        <!-- Legal -->
+        <div>
+          <h3 class="text-white font-semibold mb-4">Legal</h3>
+          <ul class="space-y-2 text-sm">
+            <li><RouterLink to="/terms" class="text-slate-400 hover:text-violet-400 transition">Términos y Condiciones</RouterLink></li>
+            <li><RouterLink to="/privacy" class="text-slate-400 hover:text-violet-400 transition">Privacidad</RouterLink></li>
+            <li><RouterLink to="/cancellation-policy" class="text-slate-400 hover:text-violet-400 transition">Política de cancelación</RouterLink></li>
           </ul>
         </div>
       </div>
