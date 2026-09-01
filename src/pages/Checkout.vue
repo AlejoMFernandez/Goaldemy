@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { fetchPlans } from '../services/premium'
+import { fetchPlans, getUserPlan } from '../services/premium'
 import { getAuthUser } from '../services/auth'
 import { startCheckout, handleReturnFromCheckout } from '../services/checkout'
 import { pushSuccessToast, pushErrorToast, pushInfoToast } from '../stores/notifications'
@@ -21,6 +21,12 @@ const emailError = ref('')
 const acceptedTerms = ref(false)
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// Si ya tiene una suscripción con renovación automática activa (a CUALQUIER
+// plan), bloqueamos "Pago único": comprarlo pisaría provider_subscription_id
+// en la fila y dejaría el cobro recurrente original en Mercado Pago sin
+// forma de cancelarlo desde la app (ver finding #2 de la revisión final).
+const hasActiveAutoRenew = ref(false)
+
 function planPerks(p) {
   if (!p) return []
   const perks = []
@@ -33,6 +39,7 @@ function planPerks(p) {
 
 async function pay() {
   if (!plan.value || payLoading.value || !acceptedTerms.value) return
+  if (billingType.value === 'one_time' && hasActiveAutoRenew.value) return
 
   let payerEmail = null
   if (useOtherEmail.value) {
@@ -77,6 +84,13 @@ onMounted(async () => {
     pushErrorToast('Plan no encontrado')
     router.push('/pricing')
   }
+
+  try {
+    const userPlan = await getUserPlan()
+    hasActiveAutoRenew.value = userPlan.plan !== 'free' && userPlan.autoRenew === true
+  } catch (e) {
+    console.warn('[checkout] no se pudo cargar el plan actual', e)
+  }
 })
 </script>
 
@@ -109,12 +123,16 @@ onMounted(async () => {
             </button>
             <button
               type="button"
-              @click="billingType = 'one_time'"
+              :disabled="hasActiveAutoRenew"
+              @click="!hasActiveAutoRenew && (billingType = 'one_time')"
               class="text-left rounded-xl border p-4 transition"
-              :class="billingType === 'one_time' ? 'border-violet-400/60 bg-violet-500/10' : 'border-white/10 hover:border-white/20'"
+              :class="hasActiveAutoRenew
+                ? 'border-white/5 opacity-50 cursor-not-allowed'
+                : (billingType === 'one_time' ? 'border-violet-400/60 bg-violet-500/10' : 'border-white/10 hover:border-white/20')"
             >
               <div class="font-bold text-white text-sm mb-1">Pago único</div>
               <div class="text-xs text-slate-400">Pagás una vez, dura 30 días, no se renueva.</div>
+              <div v-if="hasActiveAutoRenew" class="text-xs text-amber-400 mt-1.5">Ya tenés débito automático activo — cancelalo primero para usar pago único.</div>
             </button>
           </div>
           <p class="text-xs text-slate-500 mt-2">Mismo precio en las dos modalidades: no es un descuento, solo cambia si se renueva sola o no.</p>
