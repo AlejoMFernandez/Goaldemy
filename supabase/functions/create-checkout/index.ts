@@ -25,7 +25,8 @@ serve(async (req) => {
       })
     }
 
-    const { plan_slug, provider, billing_email } = await req.json()
+    const { plan_slug, provider, billing_email, billing_type } = await req.json()
+    const billingType = billing_type === 'one_time' ? 'one_time' : 'recurring'
     if (!plan_slug || !provider) {
       return new Response(JSON.stringify({ error: 'Faltan parámetros' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -63,7 +64,9 @@ serve(async (req) => {
     let checkoutUrl = ''
 
     if (provider === 'mercadopago') {
-      checkoutUrl = await createMercadoPagoCheckout(plan, user, frontendUrl, payerEmail)
+      checkoutUrl = billingType === 'one_time'
+        ? await createMercadoPagoOneTimePayment(plan, user, frontendUrl, payerEmail)
+        : await createMercadoPagoCheckout(plan, user, frontendUrl, payerEmail)
     } else if (provider === 'stripe') {
       checkoutUrl = await createStripeCheckout(plan, user, frontendUrl)
     } else {
@@ -96,7 +99,7 @@ async function createMercadoPagoCheckout(plan: any, user: any, frontendUrl: stri
       currency_id: 'ARS',
     },
     payer_email: payerEmail,
-    back_url: `${frontendUrl}/pricing?result=mp`,
+    back_url: `${frontendUrl}/checkout?plan=${plan.slug}&result=mp`,
     external_reference: JSON.stringify({ user_id: user.id, plan_slug: plan.slug }),
   }
 
@@ -148,4 +151,40 @@ async function createStripeCheckout(plan: any, user: any, frontendUrl: string) {
   if (!res.ok) throw new Error(data.error?.message || 'Error creando sesión de Stripe')
 
   return data.url
+}
+
+async function createMercadoPagoOneTimePayment(plan: any, user: any, frontendUrl: string, payerEmail: string) {
+  const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')
+  if (!accessToken) throw new Error('MERCADOPAGO_ACCESS_TOKEN no configurado')
+
+  const body = {
+    items: [{
+      title: `Fulvo ${plan.name} (1 mes)`,
+      quantity: 1,
+      unit_price: plan.price_ars / 100,
+      currency_id: 'ARS',
+    }],
+    payer: { email: payerEmail },
+    back_urls: {
+      success: `${frontendUrl}/checkout?plan=${plan.slug}&result=mp_ok`,
+      failure: `${frontendUrl}/checkout?plan=${plan.slug}&result=mp_fail`,
+      pending: `${frontendUrl}/checkout?plan=${plan.slug}&result=mp_pending`,
+    },
+    auto_return: 'approved',
+    external_reference: JSON.stringify({ user_id: user.id, plan_slug: plan.slug, billing_type: 'one_time' }),
+  }
+
+  const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(body),
+  })
+
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.message || 'Error creando pago único en MP')
+
+  return data.init_point
 }
