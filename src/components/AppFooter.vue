@@ -57,15 +57,19 @@ export default {
       <!-- Bottom bar -->
       <div class="border-t border-white/10 pt-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between text-sm text-slate-400">
         <p>© 2026 <span class="text-cyan-400 font-semibold">FULVO</span>. Todos los derechos reservados.</p>
-        <p class="text-slate-400">
-          Desarrollado por 
-          <a
-            href="https://alejomfernandez.com.ar"
-            target="_blank"
-            rel="noopener"
-            class="font-semibold text-cyan-400 underline underline-offset-2 hover:text-cyan-300 transition"
-          >Alejo Martin Fernandez</a>
-        </p>
+        <div class="flex items-center gap-4">
+          <RouterLink to="/privacidad" class="text-slate-400 hover:text-cyan-400 transition">Privacidad</RouterLink>
+          <RouterLink to="/terminos" class="text-slate-400 hover:text-cyan-400 transition">Términos</RouterLink>
+          <p class="text-slate-400">
+            Desarrollado por
+            <a
+              href="https://alejomfernandez.com.ar"
+              target="_blank"
+              rel="noopener"
+              class="font-semibold text-cyan-400 underline underline-offset-2 hover:text-cyan-300 transition"
+            >Alejo Martin Fernandez</a>
+          </p>
+        </div>
       </div>
     </div>
   </footer>

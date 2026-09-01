@@ -8,8 +8,7 @@ import { isAdmin } from '../services/admin';
 // cada página/juego baja en su propio chunk sólo al navegar, así el bundle
 // inicial no arrastra los 15 juegos + su data de jugadores (dataGAMES.json).
 import Landing from '../pages/Landing.vue';
-const Login = () => import('../pages/auth/Login.vue');
-const Register = () => import('../pages/auth/Register.vue');
+const AuthPage = () => import('../pages/auth/AuthPage.vue');
 const VerifyEmail = () => import('../pages/auth/VerifyEmail.vue');
 const ResetPassword = () => import('../pages/auth/ResetPassword.vue');
 const Profile = () => import('../pages/profile/Profile.vue');
@@ -47,6 +46,8 @@ const TeamPage = () => import('../pages/TeamPage.vue');
 const Pricing = () => import('../pages/Pricing.vue');
 const DailyChallenge = () => import('../pages/DailyChallenge.vue');
 const Career = () => import('../pages/Career.vue');
+const PrivacyPolicy = () => import('../pages/legal/PrivacyPolicy.vue');
+const TermsOfService = () => import('../pages/legal/TermsOfService.vue');
 
 const routes = [
     { path: '/', component: Landing, meta: { zone: 'hub' } },
@@ -54,8 +55,8 @@ const routes = [
     { path: '/leagues', redirect: '/competiciones' },
     { path: '/leagues/:slug', component: CompetitionPage, meta: { zone: 'data' } },
     { path: '/team/:teamId', component: TeamPage, meta: { zone: 'data' } },
-    { path: '/login', component: Login, meta: { layout: 'auth', zone: 'hub' } },
-    { path: '/register', component: Register, meta: { layout: 'auth', zone: 'hub' } },
+    { path: '/login', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth' } },
+    { path: '/register', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth' } },
     { path: '/verify-email', component: VerifyEmail, meta: { layout: 'auth', zone: 'hub' } },
     { path: '/reset-password', component: ResetPassword, meta: { layout: 'auth', zone: 'hub' } },
     { path: '/profile', component: Profile, meta: { requiresAuth: true, zone: 'hub' } },
@@ -86,6 +87,8 @@ const routes = [
     { path: '/about/me', component: AboutMe, meta: { zone: 'hub' } },
     { path: '/about/fulvo', component: AboutFulvo, meta: { zone: 'hub' } },
     { path: '/about/objetivo', component: AboutObjective, meta: { zone: 'hub' } },
+    { path: '/privacidad', component: PrivacyPolicy, meta: { zone: 'hub' } },
+    { path: '/terminos', component: TermsOfService, meta: { zone: 'hub' } },
     // Play landing pages
     { path: '/play/points', component: PlayPoints, meta: { requiresAuth: true, zone: 'hub' } },
     // /play/free (Juego Libre) retirado en MEJORAS12: redirige al índice por puntos
