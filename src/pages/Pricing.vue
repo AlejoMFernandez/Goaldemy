@@ -205,6 +205,13 @@ onMounted(async () => {
           Tarjeta, débito o efectivo
         </div>
       </div>
+      <div class="flex items-center justify-center gap-4 text-xs text-slate-500 mt-4">
+        <RouterLink to="/terms" class="hover:text-slate-300 transition">Términos y Condiciones</RouterLink>
+        <span>·</span>
+        <RouterLink to="/privacy" class="hover:text-slate-300 transition">Privacidad</RouterLink>
+        <span>·</span>
+        <RouterLink to="/cancellation-policy" class="hover:text-slate-300 transition">Cancelación</RouterLink>
+      </div>
     </div>
   </div>
 </template>
