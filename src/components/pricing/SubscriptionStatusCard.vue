@@ -65,7 +65,7 @@ async function confirmCancel() {
         >
           {{ cancelling ? 'Cancelando…' : 'Sí, cancelar' }}
         </button>
-        <button @click="confirming = false" class="text-sm text-slate-400 hover:text-white transition">
+        <button @click="confirming = false" :disabled="cancelling" class="text-sm text-slate-400 hover:text-white transition disabled:opacity-50">
           No
         </button>
       </div>
