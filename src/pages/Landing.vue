@@ -21,7 +21,6 @@ const HERO_VIDEO_SRC = '/videoshero/hero-aerial.mp4'
 const HERO_VIDEO_POSTER = '/videoshero/hero-aerial-poster.jpg'
 // Async: pase, planes y modal de partido bajan en su propio chunk (deps pesadas
 // fuera del bundle inicial de la home). MonthlyPass trae su card + modal + datos.
-const MatchDetailModal = defineAsyncComponent(() => import('../components/match/MatchDetailModal.vue'))
 const MonthlyPass = defineAsyncComponent(() => import('../components/rewards/MonthlyPass.vue'))
 const PlanCard = defineAsyncComponent(() => import('../components/pricing/PlanCard.vue'))
 
@@ -652,8 +651,6 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
       </div>
     </div>
 
-    <!-- Match Detail Modal -->
-    <MatchDetailModal :match="selectedMatch" :open="matchModalOpen" @close="matchModalOpen = false" />
   </section>
 </template>
 
