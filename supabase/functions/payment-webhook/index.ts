@@ -39,6 +39,7 @@ function getAdminClient() {
 async function activateSubscription(
   userId: string, planSlug: string, provider: string,
   providerId: string, periodStart: string, periodEnd: string,
+  autoRenew: boolean = true,
 ) {
   const supabase = getAdminClient()
   const { error } = await supabase.rpc('activate_subscription', {
@@ -48,6 +49,7 @@ async function activateSubscription(
     p_provider_id: providerId,
     p_period_start: periodStart,
     p_period_end: periodEnd,
+    p_auto_renew: autoRenew,
   })
   if (error) throw new Error(`activate_subscription failed: ${error.message}`)
 }
@@ -142,7 +144,45 @@ async function verifyStripeSignature(body: string, sig: string, secret: string):
 
 // ─── MERCADO PAGO ────────────────────────────────────────
 
+async function verifyMercadoPagoSignature(req: Request, secret: string): Promise<boolean> {
+  try {
+    const sig = req.headers.get('x-signature')
+    const requestId = req.headers.get('x-request-id')
+    if (!sig || !requestId) return false
+
+    const parts = Object.fromEntries(sig.split(',').map(p => {
+      const [k, v] = p.split('=')
+      return [k?.trim(), v?.trim()]
+    }))
+    const ts = parts['ts']
+    const expectedSig = parts['v1']
+    if (!ts || !expectedSig) return false
+
+    const url = new URL(req.url)
+    const dataId = (url.searchParams.get('data.id') || '').toLowerCase()
+
+    const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`
+    const key = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+    )
+    const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(manifest))
+    const hex = Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('')
+    return hex === expectedSig
+  } catch {
+    return false
+  }
+}
+
 async function handleMercadoPagoWebhook(req: Request) {
+  const webhookSecret = Deno.env.get('MERCADOPAGO_WEBHOOK_SECRET')
+  if (webhookSecret) {
+    const isValid = await verifyMercadoPagoSignature(req, webhookSecret)
+    if (!isValid) {
+      return new Response('Invalid signature', { status: 401, headers: corsHeaders })
+    }
+  }
+
   const body = await req.json()
   const type = body.type || body.topic
 
@@ -177,6 +217,31 @@ async function handleMercadoPagoWebhook(req: Request) {
       }
     } else if (preapproval.status === 'cancelled' || preapproval.status === 'paused') {
       await cancelSubscription(String(preapprovalId))
+    }
+  } else if (type === 'payment') {
+    const paymentId = body.data?.id || body.id
+    if (!paymentId) {
+      return new Response('No payment id', { status: 400, headers: corsHeaders })
+    }
+
+    const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')!
+    const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    })
+    const payment = await res.json()
+
+    let ref: any = {}
+    try { ref = JSON.parse(payment.external_reference || '{}') } catch {}
+
+    if (payment.status === 'approved' && ref.billing_type === 'one_time' && ref.user_id && ref.plan_slug) {
+      const now = new Date()
+      const periodEnd = new Date(now)
+      periodEnd.setMonth(periodEnd.getMonth() + 1)
+
+      await activateSubscription(
+        ref.user_id, ref.plan_slug, 'mercadopago', String(paymentId),
+        now.toISOString(), periodEnd.toISOString(), false,
+      )
     }
   }
 
