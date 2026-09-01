@@ -144,7 +144,7 @@ async function verifyStripeSignature(body: string, sig: string, secret: string):
 
 // ─── MERCADO PAGO ────────────────────────────────────────
 
-async function verifyMercadoPagoSignature(req: Request, secret: string): Promise<boolean> {
+async function verifyMercadoPagoSignature(req: Request, secret: string, fallbackDataId?: string): Promise<boolean> {
   try {
     const sig = req.headers.get('x-signature')
     const requestId = req.headers.get('x-request-id')
@@ -159,7 +159,7 @@ async function verifyMercadoPagoSignature(req: Request, secret: string): Promise
     if (!ts || !expectedSig) return false
 
     const url = new URL(req.url)
-    const dataId = (url.searchParams.get('data.id') || '').toLowerCase()
+    const dataId = (url.searchParams.get('data.id') || fallbackDataId || '').toLowerCase()
 
     const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`
     const key = await crypto.subtle.importKey(
@@ -175,16 +175,25 @@ async function verifyMercadoPagoSignature(req: Request, secret: string): Promise
 }
 
 async function handleMercadoPagoWebhook(req: Request) {
+  // Se lee el body UNA sola vez (Request bodies solo se pueden consumir una
+  // vez) y se reusa tanto para el fallback de data.id de la firma como para
+  // el resto del handler.
+  const body = await req.json()
+  const type = body.type || body.topic
+  const bodyDataId = body.data?.id || body.id
+
   const webhookSecret = Deno.env.get('MERCADOPAGO_WEBHOOK_SECRET')
   if (webhookSecret) {
-    const isValid = await verifyMercadoPagoSignature(req, webhookSecret)
+    const isValid = await verifyMercadoPagoSignature(req, webhookSecret, bodyDataId ? String(bodyDataId) : undefined)
     if (!isValid) {
+      console.error('mercadopago webhook: signature verification failed', {
+        requestId: req.headers.get('x-request-id'),
+        hasSignatureHeader: !!req.headers.get('x-signature'),
+        dataIdPresent: !!(new URL(req.url).searchParams.get('data.id') || bodyDataId),
+      })
       return new Response('Invalid signature', { status: 401, headers: corsHeaders })
     }
   }
-
-  const body = await req.json()
-  const type = body.type || body.topic
 
   if (type === 'subscription_preapproval' || type === 'preapproval') {
     const preapprovalId = body.data?.id || body.id
@@ -196,6 +205,10 @@ async function handleMercadoPagoWebhook(req: Request) {
     const res = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
       headers: { 'Authorization': `Bearer ${accessToken}` },
     })
+    if (!res.ok) {
+      console.error('mercadopago webhook: preapproval fetch failed', { preapprovalId, status: res.status })
+      return new Response('MP fetch failed', { status: 500, headers: corsHeaders })
+    }
     const preapproval = await res.json()
 
     if (preapproval.status === 'authorized') {
@@ -228,6 +241,10 @@ async function handleMercadoPagoWebhook(req: Request) {
     const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
       headers: { 'Authorization': `Bearer ${accessToken}` },
     })
+    if (!res.ok) {
+      console.error('mercadopago webhook: payment fetch failed', { paymentId, status: res.status })
+      return new Response('MP fetch failed', { status: 500, headers: corsHeaders })
+    }
     const payment = await res.json()
 
     let ref: any = {}
