@@ -14,6 +14,7 @@ const PLAN_DEFAULTS = {
   xpMultiplier: 1.0,
   badge: null,
   periodEnd: null,
+  autoRenew: true,
   powerups: { fiftyFifty: 0, shield: 0, extraTime: 0, revealHint: 0, streakProtector: 0 },
 }
 
