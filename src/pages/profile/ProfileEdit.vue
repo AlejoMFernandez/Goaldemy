@@ -7,15 +7,18 @@ import { flagUrl } from '../../services/countries';
 import SearchSelect from '../../components/common/SearchSelect.vue';
 import { getAllPlayers, getAllTeams } from '../../services/players';
 import CosmeticsCollection from '../../components/profile/CosmeticsCollection.vue';
+import SubscriptionStatusCard from '../../components/pricing/SubscriptionStatusCard.vue';
+import { getUserPlan } from '../../services/premium';
 
 let unsubscribeAuth = () => {};
 
 export default {
   name: 'ProfileEdit',
-  components: { AppButton, SearchSelect, CosmeticsCollection },
+  components: { AppButton, SearchSelect, CosmeticsCollection, SubscriptionStatusCard },
   data() {
     return {
       user: null,
+      userPlan: null,
       formData: {
         display_name: '',
         bio: '',
@@ -54,9 +57,13 @@ export default {
         alert(error?.message || 'No se pudo guardar el perfil')
       }
       this.loading = false;
+    },
+    async loadUserPlan() {
+      this.userPlan = await getUserPlan(true);
     }
   },
   mounted() {
+    this.loadUserPlan();
     let initialized = false
     unsubscribeAuth = subscribeToAuthStateChanges(userState => {
       if (initialized) {
@@ -96,6 +103,13 @@ export default {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 group-hover:-translate-x-0.5 transition-transform"><path d="M15 18l-6-6 6-6" /></svg>
       <span class="text-sm">Perfil</span>
     </button>
+
+    <SubscriptionStatusCard
+      v-if="userPlan"
+      :user-plan="userPlan"
+      @cancelled="loadUserPlan"
+      class="mb-4"
+    />
 
     <CosmeticsCollection class="block" :avatar-url="user?.avatar_url || ''" :name="formData.display_name" :initial="avatarInitial">
       <template #datos>
