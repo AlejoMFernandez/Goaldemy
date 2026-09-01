@@ -72,11 +72,20 @@ serve(async (req) => {
       }
     }
 
-    const { error: updateError } = await adminSupabase
-      .from('subscriptions')
-      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-      .eq('id', sub.id)
-    if (updateError) throw updateError
+    try {
+      const { error: updateError } = await adminSupabase
+        .from('subscriptions')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('id', sub.id)
+      if (updateError) throw updateError
+    } catch (dbError) {
+      console.error('DB update failed after provider cancellation succeeded:', dbError)
+      return new Response(JSON.stringify({
+        error: 'La suscripción se canceló en ' + (sub.provider === 'stripe' ? 'Stripe' : 'Mercado Pago') + ' pero no pudimos actualizarlo localmente todavía; se sincronizará automáticamente en unos minutos.'
+      }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
