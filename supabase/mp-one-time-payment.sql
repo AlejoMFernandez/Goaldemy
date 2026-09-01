@@ -54,6 +54,9 @@ END;
 $$;
 
 -- 3. get_user_plan: agrega "autoRenew" al JSON de salida.
+--    También sirve una fila 'cancelled' cuyo current_period_end todavía no
+--    pasó (el usuario canceló pero conserva el plan pago hasta el final del
+--    período ya pagado, como promete la UI y la política de cancelación).
 CREATE OR REPLACE FUNCTION public.get_user_plan(p_user_id UUID DEFAULT NULL)
 RETURNS JSON
 LANGUAGE plpgsql
@@ -72,7 +75,10 @@ BEGIN
   END IF;
 
   SELECT * INTO sub FROM public.subscriptions
-    WHERE user_id = uid AND status = 'active'
+    WHERE user_id = uid
+      AND (status = 'active'
+           OR (status = 'cancelled' AND current_period_end IS NOT NULL AND current_period_end > now()))
+    ORDER BY (status = 'active') DESC
     LIMIT 1;
 
   IF sub IS NOT NULL AND sub.plan_slug != 'free' AND sub.current_period_end IS NOT NULL AND sub.current_period_end < now() THEN

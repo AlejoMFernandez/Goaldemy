@@ -75,7 +75,7 @@ serve(async (req) => {
     try {
       const { error: updateError } = await adminSupabase
         .from('subscriptions')
-        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .update({ status: 'cancelled', auto_renew: false, updated_at: new Date().toISOString() })
         .eq('id', sub.id)
       if (updateError) throw updateError
     } catch (dbError) {
