@@ -3,78 +3,36 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchPlans, getUserPlan, invalidatePlanCache } from '../services/premium'
 import { getAuthUser } from '../services/auth'
-import { startCheckout, handleReturnFromCheckout } from '../services/checkout'
+import { handleReturnFromCheckout } from '../services/checkout'
 import { pushSuccessToast, pushErrorToast, pushInfoToast } from '../stores/notifications'
 import PlanCard from '../components/pricing/PlanCard.vue'
+import SubscriptionStatusCard from '../components/pricing/SubscriptionStatusCard.vue'
 import { planStyle, formatPrice } from '../services/plans-ui'
 
 const router = useRouter()
 const plans = ref([])
 const currentPlan = ref('free')
+const userPlanData = ref(null)
 const loading = ref(true)
-const checkoutLoading = ref(null)
 const openFaq = ref(null)
-const confirmPlan = ref(null) // plan pendiente de confirmar antes de ir a Mercado Pago
-const accountEmail = computed(() => getAuthUser()?.email || '')
-const useOtherEmail = ref(false)     // ¿paga con otra cuenta de Mercado Pago?
-const billingEmail = ref('')         // mail de MP alternativo
-const emailError = ref('')
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const sortedPlans = computed(() =>
   [...plans.value].sort((a, b) => a.sort_order - b.sort_order)
 )
 
-// Paso 1: abrir el popup de confirmación (no redirige todavía).
 function askSubscribe(plan) {
   const { id } = getAuthUser() || {}
   if (!id) {
     router.push('/login')
     return
   }
-  // Reset del campo de mail de facturación en cada apertura.
-  useOtherEmail.value = false
-  billingEmail.value = ''
-  emailError.value = ''
-  confirmPlan.value = plan
+  router.push(`/checkout?plan=${plan.slug}`)
 }
 
-// Paso 2: el usuario confirma → recién ahí vamos a Mercado Pago.
-async function confirmCheckout() {
-  const plan = confirmPlan.value
-  if (!plan || checkoutLoading.value) return
-
-  // Si eligió pagar con otra cuenta, validamos el mail antes de redirigir.
-  let payerEmail = null
-  if (useOtherEmail.value) {
-    const val = billingEmail.value.trim()
-    if (!EMAIL_RE.test(val)) {
-      emailError.value = 'Ingresá un e-mail válido'
-      return
-    }
-    emailError.value = ''
-    payerEmail = val
-  }
-
-  checkoutLoading.value = plan.slug
-  try {
-    await startCheckout(plan.slug, 'mercadopago', payerEmail)
-  } catch (e) {
-    pushErrorToast(e.message || 'Error al iniciar el pago')
-    checkoutLoading.value = null
-    confirmPlan.value = null
-  }
-}
-
-// Features clave para el popup de confirmación.
-function planPerks(plan) {
-  if (!plan) return []
-  const perks = []
-  if (plan.xp_multiplier > 1) perks.push(`Bonus de XP +${Math.round((plan.xp_multiplier - 1) * 100)}%`)
-  if (plan.daily_powerups) perks.push(`${plan.daily_powerups} power-up${plan.daily_powerups === 1 ? '' : 's'} por día`)
-  perks.push('Pase de Batalla PRO + cosméticos exclusivos')
-  if (plan.badge) perks.push(`Badge ${plan.slug === 'legend' ? 'Legend dorado' : 'Pro'} en perfil`)
-  return perks
+async function reloadPlan() {
+  const userPlan = await getUserPlan(true)
+  currentPlan.value = userPlan.plan || 'free'
+  userPlanData.value = userPlan
 }
 
 const COMPARISON = [
@@ -89,10 +47,11 @@ const COMPARISON = [
 ]
 
 const FAQ = [
-  { q: '¿Puedo cancelar en cualquier momento?', a: 'Sí, podés cancelar tu suscripción cuando quieras desde Mercado Pago. No hay contratos ni permanencia mínima.' },
+  { q: '¿Puedo cancelar en cualquier momento?', a: 'Sí, podés cancelar tu suscripción cuando quieras desde acá mismo o desde Mercado Pago. No hay contratos ni permanencia mínima.' },
   { q: '¿Cómo se procesan los pagos?', a: 'Los pagos se procesan de forma segura a través de Mercado Pago. Podés pagar con tarjeta de crédito, débito, dinero en cuenta o efectivo.' },
   { q: '¿Qué pasa con mis power-ups si cancelo?', a: 'Si cancelás, tu plan vuelve a Free al final del período pagado. Los power-ups no usados se pierden, pero conservás todo tu progreso, XP y logros.' },
   { q: '¿Puedo cambiar de plan?', a: 'Sí, podés subir o bajar de plan en cualquier momento. El cambio se aplica en el siguiente ciclo de facturación.' },
+  { q: '¿Cuál es la diferencia entre débito automático y pago único?', a: 'El débito automático se renueva solo cada mes hasta que lo canceles. El pago único es una sola vez: tenés el plan por 30 días y no se te cobra de nuevo — volvés a Free automáticamente salvo que compres otra vez.' },
 ]
 
 onMounted(async () => {
@@ -101,19 +60,15 @@ onMounted(async () => {
     if (returnResult.status === 'success') {
       pushSuccessToast('Pago procesado. Tu plan se activará en unos segundos.')
       invalidatePlanCache()
-      setTimeout(async () => {
-        const userPlan = await getUserPlan(true)
-        currentPlan.value = userPlan.plan || 'free'
-      }, 3000)
+      setTimeout(reloadPlan, 3000)
     } else if (returnResult.status === 'cancelled') {
       pushInfoToast('Pago cancelado')
     }
     window.history.replaceState({}, '', '/pricing')
   }
 
-  const [allPlans, userPlan] = await Promise.all([fetchPlans(), getUserPlan()])
+  const [allPlans] = await Promise.all([fetchPlans(), reloadPlan()])
   plans.value = allPlans
-  currentPlan.value = userPlan.plan || 'free'
   loading.value = false
 })
 </script>
@@ -130,6 +85,11 @@ onMounted(async () => {
           Más XP, power-ups, cosméticos exclusivos y el Pase de Batalla PRO para dominar Fulvo. Cancelá cuando quieras.
         </p>
       </div>
+    </div>
+
+    <!-- Estado de suscripción actual -->
+    <div v-if="!loading && userPlanData && userPlanData.plan !== 'free'" class="max-w-5xl mx-auto px-4 pb-6">
+      <SubscriptionStatusCard :user-plan="userPlanData" @cancelled="reloadPlan" />
     </div>
 
     <!-- Plans -->
@@ -246,101 +206,6 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-
-    <!-- ════ Popup de confirmación antes de Mercado Pago ════ -->
-    <Teleport to="body">
-      <Transition name="pay-modal">
-        <div v-if="confirmPlan" class="fixed inset-0 z-[60] overflow-y-auto">
-          <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" @click="confirmPlan = null"></div>
-          <div class="relative min-h-full flex items-center justify-center p-4" @click.self="confirmPlan = null">
-            <div class="relative w-full max-w-md rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 shadow-2xl">
-              <button @click="confirmPlan = null" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-
-              <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-3">Confirmá tu suscripción</div>
-
-              <!-- Plan + precio -->
-              <div class="flex items-center gap-3 mb-4">
-                <div class="w-12 h-12 rounded-2xl grid place-items-center border" :class="planStyle(confirmPlan.slug).badge">
-                  <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                </div>
-                <div>
-                  <div class="font-display font-bold text-white text-lg leading-tight">Plan {{ confirmPlan.name }}</div>
-                  <div class="flex items-end gap-1">
-                    <span class="text-2xl font-extrabold text-white">{{ formatPrice(confirmPlan) }}</span>
-                    <span class="text-slate-400 text-xs mb-1">ARS / mes</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Qué incluye -->
-              <ul class="space-y-1.5 mb-4">
-                <li v-for="(perk, i) in planPerks(confirmPlan)" :key="i" class="flex items-center gap-2 text-sm text-slate-300">
-                  <svg class="w-4 h-4 flex-shrink-0" :class="planStyle(confirmPlan.slug).accent" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                  {{ perk }}
-                </li>
-              </ul>
-
-              <!-- Aviso Mercado Pago -->
-              <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3 flex gap-2.5 mb-4">
-                <svg class="w-5 h-5 text-slate-300 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                <p class="text-xs text-slate-300 leading-relaxed">
-                  Al continuar te llevamos a <strong class="text-white">Mercado Pago</strong> para completar el pago de forma segura. Podés pagar con tarjeta, débito, dinero en cuenta o efectivo. Cancelás cuando quieras.
-                </p>
-              </div>
-
-              <!-- E-mail de facturación (opcional) -->
-              <div class="mb-5">
-                <p class="text-xs text-slate-400 leading-relaxed mb-2">
-                  La suscripción se cobra a tu cuenta de Mercado Pago con el e-mail
-                  <strong class="text-slate-200">{{ accountEmail }}</strong>.
-                </p>
-                <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
-                  <input type="checkbox" v-model="useOtherEmail" class="accent-indigo-500 w-4 h-4 rounded" />
-                  Mi cuenta de Mercado Pago usa otro e-mail
-                </label>
-
-                <Transition name="faq-expand">
-                  <div v-if="useOtherEmail" class="mt-3">
-                    <input
-                      v-model="billingEmail"
-                      type="email"
-                      inputmode="email"
-                      autocomplete="email"
-                      placeholder="tu-email-de-mercadopago@ejemplo.com"
-                      class="w-full rounded-xl border bg-slate-900/60 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-violet-400/60"
-                      :class="emailError ? 'border-red-500/60' : 'border-white/15'"
-                      @keyup.enter="confirmCheckout"
-                    />
-                    <p v-if="emailError" class="text-xs text-red-400 mt-1.5">{{ emailError }}</p>
-                    <p v-else class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
-                      Usá el e-mail con el que iniciás sesión en Mercado Pago. Tu plan de Fulvo se activa igual en <strong class="text-slate-400">{{ accountEmail }}</strong>.
-                    </p>
-                  </div>
-                </Transition>
-              </div>
-
-              <!-- Acciones -->
-              <div class="flex gap-3">
-                <button @click="confirmPlan = null" class="flex-1 rounded-xl border border-white/15 hover:bg-white/5 text-white py-3 text-sm font-semibold transition">
-                  Cancelar
-                </button>
-                <button
-                  @click="confirmCheckout"
-                  :disabled="checkoutLoading"
-                  class="flex-1 rounded-xl py-3 text-sm font-bold transition disabled:opacity-60 flex items-center justify-center gap-2"
-                  :class="planStyle(confirmPlan.slug).cta"
-                >
-                  <span v-if="checkoutLoading" class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-                  {{ checkoutLoading ? 'Redirigiendo…' : 'Pagar con Mercado Pago' }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
   </div>
 </template>
 
@@ -349,6 +214,4 @@ onMounted(async () => {
 .faq-expand-leave-active { transition: all 0.15s ease; }
 .faq-expand-enter-from, .faq-expand-leave-to { opacity: 0; max-height: 0; }
 .faq-expand-enter-to, .faq-expand-leave-from { opacity: 1; max-height: 200px; }
-.pay-modal-enter-active, .pay-modal-leave-active { transition: opacity 0.2s ease; }
-.pay-modal-enter-from, .pay-modal-leave-to { opacity: 0; }
 </style>
