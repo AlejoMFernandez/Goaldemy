@@ -117,7 +117,7 @@ export default {
         <AppLoader v-if="authBooting" />
         <RouterView v-else v-slot="{ Component, route }">
           <Transition name="fade-slide" mode="out-in">
-            <div :key="route.path" class="route-shell">
+            <div :key="route.meta?.authGroup || route.path" class="route-shell">
               <component :is="Component" />
             </div>
           </Transition>
