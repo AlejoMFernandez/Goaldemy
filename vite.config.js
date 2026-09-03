@@ -16,8 +16,8 @@ export default defineConfig(async ({ mode }) => {
     registerType: 'autoUpdate',
     includeAssets: ['goaldemy.png'],
     manifest: {
-      name: 'Goaldemy',
-      short_name: 'Goaldemy',
+      name: 'Fulvo',
+      short_name: 'Fulvo',
       description: 'Entrená tu conocimiento de fútbol jugando: micro‑juegos, rachas y logros.',
       start_url: '/',
       display: 'standalone',
