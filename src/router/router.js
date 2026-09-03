@@ -62,7 +62,8 @@ const routes = [
     { path: '/profile', component: Profile, meta: { requiresAuth: true, zone: 'hub' } },
     { path: '/profile-edit', component: ProfileEdit, meta: { requiresAuth: true, zone: 'hub' } },
     { path: '/teams', component: Teams, meta: { zone: 'data' } },
-    { path: '/games/guess-player', component: GuessPlayer, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
+    // Piloto de modo invitado: se puede jugar sin cuenta, el resultado se reclama al registrarse (ver services/guest-play.js)
+    { path: '/games/guess-player', component: GuessPlayer, meta: { immersive: true, zone: 'play' } },
     { path: '/games/nationality', component: NationalityGame, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
     { path: '/games/player-position', component: PlayerPosition, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
     { path: '/games/who-is', component: WhoIs, meta: { requiresAuth: true, immersive: true, zone: 'play' } },

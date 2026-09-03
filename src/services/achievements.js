@@ -4,9 +4,10 @@
  * Gestiona el catálogo de logros y la consulta de logros desbloqueados por usuarios.
  * 
  * SISTEMA DE LOGROS:
- * - 34 logros totales en la aplicación
- * - Cada logro tiene: code (identificador único), name, description, icon_url, points
+ * - Cada logro tiene: code (identificador único), name, description, icon_url, points, active
  * - Los logros se almacenan en la tabla "achievements" (catálogo)
+ * - active=false = retirado (fusionado/cortado): no aparece como "pendiente" para nadie
+ *   nuevo, pero quien ya lo tenía conserva su logro (getUserAchievements no filtra por active)
  * - Los logros desbloqueados se guardan en "user_achievements" (relación usuario-logro)
  * 
  * DESBLOQUEO:
@@ -33,7 +34,7 @@ import { supabase } from './supabase'
 export async function getUserAchievements(userId) {
   const { data, error } = await supabase
     .from('user_achievements')
-    .select('earned_at, achievements:achievement_id (id, code, name, description, icon_url, points)')
+    .select('earned_at, metadata, achievements:achievement_id (id, code, name, description, icon_url, points)')
     .eq('user_id', userId)
     .order('earned_at', { ascending: false })
   return { data, error }
@@ -57,6 +58,7 @@ export async function getAchievementsCatalog(force = false) {
   const { data, error } = await supabase
     .from('achievements')
     .select('id, code, name, description, icon_url, points')
+    .eq('active', true)
     .order('code', { ascending: true })
 
   if (error) {

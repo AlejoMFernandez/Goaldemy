@@ -10,6 +10,8 @@ import { celebrateCorrect, checkEarlyWin, celebrateGameWin, announceGameLoss, ce
 import { playTimeUpSound } from '../../services/sounds'
 
 import { getGameMetadata } from '../../services/games'
+import { getAuthUser } from '../../services/auth'
+import { setPendingGuestClaim } from '../../services/guest-play'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 import CircularTimer from '../../components/game/CircularTimer.vue'
@@ -22,6 +24,9 @@ export default {
   computed: {
     gameMetadata() {
       return getGameMetadata('guess-player')
+    },
+    isGuest() {
+      return !getAuthUser()?.id
     }
   },
   data() {
@@ -179,7 +184,13 @@ export default {
       }
     },
     async finishChallenge(result) {
-      if (this.allowXp && this.xpEarned > 0) {
+      if (this.isGuest) {
+        // Sin cuenta: no hay a quién otorgarle XP server-side. Guardamos el resultado
+        // para reclamarlo de verdad si se registra (ver services/guest-play.js).
+        if (this.xpEarned > 0) {
+          setPendingGuestClaim({ game: 'guess-player', corrects: this.corrects, total: 10, maxStreak: this.maxStreak })
+        }
+      } else if (this.allowXp && this.xpEarned > 0) {
         await awardXpBatch({ gameCode: 'guess-player', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
       }
       await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects, attempts: this.attempts, errors: Math.max(0, (this.attempts || 0) - (this.corrects || 0)), maxWrongStreak: this.maxWrongStreak || 0 }).catch(()=>{})
@@ -297,6 +308,7 @@ export default {
           :difficulty="selectedDifficulty"
           :winThreshold="10"
           :backPath="backPath()"
+          :guest="isGuest"
           @close="showSummary = false"
         />
         

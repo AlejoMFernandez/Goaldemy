@@ -95,6 +95,8 @@ export default {
     // Referidos: si vino con un código pendiente y ya está logueado + verificado,
     // reparte las Fichas a él y a quien lo invitó (cierra el loop del share incentivado).
     import('./services/referral').then(m => m.claimPendingReferral?.()).catch(() => {})
+    // Modo invitado en juegos reales (piloto: Adivina el jugador): mismo cierre de loop.
+    import('./services/guest-play').then(m => m.claimPendingGuestReward?.()).catch(() => {})
     installPresence()
     this.$watch(() => this.$route?.path, (path) => {
       setSuppressOverlays(false)

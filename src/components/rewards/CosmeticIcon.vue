@@ -21,13 +21,17 @@ const uid = 'ci' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
 const gid = (name) => `${uid}-${name}`
 const silver = `url(#${gid('silver')})`
 const gold = `url(#${gid('gold')})`
+const ruby = `url(#${gid('ruby')})`
+const sapphire = `url(#${gid('sapphire')})`
+const emerald = `url(#${gid('emerald')})`
+const moon = `url(#${gid('moon')})`
 
 // Map emoji legacy (style_key actual de los cosméticos) → clave semántica del set SVG.
 const EMOJI_MAP = {
   '⚽': 'ball', '👟': 'boot', '🧤': 'gloves', '🏅': 'medal',
   '🏆': 'trophy', '🐐': 'goat', '👑': 'crown', '⭐': 'star', '🛡️': 'shield', '🛡': 'shield',
 }
-const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel', 'chat', 'butterfly', 'globe', 'comet', 'phoenix', 'rank_bronze', 'rank_silver', 'rank_gold', 'rank_emerald', 'rank_cyan', 'rank_champion'])
+const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel', 'chat', 'butterfly', 'globe', 'comet', 'phoenix', 'calendar', 'crystal_ball', 'tactics_board', 'rank_bronze', 'rank_silver', 'rank_gold', 'rank_emerald', 'rank_cyan', 'rank_champion', 'ach_target', 'ach_flag', 'ach_gauge', 'ach_engine', 'ach_five_stars', 'ach_clean_sweep', 'ach_ring_complete', 'ach_flags_fan', 'ach_horseshoe', 'ach_comeback_arrow', 'ach_crescent_moon', 'ach_perfect_seal', 'ach_triple_ball', 'ach_grand_rosette', 'ach_centurion_helmet', 'ach_network', 'ach_chat_stack', 'ach_dual_medal', 'ach_triple_gem', 'ach_royal_banner'])
 
 const key = computed(() => {
   const k = (props.iconKey || '').trim()
@@ -51,6 +55,10 @@ const frame = computed(() => FRAME[props.rarity] || FRAME.common)
 const ACCENT = { common: '#10b981', rare: '#2563eb', epic: '#9333ea', legendary: '#b45309' }
 const accent = computed(() => ACCENT[props.rarity] || ACCENT.common)
 
+// Aguja del velocímetro (ach_gauge): sube de tier en tier ("calentando motores").
+const GAUGE_ANGLE = { common: -55, rare: -8, epic: 42, legendary: 42 }
+const gaugeAngle = computed(() => GAUGE_ANGLE[props.rarity] ?? GAUGE_ANGLE.common)
+
 // Arte raster opcional (DROP-IN): si existe /cosmetics/icons/<key>.webp se usa como
 // imagen full-bleed; si el archivo no existe (404) @error cae al SVG. Solo íconos cuadrados
 // (no framed). Para sumar un ícono raster: pegá el .webp y agregá su clave al set.
@@ -73,6 +81,10 @@ function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = tr
     <defs>
       <linearGradient :id="gid('silver')" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#94a3b8"/></linearGradient>
       <linearGradient :id="gid('gold')" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
+      <linearGradient :id="gid('ruby')" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fca5a5"/><stop offset="1" stop-color="#b91c1c"/></linearGradient>
+      <linearGradient :id="gid('sapphire')" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfdbfe"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient>
+      <linearGradient :id="gid('emerald')" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a7f3d0"/><stop offset="1" stop-color="#047857"/></linearGradient>
+      <radialGradient :id="gid('moon')" cx="0.35" cy="0.3" r="0.9"><stop offset="0" stop-color="#eef2ff"/><stop offset="1" stop-color="#a5b4fc"/></radialGradient>
       <template v-if="framed">
         <linearGradient :id="gid('RimCommon')" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a7f3d0"/><stop offset="0.5" stop-color="#10b981"/><stop offset="1" stop-color="#0e7490"/></linearGradient>
         <linearGradient :id="gid('RimRare')" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bae6fd"/><stop offset="0.5" stop-color="#38bdf8"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient>
@@ -300,6 +312,37 @@ function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = tr
         <path d="M56 34 l8 -1 -5 5 z" fill="#facc15"/>
       </template>
 
+      <!-- CALENDARIO (constancia diaria) -->
+      <template v-else-if="key === 'calendar'">
+        <rect x="22" y="24" width="56" height="52" rx="6" :fill="silver" stroke="#64748b" stroke-width="1.5"/>
+        <rect x="22" y="24" width="56" height="14" rx="6" :fill="accent"/>
+        <rect x="22" y="31" width="56" height="7" :fill="accent"/>
+        <rect x="32" y="15" width="6" height="14" rx="3" fill="#475569"/>
+        <rect x="62" y="15" width="6" height="14" rx="3" fill="#475569"/>
+        <g fill="#94a3b8"><circle cx="32" cy="52" r="3"/><circle cx="44" cy="52" r="3"/><circle cx="56" cy="52" r="3"/><circle cx="68" cy="52" r="3"/><circle cx="32" cy="64" r="3"/></g>
+        <path d="M52 61 l4.5 5 8.5 -10" fill="none" :stroke="accent" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </template>
+      <!-- BOLA DE CRISTAL (adivino) -->
+      <template v-else-if="key === 'crystal_ball'">
+        <ellipse cx="50" cy="80" rx="20" ry="5" fill="#334155"/>
+        <path d="M32 75 q-4 -9 4 -11 h28 q8 2 4 11 z" fill="#475569" stroke="#1e293b" stroke-width="1"/>
+        <circle cx="50" cy="47" r="26" fill="#c4b5fd" fill-opacity="0.4" stroke="#7c3aed" stroke-width="2"/>
+        <circle cx="50" cy="47" r="26" fill="none" stroke="#ede9fe" stroke-opacity="0.6" stroke-width="1"/>
+        <path d="M37 39 a15 15 0 0 1 19 -6" fill="none" stroke="#faf5ff" stroke-opacity="0.85" stroke-width="3" stroke-linecap="round"/>
+        <path d="M50 30 l3 7 8 1 -6 5 2 8 -7 -4 -7 4 2 -8 -6 -5 8 -1 z" fill="#faf5ff" fill-opacity="0.9"/>
+      </template>
+      <!-- PIZARRA TÁCTICA (técnico) -->
+      <template v-else-if="key === 'tactics_board'">
+        <rect x="20" y="16" width="60" height="56" rx="4" fill="#166534" stroke="#052e16" stroke-width="2"/>
+        <rect x="20" y="16" width="60" height="56" rx="4" fill="none" stroke="#ffffff" stroke-opacity="0.5" stroke-width="1"/>
+        <path d="M50 16 v56" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1.5"/>
+        <circle cx="50" cy="44" r="10" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1.5"/>
+        <path d="M34 29 L66 44 M34 58 L66 44" stroke="#facc15" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <g fill="#facc15"><circle cx="34" cy="29" r="4"/><circle cx="34" cy="58" r="4"/><circle cx="66" cy="44" r="4"/></g>
+        <g fill="#ffffff"><circle cx="60" cy="25" r="4"/><circle cx="60" cy="62" r="4"/></g>
+        <rect x="14" y="72" width="72" height="9" rx="2" fill="#78350f" stroke="#3f1d05" stroke-width="1"/>
+      </template>
+
       <!-- ══ INSIGNIAS DE RANGO (escudo metálico + emblema) ══ -->
       <!-- BRONCE: escudo + pelota -->
       <template v-else-if="key === 'rank_bronze'">
@@ -335,6 +378,254 @@ function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = tr
         <path d="M34 60 L34 42 L44 50 L50 34 L56 50 L66 42 L66 60 Z" fill="none" stroke="#fde68a" stroke-width="2.6" stroke-linejoin="round"/>
         <rect x="34" y="60" width="32" height="6" rx="1" fill="none" stroke="#fde68a" stroke-width="2.2"/>
         <circle cx="44" cy="50" r="2.4" fill="#22d3ee"/><circle cx="50" cy="45" r="2.8" fill="#fde047"/><circle cx="56" cy="50" r="2.4" fill="#34d399"/>
+      </template>
+
+      <!-- ══ ÍCONOS EXCLUSIVOS DE LOGROS (nunca compartidos con la tienda de cosméticos) ══ -->
+      <!-- DIANA (primer toque) -->
+      <template v-else-if="key === 'ach_target'">
+        <circle cx="50" cy="50" r="31" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+        <circle cx="50" cy="50" r="31" fill="none" :stroke="ruby" stroke-width="7"/>
+        <circle cx="50" cy="50" r="19" :fill="ruby"/>
+        <circle cx="50" cy="50" r="19" fill="none" stroke="#f8fafc" stroke-width="7"/>
+        <circle cx="50" cy="50" r="7" :fill="gold" stroke="#b45309" stroke-width="1"/>
+        <path d="M30 34 a24 24 0 0 1 15 -10" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="3" stroke-linecap="round"/>
+        <path d="M80 20 L52 48" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+        <path d="M80 20 l3 9 -9 3 z" fill="#0f172a"/>
+        <path d="M83 15 l6 -6" stroke="#facc15" stroke-width="2.5" stroke-linecap="round"/>
+      </template>
+      <!-- BANDERA A CUADROS (debut ganador) -->
+      <template v-else-if="key === 'ach_flag'">
+        <ellipse cx="34" cy="87" rx="7" ry="2.2" fill="#0f172a" opacity="0.3"/>
+        <path d="M34 14 v72" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="34" cy="13" r="4" :fill="silver" stroke="#64748b" stroke-width="1"/>
+        <path d="M34 20 h30 q4 6 0 12 t0 12 h-30 z" fill="#ffffff" stroke="#1e293b" stroke-width="1.2" stroke-linejoin="round"/>
+        <g fill="#1e293b">
+          <rect x="34" y="20" width="7.5" height="7.5"/><rect x="49" y="20" width="7.5" height="7.5"/>
+          <rect x="41.5" y="27.5" width="7.5" height="7.5"/><rect x="56.5" y="27.5" width="7.5" height="7.5"/>
+          <rect x="34" y="35" width="7.5" height="7.5"/><rect x="49" y="35" width="7.5" height="7.5"/>
+        </g>
+        <path d="M36 22 v20" stroke="#ffffff" stroke-opacity="0.5" stroke-width="1.5"/>
+      </template>
+      <!-- VELOCÍMETRO (rachas: calentando motores) -->
+      <template v-else-if="key === 'ach_gauge'">
+        <circle cx="50" cy="58" r="34" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+        <path d="M22 68 a28 28 0 1 1 56 0" fill="none" stroke="#1e293b" stroke-width="9" stroke-linecap="round"/>
+        <path d="M22 68 a28 28 0 0 1 11 -23" fill="none" :stroke="emerald" stroke-width="9" stroke-linecap="round"/>
+        <path d="M58 31 a28 28 0 0 1 20 37" fill="none" :stroke="ruby" stroke-width="9" stroke-linecap="round"/>
+        <g stroke="#f8fafc" stroke-opacity="0.6" stroke-width="1.4" stroke-linecap="round">
+          <path d="M50 38 v4 M28 50 l3 2 M72 50 l-3 2"/>
+        </g>
+        <g :transform="`rotate(${gaugeAngle} 50 68)`">
+          <path d="M50 68 L50 36" stroke="#f8fafc" stroke-width="3.5" stroke-linecap="round"/>
+        </g>
+        <circle cx="50" cy="68" r="6.5" :fill="gold" stroke="#b45309" stroke-width="1.3"/>
+        <circle cx="47.5" cy="65.5" r="1.6" fill="#fff7d6" opacity="0.85"/>
+      </template>
+      <!-- ENGRANAJE (máquina, tope de racha) -->
+      <template v-else-if="key === 'ach_engine'">
+        <g :fill="gold" stroke="#b45309" stroke-width="1">
+          <rect x="46" y="10" width="8" height="17" rx="2"/>
+          <rect x="46" y="73" width="8" height="17" rx="2"/>
+          <rect x="10" y="46" width="17" height="8" rx="2"/>
+          <rect x="73" y="46" width="17" height="8" rx="2"/>
+          <rect x="20" y="20" width="11" height="11" rx="2" transform="rotate(45 25.5 25.5)"/>
+          <rect x="69" y="20" width="11" height="11" rx="2" transform="rotate(45 74.5 25.5)"/>
+          <rect x="20" y="69" width="11" height="11" rx="2" transform="rotate(45 25.5 74.5)"/>
+          <rect x="69" y="69" width="11" height="11" rx="2" transform="rotate(45 74.5 74.5)"/>
+        </g>
+        <circle cx="50" cy="50" r="18" :fill="gold" stroke="#b45309" stroke-width="2"/>
+        <circle cx="50" cy="50" r="18" fill="none" stroke="#fff7d6" stroke-opacity="0.5" stroke-width="1.5"/>
+        <circle cx="50" cy="50" r="8" fill="#78350f"/>
+        <circle cx="47" cy="47" r="2" fill="#a8590a" opacity="0.6"/>
+      </template>
+      <!-- CINCO ESTRELLAS EN ARCO (quinteto de oro) -->
+      <template v-else-if="key === 'ach_five_stars'">
+        <circle cx="50" cy="48" r="26" fill="#fff7d6" opacity="0.08"/>
+        <g :fill="gold" stroke="#b45309" stroke-width="1" stroke-linejoin="round">
+          <path d="M24 66 l2 5 6 1 -4 4 1 6 -5 -3 -5 3 1 -6 -4 -4 6 -1 z"/>
+          <path d="M38 46 l2.5 6 7 .8 -5 4.5 1.5 7 -6 -3.7 -6 3.7 1.5 -7 -5 -4.5 7 -.8 z"/>
+          <path d="M50 30 l3 7 8 1 -6 5 2 8 -7 -4 -7 4 2 -8 -6 -5 8 -1 z"/>
+          <path d="M62 46 l2.5 6 7 .8 -5 4.5 1.5 7 -6 -3.7 -6 3.7 1.5 -7 -5 -4.5 7 -.8 z"/>
+          <path d="M76 66 l2 5 6 1 -4 4 1 6 -5 -3 -5 3 1 -6 -4 -4 6 -1 z"/>
+        </g>
+      </template>
+      <!-- BARRIDA LIMPIA (checklist con todo tildado) -->
+      <template v-else-if="key === 'ach_clean_sweep'">
+        <rect x="27" y="18" width="46" height="66" rx="4" fill="#0f172a" opacity="0.25"/>
+        <rect x="26" y="16" width="48" height="68" rx="4" :fill="silver" stroke="#64748b" stroke-width="1.5"/>
+        <rect x="30" y="20" width="4" height="60" fill="#ffffff" opacity="0.35"/>
+        <rect x="38" y="10" width="24" height="10" rx="3" fill="#475569"/>
+        <rect x="38" y="10" width="24" height="4" rx="2" fill="#64748b"/>
+        <g stroke="#16a34a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <path d="M34 32 l4 4 8 -8"/>
+          <path d="M34 48 l4 4 8 -8"/>
+          <path d="M34 64 l4 4 8 -8"/>
+        </g>
+        <g fill="#94a3b8"><rect x="50" y="29" width="20" height="4" rx="2"/><rect x="50" y="45" width="20" height="4" rx="2"/><rect x="50" y="61" width="20" height="4" rx="2"/></g>
+      </template>
+      <!-- ANILLO COMPLETO (decena perfecta: 10 juegos distintos) -->
+      <template v-else-if="key === 'ach_ring_complete'">
+        <circle cx="50" cy="50" r="34" fill="none" :stroke="gold" stroke-opacity="0.3" stroke-width="1"/>
+        <g :fill="gold" stroke="#b45309" stroke-width="0.8">
+          <circle cx="50" cy="17" r="5.5"/><circle cx="70" cy="24" r="5.5"/><circle cx="82" cy="42" r="5.5"/>
+          <circle cx="82" cy="58" r="5.5"/><circle cx="70" cy="76" r="5.5"/><circle cx="50" cy="83" r="5.5"/>
+          <circle cx="30" cy="76" r="5.5"/><circle cx="18" cy="58" r="5.5"/><circle cx="18" cy="42" r="5.5"/><circle cx="30" cy="24" r="5.5"/>
+        </g>
+        <circle cx="50" cy="50" r="21" :fill="accent" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1"/>
+        <path d="M40 51 l7 8 15 -17" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </template>
+      <!-- ABANICO DE BANDERAS (experto en nacionalidades) -->
+      <template v-else-if="key === 'ach_flags_fan'">
+        <path d="M30 78 V26" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="30" cy="25" r="3" fill="#94a3b8"/>
+        <path d="M30 26 h20 q3 4 0 8 t0 8 h-20 z" fill="#38bdf8" stroke="#1e293b" stroke-width="1" stroke-linejoin="round"/>
+        <path d="M38 40 V82" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="38" cy="39" r="3" fill="#94a3b8"/>
+        <path d="M38 40 h20 q3 4 0 8 t0 8 h-20 z" :fill="accent" stroke="#1e293b" stroke-width="1" stroke-linejoin="round"/>
+        <path d="M46 22 V70" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="46" cy="21" r="3" fill="#94a3b8"/>
+        <path d="M46 22 h20 q3 4 0 8 t0 8 h-20 z" fill="#f87171" stroke="#1e293b" stroke-width="1" stroke-linejoin="round"/>
+      </template>
+      <!-- HERRADURA (suertudo) -->
+      <template v-else-if="key === 'ach_horseshoe'">
+        <path d="M32 80 C20 68 20 40 32 26 C40 16 60 16 68 26 C80 40 80 68 68 80 L60 80 C68 70 70 46 60 34 C54 27 46 27 40 34 C30 46 32 70 40 80 Z" :fill="gold" stroke="#b45309" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M35 74 C27 62 28 42 37 30" fill="none" stroke="#fff7d6" stroke-opacity="0.55" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="32" cy="80" r="4" fill="#78350f"/><circle cx="40" cy="80" r="4" fill="#78350f"/>
+        <circle cx="60" cy="80" r="4" fill="#78350f"/><circle cx="68" cy="80" r="4" fill="#78350f"/>
+        <path d="M38 30 a18 18 0 0 1 12 -8" fill="none" stroke="#fff7d6" stroke-opacity="0.7" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M50 44 l1.6 3.8 4 .4 -3 2.8 .8 4 -3.4 -2 -3.4 2 .8 -4 -3 -2.8 4 -.4 z" fill="#fff7d6" opacity="0.9"/>
+      </template>
+      <!-- FLECHA DE REMONTADA (rey del comeback) -->
+      <template v-else-if="key === 'ach_comeback_arrow'">
+        <path d="M24 30 q-4 26 16 34" fill="none" :stroke="ruby" stroke-width="8" stroke-linecap="round"/>
+        <circle cx="24" cy="30" r="6.5" :fill="ruby" stroke="#7f1d1d" stroke-width="1"/>
+        <path d="M38 66 q26 12 38 -22" fill="none" :stroke="gold" stroke-width="8" stroke-linecap="round"/>
+        <path d="M82 36 l4 10 -10.5 1 z" :fill="gold" stroke="#b45309" stroke-width="1"/>
+        <path d="M44 68 q16 6 26 -10" fill="none" stroke="#fff7d6" stroke-opacity="0.5" stroke-width="2.5" stroke-linecap="round"/>
+      </template>
+      <!-- LUNA CRECIENTE (ave nocturna) -->
+      <template v-else-if="key === 'ach_crescent_moon'">
+        <circle cx="58" cy="42" r="34" fill="#6366f1" opacity="0.12"/>
+        <path d="M62 20 a32 32 0 1 0 18 44 a24 24 0 0 1 -18 -44 z" :fill="moon" stroke="#4338ca" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M48 24 a26 26 0 0 0 -6 30" fill="none" stroke="#ffffff" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+        <g fill="#fde68a">
+          <circle cx="70" cy="30" r="3"/><circle cx="81" cy="48" r="2"/><circle cx="60" cy="72" r="2.2"/>
+        </g>
+      </template>
+      <!-- SELLO PERFECTO (perfeccionista) -->
+      <template v-else-if="key === 'ach_perfect_seal'">
+        <path d="M36 68 l-8 20 14 -6 8 12 6 -18" fill="none" :stroke="accent" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+        <path d="M50 14 l10 6 12 -2 4 11 9 8 -6 11 2 12 -11 5 -6 11 -12 -2 -10 6 -10 -6 -12 2 -6 -11 -11 -5 2 -12 -6 -11 9 -8 4 -11 12 2 z" :fill="gold" stroke="#b45309" stroke-width="1.5" stroke-linejoin="round"/>
+        <circle cx="50" cy="50" r="20" :fill="accent" stroke="#ffffff" stroke-opacity="0.4" stroke-width="1"/>
+        <path d="M36 40 a18 18 0 0 1 14 -8" fill="none" stroke="#ffffff" stroke-opacity="0.4" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M40 50 l7 8 15 -17" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </template>
+      <!-- TRIPLETE (hat-trick: 3 balones en pirámide) -->
+      <template v-else-if="key === 'ach_triple_ball'">
+        <ellipse cx="50" cy="46" rx="10" ry="3" fill="#0f172a" opacity="0.25"/>
+        <ellipse cx="34" cy="74" rx="10" ry="3" fill="#0f172a" opacity="0.25"/>
+        <ellipse cx="66" cy="74" rx="10" ry="3" fill="#0f172a" opacity="0.25"/>
+        <g :fill="silver" stroke="#64748b" stroke-width="1">
+          <circle cx="50" cy="30" r="13"/>
+          <circle cx="34" cy="58" r="13"/>
+          <circle cx="66" cy="58" r="13"/>
+        </g>
+        <g fill="#1e293b">
+          <path d="M50 23 l5 3.6 -1.9 6 -6.2 0 -1.9 -6 z"/>
+          <path d="M34 51 l5 3.6 -1.9 6 -6.2 0 -1.9 -6 z"/>
+          <path d="M66 51 l5 3.6 -1.9 6 -6.2 0 -1.9 -6 z"/>
+        </g>
+        <g fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="1.6" stroke-linecap="round">
+          <path d="M43 24 a13 13 0 0 1 6 -4"/>
+          <path d="M27 52 a13 13 0 0 1 6 -4"/>
+          <path d="M59 52 a13 13 0 0 1 6 -4"/>
+        </g>
+      </template>
+      <!-- ROSETÓN DE CAMPEÓN (grand slam) -->
+      <template v-else-if="key === 'ach_grand_rosette'">
+        <g :fill="gold" stroke="#b45309" stroke-width="0.8">
+          <path d="M50 10 l7 12 -7 10 -7 -10 z"/>
+          <path d="M50 10 l7 12 -7 10 -7 -10 z" transform="rotate(30 50 42)"/>
+          <path d="M50 10 l7 12 -7 10 -7 -10 z" transform="rotate(60 50 42)"/>
+          <path d="M50 10 l7 12 -7 10 -7 -10 z" transform="rotate(90 50 42)"/>
+          <path d="M50 10 l7 12 -7 10 -7 -10 z" transform="rotate(120 50 42)"/>
+          <path d="M50 10 l7 12 -7 10 -7 -10 z" transform="rotate(150 50 42)"/>
+          <path d="M50 10 l7 12 -7 10 -7 -10 z" transform="rotate(180 50 42)"/>
+          <path d="M50 10 l7 12 -7 10 -7 -10 z" transform="rotate(210 50 42)"/>
+          <path d="M50 10 l7 12 -7 10 -7 -10 z" transform="rotate(240 50 42)"/>
+          <path d="M50 10 l7 12 -7 10 -7 -10 z" transform="rotate(270 50 42)"/>
+          <path d="M50 10 l7 12 -7 10 -7 -10 z" transform="rotate(300 50 42)"/>
+          <path d="M50 10 l7 12 -7 10 -7 -10 z" transform="rotate(330 50 42)"/>
+        </g>
+        <circle cx="50" cy="42" r="26" :fill="gold" stroke="#b45309" stroke-width="2"/>
+        <circle cx="50" cy="42" r="26" fill="none" stroke="#fff7d6" stroke-opacity="0.4" stroke-width="1.5"/>
+        <circle cx="50" cy="42" r="17" :fill="accent"/>
+        <path d="M50 32 l4 9 9 1 -7 6 2 9 -8 -5 -8 5 2 -9 -7 -6 9 -1 z" fill="#fff7d6"/>
+        <path d="M30 62 l-6 26 26 -12 26 12 -6 -26" fill="none" :stroke="gold" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </template>
+      <!-- CASCO DE CENTURIÓN -->
+      <template v-else-if="key === 'ach_centurion_helmet'">
+        <ellipse cx="50" cy="80" rx="26" ry="4" fill="#0f172a" opacity="0.25"/>
+        <path d="M50 16 c15 0 25 11 25 25 v7 h-50 v-7 c0 -14 10 -25 25 -25 z" :fill="gold" stroke="#b45309" stroke-width="1.5"/>
+        <path d="M32 22 a26 26 0 0 1 15 -6" fill="none" stroke="#fff7d6" stroke-opacity="0.55" stroke-width="3" stroke-linecap="round"/>
+        <path d="M25 48 h50 v9 q0 6 -6 6 h-38 q-6 0 -6 -6 z" :fill="gold" stroke="#b45309" stroke-width="1.5"/>
+        <path d="M25 48 h50" stroke="#fff7d6" stroke-opacity="0.35" stroke-width="1.5"/>
+        <rect x="46" y="28" width="8" height="26" rx="2" fill="#78350f"/>
+        <path d="M22 30 c8 -20 48 -20 56 0 l-4 11 c-10 -17 -38 -17 -48 0 z" fill="#dc2626"/>
+        <path d="M22 30 c8 -20 48 -20 56 0" fill="none" stroke="#7f1d1d" stroke-width="1" opacity="0.4"/>
+        <g fill="#78350f"><circle cx="30" cy="52" r="1.6"/><circle cx="70" cy="52" r="1.6"/></g>
+      </template>
+      <!-- RED SOCIAL (mariposa social → nodos conectados) -->
+      <template v-else-if="key === 'ach_network'">
+        <g stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round">
+          <path d="M50 26 L24 60 M50 26 L76 60 M24 60 L50 80 M76 60 L50 80 M24 60 L76 60"/>
+        </g>
+        <g stroke="#ffffff" stroke-opacity="0.25" stroke-width="1" stroke-linecap="round">
+          <path d="M50 26 L24 60 M50 26 L76 60"/>
+        </g>
+        <g :fill="accent" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1">
+          <circle cx="50" cy="26" r="9"/><circle cx="24" cy="60" r="9"/><circle cx="76" cy="60" r="9"/><circle cx="50" cy="80" r="7"/>
+        </g>
+        <circle cx="47" cy="23" r="2.2" fill="#ffffff" opacity="0.5"/>
+      </template>
+      <!-- BOCADILLOS APILADOS (charlatán) -->
+      <template v-else-if="key === 'ach_chat_stack'">
+        <path d="M18 26 h44 a8 8 0 0 1 8 8 v16 a8 8 0 0 1 -8 8 h-24 l-11 9 v-9 h-9 a8 8 0 0 1 -8 -8 v-16 a8 8 0 0 1 8 -8 z" fill="#475569" opacity="0.5"/>
+        <path d="M34 40 h48 a8 8 0 0 1 8 8 v16 a8 8 0 0 1 -8 8 h-9 v9 l-11 -9 h-28 a8 8 0 0 1 -8 -8 v-16 a8 8 0 0 1 8 -8 z" :fill="silver" stroke="#64748b" stroke-width="1.5"/>
+        <path d="M40 44 h36" stroke="#ffffff" stroke-opacity="0.4" stroke-width="1.5" stroke-linecap="round"/>
+        <g fill="#475569"><circle cx="46" cy="60" r="3.4"/><circle cx="58" cy="60" r="3.4"/><circle cx="70" cy="60" r="3.4"/></g>
+      </template>
+      <!-- DOBLE MEDALLA (bicampeón) -->
+      <template v-else-if="key === 'ach_dual_medal'">
+        <path d="M32 38 l6 16 -6 -3 -6 3 z" fill="#cbd5e1"/>
+        <path d="M68 38 l6 16 -6 -3 -6 3 z" fill="#fde68a"/>
+        <circle cx="38" cy="55" r="20" :fill="silver" stroke="#64748b" stroke-width="2"/>
+        <circle cx="38" cy="55" r="20" fill="none" stroke="#ffffff" stroke-opacity="0.4" stroke-width="1.2"/>
+        <circle cx="62" cy="55" r="20" :fill="gold" stroke="#b45309" stroke-width="2"/>
+        <circle cx="62" cy="55" r="20" fill="none" stroke="#fff7d6" stroke-opacity="0.5" stroke-width="1.2"/>
+        <path d="M38 48 l3 7 7 .8 -5 4.6 1.4 7 -6.4 -3.8 -6.4 3.8 1.4 -7 -5 -4.6 7 -.8 z" fill="#475569"/>
+        <path d="M62 48 l3 7 7 .8 -5 4.6 1.4 7 -6.4 -3.8 -6.4 3.8 1.4 -7 -5 -4.6 7 -.8 z" fill="#b45309"/>
+      </template>
+      <!-- TRIPLE GEMA (triple 5K) -->
+      <template v-else-if="key === 'ach_triple_gem'">
+        <ellipse cx="50" cy="82" rx="20" ry="3" fill="#0f172a" opacity="0.2"/>
+        <g stroke="#0891b2" stroke-width="1.2" stroke-linejoin="round">
+          <path d="M28 54 l7 -13 h11 l7 13 -12.5 22 z" fill="#a5f3fc"/>
+          <path d="M28 54 h25 M34.5 41 l4 13 M41.5 41 l-4 13" stroke-opacity="0.6" stroke-width="0.9"/>
+          <path d="M50 60 l7 -13 h11 l7 13 -12.5 22 z" fill="#67e8f9"/>
+          <path d="M50 60 h25 M56.5 47 l4 13 M63.5 47 l-4 13" stroke-opacity="0.6" stroke-width="0.9"/>
+          <path d="M39 34 l6 -11 h10 l6 11 -11 19 z" fill="#cffafe"/>
+          <path d="M39 34 h22 M45 23 l3.5 11 M51 23 l-3.5 11" stroke-opacity="0.6" stroke-width="0.9"/>
+        </g>
+        <path d="M32 50 l3 -6" stroke="#ffffff" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round"/>
+      </template>
+      <!-- ESTANDARTE REAL (rey de la semana) -->
+      <template v-else-if="key === 'ach_royal_banner'">
+        <path d="M30 20 h40 v42 l-20 16 -20 -16 z" :fill="accent" stroke="#1e293b" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M30 20 h40 v6 h-40 z" fill="#ffffff" opacity="0.12"/>
+        <path d="M36 32 l4.5 8 5.5 -13 5.5 13 4.5 -8 -1.5 16 h-17 z" :fill="gold" stroke="#b45309" stroke-width="1"/>
+        <rect x="35" y="48" width="30" height="5" rx="1.5" :fill="gold" stroke="#b45309" stroke-width="0.8"/>
+        <circle cx="41" cy="38" r="1.8" fill="#e11d48"/><circle cx="50" cy="34" r="2" fill="#06b6d4"/><circle cx="59" cy="38" r="1.8" fill="#e11d48"/>
       </template>
     </g>
 

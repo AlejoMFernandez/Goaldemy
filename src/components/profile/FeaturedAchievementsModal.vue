@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getAchievementsCatalog } from '../../services/achievements'
+import { achievementIcon } from '../../services/achievement-icons'
+import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 
 const props = defineProps({
   achievements: { type: Array, required: true },
@@ -19,10 +21,10 @@ onMounted(async () => {
 const CATEGORIES = [
   { key: 'inicio', label: '🎯 Logros de inicio', codes: ['first_correct', 'first_win'] },
   { key: 'rachas', label: '🔥 Rachas de juego', codes: ['streak_3', 'streak_5', 'streak_10', 'streak_15'] },
-  { key: 'daily_wins', label: '📅 Victorias diarias', codes: ['daily_wins_3', 'daily_wins_5', 'daily_wins_all', 'daily_wins_10'] },
+  { key: 'daily_wins', label: '📅 Victorias diarias', codes: ['daily_wins_5', 'daily_wins_all', 'daily_wins_10'] },
   { key: 'daily_streak', label: '🔁 Constancia diaria', codes: ['daily_streak_3', 'daily_streak_5', 'daily_streak_7', 'daily_streak_14', 'daily_streak_30'] },
   { key: 'game_specific', label: '⚽ Logros por juego', codes: ['guess_master', 'nationality_expert', 'position_guru'] },
-  { key: 'curious', label: '🎲 Logros curiosos', codes: ['lucky_first', 'comeback_king', 'night_owl', 'early_bird', 'weekend_warrior'] },
+  { key: 'curious', label: '🎲 Logros curiosos', codes: ['lucky_first', 'comeback_king', 'night_owl'] },
   { key: 'epic', label: '🏆 Logros épicos', codes: ['perfectionist', 'hat_trick', 'grand_slam', 'centurion'] },
   { key: 'social', label: '🌟 Logros sociales', codes: ['social_butterfly', 'chat_master'] },
   { key: 'super', label: '💎 Super logros', codes: ['streak_dual_100', 'xp_multi_5k_3', 'daily_super_5x3'] },
@@ -153,9 +155,10 @@ const canSave = computed(() => selected.value.length > 0 && selected.value.lengt
                 </div>
 
                 <div class="flex items-start gap-3">
-                  <img v-if="ach.icon_url" :src="ach.icon_url" class="w-12 h-12 rounded flex-none" alt="icon" />
-                  <div v-else class="w-12 h-12 rounded bg-slate-700/60 flex items-center justify-center text-slate-300/80 flex-none">🏆</div>
-                  
+                  <div class="w-12 h-12 flex-none">
+                    <CosmeticIcon framed :icon-key="achievementIcon(ach.code).icon" :rarity="achievementIcon(ach.code).rarity" :size="48" />
+                  </div>
+
                   <div class="flex-1 min-w-0 pr-6">
                     <p class="font-semibold text-white leading-tight">{{ ach.name }}</p>
                     <p class="text-xs text-slate-400 mt-1 line-clamp-2">{{ ach.description }}</p>

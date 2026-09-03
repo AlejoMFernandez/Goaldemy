@@ -6,10 +6,12 @@
 -- Front: glyphs en CosmeticIcon.vue (sun/clover/sword/hat/laurel) + iconThemeBg + hints en cosmetics.js.
 -- ============================================================
 
+-- icon_sun y icon_sword re-atados tras la curaduría de logros (early_bird y
+-- weekend_warrior retirados) — ver supabase/achievements-curation-1.sql
 INSERT INTO public.cosmetics (code, type, name, rarity, style_key, unlock_level, premium_only, unlock_achievement, sort_order) VALUES
-  ('icon_sun',    'icon', 'Amanecer',  'rare',      'sun',    999, false, 'early_bird',      33),
+  ('icon_sun',    'icon', 'Amanecer',  'rare',      'sun',    999, false, 'night_owl',       33),
   ('icon_clover', 'icon', 'Trébol',    'rare',      'clover', 999, false, 'lucky_first',     34),
-  ('icon_sword',  'icon', 'Espada',    'epic',      'sword',  999, false, 'weekend_warrior', 35),
+  ('icon_sword',  'icon', 'Espada',    'epic',      'sword',  999, false, 'centurion',       35),
   ('icon_hat',    'icon', 'Hat-Trick', 'epic',      'hat',    999, false, 'hat_trick',       36),
   ('icon_laurel', 'icon', 'Laurel',    'legendary', 'laurel', 999, false, 'centurion',       37)
 ON CONFLICT (code) DO UPDATE SET
