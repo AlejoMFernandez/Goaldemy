@@ -19,9 +19,8 @@ import MatchTicker from '../components/home/MatchTicker.vue'
 // Vacío = se usa el fondo con degradé en vez de video.
 const HERO_VIDEO_SRC = '/videoshero/hero-aerial.mp4'
 const HERO_VIDEO_POSTER = '/videoshero/hero-aerial-poster.jpg'
-// Async: pase, planes y modal de partido bajan en su propio chunk (deps pesadas
-// fuera del bundle inicial de la home). MonthlyPass trae su card + modal + datos.
-const MatchDetailModal = defineAsyncComponent(() => import('../components/match/MatchDetailModal.vue'))
+// Async: pase y planes bajan en su propio chunk (deps pesadas fuera del
+// bundle inicial de la home). MonthlyPass trae su card + modal + datos.
 const MonthlyPass = defineAsyncComponent(() => import('../components/rewards/MonthlyPass.vue'))
 const PlanCard = defineAsyncComponent(() => import('../components/pricing/PlanCard.vue'))
 
@@ -651,9 +650,6 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
         <div v-for="i in 3" :key="i" class="rounded-2xl border border-white/10 bg-white/[0.02] h-[420px] animate-pulse"></div>
       </div>
     </div>
-
-    <!-- Match Detail Modal -->
-    <MatchDetailModal :match="selectedMatch" :open="matchModalOpen" @close="matchModalOpen = false" />
   </section>
 </template>
 
