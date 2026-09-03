@@ -48,12 +48,12 @@ const textClass = computed(() => sizeConfig[props.size].text)
       v-if="variant === 'full' || variant === 'wordmark'"
       :class="[
         textClass,
-        'font-bold tracking-tight',
+        'font-bold tracking-tight text-white',
         { 'group-hover:translate-x-1 transition-transform duration-300': animated }
       ]"
       style="font-family: 'Montserrat', sans-serif;"
     >
-      <span class="text-white">FUL</span><span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">VO</span>
+      FULVO
     </span>
   </div>
 </template>
@@ -64,4 +64,3 @@ const textClass = computed(() => sizeConfig[props.size].text)
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.3));
 }
 </style>
-

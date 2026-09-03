@@ -135,7 +135,7 @@ export async function checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
     const wins = await countTodayDailyWins()           // juegos distintos ganados hoy
     const totalGames = await getPlayableGameCount()    // todos los juegos jugables (dinámico)
     // LOGROS POR VICTORIAS DIARIAS:
-    if (wins >= 3) await unlockAchievementWithToast('daily_wins_3')  // 3 juegos ganados hoy
+    // (3 juegos ganados hoy: cubierto por hat_trick, ver checkHatTrickAchievement)
     if (wins >= 5) await unlockAchievementWithToast('daily_wins_5')  // 5 juegos ganados hoy
     if (wins >= 10) await unlockAchievementWithToast('daily_wins_10') // 10 juegos ganados hoy
     // PLENO: Ganaste TODOS los juegos disponibles hoy
@@ -182,7 +182,9 @@ export async function checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
  */
 export async function isChallengeAvailable(slug) {
   const { id: userId } = getAuthUser() || {}
-  if (!userId) return { available: false, reason: 'Debes iniciar sesión' }
+  // Invitado (sin cuenta): puede jugar, no hay sesión server-side contra la cual
+  // chequear "ya jugaste hoy" — el límite de 1/día empieza a regir recién al registrarse.
+  if (!userId) return { available: true, reason: null, result: null }
   const gameId = await getGameId(slug)
   // If the game is not registered in DB yet, allow playing (no persisted session)
   if (!gameId) return { available: true, reason: null, result: null }
@@ -227,9 +229,9 @@ export async function startChallengeSession(slug, seconds) {
   import('../stores/notifications').then(m => m.setSuppressOverlays(true)).catch(() => {})
   const { id: userId } = getAuthUser() || {}
   const gameId = await getGameId(slug)
-  // If no DB game exists, start a non-persisted session by returning null
-  if (!userId) throw new Error('No se pudo iniciar la sesión')
-  if (!gameId) return null
+  // Invitado o juego sin registrar en DB: sesión no persistida (sessionId null,
+  // completeChallengeSession ya sabe no-opear con eso).
+  if (!userId || !gameId) return null
   const metadata = { mode: 'challenge', seconds: seconds }
   const { data, error } = await supabase
     .from('game_sessions')

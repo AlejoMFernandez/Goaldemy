@@ -241,14 +241,12 @@ export const ACHIEVEMENT_HINTS = {
   streak_15: 'Conseguí 15 aciertos seguidos en un juego',
   daily_streak_30: 'Jugá 30 días seguidos',
   perfectionist: 'Completá un juego sin ningún error',
-  night_owl: 'Jugá entre las 00:00 y las 05:00',
+  night_owl: 'Jugá entre las 00:00 y las 08:00',
   daily_wins_all: 'Ganá todos los juegos del día',
   centurion: 'Acumulá 100 victorias totales',
   guess_master: 'Ganá 20 partidas de "Adivina el jugador"',
   comeback_king: 'Ganá después de 3 errores seguidos',
-  early_bird: 'Jugá entre las 05:00 y las 08:00',
   lucky_first: 'Acertá al primer intento 10 veces',
-  weekend_warrior: 'Ganá 10 juegos un sábado o domingo',
   hat_trick: 'Ganá 3 juegos distintos el mismo día',
   chat_master: 'Enviá 100 mensajes en el chat',
   social_butterfly: 'Conectá con 10 usuarios',
@@ -266,11 +264,32 @@ export function unlockReason(c) {
   return 'Recompensa desbloqueada'
 }
 
+// Qué cosmético(s) desbloquea cada logro (para el hover de la tarjeta de logros).
+// code → [{ code, name, type, rarity, styleKey }]
+let _unlocksByAchievementCache = null
+export async function getCosmeticUnlocksByAchievement() {
+  if (_unlocksByAchievementCache) return _unlocksByAchievementCache
+  const { data, error } = await supabase
+    .from('cosmetics')
+    .select('code, name, type, rarity, style_key, unlock_achievement')
+    .not('unlock_achievement', 'is', null)
+  if (error || !data) return {}
+  const map = {}
+  for (const c of data) {
+    const key = c.unlock_achievement
+    if (!map[key]) map[key] = []
+    // style_key (no camelCase): PassCosmetic.vue espera esta forma exacta (viene de get_monthly_pass).
+    map[key].push({ code: c.code, name: c.name, type: c.type, rarity: c.rarity || 'common', style_key: c.style_key || '' })
+  }
+  _unlocksByAchievementCache = map
+  return map
+}
+
 // ── Aviso de cosméticos recién desbloqueados ──
 // Scopeado por usuario: sin scope, una cuenta veía/silenciaba los cosméticos de otra.
 const SEEN_KEY_PREFIX = 'gl:seen_cosmetics'
 const seenKeyFor = (id) => `${SEEN_KEY_PREFIX}:${id}`
-const TYPE_LABEL = { frame: 'Borde', title: 'Título', icon: 'Ícono', banner: 'Banner' }
+export const TYPE_LABEL = { frame: 'Borde', title: 'Título', icon: 'Ícono', banner: 'Banner' }
 const RARITY_EMOJI = { common: '✨', rare: '🔷', epic: '🟪', legendary: '🌟' }
 
 // Exclusivo = merece la escena premium (logros difíciles, últimos tiers del pase, premium).

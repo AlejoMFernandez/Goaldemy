@@ -11,13 +11,14 @@ values
   -- 🔥 Rachas en dias
   ('streak_3', 'Calentando motores', 'Acumula 3 aciertos seguidos en un juego', 'https://img.icons8.com/emoji/48/fire.png', 20),
   ('streak_5', 'En racha', 'Acumula 5 aciertos seguidos en un juego', 'https://img.icons8.com/fluency/48/confetti.png', 30),
-  ('streak_10', 'Imparable', 'Acumula 10 aciertos seguidos en un juego', 'https://img.icons8.com/fluency/48/trophy.png', 50),
-  ('streak_15', 'Máquina', '15 aciertos seguidos... ¿cómo lo hacés?', 'https://img.icons8.com/fluency/48/crown.png', 80),
+  ('streak_10', 'Imparable', 'Acumula 10 aciertos seguidos en un juego', 'https://img.icons8.com/fluency/48/trophy.png', 65),
+  ('streak_15', 'Máquina', '15 aciertos seguidos... ¿cómo lo hacés?', 'https://img.icons8.com/fluency/48/crown.png', 140),
   
   -- 📅 Logros diarios (wins en el día)
+  -- daily_wins_3 retirado (fusionado en hat_trick) — ver supabase/achievements-curation-1.sql
   ('daily_wins_3', 'Triplete', 'Ganá 3 juegos en un mismo día', 'https://img.icons8.com/fluency/48/goal.png', 25),
   ('daily_wins_5', 'Quinteto de oro', 'Ganá 5 juegos en un mismo día', 'https://img.icons8.com/emoji/48/gem-stone.png', 40),
-  ('daily_wins_all', 'Barrida limpia', 'Ganá todos los juegos del día', 'https://img.icons8.com/color/48/broom.png', 100),
+  ('daily_wins_all', 'Barrida limpia', 'Ganá todos los juegos del día', 'https://img.icons8.com/color/48/broom.png', 180),
   
   -- 🔁 Constancia diaria (daily streaks)
   ('daily_streak_3', 'Disciplinado', 'Volvé 3 días seguidos', 'https://img.icons8.com/color/48/calendar--v1.png', 20),
@@ -34,24 +35,25 @@ values
   -- 🎲 Logros curiosos y divertidos
   ('lucky_first', 'Suertudo', 'Acierta en el primer intento 10 veces', 'https://img.icons8.com/color/48/horseshoe.png', 40),
   ('comeback_king', 'Rey del comeback', 'Ganá después de 3 errores consecutivos', 'https://img.icons8.com/color/48/restart--v1.png', 30),
-  ('night_owl', 'Ave nocturna', 'Jugá entre las 00:00 y las 05:00', 'https://img.icons8.com/fluency/48/owl.png', 25),
+  ('night_owl', 'Ave nocturna', 'Jugá entre las 00:00 y las 08:00', 'https://img.icons8.com/fluency/48/owl.png', 25),
+  -- early_bird y weekend_warrior retirados (fusionado/cortado) — ver supabase/achievements-curation-1.sql
   ('early_bird', 'Madrugador', 'Jugá entre las 05:00 y las 08:00 (madrugador)', 'https://img.icons8.com/fluency/48/sun.png', 25),
   ('weekend_warrior', 'Guerrero del finde', 'Ganá 10 juegos en sábado o domingo', 'https://img.icons8.com/fluency/48/beach.png', 40),
   
   -- 🏆 Logros épicos y desafiantes
-  ('perfectionist', 'Perfeccionista', 'Completá un juego sin errores', 'https://img.icons8.com/fluency/48/star-half-empty.png', 60),
-  ('hat_trick', 'Hat-trick', 'Ganá 3 juegos distintos el mismo día', 'https://img.icons8.com/color/48/football2--v1.png', 50),
-  ('grand_slam', 'Grand Slam', 'Ganá TODOS los juegos disponibles dentro de la misma semana (7 días)', 'https://img.icons8.com/fluency/48/trophy.png', 150),
-  ('centurion', 'Centurión', 'Acumula 100 victorias totales', 'https://img.icons8.com/fluency/48/medal.png', 100),
+  ('perfectionist', 'Perfeccionista', 'Completá un juego sin errores', 'https://img.icons8.com/fluency/48/star-half-empty.png', 90),
+  ('hat_trick', 'Hat-trick', 'Ganá 3 juegos distintos el mismo día', 'https://img.icons8.com/color/48/football2--v1.png', 70),
+  ('grand_slam', 'Grand Slam', 'Ganá TODOS los juegos disponibles dentro de la misma semana (7 días)', 'https://img.icons8.com/fluency/48/trophy.png', 220),
+  ('centurion', 'Centurión', 'Acumula 100 victorias totales', 'https://img.icons8.com/fluency/48/medal.png', 250),
   
   -- 🌟 Logros sociales
   ('social_butterfly', 'Mariposa social', 'Conectá con 10 usuarios', 'https://img.icons8.com/fluency/48/conference-call.png', 30),
   ('chat_master', 'Charlatán', 'Envía 100 mensajes en el chat', 'https://img.icons8.com/fluency/48/chat.png', 40),
   
   -- 💎 Super logros
-  ('streak_dual_100', 'Doble centenario', 'Acumulá 100 victorias en 2 juegos distintos', 'https://img.icons8.com/color/48/two-hearts.png', 150),
-  ('xp_multi_5k_3', 'Triple 5K', 'Conseguí 5000 XP en 3 juegos diferentes', 'https://img.icons8.com/color/48/gems.png', 150),
-  ('daily_super_5x3', 'Tri-rey semanal', 'Lográ 5 días seguidos ganando en 3 juegos distintos', 'https://img.icons8.com/color/48/prize.png', 120),
+  ('streak_dual_100', 'Bicampeón', 'Acumulá 100 victorias en 2 juegos distintos', 'https://img.icons8.com/color/48/two-hearts.png', 200),
+  ('xp_multi_5k_3', 'Triple 5K', 'Conseguí 5000 XP en 3 juegos diferentes', 'https://img.icons8.com/color/48/gems.png', 220),
+  ('daily_super_5x3', 'Rey de la semana', 'Lográ 5 días seguidos ganando en 3 juegos distintos', 'https://img.icons8.com/color/48/prize.png', 120),
   ('daily_wins_10', 'Decena perfecta', 'Ganá 10 juegos diferentes en un mismo día', 'https://img.icons8.com/color/48/ten-percents.png', 150)
 on conflict (code) do update set
   name = excluded.name,

@@ -5,9 +5,12 @@ import { setSuppressOverlays, notificationsState, shiftAchievementQueue } from '
 import { friendlyNameForSlug } from '@/services/games'
 import { buildShareText, shareOrCopy } from '@/services/share'
 import { getAuthUser } from '@/services/auth'
+import { achievementIcon } from '@/services/achievement-icons'
+import CosmeticIcon from '@/components/rewards/CosmeticIcon.vue'
 
 export default {
   name: 'GameSummaryPopup',
+  components: { CosmeticIcon },
   props: {
     show: { type: Boolean, default: false },
     corrects: { type: Number, default: 0 },
@@ -27,6 +30,9 @@ export default {
     xpEarned: { type: Number, default: 0 },
     difficulty: { type: String, default: 'normal' },
     gameName: { type: String, default: '' },
+    // Invitado sin cuenta: reemplaza la tarjeta de nivel por un teaser y las
+    // acciones finales por el muro de registro (ver services/guest-play.js)
+    guest: { type: Boolean, default: false },
   },
   emits: ['close'],
   setup(props) {
@@ -37,6 +43,7 @@ export default {
     const starsRevealed = ref(0)
     const xpBarWidth = ref(0)
     const showActions = ref(false)
+    const claimGate = ref(false)
     const sessionAchievements = ref([])
     let timers = []
     let countFrame = null
@@ -145,6 +152,7 @@ export default {
       starsRevealed.value = 0
       xpBarWidth.value = props.beforePercent || 0
       showActions.value = false
+      claimGate.value = false
       sessionAchievements.value = []
       drainAchievementQueue()
       if (achWatcher) achWatcher()
@@ -168,7 +176,9 @@ export default {
 
       timers.push(setTimeout(() => {
         phase.value = 3
-        animateCount(xpGained.value, v => { animatedXp.value = v }, 800)
+        // totalXp ya cae a baseXp (XP local del juego) cuando no hay snapshot de nivel
+        // real (invitado) — xpGained solo sirve cuando SÍ hay cuenta y quedaría en 0 acá.
+        animateCount(totalXp.value, v => { animatedXp.value = v }, 800)
         animateCount(props.maxStreak, v => { animatedStreak.value = v })
       }, 1800))
 
@@ -211,10 +221,13 @@ export default {
     onMounted(() => { if (props.show) runSequence() })
     onUnmounted(clearAll)
 
+    function iconOf(ach) { return achievementIcon(ach?.code) }
+
     return {
+      iconOf,
       phase, won, animatedCorrects, animatedStreak, animatedXp,
       starsRevealed, starCount, accuracy, xpBarWidth,
-      showActions, difficultyLabel, difficultyColor, xpGained,
+      showActions, claimGate, difficultyLabel, difficultyColor, xpGained,
       baseXp, totalXp, bonusXp, hasProBonus,
       didLevelUp, sessionAchievements,
       shared, onShare,
@@ -340,8 +353,9 @@ export default {
               </div>
             </div>
 
-            <!-- Phase 4: Level progress bar -->
+            <!-- Phase 4: Level progress bar (o teaser de registro para invitados) -->
             <div
+              v-if="!guest"
               class="rounded-xl border border-white/10 bg-white/[0.03] p-3.5 transition-all duration-500"
               :class="phase >= 4 ? 'opacity-100' : 'opacity-0 translate-y-4'"
             >
@@ -380,6 +394,16 @@ export default {
                 <span>¡Subiste de nivel!</span>
               </div>
             </div>
+            <div
+              v-else
+              class="rounded-xl border border-amber-400/20 bg-amber-500/5 p-3.5 text-center transition-all duration-500"
+              :class="phase >= 4 ? 'opacity-100' : 'opacity-0 translate-y-4'"
+            >
+              <p class="text-xs text-slate-300">
+                Estás jugando <strong class="text-amber-300">como invitado</strong> — esta XP todavía no está guardada.
+                Registrate para empezar a subir de nivel de verdad.
+              </p>
+            </div>
 
             <!-- Achievements earned this session -->
             <div
@@ -395,11 +419,8 @@ export default {
                   class="flex items-center gap-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 px-3 py-2.5"
                   :style="phase >= 4 ? `animation: stat-slide-in 0.5s var(--ease-spring) ${0.3 + idx * 0.15}s both` : ''"
                 >
-                  <div class="shrink-0 w-8 h-8 rounded-lg bg-yellow-500/20 border border-yellow-500/30 grid place-items-center">
-                    <img v-if="ach.iconUrl" :src="ach.iconUrl" class="w-5 h-5 rounded" alt="" />
-                    <svg v-else class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3z"/>
-                    </svg>
+                  <div class="shrink-0 w-8 h-8">
+                    <CosmeticIcon framed :icon-key="iconOf(ach).icon" :rarity="iconOf(ach).rarity" :size="32" />
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="text-sm font-semibold text-white truncate">{{ ach.title }}</div>
@@ -439,7 +460,7 @@ export default {
                 </template>
               </button>
 
-              <div class="flex gap-3">
+              <div v-if="!guest" class="flex gap-3">
                 <button
                   @click="$emit('close')"
                   class="flex-1 rounded-xl border border-white/15 hover:bg-white/5 text-slate-300 py-2.5 text-sm font-semibold transition"
@@ -452,6 +473,26 @@ export default {
                 >
                   Volver a juegos
                 </router-link>
+              </div>
+
+              <!-- Invitado: muro de reclamo en vez de Cerrar/Volver -->
+              <template v-else-if="!claimGate">
+                <button
+                  @click="claimGate = true"
+                  class="claim-btn w-full rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 py-3 text-sm font-extrabold uppercase tracking-wide transition hover:brightness-105 active:scale-[0.98] shadow-lg shadow-amber-500/30"
+                >
+                  Reclamar mis recompensas
+                </button>
+              </template>
+              <div v-else class="rounded-xl border border-amber-400/30 bg-gradient-to-br from-amber-500/10 to-slate-900/40 p-4 text-center gate-in">
+                <h3 class="font-display text-lg font-bold text-white mb-1">Tus recompensas te esperan</h3>
+                <p class="text-slate-300 text-xs mb-3">
+                  Creá tu cuenta gratis y guardá <strong class="text-emerald-400">+{{ totalXp }} XP</strong> y tu racha para siempre.
+                </p>
+                <router-link to="/register" class="block w-full rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-900 py-2.5 text-sm font-bold transition shadow-lg shadow-amber-500/25 mb-2">
+                  Crear cuenta gratis y reclamar
+                </router-link>
+                <router-link to="/login" class="block text-slate-400 hover:text-white text-xs">Ya tengo cuenta</router-link>
               </div>
             </div>
           </div>
@@ -473,4 +514,11 @@ export default {
   from { opacity: 0; transform: scale(0.92) translateY(12px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
+.claim-btn { animation: claim-glow 1.8s ease-in-out infinite; }
+@keyframes claim-glow {
+  0%, 100% { box-shadow: 0 8px 24px rgba(245,158,11,0.30); }
+  50% { box-shadow: 0 8px 34px rgba(245,158,11,0.55); }
+}
+.gate-in { animation: gate-in 0.35s var(--ease-out-expo, cubic-bezier(0.16,1,0.3,1)) both; }
+@keyframes gate-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>

@@ -657,7 +657,7 @@ export default {
                         </li>
                         <!-- User avatar dropdown (desktop) -->
                         <li class="relative">
-                            <button data-user-button aria-label="Menú de usuario" @click.stop="menuOpen = !menuOpen" class="inline-flex items-center rounded-full hover:opacity-90 hover:scale-105 transition active:scale-95">
+                            <button data-user-button data-avatar-anchor aria-label="Menú de usuario" @click.stop="menuOpen = !menuOpen" class="inline-flex items-center rounded-full hover:opacity-90 hover:scale-105 transition active:scale-95">
                                 <UserAvatar :size="38" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" />
                             </button>
                             <transition name="fade-slide">

@@ -25,7 +25,7 @@ export function initAchievementsRealtime() {
             if (!currentUserId || row.user_id !== currentUserId) return
             const { data: achievement, error } = await supabase
               .from('achievements')
-              .select('name, description, icon_url, points')
+              .select('code, name, description, icon_url, points')
               .eq('id', row.achievement_id)
               .single()
             if (!error && achievement) {
@@ -33,6 +33,7 @@ export function initAchievementsRealtime() {
               const delay = 120 * (Math.random() * 2) // 0-240ms random
               setTimeout(() => {
                 pushAchievementToast({
+                  code: achievement.code,
                   title: achievement.name,
                   description: achievement.description || '',
                   iconUrl: achievement.icon_url || null,

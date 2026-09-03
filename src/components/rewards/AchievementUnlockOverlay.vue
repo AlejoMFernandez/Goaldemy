@@ -3,14 +3,20 @@ import { ref, watch, nextTick } from 'vue'
 import { notificationsState, shiftAchievementQueue } from '@/stores/notifications'
 import { soundManager } from '@/services/sounds'
 import { celebrateAchievement } from '@/services/confetti'
+import { achievementIcon } from '@/services/achievement-icons'
+import CosmeticIcon from './CosmeticIcon.vue'
 
 export default {
   name: 'AchievementUnlockOverlay',
+  components: { CosmeticIcon },
   setup() {
     const current = ref(null)
     const phase = ref(0)
     const claimed = ref(false)
     const particles = ref([])
+    const flying = ref(false)
+    const flightStyle = ref(null)
+    const iconWrapRef = ref(null)
     let phaseTimers = []
 
     function clearTimers() {
@@ -43,11 +49,68 @@ export default {
       claimed.value = true
       soundManager.play('claim')
       spawnParticles()
+      phaseTimers.push(setTimeout(flyToAvatar, 1000))
+    }
+
+    function flyToAvatar() {
+      const iconEl = iconWrapRef.value
+      if (!iconEl) { closeAndAdvance(); return }
+
+      const startRect = iconEl.getBoundingClientRect()
+      const anchor = document.querySelector('[data-avatar-anchor]')
+      const anchorRect = anchor ? anchor.getBoundingClientRect() : null
+      const hasAnchor = !!(anchorRect && anchorRect.width > 0)
+      const targetRect = hasAnchor
+        ? anchorRect
+        : { top: 14, left: window.innerWidth - 54, width: 40, height: 40 }
+
+      const scale = targetRect.width / startRect.width
+      const deltaX = (targetRect.left + targetRect.width / 2) - (startRect.left + startRect.width / 2)
+      const deltaY = (targetRect.top + targetRect.height / 2) - (startRect.top + startRect.height / 2)
+
+      flying.value = true
+      flightStyle.value = {
+        position: 'fixed',
+        top: `${startRect.top}px`,
+        left: `${startRect.left}px`,
+        width: `${startRect.width}px`,
+        height: `${startRect.height}px`,
+        margin: 0,
+        zIndex: 70,
+        transformOrigin: 'center center',
+        transform: 'translate(0, 0) scale(1)',
+        transition: 'none',
+        opacity: 1,
+      }
+
+      nextTick(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            flightStyle.value = {
+              ...flightStyle.value,
+              transform: `translate(${deltaX}px, ${deltaY}px) scale(${scale})`,
+              transition: 'transform 0.55s cubic-bezier(0.16,1,0.3,1), opacity 0.5s ease-in',
+              opacity: hasAnchor ? 0.15 : 0,
+            }
+          })
+        })
+      })
+
       phaseTimers.push(setTimeout(() => {
-        current.value = null
-        phase.value = 0
-        phaseTimers.push(setTimeout(showNext, 400))
-      }, 1200))
+        if (hasAnchor && anchor) {
+          anchor.style.animation = 'avatar-receive 0.5s var(--ease-bounce)'
+          setTimeout(() => { anchor.style.animation = '' }, 550)
+        }
+        closeAndAdvance()
+      }, 600))
+    }
+
+    function closeAndAdvance() {
+      current.value = null
+      phase.value = 0
+      flying.value = false
+      flightStyle.value = null
+      phaseTimers.push(setTimeout(showNext, 200))
     }
 
     function spawnParticles() {
@@ -80,7 +143,9 @@ export default {
       }
     })
 
-    return { current, phase, claimed, particles, claim, rarityLabel }
+    function iconOf(item) { return achievementIcon(item?.code) }
+
+    return { current, phase, claimed, particles, flying, flightStyle, iconWrapRef, claim, rarityLabel, iconOf }
   }
 }
 </script>
@@ -90,30 +155,31 @@ export default {
     <Transition name="overlay-fade">
       <div v-if="current" class="fixed inset-0 z-[60] grid place-items-center p-4" @click.self="claim">
         <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/85 backdrop-blur-md"></div>
+        <div
+          class="absolute inset-0 bg-black/85 backdrop-blur-md transition-opacity duration-400"
+          :class="{ 'opacity-0': flying }"
+        ></div>
 
         <!-- Content -->
         <div class="relative flex flex-col items-center text-center max-w-md w-full">
 
           <!-- Glow ring + Icon -->
           <div
-            class="relative mb-6 transition-all duration-500"
-            :class="phase >= 1 ? 'opacity-100' : 'opacity-0'"
-            :style="phase >= 1 ? 'animation: scale-spring 0.6s var(--ease-bounce) both' : ''"
+            ref="iconWrapRef"
+            class="relative mb-6"
+            :class="!flying ? ['transition-all duration-500', phase >= 1 ? 'opacity-100' : 'opacity-0'] : ''"
+            :style="flying ? flightStyle : (phase >= 1 ? 'animation: scale-spring 0.6s var(--ease-bounce) both' : '')"
           >
-            <div class="w-28 h-28 rounded-full bg-emerald-500/15 border-2 border-emerald-400/40 grid place-items-center"
-              :style="phase >= 2 ? 'animation: glow-pulse 2s ease-in-out infinite' : ''">
-              <img v-if="current.iconUrl" :src="current.iconUrl" class="w-16 h-16 object-contain" :alt="current.title" />
-              <svg v-else class="w-14 h-14 text-emerald-400" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3z"/>
-              </svg>
+            <div class="w-28 h-28 rounded-full grid place-items-center"
+              :style="phase >= 2 && !flying ? 'animation: glow-pulse 2s ease-in-out infinite' : ''">
+              <CosmeticIcon framed :icon-key="iconOf(current).icon" :rarity="iconOf(current).rarity" :size="112" />
             </div>
           </div>
 
           <!-- Title text -->
           <div
-            class="mb-2 transition-all duration-500"
-            :class="phase >= 2 ? 'opacity-100' : 'opacity-0'"
+            class="mb-2 transition-all"
+            :class="[(phase >= 2 && !flying) ? 'opacity-100' : 'opacity-0', flying ? 'duration-200' : 'duration-500']"
           >
             <div
               class="font-display text-xs font-bold uppercase text-emerald-400 mb-3"
@@ -128,8 +194,8 @@ export default {
           <!-- Rarity badge -->
           <div
             v-if="rarityLabel(current.unlockPercent)"
-            class="mb-6 transition-all duration-400"
-            :class="phase >= 3 ? 'opacity-100' : 'opacity-0'"
+            class="mb-6 transition-all"
+            :class="[(phase >= 3 && !flying) ? 'opacity-100' : 'opacity-0', flying ? 'duration-200' : 'duration-400']"
           >
             <span
               class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold"
@@ -142,8 +208,8 @@ export default {
 
           <!-- Claim button -->
           <div
-            class="relative transition-all duration-400"
-            :class="phase >= 4 ? 'opacity-100' : 'opacity-0'"
+            class="relative transition-all"
+            :class="[(phase >= 4 && !flying) ? 'opacity-100' : 'opacity-0', flying ? 'duration-200 pointer-events-none' : 'duration-400']"
           >
             <!-- Particles -->
             <div

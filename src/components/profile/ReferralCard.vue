@@ -56,22 +56,20 @@ export default {
         <div class="text-[9px] uppercase tracking-wider text-slate-400 mt-0.5">{{ invitedCount === 1 ? 'amigo' : 'amigos' }}</div>
       </div>
     </div>
-    <div class="flex items-center gap-2">
-      <input
-        readonly
-        :value="link"
-        class="flex-1 min-w-0 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-300 truncate"
-        @focus="$event.target.select()"
-      />
-      <button
-        @click="onShare"
-        :class="[
-          'shrink-0 rounded-lg px-3 py-2 text-xs font-bold transition',
-          copied ? 'bg-emerald-500/15 border border-emerald-400/40 text-emerald-300' : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-900',
-        ]"
-      >
-        {{ copied ? '¡Copiado!' : 'Compartir' }}
-      </button>
-    </div>
+    <button
+      @click="onShare"
+      :class="[
+        'w-full flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition',
+        copied ? 'bg-emerald-500/15 border border-emerald-400/40 text-emerald-300' : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-900',
+      ]"
+    >
+      <svg v-if="!copied" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+      </svg>
+      <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+      {{ copied ? '¡Copiado!' : 'Copiar mi link de invitación' }}
+    </button>
   </div>
 </template>

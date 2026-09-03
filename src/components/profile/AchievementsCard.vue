@@ -1,6 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getAchievementsCatalog, getAchievementUnlockPercentages } from '../../services/achievements'
+import { friendlyNameForSlug } from '../../services/games'
+import { achievementIcon } from '../../services/achievement-icons'
+import { getCosmeticUnlocksByAchievement } from '../../services/cosmetics'
+import CosmeticIcon from '../rewards/CosmeticIcon.vue'
+import PassCosmetic from '../rewards/PassCosmetic.vue'
 
 const props = defineProps({
   achievements: { type: Array, required: true },
@@ -13,19 +18,32 @@ const emit = defineEmits(['customize'])
 
 const ACHIEVEMENTS = ref({})
 const percentages = ref({})
+const cosmeticUnlocks = ref({})
 onMounted(async () => {
   ACHIEVEMENTS.value = await getAchievementsCatalog()
   percentages.value = await getAchievementUnlockPercentages()
+  cosmeticUnlocks.value = await getCosmeticUnlocksByAchievement()
 })
 
-const ICONS_BY_CODE = {
-  daily_streak_3: '/achievements/daily-streak-3.svg',
-}
-function iconFor(a) {
-  const url = a?.achievements?.icon_url
-  if (url && typeof url === 'string' && url.trim()) return url
+function iconKeyFor(a) { return achievementIcon(a?.achievements?.code).icon }
+function rarityFor(a) { return achievementIcon(a?.achievements?.code).rarity }
+
+// Qué cosmético(s) se desbloquean al conseguir este logro (o que ya desbloqueó).
+// Se muestra en el hover tanto si ya lo tenés como si está pendiente (funciona de incentivo).
+function unlockInfoFor(a) {
   const code = a?.achievements?.code
-  return (code && ICONS_BY_CODE[code]) || ''
+  return (code && cosmeticUnlocks.value[code]) || []
+}
+
+// "Por qué" personalizado: solo cuando el metadata guardado cuenta algo más
+// específico que la descripción genérica del logro (por ahora, rachas por juego).
+function reasonFor(a) {
+  const meta = a?.metadata
+  const streak = Number(meta?.streak)
+  if (meta?.game && Number.isFinite(streak) && streak > 0) {
+    return `Racha de ${streak} en ${friendlyNameForSlug(meta.game)}`
+  }
+  return null
 }
 
 function pctClass(code) {
@@ -36,49 +54,23 @@ function pctClass(code) {
   return 'bg-slate-600/30 border-slate-500/40 text-slate-300'
 }
 
-// Dificultad del logro por puntos → medallón con anillo coloreado.
-function diffOf(a) {
-  const p = Number(a?.achievements?.points) || 0
-  if (p > 100) return 'diamond'
-  if (p > 50) return 'gold'
-  if (p > 25) return 'silver'
-  return 'bronze'
-}
-const MEDAL = {
-  bronze:  { ring: 'bg-gradient-to-br from-amber-300 via-amber-600 to-amber-900', glow: 'shadow-[0_0_10px_rgba(180,120,60,0.45)]' },
-  silver:  { ring: 'bg-gradient-to-br from-white via-slate-300 to-slate-500', glow: 'shadow-[0_0_10px_rgba(203,213,225,0.45)]' },
-  gold:    { ring: 'bg-gradient-to-br from-yellow-200 via-amber-400 to-amber-700', glow: 'shadow-[0_0_12px_rgba(251,191,36,0.5)]' },
-  diamond: { ring: 'bg-gradient-to-br from-cyan-100 via-sky-300 to-blue-500', glow: 'shadow-[0_0_14px_rgba(125,211,252,0.55)]' },
-}
-function medal(a) { return MEDAL[diffOf(a)] }
-
 const showAll = ref(false)
-const selected = ref('all')
-
-const CATEGORIES = [
-  { key: 'inicio', label: '🎯 Logros de inicio', codes: ['first_correct', 'first_win'] },
-  { key: 'rachas', label: '🔥 Rachas de juego', codes: ['streak_3', 'streak_5', 'streak_10', 'streak_15'] },
-  { key: 'daily_wins', label: '📅 Victorias diarias', codes: ['daily_wins_3', 'daily_wins_5', 'daily_wins_all', 'daily_wins_10'] },
-  { key: 'daily_streak', label: '🔁 Constancia diaria', codes: ['daily_streak_3', 'daily_streak_5', 'daily_streak_7', 'daily_streak_14', 'daily_streak_30'] },
-  { key: 'game_specific', label: '⚽ Logros por juego', codes: ['guess_master', 'nationality_expert', 'position_guru'] },
-  { key: 'curious', label: '🎲 Logros curiosos', codes: ['lucky_first', 'comeback_king', 'night_owl', 'early_bird', 'weekend_warrior'] },
-  { key: 'epic', label: '🏆 Logros épicos', codes: ['perfectionist', 'hat_trick', 'grand_slam', 'centurion'] },
-  { key: 'social', label: '🌟 Logros sociales', codes: ['social_butterfly', 'chat_master'] },
-  { key: 'super', label: '💎 Super logros', codes: ['streak_dual_100', 'xp_multi_5k_3', 'daily_super_5x3'] },
-]
-
-const tabs = [
-  { key: 'all', label: 'Todos' },
-  ...CATEGORIES.map(cat => ({ key: cat.key, label: cat.label })),
-  { key: 'missing', label: 'Pendientes' },
-]
+const viewMode = ref('list') // 'list' | 'grid'
 
 const ownedCodes = computed(() => {
   const arr = Array.isArray(props.achievements) ? props.achievements : []
   return new Set(arr.map(a => a?.achievements?.code).filter(Boolean))
 })
 
-const missingList = computed(() => {
+// Logros conseguidos, más reciente primero.
+const unlockedSorted = computed(() => {
+  const arr = Array.isArray(props.achievements) ? props.achievements.slice() : []
+  arr.sort((a, b) => new Date(b.earned_at) - new Date(a.earned_at))
+  return arr
+})
+
+// Logros pendientes (todavía no desbloqueados), alfabético.
+const pendingSorted = computed(() => {
   const have = ownedCodes.value
   const result = []
   const catalog = ACHIEVEMENTS.value || {}
@@ -87,17 +79,6 @@ const missingList = computed(() => {
   }
   result.sort((a, b) => (a.achievements?.name || '').localeCompare(b.achievements?.name || ''))
   return result
-})
-
-const filtered = computed(() => {
-  if (selected.value === 'missing') return missingList.value
-  let arr = Array.isArray(props.achievements) ? props.achievements.slice() : []
-  if (selected.value !== 'all') {
-    const category = CATEGORIES.find(c => c.key === selected.value)
-    if (category) arr = arr.filter(a => category.codes.includes(a?.achievements?.code))
-  }
-  arr.sort((a, b) => new Date(b.earned_at) - new Date(a.earned_at))
-  return arr
 })
 
 const totalCatalog = computed(() => Object.keys(ACHIEVEMENTS.value || {}).length)
@@ -110,23 +91,6 @@ const featuredList = computed(() => {
   all.forEach(a => { const c = a?.achievements?.code; if (c) byCode.set(c, a) })
   const picked = props.featuredCodes.map(c => byCode.get(c)).filter(Boolean)
   return (picked.length ? picked : all).slice(0, 3)
-})
-
-const currentCategoryLabel = computed(() => {
-  if (selected.value === 'all') return 'Todos los logros'
-  if (selected.value === 'missing') return 'Logros pendientes'
-  const category = CATEGORIES.find(c => c.key === selected.value)
-  return category ? category.label : null
-})
-
-const groupedAchievements = computed(() => {
-  if (selected.value !== 'all') return null
-  const groups = []
-  for (const category of CATEGORIES) {
-    const items = filtered.value.filter(a => category.codes.includes(a?.achievements?.code))
-    if (items.length > 0) groups.push({ category, items })
-  }
-  return groups
 })
 </script>
 
@@ -157,11 +121,8 @@ const groupedAchievements = computed(() => {
       <div v-for="(a, idx) in featuredList" :key="idx"
         class="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/80 to-slate-800/40 p-4 flex flex-col items-center text-center transition-all hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10">
         <div class="relative">
-          <div class="size-14 rounded-full p-[3px] transition-transform group-hover:scale-110" :class="[medal(a).ring, medal(a).glow]">
-            <div class="w-full h-full rounded-full bg-slate-900 grid place-items-center overflow-hidden">
-              <img v-if="iconFor(a)" :src="iconFor(a)" class="w-[80%] h-[80%] object-contain" alt="" />
-              <span v-else class="text-2xl">🏆</span>
-            </div>
+          <div class="size-14 transition-transform group-hover:scale-110">
+            <CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="56" />
           </div>
           <div v-if="percentages[a.achievements?.code]" class="absolute -bottom-1.5 -right-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold backdrop-blur border" :class="pctClass(a.achievements?.code)">
             {{ percentages[a.achievements?.code] }}%
@@ -187,80 +148,151 @@ const groupedAchievements = computed(() => {
           <div class="relative min-h-full flex items-start sm:items-center justify-center p-3 sm:p-4" @click.self="showAll = false">
             <div class="relative w-full max-w-4xl rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl my-4">
               <div class="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 py-4 border-b border-white/10 bg-slate-900/95 backdrop-blur rounded-t-2xl">
-                <h3 class="font-display font-bold text-white text-lg">{{ currentCategoryLabel || 'Todos los logros' }}</h3>
-                <button @click="showAll = false" class="text-slate-400 hover:text-white transition">
-                  <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
+                <h3 class="font-display font-bold text-white text-lg">Todos los logros</h3>
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center rounded-lg border border-white/10 overflow-hidden">
+                    <button @click="viewMode = 'list'" title="Vista lista"
+                      class="px-2 py-1.5 transition-all" :class="viewMode === 'list' ? 'bg-violet-500/20 text-violet-200' : 'text-slate-400 hover:bg-white/5'">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    </button>
+                    <button @click="viewMode = 'grid'" title="Vista grilla"
+                      class="px-2 py-1.5 transition-all" :class="viewMode === 'grid' ? 'bg-violet-500/20 text-violet-200' : 'text-slate-400 hover:bg-white/5'">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" /></svg>
+                    </button>
+                  </div>
+                  <button @click="showAll = false" class="text-slate-400 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
               </div>
 
-              <div class="px-5 pt-4 flex flex-wrap gap-2">
-                <button v-for="t in tabs" :key="t.key" @click="selected = t.key"
-                  class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-all whitespace-nowrap"
-                  :class="selected === t.key ? 'border-violet-400/50 bg-indigo-500/20 text-violet-200' : 'border-white/10 text-slate-400 hover:bg-white/5 hover:border-white/20'">
-                  {{ t.label }}
-                </button>
+              <!-- VISTA GRILLA: cada tile lleva su propio popup flotante on-hover (no hace falta click) -->
+              <div class="p-5" v-if="viewMode === 'grid'">
+                <h4 class="text-sm font-bold text-slate-200 mb-3">Desbloqueados <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-slate-400">{{ unlockedSorted.length }}</span></h4>
+                <div v-if="!unlockedSorted.length" class="text-slate-400 text-center py-6 mb-4">Aún no desbloqueaste ningún logro.</div>
+                <div v-else class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2.5 mb-6">
+                  <div v-for="(a, idx) in unlockedSorted" :key="idx" class="group/tile relative aspect-square rounded-xl">
+                    <div class="w-full h-full"><CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="64" /></div>
+                    <div v-if="percentages[a.achievements?.code]" class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold backdrop-blur border pointer-events-none" :class="pctClass(a.achievements?.code)">{{ percentages[a.achievements?.code] }}%</div>
+
+                    <div class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-30 w-64 rounded-xl border border-white/15 bg-slate-900/95 backdrop-blur p-3 opacity-0 translate-y-1 shadow-2xl transition-all group-hover/tile:opacity-100 group-hover/tile:translate-y-0">
+                      <div class="flex items-start gap-2.5">
+                        <div class="size-10 flex-none"><CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="40" /></div>
+                        <div class="min-w-0">
+                          <p class="font-bold text-xs text-white leading-tight">{{ a.achievements?.name || 'Logro' }}</p>
+                          <p class="text-[10px] font-semibold text-emerald-300 mt-0.5">+{{ a.achievements?.points ?? 0 }} XP · {{ new Date(a.earned_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) }}</p>
+                        </div>
+                      </div>
+                      <p v-if="a.achievements?.description" class="text-[10px] text-slate-400 leading-snug mt-2">{{ a.achievements.description }}</p>
+                      <p v-if="reasonFor(a)" class="text-[10px] text-violet-300/90 leading-snug mt-1">{{ reasonFor(a) }}</p>
+                      <template v-if="unlockInfoFor(a).length">
+                        <div class="text-[9px] uppercase tracking-wider text-slate-500 font-semibold mt-2 pt-2 border-t border-white/10 mb-1.5">Desbloqueás</div>
+                        <div class="grid grid-cols-3 gap-2 place-items-center">
+                          <div v-for="u in unlockInfoFor(a)" :key="u.code" class="flex flex-col items-center gap-1">
+                            <PassCosmetic :cos="u" :size="34" />
+                            <div class="text-[8px] font-semibold text-slate-300 text-center leading-tight">{{ u.name }}</div>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+
+                <h4 class="text-sm font-bold text-slate-200 mb-3">Pendientes <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-slate-400">{{ pendingSorted.length }}</span></h4>
+                <div v-if="!pendingSorted.length" class="text-center py-6">
+                  <div class="text-3xl mb-2">✨</div>
+                  <p class="font-semibold text-emerald-400">¡No te queda ningún logro pendiente!</p>
+                </div>
+                <div v-else class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2.5">
+                  <div v-for="(a, idx) in pendingSorted" :key="idx" class="group/tile relative aspect-square rounded-xl">
+                    <div class="w-full h-full opacity-40 grayscale"><CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="64" /></div>
+
+                    <div class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-30 w-64 rounded-xl border border-white/15 bg-slate-900/95 backdrop-blur p-3 opacity-0 translate-y-1 shadow-2xl transition-all group-hover/tile:opacity-100 group-hover/tile:translate-y-0">
+                      <div class="flex items-start gap-2.5">
+                        <div class="size-10 flex-none opacity-60 grayscale"><CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="40" /></div>
+                        <div class="min-w-0">
+                          <p class="font-bold text-xs text-slate-200 leading-tight">{{ a.achievements?.name || 'Logro' }}</p>
+                          <p class="text-[10px] font-semibold text-slate-500 mt-0.5">🔒 +{{ a.achievements?.points ?? 0 }} XP al conseguirlo</p>
+                        </div>
+                      </div>
+                      <p v-if="a.achievements?.description" class="text-[10px] text-slate-400 leading-snug mt-2">{{ a.achievements.description }}</p>
+                      <template v-if="unlockInfoFor(a).length">
+                        <div class="text-[9px] uppercase tracking-wider text-slate-500 font-semibold mt-2 pt-2 border-t border-white/10 mb-1.5">Al conseguirlo, desbloqueás</div>
+                        <div class="grid grid-cols-3 gap-2 place-items-center">
+                          <div v-for="u in unlockInfoFor(a)" :key="u.code" class="flex flex-col items-center gap-1">
+                            <PassCosmetic :cos="u" :size="34" />
+                            <div class="text-[8px] font-semibold text-slate-300 text-center leading-tight">{{ u.name }}</div>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div class="p-5">
-                <template v-if="groupedAchievements && selected === 'all'">
-                  <div v-for="group in groupedAchievements" :key="group.category.key" class="mb-6 last:mb-0">
-                    <h4 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
-                      {{ group.category.label }}
-                      <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-slate-400">{{ group.items.length }}</span>
-                    </h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      <div v-for="(a, idx) in group.items" :key="idx" class="relative overflow-hidden rounded-xl border p-4"
-                        :class="a._missing ? 'border-white/5 bg-slate-900/40' : 'border-white/10 bg-slate-800/70'">
-                        <div class="flex items-start gap-3">
-                          <div class="relative flex-none">
-                            <div class="size-11 rounded-full p-[2px]" :class="[medal(a).ring, medal(a).glow, a._missing ? 'opacity-40 grayscale' : '']">
-                              <div class="w-full h-full rounded-full bg-slate-900 grid place-items-center overflow-hidden">
-                                <img v-if="iconFor(a)" :src="iconFor(a)" class="w-[80%] h-[80%] object-contain" alt="" />
-                                <span v-else class="text-xl">🏆</span>
-                              </div>
-                            </div>
-                            <div v-if="percentages[a.achievements?.code]" class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold backdrop-blur border" :class="pctClass(a.achievements?.code)">{{ percentages[a.achievements?.code] }}%</div>
-                          </div>
-                          <div class="min-w-0 flex-1">
-                            <p class="font-bold text-sm leading-tight" :class="a._missing ? 'text-slate-300' : 'text-white'">{{ a.achievements?.name || 'Logro' }}</p>
-                            <p v-if="a.achievements?.description" class="text-[11px] leading-snug mt-1 line-clamp-2" :class="a._missing ? 'text-slate-500' : 'text-slate-400'">{{ a.achievements.description }}</p>
-                            <div class="mt-1.5 flex items-center justify-between">
-                              <span class="text-[11px] font-semibold" :class="a._missing ? 'text-slate-500' : 'text-emerald-300'">+{{ a.achievements?.points ?? 0 }} XP</span>
-                              <span class="text-[10px]" :class="a._missing ? 'text-slate-500' : 'text-slate-400'"><template v-if="a._missing">🔒</template><template v-else>{{ new Date(a.earned_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) }}</template></span>
-                            </div>
-                          </div>
+              <!-- VISTA LISTA -->
+              <div class="p-5" v-else>
+                <h4 class="text-sm font-bold text-slate-200 mb-3">Desbloqueados <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-slate-400">{{ unlockedSorted.length }}</span></h4>
+                <div v-if="!unlockedSorted.length" class="text-slate-400 text-center py-6 mb-6">Aún no desbloqueaste ningún logro.</div>
+                <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+                  <div v-for="(a, idx) in unlockedSorted" :key="idx" class="group/ach relative rounded-xl border border-white/10 bg-slate-800/70 hover:border-white/20 p-4 transition-all">
+                    <div class="flex items-start gap-3">
+                      <div class="relative flex-none">
+                        <div class="size-12"><CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="48" /></div>
+                        <div v-if="percentages[a.achievements?.code]" class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold backdrop-blur border" :class="pctClass(a.achievements?.code)">{{ percentages[a.achievements?.code] }}%</div>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <p class="font-bold text-sm leading-tight text-white">{{ a.achievements?.name || 'Logro' }}</p>
+                        <p v-if="a.achievements?.description" class="text-[11px] leading-snug mt-1 line-clamp-2 text-slate-400">{{ a.achievements.description }}</p>
+                        <p v-if="reasonFor(a)" class="text-[11px] leading-snug mt-0.5 text-violet-300/90">{{ reasonFor(a) }}</p>
+                        <div class="mt-1.5 flex items-center justify-between">
+                          <span class="text-[11px] font-semibold text-emerald-300">+{{ a.achievements?.points ?? 0 }} XP</span>
+                          <span class="text-[10px] text-slate-400">{{ new Date(a.earned_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Popup flotante on-hover: qué cosmético desbloquea (patrón PlanCard/Pricing) -->
+                    <div v-if="unlockInfoFor(a).length" class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-30 w-64 rounded-xl border border-white/15 bg-slate-900/95 backdrop-blur p-3 opacity-0 translate-y-1 shadow-2xl transition-all group-hover/ach:opacity-100 group-hover/ach:translate-y-0">
+                      <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2">Desbloqueaste</div>
+                      <div class="grid grid-cols-3 gap-2 place-items-center">
+                        <div v-for="u in unlockInfoFor(a)" :key="u.code" class="flex flex-col items-center gap-1">
+                          <PassCosmetic :cos="u" :size="40" />
+                          <div class="text-[9px] font-semibold text-slate-300 text-center leading-tight">{{ u.name }}</div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </template>
+                </div>
 
-                <div v-else>
-                  <div v-if="!filtered.length" class="text-slate-400 text-center py-8">
-                    <div class="text-3xl mb-2">✨</div>
-                    <p v-if="selected === 'missing'" class="font-semibold text-emerald-400">¡No te queda ningún logro pendiente!</p>
-                    <p v-else>Aún no hay logros en esta categoría</p>
-                  </div>
-                  <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <div v-for="(a, idx) in filtered" :key="idx" class="relative overflow-hidden rounded-xl border p-4"
-                      :class="a._missing ? 'border-white/5 bg-slate-900/40' : 'border-white/10 bg-slate-800/70'">
-                      <div class="flex items-start gap-3">
-                        <div class="relative flex-none">
-                          <div class="size-12 rounded-full p-[2px]" :class="[medal(a).ring, medal(a).glow, a._missing ? 'opacity-40 grayscale' : '']">
-                            <div class="w-full h-full rounded-full bg-slate-900 grid place-items-center overflow-hidden">
-                              <img v-if="iconFor(a)" :src="iconFor(a)" class="w-[80%] h-[80%] object-contain" alt="" />
-                              <span v-else class="text-xl">🏆</span>
-                            </div>
-                          </div>
-                          <div v-if="percentages[a.achievements?.code]" class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold backdrop-blur border" :class="pctClass(a.achievements?.code)">{{ percentages[a.achievements?.code] }}%</div>
+                <h4 class="text-sm font-bold text-slate-200 mb-3">Pendientes <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-slate-400">{{ pendingSorted.length }}</span></h4>
+                <div v-if="!pendingSorted.length" class="text-center py-6">
+                  <div class="text-3xl mb-2">✨</div>
+                  <p class="font-semibold text-emerald-400">¡No te queda ningún logro pendiente!</p>
+                </div>
+                <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div v-for="(a, idx) in pendingSorted" :key="idx" class="group/ach relative rounded-xl border border-white/5 bg-slate-900/40 p-4 transition-all">
+                    <div class="flex items-start gap-3">
+                      <div class="relative flex-none">
+                        <div class="size-12 opacity-40 grayscale"><CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="48" /></div>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <p class="font-bold text-sm leading-tight text-slate-300">{{ a.achievements?.name || 'Logro' }}</p>
+                        <p v-if="a.achievements?.description" class="text-[11px] leading-snug mt-1 line-clamp-2 text-slate-500">{{ a.achievements.description }}</p>
+                        <div class="mt-1.5 flex items-center justify-between">
+                          <span class="text-[11px] font-semibold text-slate-500">+{{ a.achievements?.points ?? 0 }} XP</span>
+                          <span class="text-[10px] text-slate-500">🔒</span>
                         </div>
-                        <div class="min-w-0 flex-1">
-                          <p class="font-bold text-sm leading-tight" :class="a._missing ? 'text-slate-300' : 'text-white'">{{ a.achievements?.name || 'Logro' }}</p>
-                          <p v-if="a.achievements?.description" class="text-[11px] leading-snug mt-1 line-clamp-2" :class="a._missing ? 'text-slate-500' : 'text-slate-400'">{{ a.achievements.description }}</p>
-                          <div class="mt-1.5 flex items-center justify-between">
-                            <span class="text-[11px] font-semibold" :class="a._missing ? 'text-slate-500' : 'text-emerald-300'">+{{ a.achievements?.points ?? 0 }} XP</span>
-                            <span class="text-[10px]" :class="a._missing ? 'text-slate-500' : 'text-slate-400'"><template v-if="a._missing">🔒</template><template v-else>{{ new Date(a.earned_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) }}</template></span>
-                          </div>
+                      </div>
+                    </div>
+
+                    <!-- Popup flotante on-hover: qué desbloqueás si conseguís este logro -->
+                    <div v-if="unlockInfoFor(a).length" class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-30 w-64 rounded-xl border border-white/15 bg-slate-900/95 backdrop-blur p-3 opacity-0 translate-y-1 shadow-2xl transition-all group-hover/ach:opacity-100 group-hover/ach:translate-y-0">
+                      <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2">Al conseguirlo, desbloqueás</div>
+                      <div class="grid grid-cols-3 gap-2 place-items-center">
+                        <div v-for="u in unlockInfoFor(a)" :key="u.code" class="flex flex-col items-center gap-1">
+                          <PassCosmetic :cos="u" :size="40" />
+                          <div class="text-[9px] font-semibold text-slate-300 text-center leading-tight">{{ u.name }}</div>
                         </div>
                       </div>
                     </div>
@@ -278,4 +310,7 @@ const groupedAchievements = computed(() => {
 <style scoped>
 .ach-modal-enter-active, .ach-modal-leave-active { transition: opacity 0.2s ease; }
 .ach-modal-enter-from, .ach-modal-leave-to { opacity: 0; }
+/* CosmeticIcon fija width/height en px vía prop; acá lo usamos dentro de cajas
+   fluidas (grilla responsiva, tarjetas), así que lo estiramos al 100% del padre. */
+:deep(.cosmetic-icon) { width: 100%; height: 100%; }
 </style>

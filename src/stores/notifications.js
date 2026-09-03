@@ -37,9 +37,9 @@ function push(item, ttlMs = 5000) {
 
 // ── Achievement overlay queue ──
 
-export function queueAchievementOverlay({ title, iconUrl, earnedAt, points = 0, description = '', unlockPercent = null }) {
+export function queueAchievementOverlay({ code = '', title, iconUrl, earnedAt, points = 0, description = '', unlockPercent = null }) {
   const id = _genId()
-  state.achievementQueue.push({ id, title, iconUrl, earnedAt, points, description, unlockPercent })
+  state.achievementQueue.push({ id, code, title, iconUrl, earnedAt, points, description, unlockPercent })
   addPendingReward('achievement', { title, iconUrl, points, description, id })
   return id
 }
@@ -229,8 +229,8 @@ export function clearClaimedRewards() {
 
 // ── Legacy toast API (still used for errors, success, info) ──
 
-export function pushAchievementToast({ title, iconUrl, earnedAt, points = null, description = '' }) {
-  return queueAchievementOverlay({ title, iconUrl, earnedAt, points: points || 0, description })
+export function pushAchievementToast({ code = '', title, iconUrl, earnedAt, points = null, description = '' }) {
+  return queueAchievementOverlay({ code, title, iconUrl, earnedAt, points: points || 0, description })
 }
 
 export function pushLevelUpToast({ level, oldLevel }) {

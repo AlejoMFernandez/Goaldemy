@@ -7,9 +7,7 @@
  * TIPOS DE LOGROS:
  * 
  * 1. BASADOS EN TIEMPO:
- *    - night_owl: Jugar entre 00:00-05:00
- *    - early_bird: Jugar antes de las 07:00
- *    - weekend_warrior: 10+ victorias en fin de semana
+ *    - night_owl: Jugar entre 00:00-08:00 (madrugada + madrugador, fusionados)
  * 
  * 2. BASADOS EN RENDIMIENTO:
  *    - perfect_10: 10/10 respuestas correctas
@@ -46,60 +44,14 @@ export async function checkTimeBasedAchievements() {
   try {
     const now = new Date()
     const hour = now.getHours()
-    
-    // Night owl: 00:00 - 04:59 (madrugada)
-    if (hour >= 0 && hour < 5) {
-      await unlockAchievementWithToast('night_owl')
-    }
 
-    // Early bird: 05:00 - 07:59 (madrugador, sin solaparse con night_owl)
-    if (hour >= 5 && hour < 8) {
-      await unlockAchievementWithToast('early_bird')
-    }
-    
-    // Weekend warrior: Saturday (6) or Sunday (0)
-    const day = now.getDay()
-    if (day === 0 || day === 6) {
-      // Check if user has 10+ weekend wins
-      await checkWeekendWarrior()
+    // Night owl: 00:00 - 07:59 (madrugada + madrugador, fusionados en un solo logro)
+    if (hour >= 0 && hour < 8) {
+      await unlockAchievementWithToast('night_owl')
     }
   } catch (e) {
     console.error('[time-achievements] Error:', e)
   }
-}
-
-/**
- * Check weekend warrior achievement (10 wins on Saturday/Sunday)
- */
-async function checkWeekendWarrior() {
-  const { id: userId } = getAuthUser() || {}
-  if (!userId) return
-
-  try {
-    const { data, error } = await supabase
-      .from('game_sessions')
-      .select('id, started_at, metadata')
-      .eq('user_id', userId)
-      .contains('metadata', { result: 'win' })
-      .order('started_at', { ascending: false })
-      .limit(500)
-
-    if (error) return
-
-    // Count wins on weekends
-    let weekendWins = 0
-    for (const session of (data || [])) {
-      const date = new Date(session.started_at)
-      const day = date.getDay()
-      if (day === 0 || day === 6) {
-        weekendWins++
-      }
-    }
-
-    if (weekendWins >= 10) {
-      await unlockAchievementWithToast('weekend_warrior')
-    }
-  } catch {}
 }
 
 /**
