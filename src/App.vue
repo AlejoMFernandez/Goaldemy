@@ -3,7 +3,7 @@ import AppNavBar from './components/AppNavBar.vue';
 import AppFooter from './components/AppFooter.vue';
 import FriendsDock from './components/FriendsDock.vue';
 import AppToast from './components/AppToast.vue';
-import AppLoader from './components/common/AppLoader.vue';
+import AppSplash from './components/common/AppSplash.vue';
 import BrandedBackground from './components/BrandedBackground.vue';
 import AchievementUnlockOverlay from './components/rewards/AchievementUnlockOverlay.vue';
 import LevelUpOverlay from './components/rewards/LevelUpOverlay.vue';
@@ -22,7 +22,7 @@ export default {
     AppNavBar,
     AppFooter,
     AppToast,
-    AppLoader,
+    AppSplash,
     FriendsDock,
     BrandedBackground,
     AchievementUnlockOverlay,
@@ -34,11 +34,18 @@ export default {
   data() {
     return {
       authBooting: true,
+      splashMinDelayDone: false, // tiempo mínimo del splash para que la animación no "flashee"
       isLg: false,        // desktop ≥1024px → reservar ancho de la sidebar
       _mqlSidebar: null,
     }
   },
   computed: {
+    // Splash de arranque en frío: se apaga recién cuando auth resolvió Y pasó el
+    // tiempo mínimo de animación. Mientras tanto el resto de la app ya se monta
+    // debajo (oculto) para camuflar la carga real de componentes/datos.
+    showSplash() {
+      return this.authBooting || !this.splashMinDelayDone
+    },
     isAuthLayout() {
       return this.$route?.meta?.layout === 'auth'
     },
@@ -78,6 +85,12 @@ export default {
     this.isLg = this._mqlSidebar.matches
     this._onMq = (e) => { this.isLg = e.matches }
     this._mqlSidebar.addEventListener('change', this._onMq)
+    // Mínimo ~2.2s de splash: da tiempo a la secuencia de marca completa (ícono
+    // entra, después el wordmark "FULVO") antes de revelar la app, aunque la
+    // sesión resuelva casi al instante. Debe cubrir la duración de las animaciones
+    // en AppSplash.vue (ícono 0.8s + wordmark delay 1.1s + wordmark 0.7s ≈ 1.8s)
+    // más un pequeño respiro para que se lea el logo completo.
+    setTimeout(() => { this.splashMinDelayDone = true }, 2200)
     try { await authReady; } finally { this.authBooting = false }
     import('./services/players').then(m => m.initializePlayers?.()).catch(() => {})
     // Bienvenida PRO ANTES de la lluvia de cosméticos: si el usuario recién se hizo
@@ -116,8 +129,7 @@ export default {
          :class="isAuthLayout ? 'grid grid-rows-[1fr]' : 'grid grid-rows-[auto_1fr_auto]'">
       <AppNavBar v-if="!isAuthLayout" />
       <main :style="shellStyle" :class="isAuthLayout ? 'relative z-10 min-h-screen min-w-0 grid place-items-center px-4 py-8' : (isImmersive ? 'relative z-10 w-full min-w-0 max-w-[1600px] mx-auto px-3 sm:px-6 py-0' : 'relative z-10 w-full min-w-0 max-w-[1600px] mx-auto px-6 py-10 lg:py-12')">
-        <AppLoader v-if="authBooting" />
-        <RouterView v-else v-slot="{ Component, route }">
+        <RouterView v-if="!authBooting" v-slot="{ Component, route }">
           <Transition name="fade-slide" mode="out-in">
             <div :key="route.meta?.authGroup || route.path" class="route-shell">
               <component :is="Component" />
@@ -134,5 +146,8 @@ export default {
     <ProWelcomeOverlay />
     <ClaimNotificationStack />
     <FriendsDock v-if="!isAuthLayout" />
+    <Transition name="splash-fade">
+      <AppSplash v-if="showSplash" />
+    </Transition>
   </div>
 </template>
