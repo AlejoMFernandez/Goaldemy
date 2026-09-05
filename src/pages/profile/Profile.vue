@@ -361,8 +361,8 @@ export default {
 
 <template>
   <div class="mx-auto max-w-6xl pb-12 px-4">
-    <!-- Banner del usuario full-bleed (100% del ancho de pantalla, estilo Salesforce) -->
-    <div class="relative h-36 sm:h-52 overflow-hidden w-screen left-1/2 -translate-x-1/2 -mt-10 lg:-mt-12" :class="[bannerClass, equippedBannerPremium ? 'anim-pan' : '']">
+    <!-- Banner del usuario full-bleed (100% del ancho de <main>, estilo Salesforce) -->
+    <div class="relative h-36 sm:h-52 overflow-hidden banner-full-bleed -mt-10 lg:-mt-12" :class="[bannerClass, equippedBannerPremium ? 'anim-pan' : '']">
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute top-5 right-12 w-28 h-28 rounded-full border-2 border-white/10 opacity-40"></div>
         <div class="absolute -bottom-6 right-32 w-20 h-20 rounded-full border border-white/10 opacity-30"></div>
@@ -582,3 +582,18 @@ export default {
     />
   </div>
 </template>
+
+<style scoped>
+/* Rompe el max-width/padding de <main> Y del wrapper max-w-6xl de esta
+   página para que el banner ocupe el 100% del viewport. Ver comentario de
+   .full-bleed en MatchTicker.vue: aunque este banner está anidado un nivel
+   más adentro que el ticker (dentro del <div max-w-6xl px-4> de esta
+   página), --fb-shift sigue siendo la corrección correcta sin importar el
+   ancho del contenedor local — es una propiedad de este truco de centrado. */
+.banner-full-bleed {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  margin-left: calc(-50vw + var(--fb-shift, 0px));
+}
+</style>

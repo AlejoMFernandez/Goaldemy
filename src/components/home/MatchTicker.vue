@@ -64,13 +64,15 @@ defineProps({
 <style scoped>
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
-/* Rompe el max-width/padding de <main> para ocupar el 100% del viewport. */
+/* Rompe el max-width/padding de <main> para ocupar el 100% del viewport.
+   --fb-shift (seteada en App.vue) corrige el corrimiento constante que
+   introduce el gutter derecho de la sidebar de amigos (padding asimétrico
+   en <main>) — sin esa corrección el truco -50vw asume que <main> queda
+   centrado simétrico en el viewport y el ticker se corta de un lado. */
 .full-bleed {
   width: 100vw;
   position: relative;
   left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
+  margin-left: calc(-50vw + var(--fb-shift, 0px));
 }
 </style>

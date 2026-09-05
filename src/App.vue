@@ -55,18 +55,28 @@ export default {
     // Reserva el ancho de la sidebar (300px) SOLO en desktop y con sesión.
     // Inline (no Tailwind ni scoped CSS) → garantizado, sin sorpresas de cascada.
     shellStyle() {
+      // --fb-shift: corrección constante para los elementos "full-bleed"
+      // (MatchTicker, hero de invitado, banner de perfil — cualquiera sea su
+      // anidamiento). El truco width:100vw + left:50% + margin-left:-50vw
+      // asume que <main> queda centrado simétrico en el viewport; el gutter
+      // derecho de la sidebar (84px vs 24px del lado izquierdo) lo corre del
+      // centro una constante = (padding-right - padding-left)/2, sin importar
+      // el ancho del contenedor local (por eso esta única variable alcanza
+      // para cualquier nivel de anidamiento). Sumada al -50vw de cada full-bleed,
+      // recentra el elemento exactamente en el borde real del viewport.
+      const fbVars = { '--fb-shift': (this.hasSidebar && this.isLg) ? '30px' : '0px' }
       // Card flotante de amigos a la derecha en desktop: ya no es una columna
       // full-height, sino una card centrada y separada del borde. Reservamos un
       // gutter fino (~72px = ancho card + inset) para que el contenido no quede
       // tapado por la card. La lista completa + chat son un drawer desplegable.
-      if (this.hasSidebar && this.isLg) return { paddingRight: '84px' }
+      if (this.hasSidebar && this.isLg) return { ...fbVars, paddingRight: '84px' }
       // Mobile/tablet (<lg): el cluster flotante de amigos (desafíos + bug + amigos,
       // fixed bottom-5 right-4) mide ~164px de alto real. Reservamos abajo para que
       // no tape contenido que caiga en la esquina inferior derecha (ej. la última
       // card del grid de "Jugá hoy" en Home). No aplica en juegos inmersivos: ahí
       // el shell pide py-0 a propósito (ocupa 100dvh sin scroll).
-      if (this.hasSidebar && !this.isImmersive) return { paddingBottom: '104px' }
-      return {}
+      if (this.hasSidebar && !this.isImmersive) return { ...fbVars, paddingBottom: '104px' }
+      return fbVars
     }
   },
   async mounted() {

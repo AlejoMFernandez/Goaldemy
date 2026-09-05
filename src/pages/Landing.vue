@@ -3,7 +3,7 @@ import { onMounted, onUnmounted, reactive, computed, ref, defineAsyncComponent }
 import { RouterLink, useRouter } from 'vue-router'
 import { supabase } from '../services/supabase'
 import { getAuthUser } from '../services/auth'
-import { fetchGames, gameRouteForSlug, getUserXpByGame } from '../services/games'
+import { fetchGames, gameRouteForSlug } from '../services/games'
 import { LEAGUES, getUpcomingMatches } from '../services/fotmob'
 import { getDailyChallenges, getDailyReward, getMonthlyPass } from '../services/rewards'
 import { getUserLevel, getLeaderboard } from '../services/xp'
@@ -39,19 +39,18 @@ const state = reactive({
 
 // Spotlight "Top jugador" (semana/mes) — reemplaza la vieja sección de partidos
 // del Mundial (torneo ya finalizado, esa data quedó vieja) por algo propio de
-// Fulvo que nunca se desactualiza.
+// Fulvo que nunca se desactualiza. Podio top 3 (no una card 1:1 igual al hero).
 const spotlight = reactive({
   loading: true,
   period: 'weekly', // 'weekly' | 'monthly'
-  userId: null,
-  name: '', avatarUrl: '', level: 1, xp: 0,
-  frameKey: 'none', iconGlyph: '', iconBg: 'emerald', framePremium: false,
-  dailyStreak: 0,
-  topGame: null, // { id, name, cover_url, xp } — favorito histórico, no acotado al período
+  top: [], // [{ userId, name, avatarUrl, level, xp, frameKey, iconGlyph, iconBg, framePremium }] rank #1..#3
 })
-const spotlightTier = computed(() => getTierForLevel(spotlight.level))
-const spotlightTierLabel = computed(() => spotlightTier.value?.label || '')
-const spotlightTierAccent = computed(() => tierAccentText(spotlightTier.value?.color))
+// Config visual del podio: orden de render 2-1-3, tamaños/alturas decrecientes por rango.
+const podiumSlots = computed(() => ([
+  { rank: 2, player: spotlight.top[1], avatarSize: 72, pedestal: 'h-12', badge: 'bg-slate-300 text-slate-900' },
+  { rank: 1, player: spotlight.top[0], avatarSize: 96, pedestal: 'h-20', badge: 'bg-amber-400 text-slate-900' },
+  { rank: 3, player: spotlight.top[2], avatarSize: 72, pedestal: 'h-8', badge: 'bg-orange-600 text-white' },
+].filter(s => s.player)))
 
 // Dashboard del usuario logueado
 const home = reactive({
@@ -69,39 +68,32 @@ const currentPlan = ref('')
 const sortedPlans = computed(() => [...plans.value].sort((a, b) => a.sort_order - b.sort_order))
 function goToPricing() { router.push('/pricing') }
 
-// Trae al usuario #1 del ranking (semanal/mensual) + sus cosméticos, racha y
-// juego favorito (histórico por XP) para el spotlight de la home.
+// Trae el Top 3 del ranking (semanal/mensual) + cosméticos equipados de cada
+// uno para el podio de la home.
 async function loadSpotlight() {
   spotlight.loading = true
   try {
-    const { data, error } = await getLeaderboard({ period: spotlight.period, gameId: null, limit: 1, offset: 0 })
+    const { data, error } = await getLeaderboard({ period: spotlight.period, gameId: null, limit: 3, offset: 0 })
     if (error) throw error
-    const row = Array.isArray(data) ? data[0] : data
-    if (!row) { spotlight.userId = null; return }
-    spotlight.userId = row.user_id
-    spotlight.name = row.display_name || row.username || row.email || row.user_id?.slice(0, 8) || '—'
-    spotlight.avatarUrl = row.avatar_url || ''
-    spotlight.level = row.user_level ?? row.level ?? 1
-    spotlight.xp = row.xp_total ?? 0
-
-    const [cosmetics, profileRes, xpByGame] = await Promise.all([
-      getEquippedCosmetics(row.user_id).catch(() => null),
-      supabase.from('user_profiles').select('daily_streak').eq('id', row.user_id).single(),
-      getUserXpByGame(row.user_id).catch(() => ({ data: [] })),
-    ])
-    if (cosmetics) {
-      spotlight.frameKey = cosmetics.frameKey || 'none'
-      spotlight.iconGlyph = cosmetics.iconGlyph || ''
-      spotlight.iconBg = cosmetics.iconBg || 'emerald'
-      spotlight.framePremium = !!cosmetics.framePremium
-    }
-    spotlight.dailyStreak = profileRes?.data?.daily_streak || 0
-    // Excluye el balde "Otros" (game_id null, XP sin atribuir a un juego real)
-    const games = (xpByGame?.data || []).filter(g => g.xp > 0 && g.id && g.id !== 'unknown')
-    spotlight.topGame = games.length ? [...games].sort((a, b) => b.xp - a.xp)[0] : null
+    const rows = Array.isArray(data) ? data : (data ? [data] : [])
+    if (!rows.length) { spotlight.top = []; return }
+    spotlight.top = await Promise.all(rows.map(async row => {
+      const cosmetics = await getEquippedCosmetics(row.user_id).catch(() => null)
+      return {
+        userId: row.user_id,
+        name: row.display_name || row.username || row.email || row.user_id?.slice(0, 8) || '—',
+        avatarUrl: row.avatar_url || '',
+        level: row.user_level ?? row.level ?? 1,
+        xp: row.xp_total ?? 0,
+        frameKey: cosmetics?.frameKey || 'none',
+        iconGlyph: cosmetics?.iconGlyph || '',
+        iconBg: cosmetics?.iconBg || 'emerald',
+        framePremium: !!cosmetics?.framePremium,
+      }
+    }))
   } catch (e) {
     console.warn('[Landing] spotlight load error', e)
-    spotlight.userId = null
+    spotlight.top = []
   } finally {
     spotlight.loading = false
   }
@@ -298,12 +290,21 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 </script>
 
 <template>
-  <section class="relative min-h-screen bg-[#0b1220]">
+  <section class="relative min-h-screen" :class="state.isAuthenticated ? '' : 'bg-[#0b1220]'">
 
     <!-- ══════════════════ Ticker de partidos (arriba de todo, para todos) ══════════════════ -->
     <MatchTicker :matches="tickerMatches" :loading="state.loadingTicker" />
 
-    <!-- ══════════════════ HERO ══════════════════ -->
+    <!-- ══════════════════ HERO + Top jugador ══════════════════ -->
+    <!-- Logueado: glow ambiental compartido de fondo (antes vivía duplicado dentro de cada card).
+         overflow-hidden solo cuando hay blobs que contener: para invitado clipeaba el hero
+         full-bleed (que necesita desbordar hacia los costados hasta el borde real). -->
+    <div class="relative" :class="state.isAuthenticated ? 'overflow-hidden' : ''">
+      <template v-if="state.isAuthenticated">
+        <div class="pointer-events-none absolute -top-10 -right-24 w-80 h-80 sm:w-96 sm:h-96 rounded-full opacity-20" style="background: radial-gradient(circle, rgba(99,102,241,0.5), transparent 70%);"></div>
+        <div class="pointer-events-none absolute -bottom-10 -left-24 w-80 h-80 sm:w-96 sm:h-96 rounded-full opacity-10" style="background: radial-gradient(circle, rgba(168,85,247,0.45), transparent 70%);"></div>
+      </template>
+
     <!-- Invitado: hero inmersivo full-bleed (video de fondo secundario + degradé) -->
     <div v-if="!state.isAuthenticated" class="relative overflow-hidden hero-fullbleed mb-20 min-h-[520px] sm:min-h-[600px] flex items-center justify-center">
       <div class="absolute inset-0 hero-aurora"></div>
@@ -341,9 +342,6 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
     <!-- Logueado: hero XL estilo lobby (avatar grande + JUGAR + Tu día) — sin cambios -->
     <div v-else class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 mb-20">
       <div class="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900/70 to-slate-800/40 p-6 sm:p-8 shadow-xl shadow-black/30">
-        <div class="pointer-events-none absolute -top-24 -right-20 w-72 h-72 rounded-full opacity-20" style="background: radial-gradient(circle, rgba(99,102,241,0.55), transparent 70%);"></div>
-        <div class="pointer-events-none absolute -bottom-28 -left-16 w-72 h-72 rounded-full opacity-10" style="background: radial-gradient(circle, rgba(168,85,247,0.5), transparent 70%);"></div>
-
         <div class="relative flex flex-col sm:flex-row items-center gap-5 sm:gap-7">
           <!-- Avatar XL con badge de nivel -->
           <div class="relative shrink-0">
@@ -409,7 +407,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
       </div>
     </div>
 
-    <!-- ══════════════════ Top jugador (semana/mes) ══════════════════ -->
+    <!-- ══════════════════ Top jugador (semana/mes) — podio Top 3, ya no clona el hero ══════════════════ -->
     <!-- min-h reserva espacio para que el footer no salte cuando carga (CLS) -->
     <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 mb-20 min-h-[260px]">
       <div class="flex items-center justify-between gap-3 mb-6">
@@ -427,61 +425,49 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
       </div>
 
       <!-- Loading skeleton: solo en la carga inicial, sin dato previo que mostrar -->
-      <div v-if="spotlight.loading && !spotlight.userId" class="rounded-3xl border border-white/10 bg-slate-900/40 h-[220px] animate-pulse"></div>
+      <div v-if="spotlight.loading && !spotlight.top.length" class="rounded-3xl border border-white/10 bg-slate-900/40 h-[220px] animate-pulse"></div>
 
-      <!-- Spotlight card: al cambiar de período se atenúa en el lugar, nunca cambia de tamaño -->
+      <!-- Podio: al cambiar de período se atenúa en el lugar, nunca cambia de tamaño -->
       <div
-        v-else-if="spotlight.userId"
+        v-else-if="spotlight.top.length"
         class="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900/70 to-slate-800/40 p-6 sm:p-8 transition-opacity duration-200"
         :class="spotlight.loading ? 'opacity-40 pointer-events-none' : 'opacity-100'"
       >
-        <div class="pointer-events-none absolute -top-24 -right-20 w-72 h-72 rounded-full opacity-20" style="background: radial-gradient(circle, rgba(99,102,241,0.55), transparent 70%);"></div>
-        <div class="pointer-events-none absolute -bottom-28 -left-16 w-72 h-72 rounded-full opacity-10" style="background: radial-gradient(circle, rgba(168,85,247,0.5), transparent 70%);"></div>
+        <!-- Invitado: este glow es local (no hay hero logueado del que "heredar" el de fondo) -->
+        <template v-if="!state.isAuthenticated">
+          <div class="pointer-events-none absolute -top-24 -right-20 w-72 h-72 rounded-full opacity-20" style="background: radial-gradient(circle, rgba(99,102,241,0.55), transparent 70%);"></div>
+          <div class="pointer-events-none absolute -bottom-28 -left-16 w-72 h-72 rounded-full opacity-10" style="background: radial-gradient(circle, rgba(168,85,247,0.5), transparent 70%);"></div>
+        </template>
 
-        <div class="relative flex flex-col sm:flex-row items-center gap-6">
-          <div class="relative shrink-0">
-            <UserAvatar
-              :size="96"
-              :avatar-url="spotlight.avatarUrl"
-              :initial="(spotlight.name || '?')[0]?.toUpperCase()"
-              :frame-key="spotlight.frameKey"
-              :icon-glyph="spotlight.iconGlyph"
-              :icon-bg="spotlight.iconBg"
-              :frame-premium="spotlight.framePremium"
-            />
-            <div class="absolute -top-1.5 -right-1.5 grid place-items-center w-7 h-7 rounded-full bg-amber-400 text-slate-900 text-xs font-black shadow-lg shadow-amber-500/30">1</div>
+        <p class="relative text-[11px] uppercase tracking-[0.2em] text-slate-500 text-center mb-6">
+          {{ spotlight.period === 'weekly' ? 'Top jugador de la semana' : 'Top jugador del mes' }}
+        </p>
+
+        <div class="relative flex items-end justify-center gap-3 sm:gap-6">
+          <div v-for="slot in podiumSlots" :key="slot.rank" class="flex flex-col items-center">
+            <div class="relative">
+              <UserAvatar
+                :size="slot.avatarSize"
+                :avatar-url="slot.player.avatarUrl"
+                :initial="(slot.player.name || '?')[0]?.toUpperCase()"
+                :frame-key="slot.player.frameKey"
+                :icon-glyph="slot.player.iconGlyph"
+                :icon-bg="slot.player.iconBg"
+                :frame-premium="slot.player.framePremium"
+              />
+              <div class="absolute -top-1.5 -right-1.5 grid place-items-center w-6 h-6 rounded-full text-xs font-black shadow-lg" :class="slot.badge">{{ slot.rank }}</div>
+            </div>
+            <p class="mt-2 text-sm sm:text-base font-bold text-white truncate max-w-[100px] sm:max-w-[130px] text-center">{{ slot.player.name }}</p>
+            <p class="text-[11px] text-slate-500 mt-0.5 whitespace-nowrap">Nivel {{ slot.player.level }} · {{ slot.player.xp.toLocaleString('es-AR') }} XP</p>
+            <!-- El pedestal solo tiene sentido si hay más de uno para comparar -->
+            <div v-if="podiumSlots.length > 1" class="mt-3 w-16 sm:w-20 rounded-t-xl bg-white/5 border-t border-white/10" :class="slot.pedestal"></div>
           </div>
-
-          <div class="flex-1 min-w-0 text-center sm:text-left">
-            <p class="text-[11px] uppercase tracking-[0.2em] text-slate-500 mb-1">
-              {{ spotlight.period === 'weekly' ? 'Top jugador de la semana' : 'Top jugador del mes' }}
-            </p>
-            <h3 class="font-display text-2xl sm:text-3xl font-bold text-white truncate">{{ spotlight.name }}</h3>
-            <span v-if="spotlightTierLabel" class="inline-flex items-center gap-1.5 font-bold text-sm mt-1.5" :class="spotlightTierAccent">
-              <span class="w-1.5 h-1.5 rounded-full bg-current"></span>{{ spotlightTierLabel }} · Nivel {{ spotlight.level }}
-            </span>
-          </div>
-
-          <RouterLink to="/leaderboards" class="shrink-0 rounded-xl border border-white/15 px-5 py-2.5 font-semibold text-slate-200 text-sm transition-all hover:border-white/25 hover:bg-white/5 active:scale-95">
-            Ver ranking →
-          </RouterLink>
         </div>
 
-        <!-- Por qué es el Top 1 -->
-        <div class="relative mt-7 pt-6 border-t border-white/10 grid grid-cols-3 divide-x divide-white/10">
-          <div class="flex flex-col items-center px-2">
-            <span class="text-[10px] uppercase tracking-wider text-slate-500">{{ spotlight.period === 'weekly' ? 'XP esta semana' : 'XP este mes' }}</span>
-            <span class="font-display text-xl font-bold text-white mt-0.5">{{ spotlight.xp.toLocaleString('es-AR') }}</span>
-          </div>
-          <div class="flex flex-col items-center px-2 text-center min-w-0">
-            <span class="text-[10px] uppercase tracking-wider text-slate-500">Juego favorito</span>
-            <span class="font-display text-sm font-bold text-white mt-1 leading-tight line-clamp-2">{{ spotlight.topGame?.name || '—' }}</span>
-            <span v-if="spotlight.topGame" class="text-[10px] text-slate-500 mt-0.5">{{ spotlight.topGame.xp.toLocaleString('es-AR') }} XP</span>
-          </div>
-          <div class="flex flex-col items-center px-2">
-            <span class="text-[10px] uppercase tracking-wider text-slate-500">Racha actual</span>
-            <span class="font-display text-xl font-bold text-white mt-0.5">{{ spotlight.dailyStreak }} <span class="text-slate-500 text-sm font-semibold">días</span></span>
-          </div>
+        <div class="relative mt-6 text-center">
+          <RouterLink to="/leaderboards" class="inline-flex items-center gap-1.5 rounded-xl border border-white/15 px-5 py-2.5 font-semibold text-slate-200 text-sm transition-all hover:border-white/25 hover:bg-white/5 active:scale-95">
+            Ver ranking completo →
+          </RouterLink>
         </div>
       </div>
 
@@ -489,6 +475,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
       <div v-else class="rounded-2xl border border-white/10 bg-slate-900/40 p-10 text-center">
         <p class="text-slate-300 font-medium">Todavía no hay suficiente actividad para armar el ranking {{ spotlight.period === 'weekly' ? 'semanal' : 'mensual' }}</p>
       </div>
+    </div>
     </div>
 
     <!-- ══════════════════ Juegos ══════════════════ -->
@@ -613,14 +600,14 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 </template>
 
 <style scoped>
-/* Rompe el max-width/padding de <main> para que el hero ocupe el 100% del viewport. */
+/* Rompe el max-width/padding de <main> para que el hero ocupe el 100% del
+   viewport. Ver comentario de .full-bleed en MatchTicker.vue: --fb-shift
+   corrige el corrimiento que introduce el gutter de la sidebar de amigos. */
 .hero-fullbleed {
   width: 100vw;
   position: relative;
   left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
+  margin-left: calc(-50vw + var(--fb-shift, 0px));
 }
 /* Fondo del hero de invitado: usado siempre (video, si hay, se superpone encima) */
 .hero-aurora {
