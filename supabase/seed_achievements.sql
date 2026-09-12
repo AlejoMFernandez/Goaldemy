@@ -15,8 +15,7 @@ values
   ('streak_15', 'Máquina', '15 aciertos seguidos... ¿cómo lo hacés?', 'https://img.icons8.com/fluency/48/crown.png', 140),
   
   -- 📅 Logros diarios (wins en el día)
-  -- daily_wins_3 retirado (fusionado en hat_trick) — ver supabase/achievements-curation-1.sql
-  ('daily_wins_3', 'Triplete', 'Ganá 3 juegos en un mismo día', 'https://img.icons8.com/fluency/48/goal.png', 25),
+  -- daily_wins_3 (Triplete) BORRADO (duplicaba hat_trick) — ver supabase/achievements-delete-triplete.sql
   ('daily_wins_5', 'Quinteto de oro', 'Ganá 5 juegos en un mismo día', 'https://img.icons8.com/emoji/48/gem-stone.png', 40),
   ('daily_wins_all', 'Barrida limpia', 'Ganá todos los juegos del día', 'https://img.icons8.com/color/48/broom.png', 180),
   
