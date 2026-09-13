@@ -112,12 +112,14 @@ export const FRAME_STYLES = {
   champion:{ wrap: 'frm-champion shadow-[0_0_22px_rgba(251,191,36,0.6)]', pad: 'p-[3px]' },
   diamond: { wrap: 'frm-diamond shadow-[0_0_22px_rgba(125,211,252,0.7)]', pad: 'p-[3px]' },
   // Familia "medallón": anillo metálico + remaches (borde punteado) + glow por rareza.
-  medal_bronze:  { wrap: 'bg-gradient-to-br from-amber-300 via-amber-600 to-amber-900 border-2 border-dotted border-amber-200/60 shadow-[0_0_16px_rgba(180,120,60,0.5)]', pad: 'p-[5px]' },
-  medal_silver:  { wrap: 'bg-gradient-to-br from-white via-slate-300 to-slate-500 border-2 border-dotted border-white/70 shadow-[0_0_16px_rgba(203,213,225,0.5)]', pad: 'p-[5px]' },
-  medal_gold:    { wrap: 'bg-gradient-to-br from-yellow-200 via-amber-400 to-amber-700 border-2 border-dotted border-yellow-100/70 shadow-[0_0_18px_rgba(251,191,36,0.6)]', pad: 'p-[5px]' },
-  medal_diamond: { wrap: 'bg-gradient-to-br from-cyan-100 via-sky-300 to-blue-500 border-2 border-dotted border-white/80 shadow-[0_0_20px_rgba(125,211,252,0.65)]', pad: 'p-[5px]' },
-  medal_emerald: { wrap: 'bg-gradient-to-br from-emerald-200 via-emerald-400 to-teal-700 border-2 border-dotted border-emerald-100/70 shadow-[0_0_18px_rgba(16,185,129,0.6)]', pad: 'p-[5px]' },
-  medal_champion:{ wrap: 'bg-gradient-to-br from-amber-200 via-yellow-400 to-cyan-500 border-2 border-dotted border-amber-100/80 shadow-[0_0_22px_rgba(251,191,36,0.65)] anim-pan', pad: 'p-[5px]' },
+  // Pad igual al resto de los bordes (3px) y borde de 1px: antes (5px + border-2) se
+  // comía demasiado espacio del ícono en avatares chicos (rail de amigos).
+  medal_bronze:  { wrap: 'bg-gradient-to-br from-amber-300 via-amber-600 to-amber-900 border border-dotted border-amber-200/60 shadow-[0_0_16px_rgba(180,120,60,0.5)]', pad: 'p-[3px]' },
+  medal_silver:  { wrap: 'bg-gradient-to-br from-white via-slate-300 to-slate-500 border border-dotted border-white/70 shadow-[0_0_16px_rgba(203,213,225,0.5)]', pad: 'p-[3px]' },
+  medal_gold:    { wrap: 'bg-gradient-to-br from-yellow-200 via-amber-400 to-amber-700 border border-dotted border-yellow-100/70 shadow-[0_0_18px_rgba(251,191,36,0.6)]', pad: 'p-[3px]' },
+  medal_diamond: { wrap: 'bg-gradient-to-br from-cyan-100 via-sky-300 to-blue-500 border border-dotted border-white/80 shadow-[0_0_20px_rgba(125,211,252,0.65)]', pad: 'p-[3px]' },
+  medal_emerald: { wrap: 'bg-gradient-to-br from-emerald-200 via-emerald-400 to-teal-700 border border-dotted border-emerald-100/70 shadow-[0_0_18px_rgba(16,185,129,0.6)]', pad: 'p-[3px]' },
+  medal_champion:{ wrap: 'bg-gradient-to-br from-amber-200 via-yellow-400 to-cyan-500 border border-dotted border-amber-100/80 shadow-[0_0_22px_rgba(251,191,36,0.65)] anim-pan', pad: 'p-[3px]' },
 }
 
 export function frameStyle(styleKey) {

@@ -4,8 +4,8 @@ import { getAchievementsCatalog, getAchievementUnlockPercentages } from '../../s
 import { friendlyNameForSlug } from '../../services/games'
 import { achievementIcon } from '../../services/achievement-icons'
 import { getCosmeticUnlocksByAchievement } from '../../services/cosmetics'
-import CosmeticIcon from '../rewards/CosmeticIcon.vue'
-import PassCosmetic from '../rewards/PassCosmetic.vue'
+import AchievementTile from '../rewards/AchievementTile.vue'
+import RewardChips from '../rewards/RewardChips.vue'
 
 const props = defineProps({
   achievements: { type: Array, required: true },
@@ -45,6 +45,10 @@ function reasonFor(a) {
   }
   return null
 }
+
+// Umbral aproximado: si el texto es más largo que esto, probablemente se corta
+// en las 2 líneas disponibles (line-clamp-2) → mostramos hover con el texto completo.
+function isLong(text) { return !!text && text.length > 70 }
 
 function pctClass(code) {
   const p = percentages.value[code]
@@ -122,7 +126,7 @@ const featuredList = computed(() => {
         class="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-slate-800/80 to-slate-800/40 p-4 flex flex-col items-center text-center transition-all hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10">
         <div class="relative">
           <div class="size-14 transition-transform group-hover:scale-110">
-            <CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="56" />
+            <AchievementTile :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="56" />
           </div>
           <div v-if="percentages[a.achievements?.code]" class="absolute -bottom-1.5 -right-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold backdrop-blur border" :class="pctClass(a.achievements?.code)">
             {{ percentages[a.achievements?.code] }}%
@@ -172,28 +176,20 @@ const featuredList = computed(() => {
                 <div v-if="!unlockedSorted.length" class="text-slate-400 text-center py-6 mb-4">Aún no desbloqueaste ningún logro.</div>
                 <div v-else class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2.5 mb-6">
                   <div v-for="(a, idx) in unlockedSorted" :key="idx" class="group/tile relative aspect-square rounded-xl">
-                    <div class="w-full h-full"><CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="64" /></div>
+                    <div class="w-full h-full"><AchievementTile :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="64" /></div>
                     <div v-if="percentages[a.achievements?.code]" class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold backdrop-blur border pointer-events-none" :class="pctClass(a.achievements?.code)">{{ percentages[a.achievements?.code] }}%</div>
 
-                    <div class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-30 w-64 rounded-xl border border-white/15 bg-slate-900/95 backdrop-blur p-3 opacity-0 translate-y-1 shadow-2xl transition-all group-hover/tile:opacity-100 group-hover/tile:translate-y-0">
+                    <div class="pointer-events-none absolute left-1/2 -translate-x-1/2 z-30 w-72 rounded-xl border border-white/15 bg-slate-900/95 backdrop-blur p-3 opacity-0 translate-y-1 shadow-2xl transition-all group-hover/tile:opacity-100 group-hover/tile:translate-y-0" :class="idx < 8 ? 'top-full mt-2' : 'bottom-full mb-2'">
                       <div class="flex items-start gap-2.5">
-                        <div class="size-10 flex-none"><CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="40" /></div>
+                        <div class="size-10 flex-none"><AchievementTile :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="40" /></div>
                         <div class="min-w-0">
                           <p class="font-bold text-xs text-white leading-tight">{{ a.achievements?.name || 'Logro' }}</p>
-                          <p class="text-[10px] font-semibold text-emerald-300 mt-0.5">+{{ a.achievements?.points ?? 0 }} XP · {{ new Date(a.earned_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) }}</p>
+                          <p class="text-[10px] font-semibold text-slate-400 mt-0.5">{{ new Date(a.earned_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) }}</p>
                         </div>
                       </div>
-                      <p v-if="a.achievements?.description" class="text-[10px] text-slate-400 leading-snug mt-2">{{ a.achievements.description }}</p>
-                      <p v-if="reasonFor(a)" class="text-[10px] text-violet-300/90 leading-snug mt-1">{{ reasonFor(a) }}</p>
-                      <template v-if="unlockInfoFor(a).length">
-                        <div class="text-[9px] uppercase tracking-wider text-slate-500 font-semibold mt-2 pt-2 border-t border-white/10 mb-1.5">Desbloqueás</div>
-                        <div class="grid grid-cols-3 gap-2 place-items-center">
-                          <div v-for="u in unlockInfoFor(a)" :key="u.code" class="flex flex-col items-center gap-1">
-                            <PassCosmetic :cos="u" :size="34" />
-                            <div class="text-[8px] font-semibold text-slate-300 text-center leading-tight">{{ u.name }}</div>
-                          </div>
-                        </div>
-                      </template>
+                      <p v-if="reasonFor(a)" class="text-[10px] text-slate-400 leading-snug mt-2">{{ reasonFor(a) }}</p>
+                      <p v-else-if="a.achievements?.description" class="text-[10px] text-slate-400 leading-snug mt-2">{{ a.achievements.description }}</p>
+                      <RewardChips :items="unlockInfoFor(a)" label="Desbloqueaste" />
                     </div>
                   </div>
                 </div>
@@ -205,26 +201,17 @@ const featuredList = computed(() => {
                 </div>
                 <div v-else class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2.5">
                   <div v-for="(a, idx) in pendingSorted" :key="idx" class="group/tile relative aspect-square rounded-xl">
-                    <div class="w-full h-full opacity-40 grayscale"><CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="64" /></div>
+                    <div class="w-full h-full"><AchievementTile locked :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="64" /></div>
 
-                    <div class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-30 w-64 rounded-xl border border-white/15 bg-slate-900/95 backdrop-blur p-3 opacity-0 translate-y-1 shadow-2xl transition-all group-hover/tile:opacity-100 group-hover/tile:translate-y-0">
+                    <div class="pointer-events-none absolute left-1/2 -translate-x-1/2 z-30 w-72 rounded-xl border border-white/15 bg-slate-900/95 backdrop-blur p-3 opacity-0 translate-y-1 shadow-2xl transition-all group-hover/tile:opacity-100 group-hover/tile:translate-y-0" :class="idx < 8 ? 'top-full mt-2' : 'bottom-full mb-2'">
                       <div class="flex items-start gap-2.5">
-                        <div class="size-10 flex-none opacity-60 grayscale"><CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="40" /></div>
+                        <div class="size-10 flex-none"><AchievementTile locked :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="40" /></div>
                         <div class="min-w-0">
                           <p class="font-bold text-xs text-slate-200 leading-tight">{{ a.achievements?.name || 'Logro' }}</p>
                           <p class="text-[10px] font-semibold text-slate-500 mt-0.5">🔒 +{{ a.achievements?.points ?? 0 }} XP al conseguirlo</p>
                         </div>
                       </div>
                       <p v-if="a.achievements?.description" class="text-[10px] text-slate-400 leading-snug mt-2">{{ a.achievements.description }}</p>
-                      <template v-if="unlockInfoFor(a).length">
-                        <div class="text-[9px] uppercase tracking-wider text-slate-500 font-semibold mt-2 pt-2 border-t border-white/10 mb-1.5">Al conseguirlo, desbloqueás</div>
-                        <div class="grid grid-cols-3 gap-2 place-items-center">
-                          <div v-for="u in unlockInfoFor(a)" :key="u.code" class="flex flex-col items-center gap-1">
-                            <PassCosmetic :cos="u" :size="34" />
-                            <div class="text-[8px] font-semibold text-slate-300 text-center leading-tight">{{ u.name }}</div>
-                          </div>
-                        </div>
-                      </template>
                     </div>
                   </div>
                 </div>
@@ -238,29 +225,26 @@ const featuredList = computed(() => {
                   <div v-for="(a, idx) in unlockedSorted" :key="idx" class="group/ach relative rounded-xl border border-white/10 bg-slate-800/70 hover:border-white/20 p-4 transition-all">
                     <div class="flex items-start gap-3">
                       <div class="relative flex-none">
-                        <div class="size-12"><CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="48" /></div>
+                        <div class="size-12"><AchievementTile :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="48" /></div>
                         <div v-if="percentages[a.achievements?.code]" class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold backdrop-blur border" :class="pctClass(a.achievements?.code)">{{ percentages[a.achievements?.code] }}%</div>
                       </div>
                       <div class="min-w-0 flex-1">
                         <p class="font-bold text-sm leading-tight text-white">{{ a.achievements?.name || 'Logro' }}</p>
-                        <p v-if="a.achievements?.description" class="text-[11px] leading-snug mt-1 line-clamp-2 text-slate-400">{{ a.achievements.description }}</p>
-                        <p v-if="reasonFor(a)" class="text-[11px] leading-snug mt-0.5 text-violet-300/90">{{ reasonFor(a) }}</p>
-                        <div class="mt-1.5 flex items-center justify-between">
-                          <span class="text-[11px] font-semibold text-emerald-300">+{{ a.achievements?.points ?? 0 }} XP</span>
+                        <div class="relative group/desc">
+                          <p class="text-[11px] leading-snug mt-1 line-clamp-2 min-h-[30px] text-slate-400">{{ reasonFor(a) || a.achievements?.description }}</p>
+                          <div v-if="isLong(reasonFor(a) || a.achievements?.description)" class="pointer-events-none absolute z-40 left-0 top-full mt-1 w-64 rounded-lg border border-white/15 bg-slate-900/95 backdrop-blur p-2.5 text-[11px] text-slate-200 leading-snug opacity-0 invisible group-hover/desc:opacity-100 group-hover/desc:visible shadow-2xl transition-all">
+                            {{ reasonFor(a) || a.achievements?.description }}
+                          </div>
+                        </div>
+                        <div class="mt-1.5 text-right">
                           <span class="text-[10px] text-slate-400">{{ new Date(a.earned_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) }}</span>
                         </div>
                       </div>
                     </div>
 
                     <!-- Popup flotante on-hover: qué cosmético desbloquea (patrón PlanCard/Pricing) -->
-                    <div v-if="unlockInfoFor(a).length" class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-30 w-64 rounded-xl border border-white/15 bg-slate-900/95 backdrop-blur p-3 opacity-0 translate-y-1 shadow-2xl transition-all group-hover/ach:opacity-100 group-hover/ach:translate-y-0">
-                      <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2">Desbloqueaste</div>
-                      <div class="grid grid-cols-3 gap-2 place-items-center">
-                        <div v-for="u in unlockInfoFor(a)" :key="u.code" class="flex flex-col items-center gap-1">
-                          <PassCosmetic :cos="u" :size="40" />
-                          <div class="text-[9px] font-semibold text-slate-300 text-center leading-tight">{{ u.name }}</div>
-                        </div>
-                      </div>
+                    <div v-if="unlockInfoFor(a).length" class="pointer-events-none absolute left-1/2 -translate-x-1/2 z-30 w-72 rounded-xl border border-white/15 bg-slate-900/95 backdrop-blur p-3 opacity-0 translate-y-1 shadow-2xl transition-all group-hover/ach:opacity-100 group-hover/ach:translate-y-0" :class="idx < 3 ? 'top-full mt-2' : 'bottom-full mb-2'">
+                      <RewardChips :items="unlockInfoFor(a)" label="Desbloqueaste" bare />
                     </div>
                   </div>
                 </div>
@@ -274,25 +258,19 @@ const featuredList = computed(() => {
                   <div v-for="(a, idx) in pendingSorted" :key="idx" class="group/ach relative rounded-xl border border-white/5 bg-slate-900/40 p-4 transition-all">
                     <div class="flex items-start gap-3">
                       <div class="relative flex-none">
-                        <div class="size-12 opacity-40 grayscale"><CosmeticIcon framed :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="48" /></div>
+                        <div class="size-12"><AchievementTile locked :icon-key="iconKeyFor(a)" :rarity="rarityFor(a)" :size="48" /></div>
                       </div>
                       <div class="min-w-0 flex-1">
                         <p class="font-bold text-sm leading-tight text-slate-300">{{ a.achievements?.name || 'Logro' }}</p>
-                        <p v-if="a.achievements?.description" class="text-[11px] leading-snug mt-1 line-clamp-2 text-slate-500">{{ a.achievements.description }}</p>
+                        <div class="relative group/desc">
+                          <p class="text-[11px] leading-snug mt-1 line-clamp-2 min-h-[30px] text-slate-500">{{ a.achievements?.description }}</p>
+                          <div v-if="isLong(a.achievements?.description)" class="pointer-events-none absolute z-40 left-0 top-full mt-1 w-64 rounded-lg border border-white/15 bg-slate-900/95 backdrop-blur p-2.5 text-[11px] text-slate-200 leading-snug opacity-0 invisible group-hover/desc:opacity-100 group-hover/desc:visible shadow-2xl transition-all">
+                            {{ a.achievements?.description }}
+                          </div>
+                        </div>
                         <div class="mt-1.5 flex items-center justify-between">
                           <span class="text-[11px] font-semibold text-slate-500">+{{ a.achievements?.points ?? 0 }} XP</span>
                           <span class="text-[10px] text-slate-500">🔒</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Popup flotante on-hover: qué desbloqueás si conseguís este logro -->
-                    <div v-if="unlockInfoFor(a).length" class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-30 w-64 rounded-xl border border-white/15 bg-slate-900/95 backdrop-blur p-3 opacity-0 translate-y-1 shadow-2xl transition-all group-hover/ach:opacity-100 group-hover/ach:translate-y-0">
-                      <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2">Al conseguirlo, desbloqueás</div>
-                      <div class="grid grid-cols-3 gap-2 place-items-center">
-                        <div v-for="u in unlockInfoFor(a)" :key="u.code" class="flex flex-col items-center gap-1">
-                          <PassCosmetic :cos="u" :size="40" />
-                          <div class="text-[9px] font-semibold text-slate-300 text-center leading-tight">{{ u.name }}</div>
                         </div>
                       </div>
                     </div>
@@ -310,7 +288,8 @@ const featuredList = computed(() => {
 <style scoped>
 .ach-modal-enter-active, .ach-modal-leave-active { transition: opacity 0.2s ease; }
 .ach-modal-enter-from, .ach-modal-leave-to { opacity: 0; }
-/* CosmeticIcon fija width/height en px vía prop; acá lo usamos dentro de cajas
-   fluidas (grilla responsiva, tarjetas), así que lo estiramos al 100% del padre. */
-:deep(.cosmetic-icon) { width: 100%; height: 100%; }
+/* CosmeticIcon/AchievementTile fijan width/height en px vía prop; acá los usamos
+   dentro de cajas fluidas (grilla responsiva, tarjetas), así que se estiran al
+   100% del padre. */
+:deep(.cosmetic-icon), :deep(.achievement-tile) { width: 100%; height: 100%; }
 </style>

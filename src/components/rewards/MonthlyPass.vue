@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getMonthlyPass, claimPassTier, powerupLabel } from '../../services/rewards'
 import { pushClaimNotification } from '../../stores/notifications'
@@ -14,8 +14,19 @@ const claiming = ref(null)
 const detailOpen = ref(false)
 const trackEl = ref(null)
 
-const POWERUP_ICONS = { fifty_fifty: '✂️', shield: '🛡️', extra_time: '⏱️', reveal_hint: '💡' }
-function powerupIcon(t) { return POWERUP_ICONS[t] || '🎁' }
+// Tinte por ayuda — mismo criterio que AyudasPanel.vue (índice de juegos), así
+// una mejora se reconoce por color en cualquier parte de la app.
+const POWERUP_COLORS = {
+  fifty_fifty: { ring: 'ring-fuchsia-400/30', bg: 'bg-fuchsia-500/15', text: 'text-fuchsia-200' },
+  shield: { ring: 'ring-sky-400/30', bg: 'bg-sky-500/15', text: 'text-sky-200' },
+  extra_time: { ring: 'ring-amber-400/30', bg: 'bg-amber-500/15', text: 'text-amber-100' },
+  reveal_hint: { ring: 'ring-emerald-400/30', bg: 'bg-emerald-500/15', text: 'text-emerald-200' },
+}
+function puColor(type) { return POWERUP_COLORS[type] || POWERUP_COLORS.reveal_hint }
+// Emoji legacy solo para el toast global de "reclamado" (stack compartido con
+// el resto de la app, fuera del alcance de este rediseño).
+const POWERUP_TOAST_EMOJI = { fifty_fifty: '✂️', shield: '🛡️', extra_time: '⏱️', reveal_hint: '💡' }
+function powerupToastEmoji(t) { return POWERUP_TOAST_EMOJI[t] || '🎁' }
 
 const monthLabel = computed(() => {
   if (!pass.value.month) return ''
@@ -71,6 +82,12 @@ function hasReward(tier, track) {
   return !!r.cos || !!r.powerup || r.xp > 0
 }
 
+// Hito = trae un cosmético — son los premios "jugosos" que venden el pase,
+// se destacan con una tile más grande que XP/powerups sueltos.
+function isMilestone(tier, track) {
+  return !!rewardFor(tier, track).cos
+}
+
 function canClaim(tier, track) {
   if (!tier.unlocked) return false
   if (track === 'premium' && !pass.value.is_premium) return false
@@ -114,7 +131,7 @@ async function handleClaim(tier, track) {
       const title = `${seasonName.value} · Nivel ${tier.tier}`
       const cos = rewardFor(tier, track).cos
       if (cos) pushClaimNotification({ type: 'cosmetic', title: `${title} — ${cos.name}`, emoji: '🎁' })
-      else if (res.powerup) pushClaimNotification({ type: 'powerup', title, emoji: powerupIcon(res.powerup) })
+      else if (res.powerup) pushClaimNotification({ type: 'powerup', title, emoji: powerupToastEmoji(res.powerup) })
       else pushClaimNotification({ type: 'xp', title, xp: res.xp, emoji: '🎟️' })
     }
   } finally {
@@ -128,10 +145,8 @@ function openDetail() {
 }
 
 function scrollToCurrent() {
-  const el = trackEl.value
-  if (!el) return
-  const node = el.querySelector('[data-current="1"]')
-  if (node) el.scrollTo({ left: node.offsetLeft - 80, behavior: 'smooth' })
+  const node = trackEl.value?.querySelector('[data-current="1"]')
+  if (node) node.scrollIntoView({ block: 'center', behavior: 'smooth' })
 }
 
 onMounted(load)
@@ -150,11 +165,19 @@ defineExpose({ reload: load })
 
     <div class="relative flex items-start justify-between gap-3">
       <div class="flex items-center gap-2.5">
-        <div class="w-11 h-11 rounded-2xl grid place-items-center text-2xl bg-amber-500/15 border border-amber-400/30 shadow-lg shadow-amber-500/10">🎟️</div>
+        <div class="w-11 h-11 rounded-2xl grid place-items-center bg-amber-500/15 border border-amber-400/30 shadow-lg shadow-amber-500/10 text-amber-300">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+            <path d="M3 8.2a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1a1.6 1.6 0 0 0 0 5.6v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1a1.6 1.6 0 0 0 0-5.6v-1Z" />
+            <path d="M14.5 6.5v11" stroke-dasharray="0.1 3.2" />
+          </svg>
+        </div>
         <div>
           <div class="flex items-center gap-2">
             <h2 class="font-display font-bold text-white text-lg leading-tight">{{ seasonName }}</h2>
-            <span v-if="pass.is_premium" class="rounded-full bg-amber-500/15 border border-amber-500/40 px-2 py-0.5 text-[10px] font-bold text-amber-300">⭐ PRO</span>
+            <span v-if="pass.is_premium" class="inline-flex items-center gap-1 rounded-full bg-amber-500/15 border border-amber-500/40 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+              <svg viewBox="0 0 24 24" fill="currentColor" class="w-2.5 h-2.5"><path d="M12 2l2.6 6.9L22 9.6l-5.6 4.8L18 22l-6-3.7L6 22l1.6-7.6L2 9.6l7.4-.7Z" /></svg>
+              PRO
+            </span>
           </div>
           <div class="text-[11px] text-slate-400 capitalize mt-0.5">{{ monthLabel }}</div>
         </div>
@@ -185,7 +208,10 @@ defineExpose({ reload: load })
           <div v-if="nextTier" class="text-[11px] text-slate-400">
             <span class="text-amber-300 font-bold tabular-nums">{{ Math.max(0, nextTier.points_required - points) }}</span> al Nivel {{ nextTier.tier }}
           </div>
-          <div v-else class="text-[11px] text-amber-300 font-bold">¡Pase completado! 🏆</div>
+          <div v-else class="inline-flex items-center gap-1 text-[11px] text-amber-300 font-bold">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4"/></svg>
+            ¡Pase completado!
+          </div>
         </div>
         <div class="h-3 rounded-full bg-black/40 overflow-hidden ring-1 ring-white/5">
           <div class="h-full rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 transition-all duration-700" :style="{ width: segment.pct + '%' }"></div>
@@ -199,8 +225,14 @@ defineExpose({ reload: load })
       <!-- De dónde salen los puntos (claro y gráfico) -->
       <div class="relative mt-3 flex items-center gap-2">
         <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Sumás jugando</span>
-        <span class="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2 py-1 text-[11px] font-bold text-amber-300">🏆 +3 ganar</span>
-        <span class="inline-flex items-center gap-1 rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-[11px] font-semibold text-slate-300">🎮 +1 jugar</span>
+        <span class="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2 py-1 text-[11px] font-bold text-amber-300">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4"/></svg>
+          +3 ganar
+        </span>
+        <span class="inline-flex items-center gap-1 rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-[11px] font-semibold text-slate-300">
+          <svg viewBox="0 0 24 24" fill="currentColor" class="w-2.5 h-2.5"><path d="M8 5v14l11-7Z"/></svg>
+          +1 jugar
+        </span>
       </div>
 
       <!-- Footer: ver pase + gran premio real -->
@@ -220,22 +252,27 @@ defineExpose({ reload: load })
     </template>
   </button>
 
-  <!-- ════════ MODAL DE DETALLE ════════ -->
+  <!-- ════════ MODAL DE DETALLE — timeline vertical estilo Clash Royale ════════ -->
   <Teleport to="body">
     <Transition name="pass-modal">
-      <div v-if="detailOpen" class="fixed inset-0 z-[60] overflow-y-auto">
+      <div v-if="detailOpen" class="fixed inset-0 z-[60] overflow-hidden">
         <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" @click="detailOpen = false"></div>
-        <div class="relative min-h-full flex items-center justify-center p-3 sm:p-4" @click.self="detailOpen = false">
-          <div class="relative w-full max-w-5xl rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl">
+        <div class="relative h-full flex items-center justify-center p-2 sm:p-4" @click.self="detailOpen = false">
+          <div class="relative w-full max-w-6xl h-full sm:h-[92vh] flex flex-col rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl overflow-hidden">
 
             <!-- Header -->
-            <div class="relative overflow-hidden rounded-t-2xl border-b border-white/10 bg-gradient-to-r from-amber-500/[0.12] to-amber-600/[0.06] p-5">
+            <div class="relative shrink-0 overflow-hidden border-b border-white/10 bg-gradient-to-r from-amber-500/[0.12] to-amber-600/[0.06] p-4 sm:p-5">
               <div class="pointer-events-none absolute -top-12 right-10 w-40 h-40 rounded-full bg-amber-500/15 blur-3xl"></div>
               <button @click="detailOpen = false" class="absolute top-4 right-4 text-slate-400 hover:text-white transition z-10">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
               <div class="relative flex items-center gap-3 pr-10">
-                <div class="w-12 h-12 rounded-2xl grid place-items-center text-2xl bg-amber-500/15 border border-amber-400/30">🎟️</div>
+                <div class="w-12 h-12 rounded-2xl grid place-items-center bg-amber-500/15 border border-amber-400/30 text-amber-300 shrink-0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+                    <path d="M3 8.2a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1a1.6 1.6 0 0 0 0 5.6v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1a1.6 1.6 0 0 0 0-5.6v-1Z" />
+                    <path d="M14.5 6.5v11" stroke-dasharray="0.1 3.2" />
+                  </svg>
+                </div>
                 <div class="flex-1 min-w-0">
                   <h2 class="font-display font-bold text-white text-xl leading-tight">{{ seasonName }}</h2>
                   <div class="text-xs text-slate-400 capitalize">{{ monthLabel }} · <span class="text-amber-300 font-bold">{{ points }} puntos</span></div>
@@ -243,7 +280,7 @@ defineExpose({ reload: load })
                 <!-- Días restantes -->
                 <div class="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-black/30 border border-white/10 px-3 py-1.5 text-xs font-bold text-slate-200">
                   <svg class="w-4 h-4 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  Quedan <span class="tabular-nums text-amber-200">{{ daysLeft }}</span> {{ daysLeft === 1 ? 'día' : 'días' }}
+                  <span class="hidden sm:inline">Quedan</span> <span class="tabular-nums text-amber-200">{{ daysLeft }}</span> {{ daysLeft === 1 ? 'día' : 'días' }}
                 </div>
               </div>
 
@@ -255,15 +292,15 @@ defineExpose({ reload: load })
                 <div class="mt-1.5 flex items-center justify-between text-[11px]">
                   <span class="text-slate-400">Nivel <span class="text-white font-bold">{{ currentTierNum }}</span> / {{ tiers.length }}</span>
                   <span class="inline-flex items-center gap-2 text-slate-400">
-                    <span class="inline-flex items-center gap-1 text-amber-300 font-semibold">🏆 +3 ganar</span>
-                    <span class="inline-flex items-center gap-1">🎮 +1 jugar</span>
+                    <span class="inline-flex items-center gap-1 text-amber-300 font-semibold">+3 ganar</span>
+                    <span class="inline-flex items-center gap-1">+1 jugar</span>
                   </span>
                 </div>
               </div>
             </div>
 
             <!-- Comparativa Gratis vs PRO (leyenda + CTA) -->
-            <div class="px-5 pt-4 flex flex-wrap items-center justify-between gap-3">
+            <div class="shrink-0 px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-3 border-b border-white/5">
               <div class="flex items-center gap-4 text-xs">
                 <span class="inline-flex items-center gap-1.5 font-bold text-emerald-300">
                   <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Gratis
@@ -281,31 +318,38 @@ defineExpose({ reload: load })
               >Desbloquear PRO</button>
             </div>
 
-            <!-- Track horizontal: DOS VÍAS (Gratis arriba / PRO abajo) -->
-            <div ref="trackEl" class="overflow-x-auto px-5 py-4 pass-track">
-              <div class="flex gap-3 min-w-min">
+            <!-- Timeline vertical: GRATIS (izq) · nivel (centro) · PRO (der) -->
+            <div ref="trackEl" class="relative flex-1 overflow-y-auto pass-track px-3 sm:px-6 py-5">
+              <!-- línea central continua, detrás de los nodos -->
+              <div class="pointer-events-none absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[3px] rounded-full bg-gradient-to-b from-amber-500/40 via-white/10 to-white/5 z-0"></div>
+
+              <div class="relative z-[1] max-w-2xl sm:max-w-3xl mx-auto flex flex-col gap-2.5">
                 <div
                   v-for="tier in tiers"
                   :key="tier.tier"
                   :data-current="tier.tier === currentTierNum ? '1' : '0'"
-                  class="w-[120px] shrink-0 flex flex-col gap-2"
+                  class="grid items-center gap-2 sm:gap-4"
+                  style="grid-template-columns: 1fr 56px 1fr"
                 >
                   <!-- ── Vía GRATIS ── -->
                   <div
-                    class="relative rounded-xl border p-2 transition-all"
+                    class="relative rounded-xl border p-2 transition-all flex flex-col items-center justify-center text-center"
                     :class="[
-                      tierState(tier, 'free') === 'claimable' ? 'border-emerald-400/50 bg-emerald-500/[0.08]' : 'border-emerald-500/15 bg-emerald-500/[0.03]',
-                      !tier.unlocked ? 'opacity-70' : '',
+                      isMilestone(tier, 'free') ? 'min-h-[104px] p-3' : 'min-h-[76px]',
+                      tierState(tier, 'free') === 'claimable' ? 'border-emerald-400/50 bg-emerald-500/[0.09] shadow-[0_0_16px_rgba(16,185,129,0.15)]' : 'border-emerald-500/15 bg-emerald-500/[0.03]',
+                      !tier.unlocked ? 'opacity-60' : '',
                     ]"
                   >
-                    <div class="h-[62px] grid place-items-center text-center">
+                    <div class="flex-1 grid place-items-center">
                       <div v-if="rewardFor(tier, 'free').cos" class="flex flex-col items-center gap-1">
-                        <PassCosmetic :cos="rewardFor(tier, 'free').cos" :size="40" />
-                        <div class="text-[8px] font-bold text-emerald-200 leading-none truncate max-w-[104px]">{{ rewardFor(tier, 'free').cos.name }}</div>
+                        <PassCosmetic :cos="rewardFor(tier, 'free').cos" :size="isMilestone(tier, 'free') ? 56 : 40" />
+                        <div class="text-[9px] font-bold text-emerald-200 leading-none truncate max-w-[120px]">{{ rewardFor(tier, 'free').cos.name }}</div>
                       </div>
-                      <div v-else-if="rewardFor(tier, 'free').powerup">
-                        <PowerupIcon :type="rewardFor(tier, 'free').powerup" :size="40" />
-                        <div class="text-[9px] font-bold text-emerald-300 mt-0.5">×{{ rewardFor(tier, 'free').qty }}</div>
+                      <div v-else-if="rewardFor(tier, 'free').powerup" class="flex flex-col items-center gap-1">
+                        <div class="rounded-full p-2 ring-1" :class="[puColor(rewardFor(tier, 'free').powerup).bg, puColor(rewardFor(tier, 'free').powerup).ring, puColor(rewardFor(tier, 'free').powerup).text]">
+                          <PowerupIcon :type="rewardFor(tier, 'free').powerup" :size="22" />
+                        </div>
+                        <div class="text-[9px] font-bold text-emerald-300">×{{ rewardFor(tier, 'free').qty }}</div>
                       </div>
                       <div v-else-if="rewardFor(tier, 'free').xp > 0">
                         <div class="font-display font-bold text-lg leading-none text-emerald-300">+{{ rewardFor(tier, 'free').xp }}</div>
@@ -317,42 +361,50 @@ defineExpose({ reload: load })
                       v-if="canClaim(tier, 'free')"
                       @click="handleClaim(tier, 'free')"
                       :disabled="claiming === tier.tier + '_free'"
-                      class="mt-1 w-full rounded-lg py-1 text-[11px] font-bold bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:brightness-110 transition disabled:opacity-60"
+                      class="mt-1.5 w-full rounded-lg py-1 text-[11px] font-bold bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:brightness-110 transition disabled:opacity-60"
                     >Reclamar</button>
-                    <div v-else class="mt-1 text-center text-[10px] font-semibold py-1"
+                    <div v-else class="mt-1.5 h-5 grid place-items-center"
                       :class="tierState(tier, 'free') === 'claimed' ? 'text-emerald-400' : 'text-slate-600'">
-                      <span v-if="tierState(tier, 'free') === 'claimed'">✓</span>
-                      <span v-else-if="tierState(tier, 'free') === 'locked'">🔒</span>
-                      <span v-else>—</span>
+                      <svg v-if="tierState(tier, 'free') === 'claimed'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M5 13l4 4L19 7" /></svg>
+                      <svg v-else-if="tierState(tier, 'free') === 'locked'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
                     </div>
                   </div>
 
                   <!-- ── Nodo del nivel ── -->
-                  <div class="flex flex-col items-center py-0.5">
+                  <div class="flex flex-col items-center">
                     <div
-                      class="w-8 h-8 rounded-full grid place-items-center text-xs font-bold border-2"
-                      :class="tier.unlocked ? 'bg-amber-500/20 border-amber-400/50 text-amber-200' : 'bg-slate-800 border-white/10 text-slate-500'"
-                    >{{ tier.tier }}</div>
-                    <div class="text-[8px] text-slate-500 mt-0.5 tabular-nums">{{ tier.points_required }} pts</div>
+                      class="w-10 h-10 rounded-full grid place-items-center text-xs font-bold border-2 relative shrink-0"
+                      :class="tier.tier === currentTierNum
+                        ? 'bg-amber-500/25 border-amber-300 text-amber-100 shadow-[0_0_0_4px_rgba(251,191,36,0.15),0_0_18px_rgba(251,191,36,0.4)]'
+                        : tier.unlocked ? 'bg-amber-500/15 border-amber-400/40 text-amber-200' : 'bg-slate-800 border-white/10 text-slate-500'"
+                    >
+                      {{ tier.tier }}
+                      <svg v-if="!tier.unlocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute -bottom-1 -right-1 w-3.5 h-3.5 text-slate-500 bg-slate-900 rounded-full p-0.5"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                    </div>
+                    <div class="text-[7px] sm:text-[8px] text-slate-500 mt-1 tabular-nums text-center leading-tight">{{ tier.points_required }} pts</div>
+                    <div v-if="tier.tier === currentTierNum" class="mt-0.5 text-[7px] sm:text-[8px] font-bold text-amber-300 uppercase tracking-wide">Tu nivel</div>
                   </div>
 
                   <!-- ── Vía PRO ── -->
                   <div
-                    class="relative rounded-xl border p-2 transition-all"
+                    class="relative rounded-xl border p-2 transition-all flex flex-col items-center justify-center text-center"
                     :class="[
-                      tierState(tier, 'premium') === 'claimable' ? 'border-amber-400/50 bg-amber-500/[0.08]' : 'border-amber-500/15 bg-amber-500/[0.03]',
-                      (!tier.unlocked || (!pass.is_premium)) ? 'opacity-80' : '',
+                      isMilestone(tier, 'premium') ? 'min-h-[104px] p-3' : 'min-h-[76px]',
+                      tierState(tier, 'premium') === 'claimable' ? 'border-amber-400/50 bg-amber-500/[0.09] shadow-[0_0_16px_rgba(251,191,36,0.15)]' : 'border-amber-500/15 bg-amber-500/[0.03]',
+                      (!tier.unlocked || !pass.is_premium) ? 'opacity-70' : '',
                     ]"
                   >
-                    <div class="absolute top-1 right-1 text-[8px] font-bold uppercase tracking-wide text-amber-400/70">PRO</div>
-                    <div class="h-[62px] grid place-items-center text-center">
+                    <div class="absolute top-1.5 right-1.5 text-[7px] font-bold uppercase tracking-wide text-amber-400/70">PRO</div>
+                    <div class="flex-1 grid place-items-center">
                       <div v-if="rewardFor(tier, 'premium').cos" class="flex flex-col items-center gap-1">
-                        <PassCosmetic :cos="rewardFor(tier, 'premium').cos" :size="40" />
-                        <div class="text-[8px] font-bold text-amber-200 leading-none truncate max-w-[104px]">{{ rewardFor(tier, 'premium').cos.name }}</div>
+                        <PassCosmetic :cos="rewardFor(tier, 'premium').cos" :size="isMilestone(tier, 'premium') ? 56 : 40" />
+                        <div class="text-[9px] font-bold text-amber-200 leading-none truncate max-w-[120px]">{{ rewardFor(tier, 'premium').cos.name }}</div>
                       </div>
-                      <div v-else-if="rewardFor(tier, 'premium').powerup">
-                        <PowerupIcon :type="rewardFor(tier, 'premium').powerup" :size="40" />
-                        <div class="text-[9px] font-bold text-amber-300 mt-0.5">×{{ rewardFor(tier, 'premium').qty }}</div>
+                      <div v-else-if="rewardFor(tier, 'premium').powerup" class="flex flex-col items-center gap-1">
+                        <div class="rounded-full p-2 ring-1" :class="[puColor(rewardFor(tier, 'premium').powerup).bg, puColor(rewardFor(tier, 'premium').powerup).ring, puColor(rewardFor(tier, 'premium').powerup).text]">
+                          <PowerupIcon :type="rewardFor(tier, 'premium').powerup" :size="22" />
+                        </div>
+                        <div class="text-[9px] font-bold text-amber-300">×{{ rewardFor(tier, 'premium').qty }}</div>
                       </div>
                       <div v-else-if="rewardFor(tier, 'premium').xp > 0">
                         <div class="font-display font-bold text-lg leading-none text-amber-300">+{{ rewardFor(tier, 'premium').xp }}</div>
@@ -364,26 +416,28 @@ defineExpose({ reload: load })
                       v-if="canClaim(tier, 'premium')"
                       @click="handleClaim(tier, 'premium')"
                       :disabled="claiming === tier.tier + '_premium'"
-                      class="mt-1 w-full rounded-lg py-1 text-[11px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:brightness-110 transition disabled:opacity-60"
+                      class="mt-1.5 w-full rounded-lg py-1 text-[11px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:brightness-110 transition disabled:opacity-60"
                     >Reclamar</button>
                     <button
                       v-else-if="tierState(tier, 'premium') === 'locked-premium'"
                       @click="router.push('/pricing')"
-                      class="mt-1 w-full rounded-lg py-1 text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition"
-                    >🔒 PRO</button>
-                    <div v-else class="mt-1 text-center text-[10px] font-semibold py-1"
+                      class="mt-1.5 w-full inline-flex items-center justify-center gap-1 rounded-lg py-1 text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                      PRO
+                    </button>
+                    <div v-else class="mt-1.5 h-5 grid place-items-center"
                       :class="tierState(tier, 'premium') === 'claimed' ? 'text-amber-400' : 'text-slate-600'">
-                      <span v-if="tierState(tier, 'premium') === 'claimed'">✓</span>
-                      <span v-else-if="tierState(tier, 'premium') === 'locked'">🔒</span>
-                      <span v-else>—</span>
+                      <svg v-if="tierState(tier, 'premium') === 'claimed'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M5 13l4 4L19 7" /></svg>
+                      <svg v-else-if="tierState(tier, 'premium') === 'locked'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="px-5 pb-5 text-center text-[11px] text-slate-500">
-              Deslizá para ver todos los niveles · <span class="text-emerald-300">Gratis</span> arriba, <span class="text-amber-300">PRO</span> abajo
+            <div class="shrink-0 px-5 py-2.5 text-center text-[11px] text-slate-500 border-t border-white/5">
+              <span class="text-emerald-300">Gratis</span> a la izquierda · <span class="text-amber-300">PRO</span> a la derecha · el nivel te marca el camino
             </div>
           </div>
         </div>
@@ -394,7 +448,7 @@ defineExpose({ reload: load })
 
 <style scoped>
 .pass-track { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent; }
-.pass-track::-webkit-scrollbar { height: 8px; }
+.pass-track::-webkit-scrollbar { width: 8px; }
 .pass-track::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
 
 .pass-modal-enter-active, .pass-modal-leave-active { transition: opacity 0.25s ease; }

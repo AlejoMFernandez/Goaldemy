@@ -4,11 +4,11 @@ import { notificationsState, shiftAchievementQueue } from '@/stores/notification
 import { soundManager } from '@/services/sounds'
 import { celebrateAchievement } from '@/services/confetti'
 import { achievementIcon } from '@/services/achievement-icons'
-import CosmeticIcon from './CosmeticIcon.vue'
+import AchievementTile from './AchievementTile.vue'
 
 export default {
   name: 'AchievementUnlockOverlay',
-  components: { CosmeticIcon },
+  components: { AchievementTile },
   setup() {
     const current = ref(null)
     const phase = ref(0)
@@ -170,9 +170,9 @@ export default {
             :class="!flying ? ['transition-all duration-500', phase >= 1 ? 'opacity-100' : 'opacity-0'] : ''"
             :style="flying ? flightStyle : (phase >= 1 ? 'animation: scale-spring 0.6s var(--ease-bounce) both' : '')"
           >
-            <div class="w-28 h-28 rounded-full grid place-items-center"
+            <div class="w-28 h-28 rounded-3xl grid place-items-center"
               :style="phase >= 2 && !flying ? 'animation: glow-pulse 2s ease-in-out infinite' : ''">
-              <CosmeticIcon framed :icon-key="iconOf(current).icon" :rarity="iconOf(current).rarity" :size="112" />
+              <AchievementTile :icon-key="iconOf(current).icon" :rarity="iconOf(current).rarity" :size="112" />
             </div>
           </div>
 

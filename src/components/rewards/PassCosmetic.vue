@@ -35,8 +35,10 @@ const props = defineProps({
       :style="{ width: Math.round(size * 1.6) + 'px', height: Math.round(size * 0.72) + 'px' }"
     ></div>
 
-    <!-- Título: texto -->
-    <div v-else class="px-1 text-center text-[11px] font-bold leading-tight" :class="rarity(cos.rarity).text">
+    <!-- Título: texto. Mismo ancho/alto que un ícono (para no quedar "estirado" al
+         lado de otros), pero pegado ABAJO del box (no centrado verticalmente) para
+         que quede pegado a la rareza que va justo debajo, no flotando en el medio. -->
+    <div v-else class="flex items-end justify-center text-center px-1 text-[11px] font-bold leading-tight" :class="rarity(cos.rarity).text" :style="{ width: size + 'px', height: size + 'px' }">
       "{{ cos.name }}"
     </div>
   </div>

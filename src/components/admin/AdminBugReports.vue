@@ -9,6 +9,8 @@ const loading = ref(true)
 const filter = ref('all')      // all | open | done
 const busy = ref(null)
 
+const origin = typeof window !== 'undefined' ? window.location.origin : ''
+
 const STATUS = {
   open:        { label: 'Abierto',     cls: 'bg-amber-500/15 text-amber-300 border-amber-400/30' },
   in_progress: { label: 'En progreso', cls: 'bg-sky-500/15 text-sky-300 border-sky-400/30' },
@@ -87,7 +89,7 @@ onMounted(load)
               <span class="text-slate-400 font-medium">{{ nameFor(r.user_id) }}</span>
               <span>{{ fmtDate(r.created_at) }}</span>
               <span v-if="r.contact" class="text-slate-400">✉ {{ r.contact }}</span>
-              <a v-if="r.url" :href="r.url" target="_blank" rel="noopener" class="text-sky-400 hover:underline truncate max-w-[220px]">{{ r.url.replace(location.origin, '') || r.url }}</a>
+              <a v-if="r.url" :href="r.url" target="_blank" rel="noopener" class="text-sky-400 hover:underline truncate max-w-[220px]">{{ r.url.replace(origin, '') || r.url }}</a>
             </div>
           </div>
           <span class="shrink-0 px-2 py-0.5 rounded-full border text-[10px] font-bold" :class="statusOf(r).cls">{{ statusOf(r).label }}</span>

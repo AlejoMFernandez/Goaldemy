@@ -49,6 +49,22 @@ export const ACHIEVEMENT_ICONS = {
   streak_dual_100:    { icon: 'ach_dual_medal',       rarity: 'legendary' },
   xp_multi_5k_3:      { icon: 'ach_triple_gem',       rarity: 'legendary' },
   daily_super_5x3:    { icon: 'ach_royal_banner',     rarity: 'legendary' },
+
+  // PRODE (pronósticos)
+  prode_5_correct:       { icon: 'ach_eye',           rarity: 'common' },
+  prode_10_correct:      { icon: 'ach_magnifier',     rarity: 'rare' },
+  prode_perfect_matchday:{ icon: 'ach_calendar_star', rarity: 'epic' },
+  prode_champion:        { icon: 'ach_prophet',       rarity: 'legendary' },
+
+  // Otros logros sin categoría propia arriba
+  ten_correct:        { icon: 'ach_check_badge',      rarity: 'common' },
+  speed_demon:        { icon: 'ach_stopwatch',        rarity: 'rare' },
+
+  // Retirados (ver achievements-curation-1.sql) — siguen necesitando ícono
+  // para los usuarios que ya los tienen desde antes de retirarse.
+  // daily_wins_3 (Triplete) se BORRÓ del todo (duplicaba hat_trick) — ver supabase/achievements-delete-triplete.sql
+  early_bird:         { icon: 'ach_sunrise',           rarity: 'common' },
+  weekend_warrior:    { icon: 'ach_crossed_swords',    rarity: 'rare' },
 }
 
 export function achievementIcon(code) {

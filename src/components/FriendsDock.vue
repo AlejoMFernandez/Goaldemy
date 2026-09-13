@@ -358,7 +358,7 @@ export default {
          Ya NO es una columna full-height: es una card centrada verticalmente y
          separada del borde (right-3) para dejar la barra de scroll de la página
          totalmente libre a su derecha. Flota sobre el contenido. -->
-    <div class="hidden lg:flex fixed right-5 top-1/2 -translate-y-1/2 z-30 w-[58px] max-h-[calc(100dvh-140px)] flex-col items-center surface-solid py-2">
+    <div class="hidden lg:flex fixed right-5 top-[90px] bottom-[80px] z-30 w-[58px] flex-col items-center surface-solid py-2">
       <!-- Abrir lista completa -->
       <button @click="toggleMobile" title="Ver amigos" class="relative mb-1 h-10 w-10 grid place-items-center rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition">
         <svg viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
@@ -379,7 +379,7 @@ export default {
       <!-- Desafíos + reportar bug (abajo, fijos) -->
       <div class="w-full flex flex-col items-center gap-1.5 pt-2 mt-1 border-t border-white/10">
         <button @click="challengesOpen = true" title="Objetivos y desafíos" class="h-9 w-9 grid place-items-center rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-amber-300 transition">
-          <svg viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
         </button>
         <button @click="bugOpen = true" title="Reportar un bug" class="h-9 w-9 grid place-items-center rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M8 2l1.5 2.5M16 2l-1.5 2.5"/><rect x="7" y="6" width="10" height="12" rx="5"/><path d="M12 10v6M4 10h3M17 10h3M4 15h3M17 15h3M5 20l2.5-2M19 20l-2.5-2"/></svg>
@@ -390,7 +390,7 @@ export default {
     <!-- ───────── Mobile: cluster flotante (desafíos + bug + amigos) ───────── -->
     <div class="lg:hidden fixed bottom-5 right-4 z-40 flex flex-col items-center gap-2.5">
       <button @click="challengesOpen = true" title="Desafíos" class="h-11 w-11 grid place-items-center rounded-full border border-white/15 bg-slate-800/90 text-amber-300 shadow-xl hover:brightness-110 transition active:scale-95">
-        <svg viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
       </button>
       <button @click="bugOpen = true" title="Reportar bug" class="h-11 w-11 grid place-items-center rounded-full border border-white/15 bg-slate-800/90 text-slate-300 shadow-xl hover:brightness-110 transition active:scale-95">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M8 2l1.5 2.5M16 2l-1.5 2.5"/><rect x="7" y="6" width="10" height="12" rx="5"/><path d="M12 10v6M4 10h3M17 10h3M4 15h3M17 15h3M5 20l2.5-2M19 20l-2.5-2"/></svg>
@@ -402,10 +402,14 @@ export default {
       </button>
     </div>
 
-    <!-- ───────── Barra de AMIGOS desplegable (drawer, todos los tamaños) ───────── -->
-    <div :class="mobileOpen ? 'flex' : 'hidden'"
-      class="fixed z-40 top-0 bottom-0 right-0 h-full w-[86vw] max-w-[360px]
-             flex-col overflow-hidden border-l border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 backdrop-blur-xl shadow-2xl">
+    <!-- ───────── Barra de AMIGOS desplegable (card flotante, no full-height) ─────────
+         Chica y con transición (antes: sidebar full-height "enorme" que aparecía/
+         desaparecía sin animación). -->
+    <Transition name="dock-pop">
+    <div v-if="mobileOpen"
+      class="fixed z-40 right-4 bottom-24 w-[92vw] max-w-[320px] h-[65vh] max-h-[520px]
+             lg:right-5 lg:top-[90px] lg:bottom-[80px] lg:h-auto lg:max-h-none lg:w-[320px] lg:max-w-none
+             flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 backdrop-blur-xl shadow-2xl">
 
       <!-- ===== Vista LISTA ===== -->
       <template v-if="view === 'list'">
@@ -518,6 +522,7 @@ export default {
         </form>
       </template>
     </div>
+    </Transition>
 
     <!-- ───────── Modal: reportar bug ───────── -->
     <Teleport to="body">
@@ -559,7 +564,11 @@ export default {
 </template>
 
 <style scoped>
-.rail-scroll::-webkit-scrollbar { width: 6px; }
-.rail-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 9999px; }
-.rail-scroll::-webkit-scrollbar-track { background: transparent; }
+/* Scroll invisible: nunca reserva ancho ni corre el contenido al aparecer/hover. */
+.rail-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.rail-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* Transición de la card de amigos al abrir/cerrar (antes aparecía/desaparecía sólida). */
+.dock-pop-enter-active, .dock-pop-leave-active { transition: opacity .18s ease, transform .18s ease; }
+.dock-pop-enter-from, .dock-pop-leave-to { opacity: 0; transform: translateY(8px) scale(.96); }
 </style>

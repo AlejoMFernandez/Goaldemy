@@ -6,11 +6,11 @@ import { friendlyNameForSlug } from '@/services/games'
 import { buildShareText, shareOrCopy } from '@/services/share'
 import { getAuthUser } from '@/services/auth'
 import { achievementIcon } from '@/services/achievement-icons'
-import CosmeticIcon from '@/components/rewards/CosmeticIcon.vue'
+import AchievementTile from '@/components/rewards/AchievementTile.vue'
 
 export default {
   name: 'GameSummaryPopup',
-  components: { CosmeticIcon },
+  components: { AchievementTile },
   props: {
     show: { type: Boolean, default: false },
     corrects: { type: Number, default: 0 },
@@ -420,7 +420,7 @@ export default {
                   :style="phase >= 4 ? `animation: stat-slide-in 0.5s var(--ease-spring) ${0.3 + idx * 0.15}s both` : ''"
                 >
                   <div class="shrink-0 w-8 h-8">
-                    <CosmeticIcon framed :icon-key="iconOf(ach).icon" :rarity="iconOf(ach).rarity" :size="32" />
+                    <AchievementTile :icon-key="iconOf(ach).icon" :rarity="iconOf(ach).rarity" :size="32" />
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="text-sm font-semibold text-white truncate">{{ ach.title }}</div>
