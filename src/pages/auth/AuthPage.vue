@@ -319,6 +319,18 @@ export default {
 
     <p v-if="mode === 'login'" class="mt-4 text-center text-sm text-slate-300">¿No tenés cuenta? <button type="button" class="text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline" @click="setMode('register')">Creála</button></p>
     <p v-else class="mt-4 text-center text-sm text-slate-300">¿Ya tenés cuenta? <button type="button" class="text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline" @click="setMode('login')">Accedé</button></p>
+
+    <p v-if="mode === 'register'" class="mt-3 text-center text-xs text-slate-400">
+      Al crear tu cuenta, aceptás nuestros
+      <RouterLink to="/terminos" class="text-slate-300 underline-offset-2 hover:underline hover:text-slate-200">Términos y Condiciones</RouterLink>
+      y nuestra
+      <RouterLink to="/privacidad" class="text-slate-300 underline-offset-2 hover:underline hover:text-slate-200">Política de Privacidad</RouterLink>.
+    </p>
+    <p v-else class="mt-3 text-center text-xs text-slate-400">
+      <RouterLink to="/terminos" class="underline-offset-2 hover:underline hover:text-slate-200">Términos y Condiciones</RouterLink>
+      ·
+      <RouterLink to="/privacidad" class="underline-offset-2 hover:underline hover:text-slate-200">Política de Privacidad</RouterLink>
+    </p>
   </div>
 </template>
 
