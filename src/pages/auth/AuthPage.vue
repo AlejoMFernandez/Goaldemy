@@ -116,7 +116,8 @@ export default {
           return
         }
         if ((this.user.password || '').length < 6) {
-          try { pushErrorToast('Tu contraseña es muy corta. Debe tener al menos 6 caracteres.') } catch {}
+          this.error = 'Tu contraseña es muy corta. Debe tener al menos 6 caracteres.'
+          try { pushErrorToast(this.error) } catch {}
           return
         }
         if (this.user.password !== this.user.confirm) {

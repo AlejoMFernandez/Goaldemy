@@ -31,6 +31,36 @@ import { supabase } from '../services/supabase';
 import { createUserProfile, getUserProfileById, updateUserProfile } from './user-profiles';
 import { pushSuccessToast, pushInfoToast, pushErrorToast } from '../stores/notifications';
 
+/**
+ * TRADUCTOR DE ERRORES DE SUPABASE AUTH
+ * Supabase devuelve sus mensajes de error en inglés (ej. "Invalid login credentials").
+ * Esta tabla los mapea a mensajes en español que el usuario pueda entender.
+ * Si no hay match, se devuelve el mensaje original (mejor mostrar algo que nada).
+ */
+const AUTH_ERROR_TRANSLATIONS = [
+    { match: /invalid login credentials/i, es: 'El email o la contraseña son incorrectos.' },
+    { match: /email not confirmed/i, es: 'Necesitás confirmar tu email antes de ingresar.' },
+    { match: /user already registered/i, es: 'Ya existe una cuenta con ese email. Iniciá sesión o recuperá tu contraseña.' },
+    { match: /password should be at least/i, es: 'La contraseña debe tener al menos 6 caracteres.' },
+    { match: /unable to validate email address/i, es: 'El email ingresado no es válido.' },
+    { match: /signup requires a valid password/i, es: 'Ingresá una contraseña válida.' },
+    { match: /email rate limit exceeded/i, es: 'Se enviaron demasiados correos. Esperá unos minutos e intentá de nuevo.' },
+    { match: /for security purposes.*after (\d+) seconds?/i, es: (m) => `Por seguridad, esperá ${m[1]} segundos antes de volver a intentar.` },
+    { match: /token has expired or is invalid/i, es: 'El enlace expiró o no es válido. Solicitá uno nuevo.' },
+    { match: /new password should be different/i, es: 'La nueva contraseña debe ser diferente a la anterior.' },
+    { match: /user not found/i, es: 'No encontramos ninguna cuenta registrada con ese email.' },
+    { match: /failed to fetch|network/i, es: 'Problema de conexión. Revisá tu internet e intentá de nuevo.' },
+];
+
+export function translateAuthError(message) {
+    const msg = message || '';
+    for (const rule of AUTH_ERROR_TRANSLATIONS) {
+        const m = msg.match(rule.match);
+        if (m) return typeof rule.es === 'function' ? rule.es(m) : rule.es;
+    }
+    return msg || 'Ocurrió un error inesperado. Intentá de nuevo.';
+}
+
 // Estado global del usuario autenticado (reactivo mediante observers)
 let user = {
     id: null,
@@ -114,7 +144,7 @@ export async function register(email, password, profileData = {}) {
 
         if (error) {
             console.error('[Register.vue register]:', error);
-            throw new Error(error.message || 'Registration failed');
+            throw new Error(translateAuthError(error.message));
         }
 
         const u = data?.user || null;
@@ -144,7 +174,7 @@ export async function register(email, password, profileData = {}) {
 
     } catch (error) {
         console.error('[Register.vue register]:', error);
-        throw new Error(error?.message || 'Registration failed');
+        throw new Error(translateAuthError(error?.message));
     }
 }
 
@@ -162,8 +192,9 @@ export async function login(email, password) {
 
     if (error) {
         console.error('[Login.vue login]:', error);
-        try { pushErrorToast(error.message || 'No se pudo iniciar sesión'); } catch {}
-        throw new Error(error.message || 'Login failed');
+        const friendly = translateAuthError(error.message);
+        try { pushErrorToast(friendly); } catch {}
+        throw new Error(friendly);
     }
 
     const u = data?.user || null;
@@ -200,8 +231,9 @@ export async function continueWithGoogle(redirectPath = '/profile') {
         });
         if (error) {
             console.error('[auth.js continueWithGoogle]:', error);
-            try { pushErrorToast(error.message || 'No se pudo iniciar con Google'); } catch {}
-            throw new Error(error.message || 'Google OAuth failed');
+            const friendly = translateAuthError(error.message);
+            try { pushErrorToast(friendly); } catch {}
+            throw new Error(friendly);
         }
         try { pushInfoToast('Redirigiendo a Google…'); } catch {}
         return data;
@@ -246,7 +278,7 @@ export async function resetPasswordForEmail(email) {
         console.error('[auth.js resetPasswordForEmail]:', error)
         const friendly = /invalid/i.test(error.message || '')
             ? 'No encontramos ninguna cuenta registrada con ese email'
-            : (error.message || 'No se pudo enviar el email de reseteo')
+            : translateAuthError(error.message)
         try { pushErrorToast(friendly) } catch {}
         throw new Error(friendly)
     }
@@ -258,8 +290,9 @@ export async function updatePassword(newPassword) {
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     if (error) {
         console.error('[auth.js updatePassword]:', error)
-        try { pushErrorToast(error.message || 'No se pudo actualizar la contraseña') } catch {}
-        throw new Error(error.message || 'No se pudo actualizar la contraseña')
+        const friendly = translateAuthError(error.message)
+        try { pushErrorToast(friendly) } catch {}
+        throw new Error(friendly)
     }
     try { pushSuccessToast('Contraseña actualizada') } catch {}
 }
@@ -288,8 +321,9 @@ export async function resendVerificationEmail(email) {
         return data;
     } catch (e) {
         console.error('[auth.js resendVerificationEmail]:', e);
-        try { pushErrorToast(e?.message || 'No pudimos reenviar el correo'); } catch {}
-        throw e;
+        const friendly = translateAuthError(e?.message);
+        try { pushErrorToast(friendly); } catch {}
+        throw new Error(friendly);
     }
 }
 
