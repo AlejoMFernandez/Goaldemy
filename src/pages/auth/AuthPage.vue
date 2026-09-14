@@ -151,45 +151,41 @@ export default {
 </script>
 
 <template>
-  <RouterLink to="/" class="fixed top-4 left-4 z-50 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-slate-100 hover:bg-white/10">
-    <span aria-hidden>←</span>
-    <span>Volver</span>
+  <RouterLink to="/" aria-label="Volver" class="fixed top-4 left-4 z-50 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:text-white transition">
+    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
   </RouterLink>
-  <div class="w-full lg:max-w-5xl lg:grid lg:grid-cols-[1.05fr_1fr] lg:items-stretch lg:rounded-3xl lg:overflow-hidden lg:border lg:border-white/10 lg:shadow-2xl lg:shadow-black/40">
+  <div class="w-full lg:max-w-4xl lg:grid lg:grid-cols-[1.15fr_1fr] lg:gap-4 lg:items-stretch">
 
     <!-- Panel visual — solo desktop (≥1024px), mobile no cambia -->
-    <div class="hidden lg:flex relative flex-col items-center justify-center gap-10 overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-800/80 px-10 py-14">
-      <div aria-hidden="true" class="pointer-events-none absolute -top-16 -left-16 h-64 w-64 rounded-full bg-emerald-500/20 blur-3xl"></div>
-      <div aria-hidden="true" class="pointer-events-none absolute -bottom-16 -right-24 h-64 w-64 rounded-full bg-cyan-500/20 blur-3xl"></div>
+    <div class="hidden lg:flex relative flex-col items-center justify-center gap-6 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-800/80 px-8 py-8">
+      <div aria-hidden="true" class="pointer-events-none absolute -top-16 -left-16 h-56 w-56 rounded-full bg-emerald-500/20 blur-3xl"></div>
+      <div aria-hidden="true" class="pointer-events-none absolute -bottom-16 -right-20 h-56 w-56 rounded-full bg-cyan-500/20 blur-3xl"></div>
 
-      <div class="relative z-10 text-center">
-        <FulvoLogo variant="full" size="lg" class="justify-center" />
-        <p class="mt-4 text-slate-300 text-sm max-w-xs mx-auto">Entrená tu conocimiento de fútbol, sumá XP y desbloqueá logros.</p>
+      <div class="relative z-10 text-center px-6">
+        <FulvoLogo variant="full" size="md" class="justify-center" />
+        <p class="mt-3 text-slate-300 text-sm max-w-[220px] mx-auto">Entrená tu conocimiento de fútbol, sumá XP y desbloqueá logros.</p>
       </div>
 
-      <GamesFan class="relative z-10 w-full max-w-sm" />
-
-      <!-- Divisor orgánico: el color del panel derecho "entra" al izquierdo -->
-      <svg class="pointer-events-none absolute inset-y-0 -right-px w-14" viewBox="0 0 64 800" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M32,0 C60,60 6,120 32,180 C60,240 6,300 32,360 C60,420 6,480 32,540 C60,600 6,660 32,720 C48,755 22,780 32,800 L64,800 L64,0 Z" fill="#0b1220" />
-      </svg>
+      <GamesFan class="relative z-10 w-full max-w-xs" />
     </div>
 
     <!-- Columna del form -->
-    <div class="w-full max-w-lg mx-auto lg:max-w-none lg:mx-0 lg:flex lg:flex-col lg:justify-center lg:bg-[#0b1220] lg:px-10 lg:py-12">
-    <div class="text-center mb-6">
+    <div class="w-full max-w-lg mx-auto lg:max-w-none lg:mx-0 lg:flex lg:flex-col lg:justify-center lg:rounded-2xl lg:border lg:border-white/10 lg:bg-[#0b1220] lg:px-7 lg:py-6">
+    <div class="text-center mb-6 lg:hidden">
       <img src="/iconclaro.png" alt="Fulvo" class="mx-auto h-auto w-12 mb-2" />
     </div>
 
     <!-- Toggle fijo: no se anima, solo el contenido de abajo -->
-    <div class="mb-5 flex rounded-full bg-white/5 border border-white/10 p-1">
+    <div class="mb-3 flex rounded-full bg-white/5 border border-white/10 p-1">
       <button type="button" @click="setMode('login')" :class="tabClass('login')">Iniciar sesión</button>
       <button type="button" @click="setMode('register')" :class="tabClass('register')">Crear cuenta</button>
     </div>
 
     <Transition :name="direction === 1 ? 'auth-forward' : 'auth-back'" mode="out-in">
       <div :key="mode">
-        <div class="text-center mb-6">
+        <div class="text-center mb-3">
           <h1 class="text-2xl font-bold">{{ mode === 'login' ? 'Bienvenido de nuevo' : 'Creá tu cuenta en FULVO' }}</h1>
           <p class="text-slate-300 text-sm">{{ mode === 'login' ? 'Volvé a jugar y seguir sumando XP' : 'Unite para jugar, sumar XP y desbloquear logros' }}</p>
         </div>
@@ -198,7 +194,7 @@ export default {
         <p v-if="notice" class="mb-3 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{{ notice }}</p>
 
         <!-- LOGIN -->
-        <form v-if="mode === 'login'" action="#" @submit.prevent="handleSubmit" class="card card-hover p-6 space-y-4">
+        <form v-if="mode === 'login'" action="#" @submit.prevent="handleSubmit" class="space-y-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.03] shadow-xl p-6 lg:border-0 lg:bg-none lg:shadow-none lg:p-0">
           <div>
             <label for="email" class="label">Correo electrónico</label>
             <input
@@ -233,7 +229,7 @@ export default {
 
           <div class="pt-2 space-y-3">
             <AppButton type="submit" class="w-full" :disabled="loading">Acceder</AppButton>
-            <div class="flex items-center gap-3 text-slate-400 text-xs my-5">
+            <div class="flex items-center gap-3 text-slate-400 text-xs my-3">
               <div class="h-px flex-1 bg-white/10"></div>
               <span>o</span>
               <div class="h-px flex-1 bg-white/10"></div>
@@ -246,7 +242,7 @@ export default {
         </form>
 
         <!-- REGISTER -->
-        <form v-else action="#" @submit.prevent="handleSubmit" class="card card-hover p-6 space-y-4">
+        <form v-else action="#" @submit.prevent="handleSubmit" class="space-y-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.03] shadow-xl p-6 lg:border-0 lg:bg-none lg:shadow-none lg:p-0">
           <div class="grid grid-cols-1 gap-3">
             <div>
               <label for="display_name" class="label">Nombre</label>
@@ -316,7 +312,7 @@ export default {
 
           <div class="pt-2 space-y-3">
             <AppButton type="submit" class="w-full" :disabled="loading">Crear cuenta</AppButton>
-            <div class="flex items-center gap-3 text-slate-400 text-xs my-5">
+            <div class="flex items-center gap-3 text-slate-400 text-xs my-3">
               <div class="h-px flex-1 bg-white/10"></div>
               <span>o</span>
               <div class="h-px flex-1 bg-white/10"></div>
