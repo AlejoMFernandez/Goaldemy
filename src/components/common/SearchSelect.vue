@@ -9,6 +9,7 @@ export default {
     minChars: { type: Number, default: 3 },
     showImages: { type: Boolean, default: false },
     icon: { type: String, default: '' }, // 'player' | 'team'
+    imgSize: { type: Number, default: 24 }, // px del avatar mostrado una vez seleccionado
   },
   emits: ['update:modelValue'],
   data() {
@@ -50,7 +51,7 @@ export default {
     <div class="relative">
       <!-- When we have an image, render it OUTSIDE the input (like flags) and shrink the input -->
       <div v-if="showImages && selectedOption?.image" class="flex items-center gap-2">
-        <img :src="selectedOption.image" alt="sel" class="w-6 h-6 rounded object-cover ring-1 ring-white/10" />
+        <img :src="selectedOption.image" alt="sel" class="rounded object-cover ring-1 ring-white/10 shrink-0" :style="{ width: imgSize + 'px', height: imgSize + 'px' }" />
         <div class="relative flex-1">
           <input
             :placeholder="placeholder"

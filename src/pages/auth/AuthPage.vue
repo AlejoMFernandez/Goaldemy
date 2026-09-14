@@ -57,6 +57,22 @@ export default {
     confirmBorderColor() {
       if (!this.user.confirm) return null
       return this.user.confirm === this.user.password ? '#10b981' : '#f87171'
+    },
+    // Vista previa de la sección "Armá tu perfil": banderín/escudo/foto de lo
+    // que el usuario ya eligió, para que se sienta como ir completando una figurita.
+    selectedFlagUrl() {
+      return this.user.nationality_code ? flagUrl(this.user.nationality_code) : ''
+    },
+    selectedTeamImage() {
+      const t = this.teams.find(t => t.value === this.user.favorite_team)
+      return t?.image || ''
+    },
+    selectedPlayerImage() {
+      const p = this.players.find(p => p.value === this.user.favorite_player)
+      return p?.image || ''
+    },
+    hasAnyProfilePick() {
+      return !!(this.user.nationality_code || this.user.favorite_team || this.user.favorite_player)
     }
   },
   watch: {
@@ -321,18 +337,41 @@ export default {
             </div>
           </div>
           <!-- Campos opcionales -->
-          <div class="card mt-2 p-4 bg-white/0 border border-white/10">
-            <p class="text-xs uppercase tracking-wide text-slate-400 mb-3">Opcional</p>
+          <div class="mt-2 p-4 rounded-2xl border border-white/10 bg-gradient-to-br from-emerald-500/[0.07] via-white/[0.03] to-cyan-500/[0.07]">
+            <div class="flex items-center gap-2 mb-1">
+              <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+              </svg>
+              <p class="text-sm font-semibold text-white">Armá tu perfil</p>
+              <span class="text-xs text-slate-400">(opcional)</span>
+            </div>
+            <p class="text-xs text-slate-400 mb-3">Elegí tu selección, tu club y tu ídolo — se van a ver en tu perfil.</p>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <SearchSelect label="Nacionalidad" :show-images="true" v-model="user.nationality_code" :options="countryOptions" placeholder="Escribe 3 letras para buscar tu país" />
+                <SearchSelect label="Nacionalidad" :show-images="true" :img-size="40" v-model="user.nationality_code" :options="countryOptions" placeholder="Escribe 3 letras para buscar tu país" />
               </div>
               <div>
-                <SearchSelect label="Equipo favorito" :show-images="true" v-model="user.favorite_team" :options="teams" placeholder="Escribe 3 letras para filtrar" />
+                <SearchSelect label="Equipo favorito" :show-images="true" :img-size="40" v-model="user.favorite_team" :options="teams" placeholder="Escribe 3 letras para filtrar" />
               </div>
               <div class="md:col-span-2">
-                <SearchSelect label="Jugador favorito" :show-images="true" v-model="user.favorite_player" :options="players" placeholder="Escribe 3 letras para filtrar" />
+                <SearchSelect label="Jugador favorito" :show-images="true" :img-size="40" v-model="user.favorite_player" :options="players" placeholder="Escribe 3 letras para filtrar" />
               </div>
+            </div>
+
+            <!-- Figurita: tira de lo que ya elegiste -->
+            <div v-if="hasAnyProfilePick" class="mt-4 flex items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] py-3">
+              <template v-if="selectedFlagUrl">
+                <img :src="selectedFlagUrl" alt="" class="w-11 h-11 rounded-full object-cover ring-2 ring-emerald-400/40" />
+              </template>
+              <span v-if="selectedFlagUrl && (selectedTeamImage || selectedPlayerImage)" class="text-slate-600 text-lg leading-none">+</span>
+              <template v-if="selectedTeamImage">
+                <img :src="selectedTeamImage" alt="" class="w-11 h-11 rounded-full object-cover ring-2 ring-cyan-400/40" />
+              </template>
+              <span v-if="selectedTeamImage && selectedPlayerImage" class="text-slate-600 text-lg leading-none">+</span>
+              <template v-if="selectedPlayerImage">
+                <img :src="selectedPlayerImage" alt="" class="w-11 h-11 rounded-full object-cover ring-2 ring-amber-400/40" />
+              </template>
             </div>
           </div>
 
