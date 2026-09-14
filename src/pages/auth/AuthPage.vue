@@ -370,11 +370,15 @@ export default {
               </template>
               <span v-if="selectedFlagUrl && (selectedTeamImage || selectedPlayerImage)" class="text-slate-500 text-lg leading-none">+</span>
               <template v-if="selectedTeamImage">
-                <img :src="selectedTeamImage" alt="" class="w-11 h-11 rounded-full object-contain" />
+                <span class="w-11 h-11 rounded-full overflow-hidden bg-white/5 flex items-center justify-center">
+                  <img :src="selectedTeamImage" alt="" class="object-contain" style="width:78%;height:78%;" />
+                </span>
               </template>
               <span v-if="selectedTeamImage && selectedPlayerImage" class="text-slate-500 text-lg leading-none">+</span>
               <template v-if="selectedPlayerImage">
-                <img :src="selectedPlayerImage" alt="" class="w-11 h-11 rounded-full object-contain" />
+                <span class="w-11 h-11 rounded-full overflow-hidden bg-white/5 flex items-center justify-center">
+                  <img :src="selectedPlayerImage" alt="" class="object-contain" style="width:78%;height:78%;" />
+                </span>
               </template>
             </div>
           </div>
