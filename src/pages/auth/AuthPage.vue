@@ -35,6 +35,9 @@ export default {
       loading: false,
       error: '',
       notice: '',
+      // Resalta el borde del input en rojo en vez de un banner que empuja el
+      // resto del form hacia abajo — el texto del error va solo por toast (efímero).
+      fieldError: { name: false, email: false, password: false },
       user: {
         display_name: '',
         email: '',
@@ -115,6 +118,7 @@ export default {
       this.mode = m
       this.error = ''
       this.notice = ''
+      this.fieldError = { name: false, email: false, password: false }
       const target = m === 'register' ? '/register' : '/login'
       if (this.$route.path !== target) this.$router.replace(target)
       this.resetScroll()
@@ -124,6 +128,7 @@ export default {
       return this.handleRegister()
     },
     async handleLogin() {
+      this.fieldError = { name: false, email: false, password: false }
       try {
         this.loading = true
         this.error = ''
@@ -132,26 +137,33 @@ export default {
       } catch (error) {
         console.error(error);
         this.error = error?.message || 'No se pudo iniciar sesión.'
+        // No sabemos si falló el email o la contraseña — resaltamos los dos.
+        this.fieldError.email = true
+        this.fieldError.password = true
       }
       this.loading = false;
     },
     async handleRegister() {
+      this.fieldError = { name: false, email: false, password: false }
       try {
         this.loading = true;
         this.error = ''
         this.notice = ''
         if (!(this.user.display_name || '').trim()) {
           this.error = 'El nombre es obligatorio.'
+          this.fieldError.name = true
           try { pushErrorToast(this.error) } catch {}
           return
         }
         if ((this.user.password || '').length < 6) {
           this.error = 'Tu contraseña es muy corta. Debe tener al menos 6 caracteres.'
+          this.fieldError.password = true
           try { pushErrorToast(this.error) } catch {}
           return
         }
         if (this.user.password !== this.user.confirm) {
           this.error = 'Las contraseñas no coinciden.'
+          // El campo "Confirmar" ya se resalta solo en vivo (confirmBorderColor).
           try { pushErrorToast(this.error) } catch {}
           return
         }
@@ -162,11 +174,12 @@ export default {
           favorite_player: this.user.favorite_player?.trim() || null,
         }
         await register(this.user.email, this.user.password, profile);
-        this.notice = '✅ Te enviamos un correo para confirmar tu cuenta. Verificá tu email para continuar.'
+        this.notice = 'Te enviamos un correo para confirmar tu cuenta. Verificá tu email para continuar.'
         this.$router.push('/verify-email');
       } catch (error) {
         console.error(error);
         this.error = error?.message || 'No se pudo registrar.'
+        this.fieldError.email = true
         try { pushErrorToast(this.error) } catch {}
       } finally {
         this.loading = false;
@@ -235,7 +248,6 @@ export default {
           <p class="text-slate-300 text-sm">{{ mode === 'login' ? 'Volvé a jugar y seguir sumando XP' : 'Unite para jugar, sumar XP y desbloquear logros' }}</p>
         </div>
 
-        <p v-if="error" class="mb-3 rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{{ error }}</p>
         <p v-if="notice" class="mb-3 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{{ notice }}</p>
 
         <!-- LOGIN -->
@@ -252,6 +264,8 @@ export default {
               autocapitalize="none"
               placeholder="tu@email.com"
               v-model="user.email"
+              @input="fieldError.email = false"
+              :style="fieldError.email ? { borderColor: '#f87171' } : {}"
             />
           </div>
           <div>
@@ -264,6 +278,8 @@ export default {
               autocomplete="current-password"
               placeholder="••••••••"
               v-model="user.password"
+              @input="fieldError.password = false"
+              :style="fieldError.password ? { borderColor: '#f87171' } : {}"
             />
           </div>
           <div class="flex justify-end -mt-2">
@@ -299,6 +315,8 @@ export default {
                 placeholder="Tu nombre"
                 v-model="user.display_name"
                 autocomplete="name"
+                @input="fieldError.name = false"
+                :style="fieldError.name ? { borderColor: '#f87171' } : {}"
               />
             </div>
             <div>
@@ -312,6 +330,8 @@ export default {
                 placeholder="tu@email.com"
                 v-model="user.email"
                 autocomplete="email"
+                @input="fieldError.email = false"
+                :style="fieldError.email ? { borderColor: '#f87171' } : {}"
               />
             </div>
             <div>
@@ -324,6 +344,8 @@ export default {
                 placeholder="••••••••"
                 v-model="user.password"
                 autocomplete="new-password"
+                @input="fieldError.password = false"
+                :style="fieldError.password ? { borderColor: '#f87171' } : {}"
               />
             </div>
             <div>
