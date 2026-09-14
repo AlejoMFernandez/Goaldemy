@@ -156,25 +156,25 @@ export default {
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
     </svg>
   </RouterLink>
-  <div class="w-full lg:max-w-4xl lg:h-[min(640px,85vh)] lg:grid lg:grid-cols-[1.15fr_1fr] lg:rounded-2xl lg:border lg:border-white/10 lg:overflow-hidden lg:bg-[#0b1220]">
+  <div class="w-full lg:max-w-4xl lg:h-[min(680px,88vh)] lg:grid lg:grid-cols-[1.15fr_1fr] lg:rounded-2xl lg:border lg:border-white/10 lg:overflow-hidden lg:bg-[#0b1220]">
 
     <!-- Panel visual — solo desktop (≥1024px), mobile no cambia. Altura fija
          del panel derecho (columna hermana): este NUNCA se estira ni scrollea,
          solo se centra en su propia altura. -->
-    <div class="hidden lg:flex relative flex-col items-center justify-center gap-6 h-full overflow-hidden border-r border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-800/80 px-8 py-8">
+    <div class="hidden lg:flex relative flex-col items-center justify-center gap-8 h-full overflow-hidden border-r border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-800/80 px-10 py-10">
       <div aria-hidden="true" class="pointer-events-none absolute -top-16 -left-16 h-56 w-56 rounded-full bg-emerald-500/20 blur-3xl"></div>
       <div aria-hidden="true" class="pointer-events-none absolute -bottom-16 -right-20 h-56 w-56 rounded-full bg-cyan-500/20 blur-3xl"></div>
 
-      <div class="relative z-10 text-center px-6">
-        <FulvoLogo variant="full" size="md" class="justify-center" />
-        <p class="mt-3 text-slate-300 text-sm max-w-[220px] mx-auto">Entrená tu conocimiento de fútbol, sumá XP y desbloqueá logros.</p>
+      <div class="relative z-10 text-center px-4">
+        <FulvoLogo variant="full" size="lg" class="justify-center" />
+        <p class="mt-4 text-slate-300 text-base max-w-[260px] mx-auto">Entrená tu conocimiento de fútbol, sumá XP y desbloqueá logros.</p>
       </div>
 
-      <GamesFan class="relative z-10 w-full max-w-xs" />
+      <GamesFan class="relative z-10 w-full max-w-sm" />
     </div>
 
     <!-- Columna del form: única columna que scrollea si el contenido no entra -->
-    <div class="w-full max-w-lg mx-auto lg:max-w-none lg:mx-0 lg:h-full lg:overflow-y-auto lg:px-7 lg:py-6">
+    <div class="w-full max-w-lg mx-auto lg:max-w-none lg:mx-0 lg:h-full lg:overflow-y-auto lg:px-10 lg:py-10">
     <div class="lg:my-auto">
     <div class="text-center mb-6 lg:hidden">
       <img src="/iconclaro.png" alt="Fulvo" class="mx-auto h-auto w-12 mb-2" />
@@ -188,7 +188,7 @@ export default {
 
     <Transition :name="direction === 1 ? 'auth-forward' : 'auth-back'" mode="out-in">
       <div :key="mode">
-        <div class="text-center mb-3">
+        <div class="text-center mb-6">
           <h1 class="text-2xl font-bold">{{ mode === 'login' ? 'Bienvenido de nuevo' : 'Creá tu cuenta en FULVO' }}</h1>
           <p class="text-slate-300 text-sm">{{ mode === 'login' ? 'Volvé a jugar y seguir sumando XP' : 'Unite para jugar, sumar XP y desbloquear logros' }}</p>
         </div>
@@ -197,7 +197,7 @@ export default {
         <p v-if="notice" class="mb-3 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{{ notice }}</p>
 
         <!-- LOGIN -->
-        <form v-if="mode === 'login'" action="#" @submit.prevent="handleSubmit" class="space-y-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.03] shadow-xl p-6 lg:border-0 lg:bg-none lg:shadow-none lg:p-0">
+        <form v-if="mode === 'login'" action="#" @submit.prevent="handleSubmit" class="space-y-4 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.03] shadow-xl p-6 lg:border-0 lg:bg-none lg:shadow-none lg:p-0">
           <div>
             <label for="email" class="label">Correo electrónico</label>
             <input
@@ -230,9 +230,9 @@ export default {
             </RouterLink>
           </div>
 
-          <div class="pt-2 space-y-3">
+          <div class="pt-2 space-y-4">
             <AppButton type="submit" class="w-full" :disabled="loading">Acceder</AppButton>
-            <div class="flex items-center gap-3 text-slate-400 text-xs my-3">
+            <div class="flex items-center gap-3 text-slate-400 text-xs my-5">
               <div class="h-px flex-1 bg-white/10"></div>
               <span>o</span>
               <div class="h-px flex-1 bg-white/10"></div>
@@ -245,7 +245,7 @@ export default {
         </form>
 
         <!-- REGISTER -->
-        <form v-else action="#" @submit.prevent="handleSubmit" class="space-y-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.03] shadow-xl p-6 lg:border-0 lg:bg-none lg:shadow-none lg:p-0">
+        <form v-else action="#" @submit.prevent="handleSubmit" class="space-y-4 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.03] shadow-xl p-6 lg:border-0 lg:bg-none lg:shadow-none lg:p-0">
           <div class="grid grid-cols-1 gap-3">
             <div>
               <label for="display_name" class="label">Nombre</label>
@@ -313,9 +313,9 @@ export default {
             </div>
           </div>
 
-          <div class="pt-2 space-y-3">
+          <div class="pt-2 space-y-4">
             <AppButton type="submit" class="w-full" :disabled="loading">Crear cuenta</AppButton>
-            <div class="flex items-center gap-3 text-slate-400 text-xs my-3">
+            <div class="flex items-center gap-3 text-slate-400 text-xs my-5">
               <div class="h-px flex-1 bg-white/10"></div>
               <span>o</span>
               <div class="h-px flex-1 bg-white/10"></div>

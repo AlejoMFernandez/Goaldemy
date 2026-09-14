@@ -13,7 +13,7 @@ const GAMES = [
 ]
 const CENTER = (GAMES.length - 1) / 2
 const ANGLE_STEP = 12 // grados entre cada carta
-const X_STEP = 34 // separación horizontal entre cada carta (px), además de la rotación
+const X_STEP = 40 // separación horizontal entre cada carta (px), además de la rotación
 // Tiempo total de la animación de entrada (delay máximo + duración) — pasado
 // ese punto se cambia a una transición corta para que el hover sea instantáneo.
 const ENTER_DONE_MS = 90 + Math.ceil(CENTER) * 70 + 650
@@ -54,7 +54,7 @@ export default {
       :class="{ 'is-in': mounted, entered: entered }"
       :style="{ '--fan-angle': card.angle + 'deg', '--fan-x': card.x + 'px', transitionDelay: mounted ? '0ms' : card.delay + 'ms', zIndex: card.z }"
     >
-      <img :src="card.src" :alt="card.label" width="72" height="72" loading="lazy" />
+      <img :src="card.src" :alt="card.label" width="84" height="84" loading="lazy" />
     </div>
   </div>
 </template>
@@ -63,14 +63,14 @@ export default {
 .fan {
   position: relative;
   width: 100%;
-  height: 92px;
+  height: 108px;
 }
 .fan-card {
   position: absolute;
   bottom: 0;
   left: 50%;
-  width: 72px;
-  height: 72px;
+  width: 84px;
+  height: 84px;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.14);
