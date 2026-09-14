@@ -50,6 +50,15 @@ export default {
   created() {
     this.mode = this.$route.path === '/register' ? 'register' : 'login'
   },
+  computed: {
+    // Feedback visual en tiempo real del campo "Confirmar contraseña":
+    // borde verde si coincide, rojo si no — recién una vez que el usuario
+    // empezó a escribir ahí (no marca error con el campo vacío).
+    confirmBorderColor() {
+      if (!this.user.confirm) return null
+      return this.user.confirm === this.user.password ? '#10b981' : '#f87171'
+    }
+  },
   watch: {
     '$route.path'(newPath) {
       const wanted = newPath === '/register' ? 'register' : 'login'
@@ -57,9 +66,21 @@ export default {
         this.direction = wanted === 'register' ? 1 : -1
         this.mode = wanted
       }
+      this.resetScroll()
     }
   },
   methods: {
+    // Al cambiar entre login/register, tanto el scroll de la página (mobile)
+    // como el scroll interno de la columna del form (desktop) deben arrancar
+    // siempre arriba — si no, quedaba en la posición donde estaba el form
+    // anterior (ej. a mitad del registro) y el usuario veía el nuevo form
+    // "cortado" arriba.
+    resetScroll() {
+      this.$nextTick(() => {
+        window.scrollTo({ top: 0 })
+        if (this.$refs.formScroll) this.$refs.formScroll.scrollTop = 0
+      })
+    },
     tabClass(m) {
       return [
         'flex-1 rounded-full py-2 text-sm font-semibold transition',
@@ -76,6 +97,7 @@ export default {
       this.notice = ''
       const target = m === 'register' ? '/register' : '/login'
       if (this.$route.path !== target) this.$router.replace(target)
+      this.resetScroll()
     },
     async handleSubmit() {
       if (this.mode === 'login') return this.handleLogin()
@@ -174,7 +196,7 @@ export default {
     </div>
 
     <!-- Columna del form: única columna que scrollea si el contenido no entra -->
-    <div class="w-full max-w-lg mx-auto lg:max-w-none lg:mx-0 lg:h-full lg:overflow-y-auto lg:px-10 lg:py-10">
+    <div ref="formScroll" class="w-full max-w-lg mx-auto lg:max-w-none lg:mx-0 lg:h-full lg:overflow-y-auto lg:px-10 lg:py-10">
     <div class="lg:my-auto">
     <div class="text-center mb-6 lg:hidden">
       <img src="/iconclaro.png" alt="Fulvo" class="mx-auto h-auto w-12 mb-2" />
@@ -294,6 +316,7 @@ export default {
                 placeholder="••••••••"
                 v-model="user.confirm"
                 autocomplete="new-password"
+                :style="confirmBorderColor ? { borderColor: confirmBorderColor } : {}"
               />
             </div>
           </div>
