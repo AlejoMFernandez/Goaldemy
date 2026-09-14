@@ -225,7 +225,7 @@ export default {
               <div class="h-px flex-1 bg-white/10"></div>
             </div>
             <button type="button" @click="handleGoogle" :disabled="loading" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-slate-100 hover:bg-white/10 disabled:opacity-60">
-              <img src="/social/google.png" alt="Google" class="w-5 h-5" />
+              <img src="/social/google.svg" alt="Google" class="w-5 h-5" />
               <span>Iniciar sesión con Google</span>
             </button>
           </div>
@@ -308,7 +308,7 @@ export default {
               <div class="h-px flex-1 bg-white/10"></div>
             </div>
             <button type="button" @click="handleGoogle" :disabled="loading" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-slate-100 hover:bg-white/10 disabled:opacity-60">
-              <img src="/social/google.png" alt="Google" class="w-5 h-5" />
+              <img src="/social/google.svg" alt="Google" class="w-5 h-5" />
               <span>Registrarse con Google</span>
             </button>
           </div>
