@@ -1,6 +1,7 @@
 <script>
 import AppButton from '../../components/common/AppButton.vue';
 import SearchSelect from '../../components/common/SearchSelect.vue';
+import LegalModal from '../../components/legal/LegalModal.vue';
 import { login, register, resetPasswordForEmail, continueWithGoogle } from '../../services/auth';
 import { flagUrl } from '../../services/countries';
 import countriesMap from '../../codeCOUNTRYS.json';
@@ -12,6 +13,7 @@ export default {
   components: {
     AppButton,
     SearchSelect,
+    LegalModal,
   },
   data() {
     const countryOptions = Object.entries(countriesMap)
@@ -37,6 +39,8 @@ export default {
       countryOptions,
       players,
       teams,
+      legalModalOpen: false,
+      legalModalType: 'terms',
     };
   },
   created() {
@@ -153,6 +157,10 @@ export default {
         this.loading = false
       }
       // Si tuvo éxito, Supabase redirige el navegador a Google — no hace falta apagar loading.
+    },
+    openLegal(type) {
+      this.legalModalType = type
+      this.legalModalOpen = true
     }
   }
 }
@@ -322,16 +330,18 @@ export default {
 
     <p v-if="mode === 'register'" class="mt-3 text-center text-xs text-slate-400">
       Al crear tu cuenta, aceptás nuestros
-      <RouterLink to="/terminos" class="text-slate-300 underline-offset-2 hover:underline hover:text-slate-200">Términos y Condiciones</RouterLink>
+      <button type="button" @click="openLegal('terms')" class="text-slate-300 underline-offset-2 hover:underline hover:text-slate-200">Términos y Condiciones</button>
       y nuestra
-      <RouterLink to="/privacidad" class="text-slate-300 underline-offset-2 hover:underline hover:text-slate-200">Política de Privacidad</RouterLink>.
+      <button type="button" @click="openLegal('privacy')" class="text-slate-300 underline-offset-2 hover:underline hover:text-slate-200">Política de Privacidad</button>.
     </p>
     <p v-else class="mt-3 text-center text-xs text-slate-400">
-      <RouterLink to="/terminos" class="underline-offset-2 hover:underline hover:text-slate-200">Términos y Condiciones</RouterLink>
+      <button type="button" @click="openLegal('terms')" class="underline-offset-2 hover:underline hover:text-slate-200">Términos y Condiciones</button>
       ·
-      <RouterLink to="/privacidad" class="underline-offset-2 hover:underline hover:text-slate-200">Política de Privacidad</RouterLink>
+      <button type="button" @click="openLegal('privacy')" class="underline-offset-2 hover:underline hover:text-slate-200">Política de Privacidad</button>
     </p>
   </div>
+
+  <LegalModal :open="legalModalOpen" :type="legalModalType" @close="legalModalOpen = false" />
 </template>
 
 <style scoped>
