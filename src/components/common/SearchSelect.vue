@@ -40,6 +40,12 @@ export default {
     },
     selectedImgClass() {
       return this.imgShape === 'flag' ? 'rounded-sm' : 'rounded-full'
+    },
+    // object-cover recorta escudos que no son perfectamente cuadrados (ej. Racing,
+    // cuyo escudo es más ancho que alto) — con object-contain siempre se ve
+    // completo. Las banderas sí usan cover porque ya respetan su proporción real.
+    selectedImgFit() {
+      return this.imgShape === 'flag' ? 'object-cover' : 'object-contain'
     }
   },
   methods: {
@@ -66,7 +72,7 @@ export default {
     <div class="relative">
       <!-- When we have an image, render it OUTSIDE the input (like flags) and shrink the input -->
       <div v-if="showImages && selectedOption?.image" class="flex items-center gap-2">
-        <img :src="selectedOption.image" alt="sel" class="object-cover shrink-0" :class="selectedImgClass" :style="selectedImgStyle" />
+        <img :src="selectedOption.image" alt="sel" class="shrink-0" :class="[selectedImgClass, selectedImgFit]" :style="selectedImgStyle" />
         <div class="relative flex-1">
           <input
             :placeholder="placeholder"
@@ -102,7 +108,7 @@ export default {
         >
           <span class="absolute left-0 top-0 h-full w-0.5 scale-y-0 bg-gradient-to-b from-emerald-400 to-cyan-400 transition-transform duration-200 group-hover:scale-y-100"></span>
           <template v-if="showImages">
-            <img v-if="o.image" :src="o.image" alt="img" class="object-cover" :class="selectedImgClass" :style="imgShape === 'flag' ? { width: '32px', height: '24px' } : { width: '24px', height: '24px' }" />
+            <img v-if="o.image" :src="o.image" alt="img" :class="[selectedImgClass, selectedImgFit]" :style="imgShape === 'flag' ? { width: '28px', height: '21px' } : { width: '24px', height: '24px' }" />
             <div v-else class="w-6 h-6 rounded bg-slate-700"></div>
           </template>
           <span class="truncate">{{ o.label }}</span>

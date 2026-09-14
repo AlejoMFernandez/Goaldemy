@@ -107,12 +107,12 @@ export function playerImageUrl(playerId) {
  * Cada jugador incluye datos de su equipo, posición, altura, edad, valor, etc.
  * @returns {Array} Array de objetos jugador con todas sus propiedades
  */
-export function getAllPlayers() {
-  if (_fotmobCache && _fotmobCache.length > 0) return _fotmobCache.filter(isNotablePlayer)
+export function getAllPlayers({ includeExcluded = false } = {}) {
+  if (_fotmobCache && _fotmobCache.length > 0 && !includeExcluded) return _fotmobCache.filter(isNotablePlayer)
 
   const players = [];
   for (const team of teams) {
-    if (EXCLUDED_TEAMS.has(team.name)) continue
+    if (!includeExcluded && EXCLUDED_TEAMS.has(team.name)) continue
     for (const section of team.squad) {
       for (const member of section.members) {
         const p = {

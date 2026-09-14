@@ -23,7 +23,11 @@ export default {
     const countryOptions = Object.entries(countriesMap)
       .map(([code, name]) => ({ value: code.toLowerCase(), label: name, image: flagUrl(code) }))
       .sort((a, b) => a.label.localeCompare(b.label, 'es'))
-    const players = getAllPlayers().map(p => ({ value: p.name, label: p.name, image: p.image }))
+    // includeExcluded: true — el picker de "jugador favorito" es solo cosmético
+    // para el perfil (no afecta ningún juego), así que acá sí mostramos TODOS
+    // los jugadores de todos los equipos, incluidos Boca/River/Racing (que
+    // getAllPlayers() excluye por defecto para no romper el balance de los juegos).
+    const players = getAllPlayers({ includeExcluded: true }).map(p => ({ value: p.name, label: p.name, image: p.image }))
     const teams = getAllTeams().map(t => ({ value: t.name, label: t.name, image: t.logo }))
     return {
       mode: 'login',
@@ -349,7 +353,7 @@ export default {
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <SearchSelect label="Nacionalidad" :show-images="true" :img-size="32" img-shape="flag" v-model="user.nationality_code" :options="countryOptions" placeholder="Escribe 3 letras para buscar tu país" />
+                <SearchSelect label="Nacionalidad" :show-images="true" :img-size="26" img-shape="flag" v-model="user.nationality_code" :options="countryOptions" placeholder="Escribe 3 letras para buscar tu país" />
               </div>
               <div>
                 <SearchSelect label="Equipo favorito" :show-images="true" :img-size="40" v-model="user.favorite_team" :options="teams" placeholder="Escribe 3 letras para filtrar" />
@@ -360,17 +364,17 @@ export default {
             </div>
 
             <!-- Figurita: tira de lo que ya elegiste -->
-            <div v-if="hasAnyProfilePick" class="mt-4 flex items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] py-3">
+            <div v-if="hasAnyProfilePick" class="mt-4 flex items-center justify-center gap-3 rounded-xl border border-emerald-400/20 bg-gradient-to-r from-emerald-500/10 via-cyan-500/10 to-emerald-500/10 py-3">
               <template v-if="selectedFlagUrl">
-                <img :src="selectedFlagUrl" alt="" class="w-14 h-10 rounded-sm object-cover" />
+                <img :src="selectedFlagUrl" alt="" class="w-11 h-8 rounded-sm object-cover" />
               </template>
-              <span v-if="selectedFlagUrl && (selectedTeamImage || selectedPlayerImage)" class="text-slate-600 text-lg leading-none">+</span>
+              <span v-if="selectedFlagUrl && (selectedTeamImage || selectedPlayerImage)" class="text-slate-500 text-lg leading-none">+</span>
               <template v-if="selectedTeamImage">
-                <img :src="selectedTeamImage" alt="" class="w-11 h-11 rounded-full object-cover" />
+                <img :src="selectedTeamImage" alt="" class="w-11 h-11 rounded-full object-contain" />
               </template>
-              <span v-if="selectedTeamImage && selectedPlayerImage" class="text-slate-600 text-lg leading-none">+</span>
+              <span v-if="selectedTeamImage && selectedPlayerImage" class="text-slate-500 text-lg leading-none">+</span>
               <template v-if="selectedPlayerImage">
-                <img :src="selectedPlayerImage" alt="" class="w-11 h-11 rounded-full object-cover" />
+                <img :src="selectedPlayerImage" alt="" class="w-11 h-11 rounded-full object-contain" />
               </template>
             </div>
           </div>
