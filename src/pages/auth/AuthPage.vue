@@ -349,7 +349,7 @@ export default {
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <SearchSelect label="Nacionalidad" :show-images="true" :img-size="40" v-model="user.nationality_code" :options="countryOptions" placeholder="Escribe 3 letras para buscar tu país" />
+                <SearchSelect label="Nacionalidad" :show-images="true" :img-size="32" img-shape="flag" v-model="user.nationality_code" :options="countryOptions" placeholder="Escribe 3 letras para buscar tu país" />
               </div>
               <div>
                 <SearchSelect label="Equipo favorito" :show-images="true" :img-size="40" v-model="user.favorite_team" :options="teams" placeholder="Escribe 3 letras para filtrar" />
@@ -362,15 +362,15 @@ export default {
             <!-- Figurita: tira de lo que ya elegiste -->
             <div v-if="hasAnyProfilePick" class="mt-4 flex items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] py-3">
               <template v-if="selectedFlagUrl">
-                <img :src="selectedFlagUrl" alt="" class="w-11 h-11 rounded-full object-cover ring-2 ring-emerald-400/40" />
+                <img :src="selectedFlagUrl" alt="" class="w-14 h-10 rounded-sm object-cover" />
               </template>
               <span v-if="selectedFlagUrl && (selectedTeamImage || selectedPlayerImage)" class="text-slate-600 text-lg leading-none">+</span>
               <template v-if="selectedTeamImage">
-                <img :src="selectedTeamImage" alt="" class="w-11 h-11 rounded-full object-cover ring-2 ring-cyan-400/40" />
+                <img :src="selectedTeamImage" alt="" class="w-11 h-11 rounded-full object-cover" />
               </template>
               <span v-if="selectedTeamImage && selectedPlayerImage" class="text-slate-600 text-lg leading-none">+</span>
               <template v-if="selectedPlayerImage">
-                <img :src="selectedPlayerImage" alt="" class="w-11 h-11 rounded-full object-cover ring-2 ring-amber-400/40" />
+                <img :src="selectedPlayerImage" alt="" class="w-11 h-11 rounded-full object-cover" />
               </template>
             </div>
           </div>
