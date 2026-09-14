@@ -19,4 +19,11 @@ const SUPABASE_URL = env('VITE_SUPABASE_URL', 'https://pihoijedkkapkilylavn.supa
 const SUPABASE_KEY = env('VITE_SUPABASE_ANON_KEY', 'sb_publishable_cUwYdSgZsU_R3wHzHQi7mA_-pDF8iOt');
 
 // Cliente único de Supabase exportado para toda la app
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+// flowType: 'pkce' evita que el access_token/refresh_token viajen expuestos
+// en la URL tras el login con Google (flujo implicit por defecto) — con PKCE
+// vuelve un "?code=" de un solo uso que el SDK intercambia y limpia de la URL.
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: {
+        flowType: 'pkce',
+    },
+});
