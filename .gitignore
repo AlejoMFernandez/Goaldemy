@@ -49,3 +49,5 @@ graphify-out/
 # Backups locales del scraper
 src/dataGAMES.backup-before-refresh.json
 raw-video-sources/
+.vercel
+.env*
