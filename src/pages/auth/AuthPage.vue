@@ -2,6 +2,8 @@
 import AppButton from '../../components/common/AppButton.vue';
 import SearchSelect from '../../components/common/SearchSelect.vue';
 import LegalModal from '../../components/legal/LegalModal.vue';
+import FulvoLogo from '../../components/FulvoLogo.vue';
+import GamesFan from '../../components/auth/GamesFan.vue';
 import { login, register, continueWithGoogle } from '../../services/auth';
 import { flagUrl } from '../../services/countries';
 import countriesMap from '../../codeCOUNTRYS.json';
@@ -14,6 +16,8 @@ export default {
     AppButton,
     SearchSelect,
     LegalModal,
+    FulvoLogo,
+    GamesFan,
   },
   data() {
     const countryOptions = Object.entries(countriesMap)
@@ -151,7 +155,28 @@ export default {
     <span aria-hidden>←</span>
     <span>Volver</span>
   </RouterLink>
-  <div class="w-full max-w-lg">
+  <div class="w-full lg:max-w-5xl lg:grid lg:grid-cols-[1.05fr_1fr] lg:items-stretch lg:rounded-3xl lg:overflow-hidden lg:border lg:border-white/10 lg:shadow-2xl lg:shadow-black/40">
+
+    <!-- Panel visual — solo desktop (≥1024px), mobile no cambia -->
+    <div class="hidden lg:flex relative flex-col items-center justify-center gap-10 overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-800/80 px-10 py-14">
+      <div aria-hidden="true" class="pointer-events-none absolute -top-16 -left-16 h-64 w-64 rounded-full bg-emerald-500/20 blur-3xl"></div>
+      <div aria-hidden="true" class="pointer-events-none absolute -bottom-16 -right-24 h-64 w-64 rounded-full bg-cyan-500/20 blur-3xl"></div>
+
+      <div class="relative z-10 text-center">
+        <FulvoLogo variant="full" size="lg" class="justify-center" />
+        <p class="mt-4 text-slate-300 text-sm max-w-xs mx-auto">Entrená tu conocimiento de fútbol, sumá XP y desbloqueá logros.</p>
+      </div>
+
+      <GamesFan class="relative z-10 w-full max-w-sm" />
+
+      <!-- Divisor orgánico: el color del panel derecho "entra" al izquierdo -->
+      <svg class="pointer-events-none absolute inset-y-0 -right-px w-14" viewBox="0 0 64 800" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M32,0 C60,60 6,120 32,180 C60,240 6,300 32,360 C60,420 6,480 32,540 C60,600 6,660 32,720 C48,755 22,780 32,800 L64,800 L64,0 Z" fill="#0b1220" />
+      </svg>
+    </div>
+
+    <!-- Columna del form -->
+    <div class="w-full max-w-lg mx-auto lg:max-w-none lg:mx-0 lg:flex lg:flex-col lg:justify-center lg:bg-[#0b1220] lg:px-10 lg:py-12">
     <div class="text-center mb-6">
       <img src="/iconclaro.png" alt="Fulvo" class="mx-auto h-auto w-12 mb-2" />
     </div>
@@ -319,6 +344,8 @@ export default {
       ·
       <button type="button" @click="openLegal('privacy')" class="underline-offset-2 hover:underline hover:text-slate-200">Política de Privacidad</button>
     </p>
+    </div>
+    <!-- /Columna del form -->
   </div>
 
   <LegalModal :open="legalModalOpen" :type="legalModalType" @close="legalModalOpen = false" />
