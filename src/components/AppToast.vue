@@ -20,14 +20,16 @@ const labelFor = (type) => {
 
 <template>
   <div class="fixed bottom-3 right-5 z-50 w-80 max-w-[90vw]">
-    <div class="flex flex-col gap-2">
-      <transition-group name="toast" tag="div">
-        <div
-          v-for="n in items"
-          :key="n.id"
-          class="rounded-2xl backdrop-blur-xl p-3 shadow-2xl flex items-start gap-3 border bg-slate-900/85"
-          :class="styleFor(n.type).border"
-        >
+    <!-- El gap va acá, directo en el tag que renderiza transition-group —
+         antes estaba en un div contenedor de afuera que solo tenía UN hijo
+         (el propio wrapper de transition-group), así que nunca hacía nada. -->
+    <transition-group name="toast" tag="div" class="flex flex-col gap-3">
+      <div
+        v-for="n in items"
+        :key="n.id"
+        class="rounded-2xl backdrop-blur-xl p-3 shadow-2xl flex items-start gap-3 border bg-slate-900/85"
+        :class="styleFor(n.type).border"
+      >
           <div class="shrink-0 w-8 h-8 rounded-full ring-1 grid place-items-center"
             :class="[styleFor(n.type).bg, styleFor(n.type).ring]"
           >
@@ -45,14 +47,13 @@ const labelFor = (type) => {
             <p class="text-xs font-semibold" :class="styleFor(n.type).text">{{ labelFor(n.type) }}</p>
             <p class="text-[13px] text-slate-200 whitespace-normal break-words leading-snug mt-0.5">{{ n.title }}</p>
           </div>
-          <button @click="removeNotification(n.id)" class="shrink-0 text-slate-500 hover:text-slate-300 transition mt-0.5" aria-label="Cerrar">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </transition-group>
-    </div>
+        <button @click="removeNotification(n.id)" class="shrink-0 text-slate-500 hover:text-slate-300 transition mt-0.5" aria-label="Cerrar">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </transition-group>
   </div>
 </template>
 
