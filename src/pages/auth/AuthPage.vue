@@ -156,10 +156,12 @@ export default {
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
     </svg>
   </RouterLink>
-  <div class="w-full lg:max-w-4xl lg:grid lg:grid-cols-[1.15fr_1fr] lg:gap-4 lg:items-stretch">
+  <div class="w-full lg:max-w-4xl lg:h-[min(640px,85vh)] lg:grid lg:grid-cols-[1.15fr_1fr] lg:rounded-2xl lg:border lg:border-white/10 lg:overflow-hidden lg:bg-[#0b1220]">
 
-    <!-- Panel visual — solo desktop (≥1024px), mobile no cambia -->
-    <div class="hidden lg:flex relative flex-col items-center justify-center gap-6 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-800/80 px-8 py-8">
+    <!-- Panel visual — solo desktop (≥1024px), mobile no cambia. Altura fija
+         del panel derecho (columna hermana): este NUNCA se estira ni scrollea,
+         solo se centra en su propia altura. -->
+    <div class="hidden lg:flex relative flex-col items-center justify-center gap-6 h-full overflow-hidden border-r border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-800/80 px-8 py-8">
       <div aria-hidden="true" class="pointer-events-none absolute -top-16 -left-16 h-56 w-56 rounded-full bg-emerald-500/20 blur-3xl"></div>
       <div aria-hidden="true" class="pointer-events-none absolute -bottom-16 -right-20 h-56 w-56 rounded-full bg-cyan-500/20 blur-3xl"></div>
 
@@ -171,14 +173,15 @@ export default {
       <GamesFan class="relative z-10 w-full max-w-xs" />
     </div>
 
-    <!-- Columna del form -->
-    <div class="w-full max-w-lg mx-auto lg:max-w-none lg:mx-0 lg:flex lg:flex-col lg:justify-center lg:rounded-2xl lg:border lg:border-white/10 lg:bg-[#0b1220] lg:px-7 lg:py-6">
+    <!-- Columna del form: única columna que scrollea si el contenido no entra -->
+    <div class="w-full max-w-lg mx-auto lg:max-w-none lg:mx-0 lg:h-full lg:overflow-y-auto lg:px-7 lg:py-6">
+    <div class="lg:my-auto">
     <div class="text-center mb-6 lg:hidden">
       <img src="/iconclaro.png" alt="Fulvo" class="mx-auto h-auto w-12 mb-2" />
     </div>
 
-    <!-- Toggle fijo: no se anima, solo el contenido de abajo -->
-    <div class="mb-3 flex rounded-full bg-white/5 border border-white/10 p-1">
+    <!-- Toggle fijo: solo mobile — en desktop se cambia de modo con los links de abajo -->
+    <div class="mb-3 flex rounded-full bg-white/5 border border-white/10 p-1 lg:hidden">
       <button type="button" @click="setMode('login')" :class="tabClass('login')">Iniciar sesión</button>
       <button type="button" @click="setMode('register')" :class="tabClass('register')">Crear cuenta</button>
     </div>
@@ -340,6 +343,8 @@ export default {
       ·
       <button type="button" @click="openLegal('privacy')" class="underline-offset-2 hover:underline hover:text-slate-200">Política de Privacidad</button>
     </p>
+    </div>
+    <!-- /lg:my-auto -->
     </div>
     <!-- /Columna del form -->
   </div>
