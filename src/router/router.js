@@ -10,6 +10,7 @@ import { isAdmin } from '../services/admin';
 import Landing from '../pages/Landing.vue';
 const AuthPage = () => import('../pages/auth/AuthPage.vue');
 const VerifyEmail = () => import('../pages/auth/VerifyEmail.vue');
+const ForgotPassword = () => import('../pages/auth/ForgotPassword.vue');
 const ResetPassword = () => import('../pages/auth/ResetPassword.vue');
 const Profile = () => import('../pages/profile/Profile.vue');
 const ProfileEdit = () => import('../pages/profile/ProfileEdit.vue');
@@ -58,6 +59,7 @@ const routes = [
     { path: '/login', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth' } },
     { path: '/register', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth' } },
     { path: '/verify-email', component: VerifyEmail, meta: { layout: 'auth', zone: 'hub' } },
+    { path: '/forgot-password', component: ForgotPassword, meta: { layout: 'auth', zone: 'hub' } },
     { path: '/reset-password', component: ResetPassword, meta: { layout: 'auth', zone: 'hub' } },
     { path: '/profile', component: Profile, meta: { requiresAuth: true, zone: 'hub' } },
     { path: '/profile-edit', component: ProfileEdit, meta: { requiresAuth: true, zone: 'hub' } },

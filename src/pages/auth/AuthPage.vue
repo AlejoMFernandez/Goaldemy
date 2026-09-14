@@ -2,7 +2,7 @@
 import AppButton from '../../components/common/AppButton.vue';
 import SearchSelect from '../../components/common/SearchSelect.vue';
 import LegalModal from '../../components/legal/LegalModal.vue';
-import { login, register, resetPasswordForEmail, continueWithGoogle } from '../../services/auth';
+import { login, register, continueWithGoogle } from '../../services/auth';
 import { flagUrl } from '../../services/countries';
 import countriesMap from '../../codeCOUNTRYS.json';
 import { getAllPlayers, getAllTeams } from '../../services/players';
@@ -88,26 +88,6 @@ export default {
         this.error = error?.message || 'No se pudo iniciar sesión.'
       }
       this.loading = false;
-    },
-    async handleResetPassword() {
-      if (!this.user.email) {
-        const msg = 'Ingresá tu email para enviar el enlace de reseteo.'
-        this.error = msg
-        try { pushErrorToast(msg) } catch {}
-        return
-      }
-      try {
-        this.loading = true
-        this.error = ''
-        await resetPasswordForEmail(this.user.email)
-      } catch (e) {
-        console.error(e)
-        const msg = e?.message || 'No pudimos enviar el email de reseteo.'
-        this.error = msg
-        try { pushErrorToast(msg) } catch {}
-      } finally {
-        this.loading = false
-      }
     },
     async handleRegister() {
       try {
@@ -221,9 +201,9 @@ export default {
             />
           </div>
           <div class="flex justify-end -mt-2">
-            <button type="button" @click="handleResetPassword" class="text-sm text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline disabled:opacity-60" :disabled="loading">
+            <RouterLink to="/forgot-password" class="text-sm text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline">
               ¿Olvidaste tu contraseña?
-            </button>
+            </RouterLink>
           </div>
 
           <div class="pt-2 space-y-3">
