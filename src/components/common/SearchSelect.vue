@@ -10,7 +10,7 @@ export default {
     showImages: { type: Boolean, default: false },
     icon: { type: String, default: '' }, // 'player' | 'team'
     imgSize: { type: Number, default: 24 }, // px del avatar mostrado una vez seleccionado
-    imgShape: { type: String, default: 'circle' }, // 'circle' (equipos/jugadores) | 'flag' (banderas, respeta su relación de aspecto real)
+    imgShape: { type: String, default: 'circle' }, // 'circle' (jugadores) | 'badge' (escudos, sin recorte circular) | 'flag' (banderas, respeta su relación de aspecto real)
   },
   emits: ['update:modelValue'],
   data() {
@@ -34,9 +34,22 @@ export default {
     selectedOption() {
       return this.options.find(o => o.value === this.modelValue) || null
     },
-    isCircle() { return this.imgShape !== 'flag' },
-    flagStyle() {
-      return { width: Math.round(this.imgSize * 1.33) + 'px', height: this.imgSize + 'px' }
+    selectedImgStyle() {
+      if (this.imgShape === 'flag') return { width: Math.round(this.imgSize * 1.33) + 'px', height: this.imgSize + 'px' }
+      return { width: this.imgSize + 'px', height: this.imgSize + 'px' }
+    },
+    // "badge" (escudos) queda SIN redondeo circular a propósito: un escudo no
+    // es un círculo, y rounded-full le recorta las puntas/esquinas sin importar
+    // el object-fit. Las banderas usan un radio chico (no círculo tampoco).
+    selectedImgClass() {
+      if (this.imgShape === 'flag') return 'rounded-sm'
+      if (this.imgShape === 'badge') return 'rounded-md'
+      return 'rounded-full'
+    },
+    // Las banderas usan cover porque ya respetan su proporción real. Escudos y
+    // fotos usan contain para no recortar contenido dentro de su caja.
+    selectedImgFit() {
+      return this.imgShape === 'flag' ? 'object-cover' : 'object-contain'
     }
   },
   methods: {
@@ -63,14 +76,7 @@ export default {
     <div class="relative">
       <!-- When we have an image, render it OUTSIDE the input (like flags) and shrink the input -->
       <div v-if="showImages && selectedOption?.image" class="flex items-center gap-2">
-        <!-- Escudos/fotos: círculo con el logo achicado adentro (78%) — si el logo
-             llenara el círculo entero, sus esquinas (ej. la parte alta y ancha del
-             escudo de Racing) quedan recortadas por la máscara circular. -->
-        <span v-if="isCircle" class="shrink-0 rounded-full overflow-hidden bg-white/5 flex items-center justify-center" :style="{ width: imgSize + 'px', height: imgSize + 'px' }">
-          <img :src="selectedOption.image" alt="sel" class="object-contain" style="width:78%;height:78%;" />
-        </span>
-        <!-- Banderas: respetan su proporción real, sin círculo -->
-        <img v-else :src="selectedOption.image" alt="sel" class="shrink-0 rounded-sm object-cover" :style="flagStyle" />
+        <img :src="selectedOption.image" alt="sel" class="shrink-0" :class="[selectedImgClass, selectedImgFit]" :style="selectedImgStyle" />
         <div class="relative flex-1">
           <input
             :placeholder="placeholder"
@@ -106,11 +112,8 @@ export default {
         >
           <span class="absolute left-0 top-0 h-full w-0.5 scale-y-0 bg-gradient-to-b from-emerald-400 to-cyan-400 transition-transform duration-200 group-hover:scale-y-100"></span>
           <template v-if="showImages">
-            <span v-if="o.image && isCircle" class="shrink-0 rounded-full overflow-hidden bg-white/5 flex items-center justify-center" style="width:24px;height:24px;">
-              <img :src="o.image" alt="img" class="object-contain" style="width:78%;height:78%;" />
-            </span>
-            <img v-else-if="o.image" :src="o.image" alt="img" class="shrink-0 rounded-sm object-cover" style="width:28px;height:21px;" />
-            <div v-else class="w-6 h-6 rounded bg-slate-700 shrink-0"></div>
+            <img v-if="o.image" :src="o.image" alt="img" :class="[selectedImgClass, selectedImgFit]" :style="imgShape === 'flag' ? { width: '28px', height: '21px' } : { width: '24px', height: '24px' }" />
+            <div v-else class="w-6 h-6 rounded bg-slate-700"></div>
           </template>
           <span class="truncate">{{ o.label }}</span>
         </li>

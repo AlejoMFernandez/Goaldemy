@@ -356,7 +356,7 @@ export default {
                 <SearchSelect label="Nacionalidad" :show-images="true" :img-size="26" img-shape="flag" v-model="user.nationality_code" :options="countryOptions" placeholder="Escribe 3 letras para buscar tu país" />
               </div>
               <div>
-                <SearchSelect label="Equipo favorito" :show-images="true" :img-size="40" v-model="user.favorite_team" :options="teams" placeholder="Escribe 3 letras para filtrar" />
+                <SearchSelect label="Equipo favorito" :show-images="true" :img-size="40" img-shape="badge" v-model="user.favorite_team" :options="teams" placeholder="Escribe 3 letras para filtrar" />
               </div>
               <div class="md:col-span-2">
                 <SearchSelect label="Jugador favorito" :show-images="true" :img-size="40" v-model="user.favorite_player" :options="players" placeholder="Escribe 3 letras para filtrar" />
@@ -370,15 +370,11 @@ export default {
               </template>
               <span v-if="selectedFlagUrl && (selectedTeamImage || selectedPlayerImage)" class="text-slate-500 text-lg leading-none">+</span>
               <template v-if="selectedTeamImage">
-                <span class="w-11 h-11 rounded-full overflow-hidden bg-white/5 flex items-center justify-center">
-                  <img :src="selectedTeamImage" alt="" class="object-contain" style="width:78%;height:78%;" />
-                </span>
+                <img :src="selectedTeamImage" alt="" class="w-11 h-11 rounded-md object-contain" />
               </template>
               <span v-if="selectedTeamImage && selectedPlayerImage" class="text-slate-500 text-lg leading-none">+</span>
               <template v-if="selectedPlayerImage">
-                <span class="w-11 h-11 rounded-full overflow-hidden bg-white/5 flex items-center justify-center">
-                  <img :src="selectedPlayerImage" alt="" class="object-contain" style="width:78%;height:78%;" />
-                </span>
+                <img :src="selectedPlayerImage" alt="" class="w-11 h-11 rounded-full object-contain" />
               </template>
             </div>
           </div>
