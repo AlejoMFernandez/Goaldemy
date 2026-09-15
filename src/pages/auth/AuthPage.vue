@@ -211,17 +211,24 @@ export default {
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
     </svg>
   </RouterLink>
-  <!-- Hero mobile: panel de marca arriba del todo. El form (más abajo) lo
-       "pisa" con un margen negativo, dejando solo esta franja chica con el
-       logo a la vista — en desktop no se muestra (la marca vive en el panel
-       de la izquierda). -->
-  <div class="lg:hidden relative w-full max-w-lg mx-auto overflow-hidden rounded-t-3xl border border-white/10 border-b-0 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-800/80 pt-10 pb-20 text-center">
-    <div aria-hidden="true" class="pointer-events-none absolute -top-10 -left-10 h-40 w-40 rounded-full bg-emerald-500/20 blur-3xl"></div>
-    <div aria-hidden="true" class="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-cyan-500/20 blur-3xl"></div>
-    <FulvoLogo variant="full" size="lg" class="relative z-10 justify-center" />
+  <!-- Mobile: header con el logo, pegajoso (sticky top-0) — se queda fijo
+       arriba de TODO todo el tiempo, no es una card, ocupa el ancho completo
+       de la pantalla (-mx-4 cancela el padding lateral de <main>). -->
+  <div ref="mobileHeader" class="lg:hidden sticky top-0 z-30 -mx-4 px-4 py-5 text-center bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border-b border-white/10">
+    <FulvoLogo variant="full" size="md" class="justify-center" />
   </div>
 
-  <div class="w-full lg:max-w-4xl lg:h-[min(680px,88vh)] lg:grid lg:grid-cols-[1.15fr_1fr] lg:rounded-2xl lg:border lg:border-white/10 lg:overflow-hidden lg:bg-[#0b1220]">
+  <!-- Mobile: abanico de portadas — pantalla completa (no card), en flujo
+       normal (no pegajoso): al scrollear se va tapando por el form, que sí
+       es pegajoso y la "pisa" progresivamente hasta asentarse justo debajo
+       del header con el logo. -->
+  <div class="lg:hidden relative -mx-4 px-4 pt-6 pb-28 overflow-hidden bg-gradient-to-br from-slate-900/90 to-slate-800/80 text-center">
+    <div aria-hidden="true" class="pointer-events-none absolute -top-10 -left-10 h-40 w-40 rounded-full bg-emerald-500/20 blur-3xl"></div>
+    <div aria-hidden="true" class="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-cyan-500/20 blur-3xl"></div>
+    <GamesFan class="relative z-10 w-full max-w-sm mx-auto" />
+  </div>
+
+  <div class="w-full -mt-16 lg:mt-0 lg:max-w-4xl lg:h-[min(680px,88vh)] lg:grid lg:grid-cols-[1.15fr_1fr] lg:rounded-2xl lg:border lg:border-white/10 lg:overflow-hidden lg:bg-[#0b1220]">
 
     <!-- Panel visual — solo desktop (≥1024px), mobile no cambia. Altura fija
          del panel derecho (columna hermana): este NUNCA se estira ni scrollea,
@@ -239,9 +246,15 @@ export default {
     </div>
 
     <!-- Columna del form: única columna que scrollea si el contenido no entra.
-         En mobile es la "sheet" que pisa al hero (margen negativo + esquinas
-         redondeadas arriba); en desktop es la mitad derecha de la card. -->
-    <div ref="formScroll" class="relative z-10 w-full max-w-lg mx-auto -mt-14 rounded-t-3xl border border-white/10 bg-[#0b1220] px-6 pt-8 pb-10 shadow-2xl shadow-black/50 lg:mt-0 lg:max-w-none lg:mx-0 lg:h-full lg:overflow-y-auto lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:px-10 lg:py-10">
+         En mobile es pantalla completa (no card) y pegajosa: arranca pisando
+         el abanico (el margen negativo que logra ese pisado va en el
+         CONTENEDOR de acá arriba, no en este div — si va acá, el margen
+         negativo achica la altura que el propio contenedor le calcula a este
+         hijo sticky, y con eso el sticky se queda sin "recorrido" para
+         mantenerse pegado y se despega enseguida) y al scrollear queda fija
+         justo debajo del header del logo. En desktop es la mitad derecha de
+         la card. -->
+    <div ref="formScroll" class="relative z-20 sticky top-[88px] -mx-4 rounded-t-2xl border-t border-white/10 bg-[#0b1220] px-6 pt-8 pb-10 shadow-2xl shadow-black/50 lg:static lg:z-auto lg:mx-0 lg:rounded-none lg:border-0 lg:max-w-none lg:h-full lg:overflow-y-auto lg:bg-transparent lg:shadow-none lg:px-10 lg:py-10">
     <div class="lg:my-auto">
     <!-- Toggle fijo: solo mobile — en desktop se cambia de modo con los links de abajo -->
     <div class="mb-3 flex rounded-full bg-white/5 border border-white/10 p-1 lg:hidden">
