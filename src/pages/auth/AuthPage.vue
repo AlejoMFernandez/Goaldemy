@@ -213,18 +213,23 @@ export default {
   </RouterLink>
   <!-- Mobile: header con el logo, pegajoso (sticky top-0) — se queda fijo
        arriba de TODO todo el tiempo, no es una card, ocupa el ancho completo
-       de la pantalla (-mx-4 cancela el padding lateral de <main>). -->
-  <div ref="mobileHeader" class="lg:hidden sticky top-0 z-30 -mx-4 px-4 py-5 text-center bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border-b border-white/10">
+       de la pantalla (-mx-4 cancela el padding lateral de <main>). Mismo
+       color sólido (sin gradiente ni borde) que la franja del abanico de
+       abajo, para que se vea como una sola superficie continua y no dos
+       paneles pegados. -->
+  <div ref="mobileHeader" class="lg:hidden sticky top-0 z-30 -mx-4 px-4 py-5 text-center bg-[#0b1220]">
     <FulvoLogo variant="full" size="md" class="justify-center" />
   </div>
 
   <!-- Mobile: abanico de portadas — pantalla completa (no card), en flujo
        normal (no pegajoso): al scrollear se va tapando por el form, que sí
        es pegajoso y la "pisa" progresivamente hasta asentarse justo debajo
-       del header con el logo. -->
-  <div class="lg:hidden relative -mx-4 px-4 pt-6 pb-28 overflow-hidden bg-gradient-to-br from-slate-900/90 to-slate-800/80 text-center">
+       del header con el logo. Mismo bg sólido que el header (ver comentario
+       de arriba). -->
+  <div class="lg:hidden relative -mx-4 px-4 pt-2 pb-28 overflow-hidden bg-[#0b1220] text-center">
     <div aria-hidden="true" class="pointer-events-none absolute -top-10 -left-10 h-40 w-40 rounded-full bg-emerald-500/20 blur-3xl"></div>
     <div aria-hidden="true" class="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-cyan-500/20 blur-3xl"></div>
+    <p class="relative z-10 text-slate-300 text-sm max-w-[260px] mx-auto mb-4">Entrená tu conocimiento de fútbol, sumá XP y desbloqueá logros.</p>
     <GamesFan class="relative z-10 w-full max-w-sm mx-auto" />
   </div>
 
@@ -264,7 +269,9 @@ export default {
 
     <Transition :name="direction === 1 ? 'auth-forward' : 'auth-back'" mode="out-in">
       <div :key="mode">
-        <div class="text-center mb-6">
+        <!-- Solo desktop: en mobile ya está el tagline arriba del abanico y
+             el toggle Iniciar sesión/Crear cuenta, este título quedaba de más. -->
+        <div class="hidden lg:block text-center mb-6">
           <h1 class="text-2xl font-bold">{{ mode === 'login' ? 'Bienvenido de nuevo' : 'Creá tu cuenta en FULVO' }}</h1>
           <p class="text-slate-300 text-sm">{{ mode === 'login' ? 'Volvé a jugar y seguir sumando XP' : 'Unite para jugar, sumar XP y desbloquear logros' }}</p>
         </div>
