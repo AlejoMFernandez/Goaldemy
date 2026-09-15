@@ -5,15 +5,21 @@ import { friendlyNameForSlug, friendlyDescForSlug } from '../../services/games'
 // Cada carta rota alrededor de un mismo pivote inferior (transform-origin: bottom
 // center) → efecto "mazo de cartas" sin necesidad de calcular posiciones a mano.
 const SLUGS = ['who-is', 'football-grid', 'value-order', 'connections', 'football-wordle', 'shirt-number', 'nationality']
-const GAMES = SLUGS.map(slug => ({
+const CENTER = (SLUGS.length - 1) / 2
+const ANGLE_STEP = 12 // grados entre cada carta
+const X_STEP = 40 // separación horizontal entre cada carta (px), además de la rotación
+const GAMES = SLUGS.map((slug, i) => ({
   slug,
   src: `/games/${slug}.svg`,
   label: friendlyNameForSlug(slug),
   desc: friendlyDescForSlug(slug),
+  // Las cards de las puntas del abanico quedan muy cerca del borde de la
+  // pantalla: si el tooltip se centrara sobre ellas como las del medio, se
+  // saldría del viewport. Para esas se ancla el tooltip hacia el lado con
+  // más aire (izquierda pega su borde izquierdo a la card y crece hacia la
+  // derecha, y viceversa).
+  align: i < CENTER - 1 ? 'left' : i > CENTER + 1 ? 'right' : 'center',
 }))
-const CENTER = (GAMES.length - 1) / 2
-const ANGLE_STEP = 12 // grados entre cada carta
-const X_STEP = 40 // separación horizontal entre cada carta (px), además de la rotación
 // Tiempo total de la animación de entrada (delay máximo + duración) — pasado
 // ese punto se cambia a una transición corta para que el hover sea instantáneo.
 const ENTER_DONE_MS = 90 + Math.ceil(CENTER) * 70 + 650
@@ -31,9 +37,12 @@ export default {
       })),
       mounted: false,
       entered: false,
-      // En mobile no hay :hover real — el tap alterna cuál card muestra su
-      // previsualización (nombre + de qué se trata).
-      activeIndex: null,
+      // Un solo estado maneja tanto el hover (desktop) como el tap (mobile,
+      // donde no hay :hover real) — así el z-index y el resto de la lógica
+      // no se pisan entre sí ni dependen de que el CSS :hover "gane" sobre
+      // el z-index inline, que siempre tiene prioridad.
+      hoverIndex: null,
+      tapIndex: null,
     }
   },
   mounted() {
@@ -50,11 +59,14 @@ export default {
     document.removeEventListener('click', this.onDocClick)
   },
   methods: {
+    isOpen(i) {
+      return this.hoverIndex === i || this.tapIndex === i
+    },
     toggle(i) {
-      this.activeIndex = this.activeIndex === i ? null : i
+      this.tapIndex = this.tapIndex === i ? null : i
     },
     onDocClick(e) {
-      if (!this.$el.contains(e.target)) this.activeIndex = null
+      if (!this.$el.contains(e.target)) this.tapIndex = null
     }
   }
 }
@@ -67,12 +79,14 @@ export default {
       :key="card.src"
       type="button"
       class="fan-card"
-      :class="{ 'is-in': mounted, entered: entered, 'is-active': activeIndex === i }"
-      :style="{ '--fan-angle': card.angle + 'deg', '--fan-x': card.x + 'px', transitionDelay: mounted ? '0ms' : card.delay + 'ms', zIndex: activeIndex === i ? 30 : card.z }"
+      :class="{ 'is-in': mounted, entered: entered, 'is-active': isOpen(i) }"
+      :style="{ '--fan-angle': card.angle + 'deg', '--fan-x': card.x + 'px', transitionDelay: mounted ? '0ms' : card.delay + 'ms', zIndex: isOpen(i) ? 40 : card.z }"
       @click="toggle(i)"
+      @mouseenter="hoverIndex = i"
+      @mouseleave="hoverIndex = null"
     >
       <img :src="card.src" :alt="card.label" width="84" height="84" loading="lazy" />
-      <span class="fan-tooltip" :style="{ '--fan-tooltip-angle': (-card.angle) + 'deg' }">
+      <span class="fan-tooltip" :class="'fan-tooltip--' + card.align" :style="{ '--fan-tooltip-angle': (-card.angle) + 'deg' }">
         <span class="fan-tooltip-name">{{ card.label }}</span>
         <span class="fan-tooltip-desc">{{ card.desc }}</span>
       </span>
@@ -127,10 +141,8 @@ export default {
 .fan-card.entered {
   transition: transform 0.12s ease-out;
 }
-.fan-card.is-in:hover,
 .fan-card.is-in.is-active {
   transform: translateX(-50%) translateX(var(--fan-x)) rotate(var(--fan-angle)) translateY(-14px) scale(1.1);
-  z-index: 20;
 }
 
 /* Previsualización flotante: nombre + de qué se trata el juego. Contrarrota
@@ -138,39 +150,62 @@ export default {
    se lea siempre derecho, sin importar en qué posición del abanico esté. */
 .fan-tooltip {
   position: absolute;
-  left: 50%;
   bottom: calc(100% + 10px);
-  transform: translateX(-50%) rotate(var(--fan-tooltip-angle)) translateY(4px);
-  transform-origin: bottom center;
-  width: 148px;
-  max-width: 55vw;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(11, 18, 32, 0.97);
-  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.7);
+  width: 168px;
+  max-width: min(72vw, 220px);
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(11, 18, 32, 0.98);
+  box-shadow: 0 14px 28px -8px rgba(0, 0, 0, 0.75);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s ease, transform 0.15s ease;
   text-align: center;
 }
-.fan-card.is-in:hover .fan-tooltip,
-.fan-card.is-in.is-active .fan-tooltip {
+/* Centro del abanico: el tooltip queda centrado sobre la card. */
+.fan-tooltip--center {
+  left: 50%;
+  transform: translateX(-50%) rotate(var(--fan-tooltip-angle)) translateY(4px);
+  transform-origin: bottom center;
+}
+/* Puntas izquierdas: el tooltip crece hacia la derecha (lejos del borde). */
+.fan-tooltip--left {
+  left: 0;
+  transform: translateX(0) rotate(var(--fan-tooltip-angle)) translateY(4px);
+  transform-origin: bottom left;
+}
+/* Puntas derechas: el tooltip crece hacia la izquierda (lejos del borde). */
+.fan-tooltip--right {
+  right: 0;
+  left: auto;
+  transform: translateX(0) rotate(var(--fan-tooltip-angle)) translateY(4px);
+  transform-origin: bottom right;
+}
+.fan-card.is-in.is-active .fan-tooltip--center {
   opacity: 1;
   transform: translateX(-50%) rotate(var(--fan-tooltip-angle)) translateY(0);
 }
+.fan-card.is-in.is-active .fan-tooltip--left {
+  opacity: 1;
+  transform: translateX(0) rotate(var(--fan-tooltip-angle)) translateY(0);
+}
+.fan-card.is-in.is-active .fan-tooltip--right {
+  opacity: 1;
+  transform: translateX(0) rotate(var(--fan-tooltip-angle)) translateY(0);
+}
 .fan-tooltip-name {
   display: block;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: #fff;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 .fan-tooltip-desc {
   display: block;
-  margin-top: 2px;
-  font-size: 10.5px;
+  margin-top: 3px;
+  font-size: 12px;
   color: rgb(148 163 184); /* slate-400 */
-  line-height: 1.3;
+  line-height: 1.35;
 }
 </style>
