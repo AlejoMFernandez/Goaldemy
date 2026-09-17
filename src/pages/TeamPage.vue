@@ -561,6 +561,7 @@ import { useRoute } from 'vue-router';
 import { getTeamDetails } from '../services/fotmob';
 import { getFanbaseMembers } from '../services/fanbase';
 import { getAuthUser } from '../services/auth';
+import { setSeo } from '../services/seo';
 import PeriodTabs from '../components/leaderboard/PeriodTabs.vue';
 
 // Mapeo de códigos de FotMob a códigos ISO de países
@@ -903,9 +904,20 @@ const loadTeamData = async ({ silent = false } = {}) => {
 // Auto-refresh cada 30 segundos
 let refreshInterval = null;
 
+// El route.meta.seo genérico ("Equipo | Fulvo") queda de fallback hasta que
+// carga el nombre real del equipo — recién ahí vale la pena indexarlo.
+watch(teamData, (team) => {
+  if (!team?.name) return;
+  setSeo({
+    title: team.name,
+    description: `Plantilla, últimos partidos y estadísticas de ${team.name} en Fulvo.`,
+    path: route.fullPath,
+  });
+});
+
 onMounted(() => {
   loadTeamData();
-  
+
   // Configurar auto-refresh
   refreshInterval = setInterval(() => {
     loadTeamData({ silent: true });

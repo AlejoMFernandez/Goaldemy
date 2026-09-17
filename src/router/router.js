@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { pushInfoToast } from '../stores/notifications';
 import { subscribeToAuthStateChanges, authReady, getAuthUser } from '../services/auth';
 import { isAdmin } from '../services/admin';
+import { setSeo } from '../services/seo';
 
 // La home se importa de forma EAGER: es la ruta de entrada, así el LCP no
 // espera un chunk extra. Todo lo demás es LAZY (code-splitting por ruta):
@@ -52,59 +53,59 @@ const TermsOfService = () => import('../pages/legal/TermsOfService.vue');
 
 const routes = [
     { path: '/', component: Landing, meta: { zone: 'hub' } },
-    { path: '/competiciones', component: CompetitionsHub, meta: { zone: 'data' } },
+    { path: '/competiciones', component: CompetitionsHub, meta: { zone: 'data', seo: { title: 'Competiciones', description: 'Seguí ligas y torneos de fútbol: tablas de posiciones, fixtures, resultados y brackets actualizados.' } } },
     { path: '/leagues', redirect: '/competiciones' },
-    { path: '/leagues/:slug', component: CompetitionPage, meta: { zone: 'data' } },
-    { path: '/team/:teamId', component: TeamPage, meta: { zone: 'data' } },
-    { path: '/login', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth' } },
-    { path: '/register', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth' } },
-    { path: '/verify-email', component: VerifyEmail, meta: { layout: 'auth', zone: 'hub' } },
-    { path: '/forgot-password', component: ForgotPassword, meta: { layout: 'auth', zone: 'hub' } },
-    { path: '/reset-password', component: ResetPassword, meta: { layout: 'auth', zone: 'hub' } },
-    { path: '/profile', component: Profile, meta: { requiresAuth: true, zone: 'hub' } },
-    { path: '/profile-edit', component: ProfileEdit, meta: { requiresAuth: true, zone: 'hub' } },
-    { path: '/teams', component: Teams, meta: { zone: 'data' } },
+    { path: '/leagues/:slug', component: CompetitionPage, meta: { zone: 'data', seo: { title: 'Competición', description: 'Tabla de posiciones, fixture y resultados en vivo.' } } },
+    { path: '/team/:teamId', component: TeamPage, meta: { zone: 'data', seo: { title: 'Equipo', description: 'Plantilla, últimos partidos y estadísticas del equipo.' } } },
+    { path: '/login', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth', seo: { title: 'Iniciar sesión', description: 'Ingresá a tu cuenta de Fulvo.', noindex: true } } },
+    { path: '/register', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth', seo: { title: 'Crear cuenta', description: 'Creá tu cuenta gratis en Fulvo y empezá a jugar.', noindex: true } } },
+    { path: '/verify-email', component: VerifyEmail, meta: { layout: 'auth', zone: 'hub', seo: { title: 'Verificar email', noindex: true } } },
+    { path: '/forgot-password', component: ForgotPassword, meta: { layout: 'auth', zone: 'hub', seo: { title: 'Recuperar contraseña', noindex: true } } },
+    { path: '/reset-password', component: ResetPassword, meta: { layout: 'auth', zone: 'hub', seo: { title: 'Restablecer contraseña', noindex: true } } },
+    { path: '/profile', component: Profile, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Mi perfil', noindex: true } } },
+    { path: '/profile-edit', component: ProfileEdit, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Editar perfil', noindex: true } } },
+    { path: '/teams', component: Teams, meta: { zone: 'data', seo: { title: 'Equipos', description: 'Explorá equipos de fútbol, sus planteles y estadísticas.' } } },
     // Piloto de modo invitado: se puede jugar sin cuenta, el resultado se reclama al registrarse (ver services/guest-play.js)
-    { path: '/games/guess-player', component: GuessPlayer, meta: { immersive: true, zone: 'play' } },
-    { path: '/games/nationality', component: NationalityGame, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
-    { path: '/games/player-position', component: PlayerPosition, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
-    { path: '/games/who-is', component: WhoIs, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
-    { path: '/games/value-order', component: ValueOrder, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
-    { path: '/games/age-order', component: AgeOrder, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
-    { path: '/games/height-order', component: HeightOrder, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
-    { path: '/games/shirt-number', component: ShirtNumber, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
-    { path: '/games/once-ideal', component: OnceIdeal, meta: { requiresAuth: true, zone: 'play' } },
-    { path: '/games/football-wordle', component: FootballWordle, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
-    { path: '/games/higher-or-lower', component: HigherOrLower, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
-    { path: '/games/connections', component: Connections, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
-    { path: '/games/football-grid', component: FootballGrid, meta: { requiresAuth: true, immersive: true, zone: 'play' } },
-    { path: '/games/stat-challenge', component: StatChallenge, meta: { requiresAuth: true, zone: 'play' } },
-    { path: '/leaderboards', component: Leaderboards, meta: { zone: 'data' } },
-    { path: '/u/:id', component: Profile, meta: { requiresAuth: true, zone: 'hub' } },
-    { path: '/notifications', component: Notifications, meta: { requiresAuth: true, zone: 'hub' } },
-    { path: '/messages', component: DirectMessages, meta: { requiresAuth: true, zone: 'hub' } },
-    { path: '/messages/:peerId', component: DirectChat, meta: { requiresAuth: true, zone: 'hub' } },
+    { path: '/games/guess-player', component: GuessPlayer, meta: { immersive: true, zone: 'play', seo: { title: 'Adiviná el jugador', description: 'Adiviná qué futbolista es a partir de pistas. Jugá gratis, sin necesidad de cuenta.' } } },
+    { path: '/games/nationality', component: NationalityGame, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Nacionalidad', noindex: true } } },
+    { path: '/games/player-position', component: PlayerPosition, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Posición del jugador', noindex: true } } },
+    { path: '/games/who-is', component: WhoIs, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: '¿Quién es?', noindex: true } } },
+    { path: '/games/value-order', component: ValueOrder, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Orden por valor', noindex: true } } },
+    { path: '/games/age-order', component: AgeOrder, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Orden por edad', noindex: true } } },
+    { path: '/games/height-order', component: HeightOrder, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Orden por altura', noindex: true } } },
+    { path: '/games/shirt-number', component: ShirtNumber, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Número de camiseta', noindex: true } } },
+    { path: '/games/once-ideal', component: OnceIdeal, meta: { requiresAuth: true, zone: 'play', seo: { title: 'Once ideal', noindex: true } } },
+    { path: '/games/football-wordle', component: FootballWordle, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Football Wordle', noindex: true } } },
+    { path: '/games/higher-or-lower', component: HigherOrLower, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Mayor o menor', noindex: true } } },
+    { path: '/games/connections', component: Connections, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Conexiones', noindex: true } } },
+    { path: '/games/football-grid', component: FootballGrid, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'La Grilla', noindex: true } } },
+    { path: '/games/stat-challenge', component: StatChallenge, meta: { requiresAuth: true, zone: 'play', seo: { title: 'Desafío de estadísticas', noindex: true } } },
+    { path: '/leaderboards', component: Leaderboards, meta: { zone: 'data', seo: { title: 'Tabla de posiciones', description: 'Mirá el ranking global de jugadores de Fulvo por XP, rachas y logros.' } } },
+    { path: '/u/:id', component: Profile, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Perfil de usuario', noindex: true } } },
+    { path: '/notifications', component: Notifications, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Notificaciones', noindex: true } } },
+    { path: '/messages', component: DirectMessages, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Mensajes', noindex: true } } },
+    { path: '/messages/:peerId', component: DirectChat, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Mensajes', noindex: true } } },
     // Admin Panel
-    { path: '/admin', component: AdminPanel, meta: { requiresAuth: true, requiresAdmin: true, zone: 'data' } },
+    { path: '/admin', component: AdminPanel, meta: { requiresAuth: true, requiresAdmin: true, zone: 'data', seo: { title: 'Admin', noindex: true } } },
     // About / Info
-    { path: '/about/me', component: AboutMe, meta: { zone: 'hub' } },
-    { path: '/about/fulvo', component: AboutFulvo, meta: { zone: 'hub' } },
-    { path: '/about/objetivo', component: AboutObjective, meta: { zone: 'hub' } },
-    { path: '/privacidad', component: PrivacyPolicy, meta: { zone: 'hub' } },
-    { path: '/terminos', component: TermsOfService, meta: { zone: 'hub' } },
+    { path: '/about/me', component: AboutMe, meta: { zone: 'hub', seo: { title: 'Sobre mí', description: 'Quién está detrás de Fulvo.' } } },
+    { path: '/about/fulvo', component: AboutFulvo, meta: { zone: 'hub', seo: { title: 'Qué es Fulvo', description: 'Conocé Fulvo: la app de micro-juegos de fútbol con rachas, logros y ranking.' } } },
+    { path: '/about/objetivo', component: AboutObjective, meta: { zone: 'hub', seo: { title: 'Nuestro objetivo', description: 'La misión detrás de Fulvo.' } } },
+    { path: '/privacidad', component: PrivacyPolicy, meta: { zone: 'hub', seo: { title: 'Política de privacidad' } } },
+    { path: '/terminos', component: TermsOfService, meta: { zone: 'hub', seo: { title: 'Términos de servicio' } } },
     // Play landing pages
-    { path: '/play/points', component: PlayPoints, meta: { requiresAuth: true, zone: 'hub' } },
+    { path: '/play/points', component: PlayPoints, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Jugar', noindex: true } } },
     // /play/free (Juego Libre) retirado en MEJORAS12: redirige al índice por puntos
     { path: '/play/free', redirect: '/play/points' },
-    { path: '/rewards', component: RewardCenter, meta: { requiresAuth: true, zone: 'play' } },
-    { path: '/tienda', component: Tienda, meta: { requiresAuth: true, zone: 'hub' } },
-    { path: '/pricing', component: Pricing, meta: { zone: 'hub' } },
+    { path: '/rewards', component: RewardCenter, meta: { requiresAuth: true, zone: 'play', seo: { title: 'Recompensas', noindex: true } } },
+    { path: '/tienda', component: Tienda, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Tienda', noindex: true } } },
+    { path: '/pricing', component: Pricing, meta: { zone: 'hub', seo: { title: 'Planes y precios', description: 'Conocé los planes PRO de Fulvo: cosméticos exclusivos, ayudas y más.' } } },
     // Reto del día — funnel público sin login (entrada de marketing / streamers)
-    { path: '/reto', component: DailyChallenge, meta: { zone: 'play' } },
+    { path: '/reto', component: DailyChallenge, meta: { zone: 'play', seo: { title: 'Reto del día', description: 'El desafío diario de fútbol de Fulvo: jugá gratis, sin cuenta, y competí por el mejor puntaje.' } } },
     // Modo Carrera — funnel público sin login, estilo Copero (viral, sesión corta)
-    { path: '/carrera', component: Career, meta: { zone: 'play' } },
+    { path: '/carrera', component: Career, meta: { zone: 'play', seo: { title: 'Modo Carrera', description: 'Encadená aciertos sin fallar en el modo Carrera de Fulvo. Jugá gratis, sin cuenta.' } } },
     // 404 fallback
-    { path: '/:pathMatch(.*)*', component: NotFound, meta: { zone: 'hub' } },
+    { path: '/:pathMatch(.*)*', component: NotFound, meta: { zone: 'hub', seo: { title: 'Página no encontrada', noindex: true } } },
 ]
 
 const router = createRouter({
@@ -157,6 +158,13 @@ router.afterEach((to) => {
     const toTop = () => window.scrollTo({ top: 0, left: 0 });
     requestAnimationFrame(toTop);
     setTimeout(toTop, 320);
+});
+
+// SEO por ruta: title/description/canonical/OG (ver services/seo.js).
+// Rutas con contenido dinámico (equipo, competición) lo pisan ellas mismas
+// una vez que cargan el nombre real.
+router.afterEach((to) => {
+    setSeo({ ...to.meta.seo, path: to.fullPath });
 });
 
 export default router;

@@ -6,7 +6,10 @@
     <title>Fulvo | Entrená tu conocimiento de fútbol</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/goaldemy.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <!-- Google Fonts - Montserrat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,7 +35,9 @@
       property="og:description"
       content="Entrená tu conocimiento de fútbol jugando: micro‑juegos, rachas, logros y tablas de posiciones."
     />
-    <meta property="og:image" content="https://fulvo.com.ar/goaldemy.png" />
+    <meta property="og:image" content="https://fulvo.com.ar/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:url" content="https://fulvo.com.ar/" />
 
     <!-- Twitter -->
@@ -42,8 +47,20 @@
       name="twitter:description"
       content="Entrená tu conocimiento de fútbol jugando: micro‑juegos, rachas, logros y tablas de posiciones."
     />
-    <meta name="twitter:image" content="https://fulvo.com.ar/goaldemy.png" />
+    <meta name="twitter:image" content="https://fulvo.com.ar/og-image.png" />
     <meta name="twitter:url" content="https://fulvo.com.ar/" />
+
+    <!-- Structured data: le da a Google contexto extra para sitelinks / search box -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Fulvo",
+      "url": "https://fulvo.com.ar/",
+      "description": "Entrená tu conocimiento de fútbol jugando: micro‑juegos, rachas, logros y tablas de posiciones.",
+      "inLanguage": "es-AR"
+    }
+    </script>
   </head>
   <body class="min-h-full antialiased">
     <div class="min-h-full" id="app"></div>

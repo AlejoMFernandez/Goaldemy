@@ -293,6 +293,7 @@ import { getLeagueOverview } from '@/services/fotmob.js';
 import { competitionBySlug, LEAGUE_LOGO } from '@/services/competitions.js';
 import TournamentBracket from '@/components/league/TournamentBracket.vue';
 import KnockoutBracket from '@/components/league/KnockoutBracket.vue';
+import { setSeo } from '@/services/seo.js';
 
 export default {
   name: 'CompetitionPage',
@@ -301,6 +302,17 @@ export default {
     const route = useRoute();
     const comp = computed(() => competitionBySlug(route.params.slug));
     const compLogo = computed(() => (comp.value ? LEAGUE_LOGO(comp.value.id) : ''));
+
+    // comp es síncrono (deriva del slug), a diferencia de leagueData que es async:
+    // ya podemos pisar el título/desc genérico del route.meta.seo apenas se resuelve.
+    watch(comp, (c) => {
+      if (!c?.name) return;
+      setSeo({
+        title: c.name,
+        description: `Tabla de posiciones, fixture y resultados en vivo de ${c.name} en Fulvo.`,
+        path: route.fullPath,
+      });
+    }, { immediate: true });
 
     const leagueData = ref(null);
     const loading = ref(true);
