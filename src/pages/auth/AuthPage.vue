@@ -268,8 +268,11 @@ export default {
          la card. -->
     <div ref="formScroll" class="relative z-20 sticky top-[88px] -mx-4 rounded-t-2xl border-t border-white/10 bg-[#0b1220] px-6 pt-8 pb-10 shadow-2xl shadow-black/50 lg:static lg:z-auto lg:mx-0 lg:rounded-none lg:border-0 lg:max-w-none lg:h-full lg:overflow-y-auto lg:bg-transparent lg:shadow-none lg:px-10 lg:py-10">
     <div class="lg:my-auto">
-    <!-- Toggle fijo: solo mobile — en desktop se cambia de modo con los links de abajo -->
-    <div class="mb-3 flex rounded-full bg-white/5 border border-white/10 p-1 lg:hidden">
+    <!-- Toggle fijo: solo mobile — en desktop se cambia de modo con los links de abajo.
+         mb-8 (no mb-3): en mobile el form ya no tiene el título arriba (está
+         oculto, ver más abajo), así que el toggle quedaba pegado directo al
+         primer input — parecía parte del form en vez de una selección propia. -->
+    <div class="mb-8 flex rounded-full bg-white/5 border border-white/10 p-1 lg:hidden">
       <button type="button" @click="setMode('login')" :class="tabClass('login')">Iniciar sesión</button>
       <button type="button" @click="setMode('register')" :class="tabClass('register')">Crear cuenta</button>
     </div>
