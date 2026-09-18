@@ -4,6 +4,14 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "goaldemy.vercel.app" }],
+      "destination": "https://fulvo.com.ar/$1",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/fotmob", "destination": "https://www.fotmob.com/" },
     { "source": "/fotmob/:path*", "destination": "https://www.fotmob.com/:path*" },
