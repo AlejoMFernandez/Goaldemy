@@ -138,10 +138,18 @@ export default {
     <div class="min-h-screen min-w-0 transition-[padding] duration-300"
          :class="isAuthLayout ? 'grid grid-rows-[1fr]' : 'grid grid-rows-[auto_1fr_auto]'">
       <AppNavBar v-if="!isAuthLayout" />
-      <main :style="shellStyle" :class="isAuthLayout ? 'relative z-10 min-h-screen min-w-0 grid place-items-center px-4 py-8' : (isImmersive ? 'relative z-10 w-full min-w-0 max-w-[1600px] mx-auto px-3 sm:px-6 py-0' : 'relative z-10 w-full min-w-0 max-w-[1600px] mx-auto px-6 py-10 lg:py-12')">
+      <main :style="shellStyle" :class="isAuthLayout ? 'relative z-10 min-h-0 lg:min-h-screen min-w-0 grid place-items-center px-4 py-0 lg:py-8' : (isImmersive ? 'relative z-10 w-full min-w-0 max-w-[1600px] mx-auto px-3 sm:px-6 py-0' : 'relative z-10 w-full min-w-0 max-w-[1600px] mx-auto px-6 py-10 lg:py-12')">
         <RouterView v-if="!authBooting" v-slot="{ Component, route }">
           <Transition name="fade-slide" mode="out-in">
-            <div :key="route.meta?.authGroup || route.path" class="route-shell">
+            <!-- w-full lg:w-auto solo en el layout de auth (login/register):
+                 <main> centra este wrapper con place-items-center, que por
+                 default también lo ENCOGE al ancho de su contenido
+                 (justify-items:center) en vez de estirarlo — en mobile eso
+                 dejaba el AuthPage completo angosto y centrado, con "bordes"
+                 visibles a los costados aunque sus hijos ya cancelaran el
+                 padding con -mx-4. En desktop se deja encoger (w-auto) para
+                 que la card de max-w-4xl siga centrándose sola. -->
+            <div :key="route.meta?.authGroup || route.path" class="route-shell" :class="isAuthLayout ? 'w-full lg:w-auto' : ''">
               <component :is="Component" />
             </div>
           </Transition>

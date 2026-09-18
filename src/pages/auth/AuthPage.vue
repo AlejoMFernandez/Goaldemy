@@ -225,17 +225,17 @@ export default {
        normal (no pegajoso): al scrollear se va tapando por el form, que sí
        es pegajoso y la "pisa" progresivamente hasta asentarse justo debajo
        del header con el logo. Mismo bg sólido que el header (ver comentario
-       de arriba). SIN overflow-hidden a propósito: con él, la aureola de
-       arriba (el blur que se mete -top-10 hacia el header) quedaba cortada
-       justo en el borde entre header y abanico — una línea recta en medio
-       de un glow difuso que delataba "acá empieza el otro componente". Sin
-       el clip, la aureola se difumina de verdad hacia el header (que la
-       tapa con su propio fondo sólido) y no corta en seco. También evita
-       que el tooltip de GamesFan (que se abre hacia arriba de la card) se
-       recorte cuando la card está cerca del borde superior. -->
+       de arriba). SIN overflow-hidden a propósito: para que la aureola de
+       arriba pueda pintar por encima del header (ver z-[100] abajo) en vez
+       de quedar recortada acá mismo. -->
   <div class="lg:hidden relative -mx-4 px-4 pt-2 pb-28 bg-[#0b1220] text-center">
-    <div aria-hidden="true" class="pointer-events-none absolute -top-10 -left-10 h-40 w-40 rounded-full bg-emerald-500/20 blur-3xl"></div>
-    <div aria-hidden="true" class="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-cyan-500/20 blur-3xl"></div>
+    <!-- z-[100]: el glow tiene que pintar POR ENCIMA del header sticky (z-30)
+         para que se difumine de verdad sobre su fondo en vez de que el borde
+         recto del header lo tape de golpe — eso es lo que se veía como el
+         "corte" entre header y abanico. Con el blur pintando arriba, se
+         desvanece solo (blur-3xl) sin ningún borde duro. -->
+    <div aria-hidden="true" class="pointer-events-none absolute -top-10 -left-10 z-[100] h-40 w-40 rounded-full bg-emerald-500/20 blur-3xl"></div>
+    <div aria-hidden="true" class="pointer-events-none absolute -bottom-10 -right-10 z-[100] h-40 w-40 rounded-full bg-cyan-500/20 blur-3xl"></div>
     <p class="relative z-10 text-slate-300 text-sm max-w-[260px] mx-auto mb-4">Entrená tu conocimiento de fútbol, sumá XP y desbloqueá logros.</p>
     <GamesFan class="relative z-10 w-full max-w-sm mx-auto" />
   </div>
