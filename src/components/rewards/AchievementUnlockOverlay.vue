@@ -156,7 +156,7 @@ export default {
       <div v-if="current" class="fixed inset-0 z-[60] grid place-items-center p-4" @click.self="claim">
         <!-- Backdrop -->
         <div
-          class="absolute inset-0 bg-black/85 backdrop-blur-md transition-opacity duration-400"
+          class="absolute inset-0 bg-black/92 transition-opacity duration-400"
           :class="{ 'opacity-0': flying }"
         ></div>
 

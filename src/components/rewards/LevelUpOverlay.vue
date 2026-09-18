@@ -109,7 +109,7 @@ watch(() => notificationsState.proWelcome, (pw) => {
   <Teleport to="body">
     <Transition name="overlay-fade">
       <div v-if="current" class="fixed inset-0 z-[60] grid place-items-center p-4" @click.self="stage === 'rank' ? null : dismiss()">
-        <div class="absolute inset-0 bg-black/85 backdrop-blur-md"></div>
+        <div class="absolute inset-0 bg-black/92"></div>
 
         <!-- ═══════════ ACTO 1 · ASCENSO DE RANGO ═══════════ -->
         <div v-if="stage === 'rank'" class="relative flex flex-col items-center text-center max-w-md w-full">

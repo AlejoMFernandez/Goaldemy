@@ -178,7 +178,7 @@ export default {
     <Transition name="overlay-fade">
       <div v-if="active" class="fixed inset-0 z-[60] grid place-items-center p-4 overflow-y-auto"
            @click.self="(total === 1 ? unboxed : allRevealed) && close()">
-        <div class="absolute inset-0 bg-black/85 backdrop-blur-md"></div>
+        <div class="absolute inset-0 bg-black/92"></div>
 
         <!-- ═══ MODO "1 SOLA": sobre → detalle grande (sin cambios de comportamiento) ═══ -->
         <template v-if="total === 1">

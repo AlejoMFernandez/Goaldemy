@@ -453,7 +453,7 @@ export default {
 
 <template>
     <header class="sticky top-0 z-40">
-        <div class="border-b border-white/10 bg-gradient-to-b from-slate-900/70 to-slate-900/30 backdrop-blur supports-[backdrop-filter]:bg-slate-900/40">
+        <div class="border-b border-white/10 bg-slate-900/92">
             <nav class="container mx-auto flex items-center justify-between px-4 py-4 gap-3">
                 <RouterLink to="/" class="flex-none">
                     <FulvoLogo variant="full" size="sm" :animated="true" />

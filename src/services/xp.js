@@ -111,6 +111,28 @@ export async function getLeaderboard({ period = 'all_time', gameId = null, limit
   return { data, error }
 }
 
+/**
+ * Rank (all-time, global) de un solo usuario. Perf: antes se pedía get_leaderboard
+ * con limit:100 y se buscaba la fila del usuario client-side — esta RPC (supabase/get-user-rank.sql)
+ * devuelve 1 fila en vez de 100. Resiliente: si la RPC no existe todavía (PGRST202,
+ * la migración no se corrió), cae al método viejo.
+ */
+export async function getUserRank(userId) {
+  const { data, error } = await supabase.rpc('get_user_rank', { p_user_id: userId })
+  if (!error) {
+    const row = Array.isArray(data) ? data[0] : data
+    return { rank: row?.rank ?? null, error: null }
+  }
+  if (error.code !== 'PGRST202' && !/Could not find the function/i.test(error.message || '')) {
+    return { rank: null, error }
+  }
+  // Fallback: la RPC dedicada todavía no existe en la DB.
+  const { data: topData } = await getLeaderboard({ period: 'all_time', gameId: null, limit: 100, offset: 0 })
+  const top = Array.isArray(topData) ? topData : (topData ? [topData] : [])
+  const idx = top.findIndex(r => r.user_id === userId)
+  return { rank: idx >= 0 ? (top[idx].rank ?? (idx + 1)) : null, error: null }
+}
+
 const FALLBACK_THRESHOLDS = [
   { level: 1, xp_required: 0 }, { level: 2, xp_required: 100 }, { level: 3, xp_required: 250 },
   { level: 4, xp_required: 450 }, { level: 5, xp_required: 700 }, { level: 6, xp_required: 1000 },

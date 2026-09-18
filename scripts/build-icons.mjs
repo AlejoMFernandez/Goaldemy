@@ -11,7 +11,10 @@ import sharp from 'sharp'
 
 const PUB = 'public/cosmetics/icons'
 const SRC = 'icon-sources'
-const SIZE = 512
+// El mayor uso real en el front es 150px CSS (CosmeticUnlockOverlay/AchievementUnlockOverlay);
+// 320px cubre eso con margen para pantallas retina (2x) sin cargar el peso de 512px que
+// nadie necesita (el resto de los usos son avatares/íconos de 16-64px).
+const SIZE = 320
 const QUALITY = 82
 
 await mkdir(SRC, { recursive: true })

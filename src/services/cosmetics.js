@@ -19,6 +19,25 @@ export async function getCosmetics() {
   return Array.isArray(data) ? data : []
 }
 
+// Catálogo estático (code, name, rarity, style_key, premium_only): cambia solo
+// cuando se agrega un cosmético nuevo, así que cachearlo evita re-pedirlo en
+// CADA carga de perfil (era una query extra secuencial en getEquippedCosmetics).
+let _catalogByCodeCache = null
+let _catalogByCodeAt = 0
+const CATALOG_TTL_MS = 5 * 60_000
+async function catalogByCode() {
+  const now = Date.now()
+  if (_catalogByCodeCache && (now - _catalogByCodeAt < CATALOG_TTL_MS)) return _catalogByCodeCache
+  const { data: cat, error } = await supabase.from('cosmetics').select('code, name, rarity, style_key, premium_only')
+  if (error) {
+    if (_catalogByCodeCache) return _catalogByCodeCache // seguí usando el caché viejo antes que nada
+    throw error
+  }
+  _catalogByCodeCache = Object.fromEntries((cat || []).map(c => [c.code, c]))
+  _catalogByCodeAt = now
+  return _catalogByCodeCache
+}
+
 /**
  * Cosméticos equipados de un usuario, resueltos a estilo/texto.
  * Resiliente: si el schema de cosméticos no existe todavía, devuelve defaults.
@@ -28,8 +47,7 @@ export async function getEquippedCosmetics(userId) {
   if (!userId) return out
   let byCode = {}
   try {
-    const { data: cat } = await supabase.from('cosmetics').select('code, name, rarity, style_key, premium_only')
-    byCode = Object.fromEntries((cat || []).map(c => [c.code, c]))
+    byCode = await catalogByCode()
   } catch { return out }
   // Fase 4: bordes + títulos
   try {
@@ -68,8 +86,7 @@ export async function getEquippedCosmeticsBatch(userIds) {
 
   let byCode = {}
   try {
-    const { data: cat } = await supabase.from('cosmetics').select('code, style_key')
-    byCode = Object.fromEntries((cat || []).map(c => [c.code, c]))
+    byCode = await catalogByCode()
   } catch { return out }
 
   // Intento con icon_bg (fase 4d); si la columna no existe, sin ella.

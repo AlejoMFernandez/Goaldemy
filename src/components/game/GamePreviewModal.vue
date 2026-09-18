@@ -103,7 +103,7 @@ export default {
   <Transition name="modal">
     <div v-if="open" class="fixed inset-0 z-50 overflow-y-auto">
       <!-- Backdrop -->
-      <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" @click="$emit('close')"></div>
+      <div class="fixed inset-0 bg-black/85" @click="$emit('close')"></div>
 
       <!-- Centering wrapper: centra si entra, padding parejo si es grande -->
       <div class="relative min-h-full flex items-center justify-center p-4" @click.self="$emit('close')">
@@ -247,7 +247,7 @@ export default {
   <!-- Countdown 3-2-1 antes de arrancar -->
   <Teleport to="body">
     <Transition name="cd-fade">
-      <div v-if="countdown !== null" class="fixed inset-0 z-[60] grid place-items-center bg-slate-950/92 backdrop-blur-sm">
+      <div v-if="countdown !== null" class="fixed inset-0 z-[60] grid place-items-center bg-slate-950/95">
         <div class="text-center">
           <div class="text-sm uppercase tracking-[0.3em] text-slate-400 mb-2">Preparate</div>
           <div :key="countdown" class="cd-pop font-display font-extrabold bg-gradient-to-br from-emerald-400 to-cyan-400 bg-clip-text text-transparent leading-none"

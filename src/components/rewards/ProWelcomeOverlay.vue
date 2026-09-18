@@ -65,7 +65,7 @@ function onEnter() {
   <Teleport to="body">
     <Transition name="prow-fade" @enter="onEnter">
       <div v-if="pw" class="fixed inset-0 z-[65] grid place-items-center p-4">
-        <div class="absolute inset-0 bg-black/85 backdrop-blur-md"></div>
+        <div class="absolute inset-0 bg-black/92"></div>
 
         <div class="relative w-full max-w-lg rounded-3xl border bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 shadow-2xl overflow-hidden"
              :class="isLegend ? 'border-amber-500/40' : 'border-fuchsia-500/40'"

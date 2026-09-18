@@ -67,5 +67,19 @@ export default defineConfig(async ({ mode }) => {
         },
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          // vue/vue-router/supabase-js son pesados, los necesita TODA la app y casi
+          // no cambian entre deploys → separados del chunk "index" (que sí cambia
+          // seguido), el browser los cachea aparte y no los vuelve a bajar en cada
+          // release nuestro.
+          manualChunks: {
+            vendor: ['vue', 'vue-router'],
+            supabase: ['@supabase/supabase-js'],
+          },
+        },
+      },
+    },
   }
 })

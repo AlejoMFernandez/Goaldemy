@@ -239,7 +239,7 @@ export default {
 <template>
   <Teleport to="body">
     <Transition name="summary-overlay">
-      <div v-if="show" class="fixed inset-0 z-[55] overflow-y-auto bg-black/80 backdrop-blur-lg">
+      <div v-if="show" class="fixed inset-0 z-[55] overflow-y-auto bg-black/90">
         <div class="min-h-full flex items-center justify-center p-4">
         <div class="summary-card w-full max-w-md rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden shadow-2xl shadow-black/50">
 

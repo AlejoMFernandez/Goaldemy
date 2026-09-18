@@ -161,131 +161,169 @@ export default {
       this._loading = false
     },
     async loadFor(userId) {
-      try {
-        const { data: profile, error } = await getPublicProfile(userId)
-        if (error) console.error('[Profile.vue] getPublicProfile error:', error)
-        this.user = profile ? { ...profile, id: userId } : { id: userId }
-        this.featuredAchievements = profile?.featured_achievements || []
-        try {
-          const team = this.user?.favorite_team ? findTeamByName(this.user.favorite_team) : null
-          this.favTeamLogo = team?.logo || ''
-          this.favTeamId = team?.id || ''
-        } catch {}
-        try {
-          const player = this.user?.favorite_player ? findPlayerByName(this.user.favorite_player) : null
-          this.favPlayerImage = player?.image || ''
-        } catch {}
-        const s = []
-        if (this.user?.linkedin_url) s.push({ type: 'linkedin', url: this.user.linkedin_url })
-        if (this.user?.github_url) s.push({ type: 'github', url: this.user.github_url })
-        if (this.user?.x_url) s.push({ type: 'twitter', url: this.user.x_url })
-        if (this.user?.instagram_url) s.push({ type: 'instagram', url: this.user.instagram_url })
-        this.socials = s
-        const eq = await getEquippedCosmetics(userId)
-        this.equippedFrameKey = eq.frameKey
-        this.equippedTitleText = eq.titleText
-        this.equippedTitleRarity = eq.titleRarity
-        this.equippedIconGlyph = eq.iconGlyph
-        this.equippedBannerKey = eq.bannerKey
-        this.equippedIconBg = eq.iconBg
-        this.equippedFramePremium = eq.framePremium
-        this.equippedTitlePremium = eq.titlePremium
-        this.equippedBannerPremium = eq.bannerPremium
-        try { this.viewedPlanSlug = (await getPlanBadge(userId)).plan || 'free' } catch { this.viewedPlanSlug = 'free' }
-      } catch (e) {
-        console.error('[Profile.vue] getPublicProfile exception:', e)
-        this.user = { id: userId }
-      }
+      // Perf: todo lo que sigue eran ~11 await ENCADENADOS (uno esperaba al
+      // anterior para arrancar) → el tiempo total era la SUMA de cada round-trip
+      // a Supabase. Ahora las llamadas independientes entre sí corren en
+      // paralelo con Promise.all, así el tiempo total es el MÁXIMO, no la suma.
+      // Solo checkAndUnlockSpecials (necesita xpByGame/maxStreaks) y refreshConn
+      // (perfil ajeno) siguen secuenciales porque dependen de datos de arriba.
+      const t0 = performance.now()
+      const isSelf = (this.$route.params.id || this.currentAuthId) === this.currentAuthId
 
       this.levelLoading = true
-      try {
-        const { data, error } = await getUserLevel(userId)
-        if (error) console.error('getUserLevel error:', error)
-        this.levelInfo = Array.isArray(data) ? data[0] : data
-      } catch (e) {
-        console.error('getUserLevel exception:', e)
-        this.levelInfo = null
-      } finally {
-        this.levelLoading = false
-      }
-
-      try {
-        const { getLeaderboard } = await import('../../services/xp')
-        const { data: topData } = await getLeaderboard({ period: 'all_time', gameId: null, limit: 100, offset: 0 })
-        const top = Array.isArray(topData) ? topData : (topData ? [topData] : [])
-        const idx = top.findIndex(r => r.user_id === userId)
-        this.topRank = idx >= 0 ? (top[idx].rank ?? (idx + 1)) : null
-      } catch {
-        this.topRank = null
-      }
-
       this.achLoading = true
-      try {
-        const { data: ach, error: achErr } = await getUserAchievements(userId)
-        if (achErr) console.error('load achievements error:', achErr)
-        this.achievements = ach || []
-      } catch (e) {
-        console.error('achievements exception:', e)
-        this.achievements = []
-      } finally {
-        this.achLoading = false
-      }
-
       this.xpByGameLoading = true
-      try {
-        const { data: xpRows, error: xpErr } = await getUserXpByGame(userId)
-        if (xpErr && !(xpErr.code === 'PGRST202' || /Could not find the function/i.test(xpErr.message || ''))) {
-          console.error('load xp by game error:', xpErr)
-        }
-        this.xpByGame = xpRows || []
-      } catch (e) {
-        if (!(e?.code === 'PGRST202' || /Could not find the function/i.test(e?.message || ''))) {
-          console.error('xp by game exception:', e)
-        }
-        this.xpByGame = []
-      } finally {
-        this.xpByGameLoading = false
-      }
-
       this.maxStreaksLoading = true
-      try {
-        const { data: sRows } = await getUserMaxStreakByGame(userId)
-        this.maxStreaks = sRows || []
-        const map = {}
-        for (const r of this.maxStreaks) if (r && r.id) map[r.id] = r.streak || 0
-        this.streaksMap = map
-      } catch (e) {
-        this.maxStreaks = []
-        this.streaksMap = {}
-      } finally {
-        this.maxStreaksLoading = false
-      }
+      this.dailyStreaksLoading = true
 
-      try {
-        const isSelf = (this.$route.params.id || this.currentAuthId) === this.currentAuthId
-        this.dailyStreaksLoading = true
-        if (!isSelf) {
-          this.dailyStreaksItems = []
-        } else {
-          const mod = await import('../../services/game-modes')
-          const games = mod.getDailyGamesList()
-          const rows = await Promise.all(games.map(async g => {
-            const [cur, best] = await Promise.all([
-              mod.fetchDailyWinStreak(g.slug).catch(() => 0),
-              mod.fetchMaxDailyWinStreak(g.slug).catch(() => 0),
-            ])
-            return { slug: g.slug, name: g.name, current: cur || 0, best: best || 0 }
-          }))
-          this.dailyStreaksItems = rows.sort((a,b) => (b.best||0) - (a.best||0))
+      const loadIdentity = async () => {
+        try {
+          const { data: profile, error } = await getPublicProfile(userId)
+          if (error) console.error('[Profile.vue] getPublicProfile error:', error)
+          this.user = profile ? { ...profile, id: userId } : { id: userId }
+          this.featuredAchievements = profile?.featured_achievements || []
+          try {
+            const team = this.user?.favorite_team ? findTeamByName(this.user.favorite_team) : null
+            this.favTeamLogo = team?.logo || ''
+            this.favTeamId = team?.id || ''
+          } catch {}
+          try {
+            const player = this.user?.favorite_player ? findPlayerByName(this.user.favorite_player) : null
+            this.favPlayerImage = player?.image || ''
+          } catch {}
+          const s = []
+          if (this.user?.linkedin_url) s.push({ type: 'linkedin', url: this.user.linkedin_url })
+          if (this.user?.github_url) s.push({ type: 'github', url: this.user.github_url })
+          if (this.user?.x_url) s.push({ type: 'twitter', url: this.user.x_url })
+          if (this.user?.instagram_url) s.push({ type: 'instagram', url: this.user.instagram_url })
+          this.socials = s
+        } catch (e) {
+          console.error('[Profile.vue] getPublicProfile exception:', e)
+          this.user = { id: userId }
         }
-      } catch (e) {
-        this.dailyStreaksItems = []
-      } finally {
-        this.dailyStreaksLoading = false
       }
 
+      const loadCosmeticsAndPlan = async () => {
+        try {
+          const eq = await getEquippedCosmetics(userId)
+          this.equippedFrameKey = eq.frameKey
+          this.equippedTitleText = eq.titleText
+          this.equippedTitleRarity = eq.titleRarity
+          this.equippedIconGlyph = eq.iconGlyph
+          this.equippedBannerKey = eq.bannerKey
+          this.equippedIconBg = eq.iconBg
+          this.equippedFramePremium = eq.framePremium
+          this.equippedTitlePremium = eq.titlePremium
+          this.equippedBannerPremium = eq.bannerPremium
+        } catch {}
+        try { this.viewedPlanSlug = (await getPlanBadge(userId)).plan || 'free' } catch { this.viewedPlanSlug = 'free' }
+      }
+
+      const loadLevel = async () => {
+        try {
+          const { data, error } = await getUserLevel(userId)
+          if (error) console.error('getUserLevel error:', error)
+          this.levelInfo = Array.isArray(data) ? data[0] : data
+        } catch (e) {
+          console.error('getUserLevel exception:', e)
+          this.levelInfo = null
+        } finally {
+          this.levelLoading = false
+        }
+      }
+
+      const loadRank = async () => {
+        try {
+          const { getUserRank } = await import('../../services/xp')
+          const { rank } = await getUserRank(userId)
+          this.topRank = rank
+        } catch {
+          this.topRank = null
+        }
+      }
+
+      const loadAchievements = async () => {
+        try {
+          const { data: ach, error: achErr } = await getUserAchievements(userId)
+          if (achErr) console.error('load achievements error:', achErr)
+          this.achievements = ach || []
+        } catch (e) {
+          console.error('achievements exception:', e)
+          this.achievements = []
+        } finally {
+          this.achLoading = false
+        }
+      }
+
+      const loadXpByGame = async () => {
+        try {
+          const { data: xpRows, error: xpErr } = await getUserXpByGame(userId)
+          if (xpErr && !(xpErr.code === 'PGRST202' || /Could not find the function/i.test(xpErr.message || ''))) {
+            console.error('load xp by game error:', xpErr)
+          }
+          this.xpByGame = xpRows || []
+        } catch (e) {
+          if (!(e?.code === 'PGRST202' || /Could not find the function/i.test(e?.message || ''))) {
+            console.error('xp by game exception:', e)
+          }
+          this.xpByGame = []
+        } finally {
+          this.xpByGameLoading = false
+        }
+      }
+
+      const loadMaxStreaks = async () => {
+        try {
+          const { data: sRows } = await getUserMaxStreakByGame(userId)
+          this.maxStreaks = sRows || []
+          const map = {}
+          for (const r of this.maxStreaks) if (r && r.id) map[r.id] = r.streak || 0
+          this.streaksMap = map
+        } catch (e) {
+          this.maxStreaks = []
+          this.streaksMap = {}
+        } finally {
+          this.maxStreaksLoading = false
+        }
+      }
+
+      const loadDailyStreaks = async () => {
+        try {
+          if (!isSelf) {
+            this.dailyStreaksItems = []
+          } else {
+            const mod = await import('../../services/game-modes')
+            const games = mod.getDailyGamesList()
+            const rows = await Promise.all(games.map(async g => {
+              const [cur, best] = await Promise.all([
+                mod.fetchDailyWinStreak(g.slug).catch(() => 0),
+                mod.fetchMaxDailyWinStreak(g.slug).catch(() => 0),
+              ])
+              return { slug: g.slug, name: g.name, current: cur || 0, best: best || 0 }
+            }))
+            this.dailyStreaksItems = rows.sort((a,b) => (b.best||0) - (a.best||0))
+          }
+        } catch (e) {
+          this.dailyStreaksItems = []
+        } finally {
+          this.dailyStreaksLoading = false
+        }
+      }
+
+      await Promise.all([
+        loadIdentity(),
+        loadCosmeticsAndPlan(),
+        loadLevel(),
+        loadRank(),
+        loadAchievements(),
+        loadXpByGame(),
+        loadMaxStreaks(),
+        loadDailyStreaks(),
+        this.loadConnections(userId).catch(() => {}),
+      ])
+
+      // Dependiente: necesita xpByGame/maxStreaks ya resueltos arriba.
       try {
-        const isSelf = (this.$route.params.id || this.currentAuthId) === this.currentAuthId
         const res = await checkAndUnlockSpecials(userId, this.xpByGame, this.maxStreaks, isSelf)
         const r = res?.results || {}
         const anyNew = [r.streak_dual_100, r.xp_multi_5k_3].some(x => x && x.data === true)
@@ -295,11 +333,11 @@ export default {
         }
       } catch {}
 
-      const isSelf = (this.$route.params.id || this.currentAuthId) === this.currentAuthId
-      try { await this.loadConnections(userId) } catch {}
       if (!isSelf) {
         try { await this.refreshConn() } catch {}
       }
+
+      try { console.info(`[perf] Profile.loadFor: ${Math.round(performance.now() - t0)}ms`) } catch {}
     },
     async refreshConn() {
       if (!this.user?.id) return
