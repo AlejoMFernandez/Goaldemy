@@ -14,7 +14,6 @@
  */
 import { subscribeToAuthStateChanges, logout } from '../services/auth'
 import { listConnections } from '../services/connections'
-import { getRetoDuelBoard, sendDuelChallenge } from '../services/duels'
 import { getPublicProfilesByIds, getPublicProfile } from '../services/user-profiles'
 import { getEquippedCosmeticsBatch, getEquippedCosmetics, rarity } from '../services/cosmetics'
 import { presenceState } from '../services/presence'
@@ -50,8 +49,6 @@ export default {
       friends: [],
       threads: [],
       cos: {},
-      duelBoard: {},   // friendId → { corrects, total, played } — Reto del día de hoy
-      duelBusy: {},    // friendId → true mientras se envía el desafío
       loaded: false,
       loading: false,
       // Mi perfil (bloque superior)
@@ -94,7 +91,6 @@ export default {
         const p = this.presence[f.id]
         const status = p ? (p.game ? 'playing' : 'online') : 'offline'
         const t = th[f.id]
-        const duel = this.duelBoard[f.id] || null
         return {
           id: f.id,
           name: f.display_name || f.email || 'Usuario',
@@ -103,8 +99,6 @@ export default {
           game: p?.game || null,
           gameName: p?.game ? friendlyNameForSlug(p.game) : '',
           unread: t?.unread || 0,
-          duelPlayed: !!duel?.played,
-          duelScore: duel?.played ? `${duel.corrects}/${duel.total}` : null,
         }
       })
     },
@@ -190,7 +184,6 @@ export default {
         this.friends = profiles || []
         this.cos = cos || {}
         await this.loadThreads()
-        this.loadDuelBoard()
         this.loaded = true
       } finally {
         this.loading = false
@@ -208,20 +201,6 @@ export default {
     },
     async loadThreads() {
       try { const { data } = await fetchRecentConversations(50); this.threads = data || [] } catch {}
-    },
-    async loadDuelBoard() {
-      try {
-        const board = await getRetoDuelBoard()
-        const map = {}
-        for (const row of board) map[row.friendId] = row
-        this.duelBoard = map
-      } catch {}
-    },
-    async challengeFriend(friendId) {
-      if (this.duelBusy[friendId]) return
-      this.duelBusy = { ...this.duelBusy, [friendId]: true }
-      try { await sendDuelChallenge(friendId) }
-      finally { const b = { ...this.duelBusy }; delete b[friendId]; this.duelBusy = b }
     },
     openFromRail(peerId) {
       // Desde el rail preview: abre el drawer directo en el chat del amigo.
@@ -445,13 +424,8 @@ export default {
                 <div class="min-w-0 flex-1">
                   <div class="text-sm font-semibold text-white truncate">{{ r.name }}</div>
                   <div v-if="r.status === 'playing'" class="text-[11px] text-cyan-300 truncate">Jugando · {{ r.gameName }}</div>
-                  <div v-else-if="r.duelPlayed" class="text-[11px] text-amber-300/90 truncate">🔥 Reto de hoy: {{ r.duelScore }}</div>
                   <div v-else class="text-[11px] text-emerald-400/90">En línea</div>
                 </div>
-              </button>
-              <button v-if="!r.duelPlayed" @click.stop="challengeFriend(r.id)" :disabled="duelBusy[r.id]" title="Desafiar al Reto de hoy"
-                      class="shrink-0 h-8 w-8 grid place-items-center rounded-lg text-slate-500 hover:text-amber-300 hover:bg-amber-400/10 transition opacity-0 group-hover:opacity-100 focus:opacity-100">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/></svg>
               </button>
               <span v-if="r.unread > 0" class="shrink-0 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold grid place-items-center">{{ r.unread > 9 ? '9+' : r.unread }}</span>
             </div>
@@ -465,13 +439,8 @@ export default {
                 </div>
                 <div class="min-w-0 flex-1">
                   <div class="text-sm font-medium text-slate-300 truncate">{{ r.name }}</div>
-                  <div v-if="r.duelPlayed" class="text-[11px] text-amber-300/80 truncate">🔥 Reto de hoy: {{ r.duelScore }}</div>
-                  <div v-else class="text-[11px] text-slate-500">Desconectado</div>
+                  <div class="text-[11px] text-slate-500">Desconectado</div>
                 </div>
-              </button>
-              <button v-if="!r.duelPlayed" @click.stop="challengeFriend(r.id)" :disabled="duelBusy[r.id]" title="Desafiar al Reto de hoy"
-                      class="shrink-0 h-8 w-8 grid place-items-center rounded-lg text-slate-500 hover:text-amber-300 hover:bg-amber-400/10 transition opacity-0 group-hover:opacity-100 focus:opacity-100">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/></svg>
               </button>
               <span v-if="r.unread > 0" class="shrink-0 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold grid place-items-center">{{ r.unread > 9 ? '9+' : r.unread }}</span>
             </div>
