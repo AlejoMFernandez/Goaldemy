@@ -4,6 +4,8 @@ import { initState, loadPlayers, nextRound, submitGuess, blurForLives, posLabel,
 import { initScoring, GAME_SCORING } from '../../services/scoring'
 import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
+import { getAuthUser } from '../../services/auth'
+import { setPendingGuestClaim } from '../../services/guest-play'
 import { createDailyRng } from '../../services/seeded-random'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
 import { gameSummaryBlurb } from '../../services/games'
@@ -54,6 +56,7 @@ export default {
     gameMetadata() {
       return getGameMetadata('who-is')
     },
+    isGuest() { return !getAuthUser()?.id },
     maxLives() { return this.difficultyConfig?.lives ?? 3 },
     // Suggestions after 3+ chars, up to 12
     suggestions() {
@@ -122,7 +125,7 @@ export default {
       nextRound(this)
     },
     blurb() { return gameSummaryBlurb('who-is') },
-    backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
+    backPath() { if (this.isGuest) return '/'; return this.mode === 'free' ? '/play/free' : '/play/points' },
     async chooseSuggestion(p) {
       // Tocar una sugerencia la manda directo (estilo who-are-ya).
       if (!p) return
@@ -169,7 +172,13 @@ export default {
         } else {
           setTimeout(() => announceGameLoss(), 100)
         }
-        if (this.allowXp && this.xpEarned > 0) {
+        if (this.isGuest) {
+          // Sin cuenta: no hay a quién otorgarle XP server-side. Guardamos el
+          // resultado para reclamarlo de verdad si se registra (guest-play.js).
+          if (this.xpEarned > 0) {
+            setPendingGuestClaim({ game: 'who-is', corrects: this.gameWon ? 1 : 0, total: 1, maxStreak: this.maxStreak })
+          }
+        } else if (this.allowXp && this.xpEarned > 0) {
           await awardXpBatch({ gameCode: 'who-is', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
         }
         try {
@@ -357,6 +366,8 @@ export default {
           :xpEarned="xpEarned"
           :difficulty="selectedDifficulty"
           :winThreshold="1"
+          :guest="isGuest"
+          :resultLine="gameWon ? 'Adiviné al jugador ✅' : 'No lo adiviné esta vez'"
           :backPath="backPath()"
           @close="showSummary = false"
         />
