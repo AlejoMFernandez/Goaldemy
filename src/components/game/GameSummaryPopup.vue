@@ -6,6 +6,7 @@ import { friendlyNameForSlug } from '@/services/games'
 import { buildShareText, shareOrCopy } from '@/services/share'
 import { getAuthUser } from '@/services/auth'
 import { achievementIcon } from '@/services/achievement-icons'
+import { computeGuestRewards, getPendingGuestSummary } from '@/services/guest-play'
 import AchievementTile from '@/components/rewards/AchievementTile.vue'
 
 export default {
@@ -33,6 +34,9 @@ export default {
     // Invitado sin cuenta: reemplaza la tarjeta de nivel por un teaser y las
     // acciones finales por el muro de registro (ver services/guest-play.js)
     guest: { type: Boolean, default: false },
+    // Texto de resultado custom para compartir (ej: "Racha de 12 🔥"). Si viene
+    // vacío, buildShareText usa la barra de emojis default.
+    resultLine: { type: String, default: '' },
   },
   emits: ['close'],
   setup(props) {
@@ -44,6 +48,8 @@ export default {
     const xpBarWidth = ref(0)
     const showActions = ref(false)
     const claimGate = ref(false)
+    const guestPreview = computed(() => computeGuestRewards(props.corrects, props.winThreshold))
+    const guestSummary = ref({ count: 0, games: [], xp: 0, fichas: 0 })
     const sessionAchievements = ref([])
     let timers = []
     let countFrame = null
@@ -123,6 +129,7 @@ export default {
         accuracy: accuracy.value,
         maxStreak: props.maxStreak,
         won: won.value,
+        resultLine: props.resultLine || undefined,
         refCode: getAuthUser()?.referral_code || '',
       })
       const result = await shareOrCopy(text)
@@ -154,6 +161,7 @@ export default {
       showActions.value = false
       claimGate.value = false
       sessionAchievements.value = []
+      if (props.guest) guestSummary.value = getPendingGuestSummary()
       drainAchievementQueue()
       if (achWatcher) achWatcher()
       achWatcher = watch(() => notificationsState.achievementQueue.length, drainAchievementQueue)
@@ -227,7 +235,7 @@ export default {
       iconOf,
       phase, won, animatedCorrects, animatedStreak, animatedXp,
       starsRevealed, starCount, accuracy, xpBarWidth,
-      showActions, claimGate, difficultyLabel, difficultyColor, xpGained,
+      showActions, claimGate, guestPreview, guestSummary, difficultyLabel, difficultyColor, xpGained,
       baseXp, totalXp, bonusXp, hasProBonus,
       didLevelUp, sessionAchievements,
       shared, onShare,
@@ -396,13 +404,40 @@ export default {
             </div>
             <div
               v-else
-              class="rounded-xl border border-amber-400/20 bg-amber-500/5 p-3.5 text-center transition-all duration-500"
+              class="space-y-2.5 transition-all duration-500"
               :class="phase >= 4 ? 'opacity-100' : 'opacity-0 translate-y-4'"
             >
-              <p class="text-xs text-slate-300">
-                Estás jugando <strong class="text-amber-300">como invitado</strong> — esta XP todavía no está guardada.
-                Registrate para empezar a subir de nivel de verdad.
-              </p>
+              <div class="rounded-xl border border-amber-400/20 bg-amber-500/5 p-3 text-center">
+                <p class="text-xs text-slate-300">
+                  Estás jugando <strong class="text-amber-300">como invitado</strong> — esta XP todavía no está guardada.
+                </p>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div class="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-center">
+                  <div class="text-[10px] uppercase tracking-wider text-emerald-400/70 mb-1">XP a reclamar</div>
+                  <div class="font-display text-xl font-bold text-emerald-400">+{{ guestPreview.xp }}</div>
+                </div>
+                <div class="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 text-center">
+                  <div class="text-[10px] uppercase tracking-wider text-amber-400/70 mb-1">Fichas a reclamar</div>
+                  <div class="font-display text-xl font-bold text-amber-400">+{{ guestPreview.fichas }}</div>
+                </div>
+              </div>
+
+              <div v-if="guestSummary.count > 1" class="rounded-xl border border-cyan-400/25 bg-cyan-500/5 p-3 text-center">
+                <p class="text-xs text-cyan-300">
+                  🎮 Ya llevás <strong>{{ guestSummary.count }} juegos</strong> probados hoy — total acumulado:
+                  <strong>{{ guestSummary.xp }} XP</strong> y <strong>{{ guestSummary.fichas }} Fichas</strong>.
+                </p>
+              </div>
+
+              <div v-if="guestPreview.levelUp" class="rounded-xl border border-yellow-400/25 bg-yellow-500/10 p-3 text-center">
+                <p class="text-xs text-yellow-300 font-semibold">⚡ Esa XP alcanza para pasar a Nivel 2 apenas te registrés.</p>
+              </div>
+
+              <div v-if="guestPreview.perfect" class="rounded-xl border border-yellow-400/25 bg-yellow-500/10 p-3 text-center">
+                <p class="text-xs text-yellow-300 font-semibold">🏆 Un resultado perfecto como este desbloquea logros (y cosméticos exclusivos) al crear tu cuenta.</p>
+              </div>
             </div>
 
             <!-- Achievements earned this session -->
@@ -487,7 +522,10 @@ export default {
               <div v-else class="rounded-xl border border-amber-400/30 bg-gradient-to-br from-amber-500/10 to-slate-900/40 p-4 text-center gate-in">
                 <h3 class="font-display text-lg font-bold text-white mb-1">Tus recompensas te esperan</h3>
                 <p class="text-slate-300 text-xs mb-3">
-                  Creá tu cuenta gratis y guardá <strong class="text-emerald-400">+{{ totalXp }} XP</strong> y tu racha para siempre.
+                  Creá tu cuenta gratis y guardá
+                  <strong class="text-emerald-400">+{{ guestSummary.count > 1 ? guestSummary.xp : guestPreview.xp }} XP</strong>
+                  <span v-if="guestSummary.count > 1"> de {{ guestSummary.count }} juegos</span>
+                  para siempre.
                 </p>
                 <router-link to="/register" class="block w-full rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-900 py-2.5 text-sm font-bold transition shadow-lg shadow-amber-500/25 mb-2">
                   Crear cuenta gratis y reclamar
