@@ -6,6 +6,8 @@ import { getAllPlayersAsync } from '../../services/players'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
 import { captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
+import { getAuthUser } from '../../services/auth'
+import { setPendingGuestClaim } from '../../services/guest-play'
 import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { playCorrectSound, playIncorrectSound } from '../../services/sounds'
 import { createDailyRng } from '../../services/seeded-random'
@@ -117,6 +119,7 @@ export default {
   },
   computed: {
     gameMetadata() { return getGameMetadata('football-grid') },
+    isGuest() { return !getAuthUser()?.id },
     gameFinished() {
       if (!this.gridConfig) return false
       return this.cells.every(row => row.every(c => c.player || c.failed))
@@ -206,7 +209,7 @@ export default {
       this.xpEarned = 0
       this.loading = false
     },
-    backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
+    backPath() { if (this.isGuest) return '/'; return this.mode === 'free' ? '/play/free' : '/play/points' },
     openCell(r, c) {
       const cell = this.cells[r][c]
       if (cell.player || cell.failed || this.gameFinished) return
@@ -280,7 +283,11 @@ export default {
         setTimeout(() => announceGameLoss(), 100)
       }
 
-      if (this.allowXp && this.xpEarned > 0) {
+      if (this.isGuest) {
+        if (this.xpEarned > 0) {
+          setPendingGuestClaim({ game: 'football-grid', corrects: this.corrects, total: 9, maxStreak: 0 })
+        }
+      } else if (this.allowXp && this.xpEarned > 0) {
         await awardXpBatch({ gameCode: 'football-grid', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
       }
       try {
@@ -482,6 +489,8 @@ export default {
       :xpEarned="xpEarned"
       :difficulty="selectedDifficulty"
       :winThreshold="9"
+      :guest="isGuest"
+      :resultLine="corrects === 9 ? 'Completé la grilla ✅' : `Completé ${corrects}/9 celdas`"
       :backPath="backPath()"
       @close="showSummary = false"
     />
