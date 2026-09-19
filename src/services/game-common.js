@@ -204,3 +204,13 @@ export function selectRandomPlayerFromBucket(state) {
 
   return selectedPlayer
 }
+
+/** Clave del día en horario local (YYYY-MM-DD). Usada por sistemas que necesitan
+ * "un resultado por día" sin depender de una cuenta (invitados, Modo Carrera). */
+export function todayKey() {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}

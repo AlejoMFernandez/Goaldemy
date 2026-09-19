@@ -14,7 +14,7 @@
  */
 import { getAllTeams } from './players'
 import { shareBaseUrl } from './share'
-import { todayKey } from './daily-reto'
+import { todayKey } from './game-common'
 
 export const CAREER_SEASONS = 12
 export const START_AGE = 17
