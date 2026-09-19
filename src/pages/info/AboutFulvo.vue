@@ -143,8 +143,8 @@ import FulvoLogo from '../../components/FulvoLogo.vue'
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </RouterLink>
-            <RouterLink to="/reto" class="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 px-6 py-3 font-semibold text-cyan-400 transition hover:bg-cyan-500/10 hover:border-cyan-400/50">
-              Reto del día
+            <RouterLink to="/games/guess-player?mode=challenge" class="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 px-6 py-3 font-semibold text-cyan-400 transition hover:bg-cyan-500/10 hover:border-cyan-400/50">
+              Jugá gratis
             </RouterLink>
             <RouterLink to="/leaderboards" class="inline-flex items-center gap-2 rounded-xl border border-indigo-400/30 px-6 py-3 font-semibold text-indigo-400 transition hover:bg-indigo-500/10 hover:border-indigo-400/50">
               Leaderboards
