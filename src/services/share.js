@@ -5,7 +5,7 @@
  * NO revela respuestas: solo una barra de emojis con el puntaje + el link a Fulvo.
  * Cada resultado compartido es un cartel publicitario gratis de la app.
  *
- * Usado por GameSummaryPopup (juegos logueados) y la página /reto (invitados).
+ * Usado por GameSummaryPopup, tanto en la rama logueada como en la de invitado.
  */
 
 /**
@@ -32,22 +32,32 @@ export function shareBaseUrl() {
  * @param {string} opts.refCode - Código de referido propio (opcional). Si viene, el link
  *                                 apunta a /register?ref=CODE en vez de la home: cada
  *                                 resultado compartido se vuelve una invitación con premio.
+ * @param {string} [opts.resultLine] - Texto de resultado custom; si viene, reemplaza la barra de emojis.
  * @returns {string}
  */
-export function buildShareText({ gameName = '', corrects = 0, total = 0, accuracy = 0, maxStreak = 0, won = false, refCode = '' } = {}) {
-  const t = Math.max(total || 0, 1)
-  const got = Math.max(0, Math.min(corrects || 0, t))
-  // Barra de emojis: 🟩 acierto / ⬛ fallado, en filas de a 10 para no romper el salto de línea
-  const cells = []
-  for (let i = 0; i < t; i++) cells.push(i < got ? '🟩' : '⬛')
-  const rows = []
-  for (let i = 0; i < cells.length; i += 10) rows.push(cells.slice(i, i + 10).join(''))
+export function buildShareText({ gameName = '', corrects = 0, total = 0, accuracy = 0, maxStreak = 0, won = false, refCode = '', resultLine = '' } = {}) {
   const name = gameName ? ` · ${gameName}` : ''
   const link = refCode ? `${shareBaseUrl()}/register?ref=${encodeURIComponent(refCode)}` : shareBaseUrl()
+
+  let body
+  if (resultLine) {
+    // Resultado con texto propio del juego (ej: "Racha de 12 🔥") en vez de la
+    // barra de emojis — para juegos donde "X de N preguntas" no aplica bien.
+    body = [resultLine]
+  } else {
+    const t = Math.max(total || 0, 1)
+    const got = Math.max(0, Math.min(corrects || 0, t))
+    // Barra de emojis: 🟩 acierto / ⬛ fallado, en filas de a 10 para no romper el salto de línea
+    const cells = []
+    for (let i = 0; i < t; i++) cells.push(i < got ? '🟩' : '⬛')
+    const rows = []
+    for (let i = 0; i < cells.length; i += 10) rows.push(cells.slice(i, i + 10).join(''))
+    body = [rows.join('\n'), `✅ ${got}/${t}   🎯 ${accuracy}%   🔥 x${maxStreak || 0}`]
+  }
+
   return [
     `FULVO ⚽${name}`,
-    rows.join('\n'),
-    `✅ ${got}/${t}   🎯 ${accuracy}%   🔥 x${maxStreak || 0}`,
+    ...body,
     won ? '¿Podés superarme? 👇' : '¿Le ganás a mi intento? 👇',
     link,
   ].join('\n')

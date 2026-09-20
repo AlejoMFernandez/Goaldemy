@@ -11,7 +11,7 @@
  *    o desde su perfil) → captureReferralFromUrl() lo guarda en localStorage.
  * 2. Se registra y confirma su email.
  * 3. Al loguearse por primera vez, claimPendingReferral() llama a la RPC y reparte
- *    las Fichas. Se llama desde App.vue, igual que claimPendingRetoReward().
+ *    las Fichas. Se llama desde App.vue, igual que los otros reclamos pendientes.
  */
 import { shareBaseUrl } from './share'
 

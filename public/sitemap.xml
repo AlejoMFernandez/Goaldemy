@@ -7,12 +7,6 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://fulvo.com.ar/reto</loc>
-    <lastmod>2026-09-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://fulvo.com.ar/carrera</loc>
     <lastmod>2026-09-17</lastmod>
     <changefreq>weekly</changefreq>

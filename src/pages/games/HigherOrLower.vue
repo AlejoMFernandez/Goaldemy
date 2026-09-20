@@ -3,6 +3,8 @@ import GameShell from '../../components/game/GameShell.vue'
 import { getAllPlayersAsync, sampleDistinct } from '../../services/players'
 import { initScoring } from '../../services/scoring'
 import { awardXpBatch } from '../../services/game-xp'
+import { getAuthUser } from '../../services/auth'
+import { setPendingGuestClaim } from '../../services/guest-play'
 import { createDailyRng } from '../../services/seeded-random'
 import { celebrateCorrect, celebrateIncorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { playCorrectSound, playIncorrectSound } from '../../services/sounds'
@@ -37,6 +39,7 @@ export default {
   computed: {
     gameMetadata() { return getGameMetadata('higher-or-lower') },
     target() { return this.difficultyConfig?.target || 12 },
+    isGuest() { return !getAuthUser()?.id },
   },
   data() {
     return {
@@ -118,7 +121,7 @@ export default {
     }
   },
   methods: {
-    backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
+    backPath() { if (this.isGuest) return '/'; return this.mode === 'free' ? '/play/free' : '/play/points' },
 
     async load() {
       // Filtramos randoms con estadísticas nulas (0 apariciones/goles/asistencias):
@@ -278,7 +281,11 @@ export default {
     async finishChallenge(result) {
       this.score = this.chain * (this.difficultyConfig?.xpPerCorrect || 20)
 
-      if (this.allowXp && this.xpEarned > 0) {
+      if (this.isGuest) {
+        if (this.xpEarned > 0) {
+          setPendingGuestClaim({ game: 'higher-or-lower', corrects: this.chain, total: this.target, maxStreak: this.maxStreak })
+        }
+      } else if (this.allowXp && this.xpEarned > 0) {
         await awardXpBatch({ gameCode: 'higher-or-lower', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
       }
 
@@ -435,6 +442,8 @@ export default {
           :xpEarned="xpEarned"
           :difficulty="selectedDifficulty"
           :winThreshold="target"
+          :guest="isGuest"
+          :resultLine="isGuest ? `Racha de ${chain} 🔥` : ''"
           :backPath="backPath()"
           @close="showSummary = false"
         />

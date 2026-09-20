@@ -46,7 +46,6 @@ const CompetitionsHub = () => import('../pages/leagues/CompetitionsHub.vue');
 const CompetitionPage = () => import('../pages/leagues/CompetitionPage.vue');
 const TeamPage = () => import('../pages/TeamPage.vue');
 const Pricing = () => import('../pages/Pricing.vue');
-const DailyChallenge = () => import('../pages/DailyChallenge.vue');
 const Career = () => import('../pages/Career.vue');
 const PrivacyPolicy = () => import('../pages/legal/PrivacyPolicy.vue');
 const TermsOfService = () => import('../pages/legal/TermsOfService.vue');
@@ -65,20 +64,20 @@ const routes = [
     { path: '/profile', component: Profile, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Mi perfil', noindex: true } } },
     { path: '/profile-edit', component: ProfileEdit, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Editar perfil', noindex: true } } },
     { path: '/teams', component: Teams, meta: { zone: 'data', seo: { title: 'Equipos', description: 'Explorá equipos de fútbol, sus planteles y estadísticas.' } } },
-    // Piloto de modo invitado: se puede jugar sin cuenta, el resultado se reclama al registrarse (ver services/guest-play.js)
+    // Modo invitado: se puede jugar sin cuenta, el resultado se reclama al registrarse (ver services/guest-play.js)
     { path: '/games/guess-player', component: GuessPlayer, meta: { immersive: true, zone: 'play', seo: { title: 'Adiviná el jugador', description: 'Adiviná qué futbolista es a partir de pistas. Jugá gratis, sin necesidad de cuenta.' } } },
     { path: '/games/nationality', component: NationalityGame, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Nacionalidad', noindex: true } } },
     { path: '/games/player-position', component: PlayerPosition, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Posición del jugador', noindex: true } } },
-    { path: '/games/who-is', component: WhoIs, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: '¿Quién es?', noindex: true } } },
+    { path: '/games/who-is', component: WhoIs, meta: { immersive: true, zone: 'play', seo: { title: '¿Quién es?', noindex: true } } },
     { path: '/games/value-order', component: ValueOrder, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Orden por valor', noindex: true } } },
     { path: '/games/age-order', component: AgeOrder, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Orden por edad', noindex: true } } },
     { path: '/games/height-order', component: HeightOrder, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Orden por altura', noindex: true } } },
     { path: '/games/shirt-number', component: ShirtNumber, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Número de camiseta', noindex: true } } },
     { path: '/games/once-ideal', component: OnceIdeal, meta: { requiresAuth: true, zone: 'play', seo: { title: 'Once ideal', noindex: true } } },
     { path: '/games/football-wordle', component: FootballWordle, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Football Wordle', noindex: true } } },
-    { path: '/games/higher-or-lower', component: HigherOrLower, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Mayor o menor', noindex: true } } },
+    { path: '/games/higher-or-lower', component: HigherOrLower, meta: { immersive: true, zone: 'play', seo: { title: 'Mayor o menor', noindex: true } } },
     { path: '/games/connections', component: Connections, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Conexiones', noindex: true } } },
-    { path: '/games/football-grid', component: FootballGrid, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'La Grilla', noindex: true } } },
+    { path: '/games/football-grid', component: FootballGrid, meta: { immersive: true, zone: 'play', seo: { title: 'La Grilla', noindex: true } } },
     { path: '/games/stat-challenge', component: StatChallenge, meta: { requiresAuth: true, zone: 'play', seo: { title: 'Desafío de estadísticas', noindex: true } } },
     { path: '/leaderboards', component: Leaderboards, meta: { zone: 'data', seo: { title: 'Tabla de posiciones', description: 'Mirá el ranking global de jugadores de Fulvo por XP, rachas y logros.' } } },
     { path: '/u/:id', component: Profile, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Perfil de usuario', noindex: true } } },
@@ -100,8 +99,6 @@ const routes = [
     { path: '/rewards', component: RewardCenter, meta: { requiresAuth: true, zone: 'play', seo: { title: 'Recompensas', noindex: true } } },
     { path: '/tienda', component: Tienda, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Tienda', noindex: true } } },
     { path: '/pricing', component: Pricing, meta: { zone: 'hub', seo: { title: 'Planes y precios', description: 'Conocé los planes PRO de Fulvo: cosméticos exclusivos, ayudas y más.' } } },
-    // Reto del día — funnel público sin login (entrada de marketing / streamers)
-    { path: '/reto', component: DailyChallenge, meta: { zone: 'play', seo: { title: 'Reto del día', description: 'El desafío diario de fútbol de Fulvo: jugá gratis, sin cuenta, y competí por el mejor puntaje.' } } },
     // Modo Carrera — funnel público sin login, estilo Copero (viral, sesión corta)
     { path: '/carrera', component: Career, meta: { zone: 'play', seo: { title: 'Modo Carrera', description: 'Encadená aciertos sin fallar en el modo Carrera de Fulvo. Jugá gratis, sin cuenta.' } } },
     // 404 fallback
