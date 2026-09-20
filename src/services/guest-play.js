@@ -41,12 +41,12 @@ export function setPendingGuestClaim({ game, corrects, total, maxStreak = 0 }) {
  * para que el preview que ve el invitado coincida con lo que realmente reclama.
  */
 export function computeGuestRewards(corrects = 0, total = 0) {
-  const t = Math.max(total || 0, 1)
+  const t = Math.min(Math.max(total || 0, 1), 20)
   const c = Math.min(Math.max(corrects || 0, 0), t)
   const perfect = c >= t
   const xp = Math.min(c * 10 + (perfect ? 50 : 0), 150)
   const fichas = Math.min(c * 4 + (perfect ? 20 : 0), 60)
-  const xpForLevel2 = 150
+  const xpForLevel2 = 100
   const pct = Math.min(100, Math.round((xp / xpForLevel2) * 100))
   const levelUp = xp >= xpForLevel2
   const remaining = Math.max(0, xpForLevel2 - xp)
@@ -107,9 +107,13 @@ export async function claimPendingGuestReward() {
         p_max_streak: pending.maxStreak,
         p_day_key: pending.dayKey,
       })
-      // Éxito o error de negocio (ya reclamado, etc.): la limpiamos igual para no reintentar en loop.
+      if (error) {
+        // Error de transporte/servidor: dejamos el pendiente para reintentar en la próxima carga.
+        console.warn('[guest-play] claim error:', slug, error.message)
+        continue
+      }
+      // La RPC respondió (éxito o rechazo de negocio, ej. "ya reclamado"): ya no hay nada que reintentar.
       clearPendingGuestClaim(slug)
-      if (error) { console.warn('[guest-play] claim error:', slug, error.message); continue }
       if (data?.ok) { totalXp += data.xp || 0; totalFichas += data.fichas || 0 }
     }
 

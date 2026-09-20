@@ -443,7 +443,7 @@ export default {
           :difficulty="selectedDifficulty"
           :winThreshold="target"
           :guest="isGuest"
-          :resultLine="`Racha de ${chain} 🔥`"
+          :resultLine="isGuest ? `Racha de ${chain} 🔥` : ''"
           :backPath="backPath()"
           @close="showSummary = false"
         />

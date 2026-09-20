@@ -367,7 +367,7 @@ export default {
           :difficulty="selectedDifficulty"
           :winThreshold="1"
           :guest="isGuest"
-          :resultLine="gameWon ? 'Adiviné al jugador ✅' : 'No lo adiviné esta vez'"
+          :resultLine="isGuest ? (gameWon ? 'Adiviné al jugador ✅' : 'No lo adiviné esta vez') : ''"
           :backPath="backPath()"
           @close="showSummary = false"
         />

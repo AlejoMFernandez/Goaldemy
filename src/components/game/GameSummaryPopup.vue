@@ -50,6 +50,11 @@ export default {
     const claimGate = ref(false)
     const guestPreview = computed(() => computeGuestRewards(props.corrects, props.winThreshold))
     const guestSummary = ref({ count: 0, games: [], xp: 0, fichas: 0 })
+    // El total "real" a mostrar: si hay más pendiente en otros juegos que en esta partida
+    // sola (incluye el caso de perder esta ronda sin generar pendiente nuevo), usamos el
+    // acumulado; si no, el de esta partida alcanza y coincide.
+    const guestTotalXp = computed(() => Math.max(guestSummary.value.xp, guestPreview.value.xp))
+    const guestShowsAccumulated = computed(() => guestSummary.value.xp > guestPreview.value.xp)
     const sessionAchievements = ref([])
     let timers = []
     let countFrame = null
@@ -235,7 +240,7 @@ export default {
       iconOf,
       phase, won, animatedCorrects, animatedStreak, animatedXp,
       starsRevealed, starCount, accuracy, xpBarWidth,
-      showActions, claimGate, guestPreview, guestSummary, difficultyLabel, difficultyColor, xpGained,
+      showActions, claimGate, guestPreview, guestSummary, guestTotalXp, guestShowsAccumulated, difficultyLabel, difficultyColor, xpGained,
       baseXp, totalXp, bonusXp, hasProBonus,
       didLevelUp, sessionAchievements,
       shared, onShare,
@@ -424,14 +429,14 @@ export default {
                 </div>
               </div>
 
-              <div v-if="guestSummary.count > 1" class="rounded-xl border border-cyan-400/25 bg-cyan-500/5 p-3 text-center">
+              <div v-if="guestShowsAccumulated" class="rounded-xl border border-cyan-400/25 bg-cyan-500/5 p-3 text-center">
                 <p class="text-xs text-cyan-300">
-                  🎮 Ya llevás <strong>{{ guestSummary.count }} juegos</strong> probados hoy — total acumulado:
+                  🎮 Ya llevás <strong>{{ guestSummary.count }} juegos</strong> probados hasta ahora — total acumulado:
                   <strong>{{ guestSummary.xp }} XP</strong> y <strong>{{ guestSummary.fichas }} Fichas</strong>.
                 </p>
               </div>
 
-              <div v-if="guestPreview.levelUp" class="rounded-xl border border-yellow-400/25 bg-yellow-500/10 p-3 text-center">
+              <div v-if="guestTotalXp >= guestPreview.xpForLevel2" class="rounded-xl border border-yellow-400/25 bg-yellow-500/10 p-3 text-center">
                 <p class="text-xs text-yellow-300 font-semibold">⚡ Esa XP alcanza para pasar a Nivel 2 apenas te registrés.</p>
               </div>
 
@@ -523,8 +528,8 @@ export default {
                 <h3 class="font-display text-lg font-bold text-white mb-1">Tus recompensas te esperan</h3>
                 <p class="text-slate-300 text-xs mb-3">
                   Creá tu cuenta gratis y guardá
-                  <strong class="text-emerald-400">+{{ guestSummary.count > 1 ? guestSummary.xp : guestPreview.xp }} XP</strong>
-                  <span v-if="guestSummary.count > 1"> de {{ guestSummary.count }} juegos</span>
+                  <strong class="text-emerald-400">+{{ guestTotalXp }} XP</strong>
+                  <span v-if="guestShowsAccumulated"> de {{ guestSummary.count }} juegos</span>
                   para siempre.
                 </p>
                 <router-link to="/register" class="block w-full rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-900 py-2.5 text-sm font-bold transition shadow-lg shadow-amber-500/25 mb-2">

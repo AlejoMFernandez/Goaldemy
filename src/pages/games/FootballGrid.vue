@@ -490,7 +490,7 @@ export default {
       :difficulty="selectedDifficulty"
       :winThreshold="9"
       :guest="isGuest"
-      :resultLine="corrects === 9 ? 'Completé la grilla ✅' : `Completé ${corrects}/9 celdas`"
+      :resultLine="isGuest ? (corrects === 9 ? 'Completé la grilla ✅' : `Completé ${corrects}/9 celdas`) : ''"
       :backPath="backPath()"
       @close="showSummary = false"
     />

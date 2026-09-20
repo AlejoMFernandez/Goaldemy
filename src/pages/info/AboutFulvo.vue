@@ -94,7 +94,7 @@ import FulvoLogo from '../../components/FulvoLogo.vue'
         </div>
 
         <!-- Feature Cards -->
-        <div class="grid gap-6 md:grid-cols-3">
+        <div class="grid gap-6 md:grid-cols-2">
           <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 backdrop-blur-sm p-6 hover:border-emerald-400/30 transition">
             <div class="inline-flex rounded-lg bg-emerald-500/10 p-2 ring-1 ring-emerald-400/20 mb-4">
               <svg class="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
