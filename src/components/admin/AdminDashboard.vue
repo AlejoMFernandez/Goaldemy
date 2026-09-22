@@ -8,10 +8,30 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { getAdminDashboard } from '../../services/admin.js'
+import { getLeaderboard } from '../../services/xp.js'
 
 const loading = ref(true)
 const err = ref('')
 const d = ref({})
+
+// ── Ranking completo por XP (paginado) ──
+const XP_PAGE_SIZE = 10
+const xpPage = ref(1)
+const xpRows = ref([])
+const xpLoading = ref(false)
+const xpHasNext = ref(false)
+
+async function loadXpPage(page) {
+  xpLoading.value = true
+  const { data } = await getLeaderboard({ period: 'all_time', gameId: null, limit: XP_PAGE_SIZE + 1, offset: (page - 1) * XP_PAGE_SIZE })
+  const rows = data || []
+  xpHasNext.value = rows.length > XP_PAGE_SIZE
+  xpRows.value = rows.slice(0, XP_PAGE_SIZE)
+  xpPage.value = page
+  xpLoading.value = false
+}
+function nextXpPage() { if (xpHasNext.value) loadXpPage(xpPage.value + 1) }
+function prevXpPage() { if (xpPage.value > 1) loadXpPage(xpPage.value - 1) }
 
 const MONTHS_ES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
 
@@ -44,7 +64,7 @@ async function load() {
     loading.value = false
   }
 }
-onMounted(load)
+onMounted(() => { load(); loadXpPage(1) })
 defineExpose({ load })
 </script>
 
@@ -138,7 +158,7 @@ defineExpose({ load })
         <div class="lg:col-span-2 rounded-2xl border border-white/10 bg-slate-800/50 p-5">
           <h3 class="text-sm font-semibold text-white mb-4">Altas de usuarios · últimos 14 días</h3>
           <div class="flex items-end gap-1.5 h-32">
-            <div v-for="s in signups" :key="s.d" class="flex-1 flex flex-col items-center justify-end group relative">
+            <div v-for="s in signups" :key="s.d" class="flex-1 h-full flex flex-col items-center justify-end group relative">
               <div
                 class="w-full rounded-t bg-gradient-to-t from-emerald-600 to-cyan-400 transition-all min-h-[2px]"
                 :style="{ height: ((s.c / maxSignup) * 100) + '%' }"
@@ -181,7 +201,7 @@ defineExpose({ load })
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <!-- Top juegos -->
         <div class="rounded-2xl border border-white/10 bg-slate-800/50 p-5">
           <h3 class="text-sm font-semibold text-white mb-4">Juegos más jugados · 7 días</h3>
@@ -194,19 +214,42 @@ defineExpose({ load })
           </div>
           <p v-else class="text-sm text-slate-500">Sin partidas en los últimos 7 días.</p>
         </div>
+      </div>
 
-        <!-- Top XP -->
-        <div class="rounded-2xl border border-white/10 bg-slate-800/50 p-5">
-          <h3 class="text-sm font-semibold text-white mb-4">Top jugadores por XP</h3>
-          <div v-if="(d.top_xp || []).length" class="space-y-2">
-            <div v-for="(u, i) in d.top_xp" :key="i" class="flex items-center gap-3">
-              <span class="text-xs w-4" :class="i === 0 ? 'text-amber-400' : 'text-slate-500'">{{ i + 1 }}</span>
-              <span class="text-sm text-slate-200 flex-1 truncate">{{ u.display_name || 'Usuario' }}</span>
-              <span class="text-sm font-bold text-white">{{ num(u.xp) }} XP</span>
-            </div>
+      <!-- Ranking completo por XP (paginado) -->
+      <div class="rounded-2xl border border-white/10 bg-slate-800/50 p-5 mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-semibold text-white">Ranking de jugadores por XP</h3>
+          <div class="flex items-center gap-2">
+            <button
+              @click="prevXpPage"
+              :disabled="xpPage === 1 || xpLoading"
+              class="h-7 w-7 grid place-items-center rounded-lg border border-white/10 text-slate-300 hover:text-white hover:bg-white/5 disabled:opacity-30 transition"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <span class="text-xs text-slate-400 w-10 text-center">{{ xpPage }}</span>
+            <button
+              @click="nextXpPage"
+              :disabled="!xpHasNext || xpLoading"
+              class="h-7 w-7 grid place-items-center rounded-lg border border-white/10 text-slate-300 hover:text-white hover:bg-white/5 disabled:opacity-30 transition"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
           </div>
-          <p v-else class="text-sm text-slate-500">Sin datos de XP.</p>
         </div>
+        <div v-if="xpLoading" class="space-y-2">
+          <div v-for="i in 5" :key="i" class="h-9 rounded-lg bg-white/5 animate-pulse"></div>
+        </div>
+        <div v-else-if="xpRows.length" class="space-y-1.5">
+          <div v-for="u in xpRows" :key="u.user_id" class="flex items-center gap-3 py-1">
+            <span class="text-xs w-7" :class="u.rank <= 3 ? 'text-amber-400 font-bold' : 'text-slate-500'">{{ u.rank }}</span>
+            <span class="text-sm text-slate-200 flex-1 truncate">{{ u.display_name || 'Usuario' }}</span>
+            <span class="text-xs text-slate-500">Lv {{ u.user_level ?? '-' }}</span>
+            <span class="text-sm font-bold text-white w-24 text-right">{{ num(u.xp_total) }} XP</span>
+          </div>
+        </div>
+        <p v-else class="text-sm text-slate-500">Sin datos de XP.</p>
       </div>
     </template>
   </div>

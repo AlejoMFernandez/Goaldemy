@@ -27,7 +27,7 @@
         </div>
 
         <!-- Search Bar -->
-        <div class="mb-6">
+        <div class="mb-4">
             <div class="relative">
                 <input
                     v-model="searchQuery"
@@ -42,96 +42,100 @@
             </div>
         </div>
 
+        <!-- Quick Filters -->
+        <div class="flex flex-wrap gap-2 mb-6">
+            <button
+                v-for="f in quickFilters"
+                :key="f.key"
+                @click="roleFilter = f.key"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
+                :class="roleFilter === f.key ? 'border-blue-400 bg-blue-500/15 text-blue-300' : 'border-white/10 text-slate-400 hover:text-white hover:bg-white/5'"
+            >
+                {{ f.label }} <span class="opacity-60">({{ f.count }})</span>
+            </button>
+        </div>
+
         <!-- Loading State -->
         <div v-if="loadingUsers" class="flex justify-center py-12">
             <AppLoader />
         </div>
 
         <!-- Users Table -->
-        <div v-else-if="users.length > 0" class="overflow-x-auto">
+        <div v-else-if="filteredUsers.length > 0" class="overflow-x-auto -mx-2">
             <table class="w-full">
                 <thead>
                     <tr class="border-b border-white/10">
-                        <th class="text-left py-3 px-4 text-xs uppercase tracking-wider text-slate-400 font-semibold">Usuario</th>
-                        <th class="text-left py-3 px-4 text-xs uppercase tracking-wider text-slate-400 font-semibold">Email</th>
-                        <th class="text-left py-3 px-4 text-xs uppercase tracking-wider text-slate-400 font-semibold">Nivel</th>
-                        <th class="text-left py-3 px-4 text-xs uppercase tracking-wider text-slate-400 font-semibold">XP</th>
-                        <th class="text-left py-3 px-4 text-xs uppercase tracking-wider text-slate-400 font-semibold">Rol</th>
-                        <th class="text-left py-3 px-4 text-xs uppercase tracking-wider text-slate-400 font-semibold">Fecha Registro</th>
-                        <th class="text-right py-3 px-4 text-xs uppercase tracking-wider text-slate-400 font-semibold">Acciones</th>
+                        <th class="text-left py-3 px-2 text-xs uppercase tracking-wider text-slate-400 font-semibold">Usuario</th>
+                        <th class="text-left py-3 px-2 text-xs uppercase tracking-wider text-slate-400 font-semibold whitespace-nowrap">Nivel / XP</th>
+                        <th class="text-left py-3 px-2 text-xs uppercase tracking-wider text-slate-400 font-semibold">Rol</th>
+                        <th class="text-left py-3 px-2 text-xs uppercase tracking-wider text-slate-400 font-semibold whitespace-nowrap">Registro</th>
+                        <th class="text-right py-3 px-2 text-xs uppercase tracking-wider text-slate-400 font-semibold">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-white/5">
                     <tr
-                        v-for="user in users"
+                        v-for="user in filteredUsers"
                         :key="user.id"
                         class="hover:bg-slate-700/30 transition-colors"
                     >
                         <!-- User Info -->
-                        <td class="py-4 px-4">
+                        <td class="py-4 px-2 max-w-0 w-full">
                             <div class="flex items-center gap-3">
                                 <img
                                     v-if="user.avatar_url"
                                     :src="user.avatar_url"
                                     :alt="user.display_name"
-                                    class="w-10 h-10 rounded-full object-cover border-2 border-white/20"
+                                    class="w-10 h-10 rounded-full object-cover border-2 border-white/20 shrink-0"
                                 />
-                                <div v-else class="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center text-white font-bold">
+                                <div v-else class="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center text-white font-bold shrink-0">
                                     {{ user.display_name?.charAt(0).toUpperCase() }}
                                 </div>
-                                <div>
-                                    <p class="font-semibold text-white">{{ user.display_name }}</p>
-                                    <p class="text-xs text-slate-400">ID: {{ user.id.slice(0, 8) }}...</p>
+                                <div class="min-w-0">
+                                    <p class="font-semibold text-white truncate">{{ user.display_name }}</p>
+                                    <p class="text-xs text-slate-400 truncate">{{ user.email }}</p>
                                     <span v-if="isGhost(user)" class="mt-1 inline-flex items-center gap-1 rounded-full bg-red-500/15 border border-red-500/40 px-2 py-0.5 text-[10px] font-bold text-red-300">👻 Fantasma</span>
                                     <span v-else-if="isUnconfirmed(user)" class="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-500/15 border border-amber-500/40 px-2 py-0.5 text-[10px] font-semibold text-amber-300">⏳ Sin confirmar</span>
                                 </div>
                             </div>
                         </td>
 
-                        <!-- Email -->
-                        <td class="py-4 px-4">
-                            <p class="text-slate-300">{{ user.email }}</p>
+                        <!-- Level / XP -->
+                        <td class="py-4 px-2 whitespace-nowrap">
+                            <div class="flex items-center gap-1.5">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold border border-emerald-500/30 bg-slate-800/40 text-emerald-300">
+                                    Lv {{ user.level ?? '-' }}
+                                </span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold border border-amber-500/30 bg-slate-800/40 text-amber-300">
+                                    {{ user.total_xp?.toLocaleString() ?? '-' }} XP
+                                </span>
+                            </div>
                         </td>
 
-
-                        <!-- Level -->
-                        <td class="py-4 px-4">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold border border-emerald-500/30 bg-slate-800/40 text-emerald-300">
-                                {{ user.level ?? '-' }}
-                            </span>
-                        </td>
-
-                        <td class="py-4 px-4">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold border border-amber-500/30 bg-slate-800/40 text-amber-300">
-                                {{ user.total_xp?.toLocaleString() ?? '-' }}
-                            </span>
-                        </td>
-
-                        <td class="py-4 px-4">
+                        <td class="py-4 px-2 whitespace-nowrap">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold border border-slate-500/30 bg-slate-800/40 text-slate-200">
                                 {{ user.role === 'admin' ? 'Admin' : 'User' }}
                             </span>
                         </td>
 
-                        <td class="py-4 px-4">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold border border-slate-500/30 bg-slate-800/40 text-slate-300">
+                        <td class="py-4 px-2 whitespace-nowrap">
+                            <span class="text-xs text-slate-400">
                                 {{ formatDate(user.created_at) ?? '-' }}
                             </span>
                         </td>
 
                         <!-- Actions -->
-                        <td class="py-4 px-4">
+                        <td class="py-4 px-2">
                             <div class="flex justify-end gap-2">
                                 <button
                                     @click="toggleRole(user)"
-                                    class="px-3 py-1.5 rounded-lg text-sm font-medium border border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white transition-colors"
+                                    class="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white transition-colors whitespace-nowrap"
                                     :disabled="processingUserId === user.id"
                                 >
-                                    {{ user.role === 'admin' ? 'Quitar Admin' : 'Hacer Admin' }}
+                                    {{ user.role === 'admin' ? 'Quitar admin' : 'Hacer admin' }}
                                 </button>
                                 <button
                                     @click="confirmDelete(user)"
-                                    class="px-3 py-1.5 rounded-lg text-sm font-medium border border-red-400 text-red-400 hover:bg-red-400 hover:text-white transition-colors"
+                                    class="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-red-400 text-red-400 hover:bg-red-400 hover:text-white transition-colors whitespace-nowrap"
                                     :disabled="processingUserId === user.id"
                                 >
                                     Eliminar
@@ -203,6 +207,7 @@ export default {
         const showDeleteModal = ref(false);
         const userToDelete = ref(null);
         const purgingGhosts = ref(false);
+        const roleFilter = ref('all');
         let searchTimeout = null;
 
         // ── Usuarios fantasma ──
@@ -218,6 +223,22 @@ export default {
             return isUnconfirmed(user) && ageDays(user) > GHOST_DAYS && !(user.total_xp > 0);
         }
         const ghostCount = computed(() => users.value.filter(isGhost).length);
+        const adminCount = computed(() => users.value.filter(u => u.role === 'admin').length);
+        const unconfirmedCount = computed(() => users.value.filter(u => isUnconfirmed(u) && !isGhost(u)).length);
+
+        const quickFilters = computed(() => [
+            { key: 'all', label: 'Todos', count: users.value.length },
+            { key: 'admin', label: 'Admins', count: adminCount.value },
+            { key: 'ghost', label: 'Fantasmas', count: ghostCount.value },
+            { key: 'unconfirmed', label: 'Sin confirmar', count: unconfirmedCount.value },
+        ]);
+
+        const filteredUsers = computed(() => {
+            if (roleFilter.value === 'admin') return users.value.filter(u => u.role === 'admin');
+            if (roleFilter.value === 'ghost') return users.value.filter(isGhost);
+            if (roleFilter.value === 'unconfirmed') return users.value.filter(u => isUnconfirmed(u) && !isGhost(u));
+            return users.value;
+        });
 
         async function handlePurgeGhosts() {
             if (!ghostCount.value || purgingGhosts.value) return;
@@ -323,9 +344,9 @@ export default {
         function formatDate(dateString) {
             const date = new Date(dateString);
             return date.toLocaleDateString('es-AR', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
+                year: '2-digit',
+                month: '2-digit',
+                day: '2-digit'
             });
         }
 
@@ -335,6 +356,9 @@ export default {
 
         return {
             users,
+            filteredUsers,
+            roleFilter,
+            quickFilters,
             loadingUsers,
             searchQuery,
             processingUserId,

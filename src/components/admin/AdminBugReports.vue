@@ -1,13 +1,19 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getBugReports, setBugReportStatus } from '../../services/feedback'
+import { getBugReports, setBugReportStatus, deleteBugReport, getBugReportImageUrl } from '../../services/feedback'
 import { getPublicProfilesByIds } from '../../services/user-profiles'
+
+const emit = defineEmits(['updated'])
 
 const reports = ref([])
 const profiles = ref({})
+const imageUrls = ref({})
 const loading = ref(true)
 const filter = ref('all')      // all | open | done
 const busy = ref(null)
+const reportToDelete = ref(null)
+const deleting = ref(false)
+const lightboxUrl = ref('')
 
 const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
@@ -28,6 +34,7 @@ const filtered = computed(() => {
 function nameFor(id) { const p = profiles.value[id]; return p ? (p.display_name || p.email || 'Usuario') : (id ? 'Usuario' : 'Anónimo') }
 function fmtDate(ts) { try { return new Date(ts).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) } catch { return '' } }
 function statusOf(r) { return STATUS[r.status] || STATUS.open }
+function ticketRef(r) { return '#' + (r.id || '').replace(/-/g, '').slice(0, 6).toUpperCase() }
 
 async function load() {
   loading.value = true
@@ -38,14 +45,37 @@ async function load() {
     try { const { data: ps } = await getPublicProfilesByIds(ids); const m = {}; for (const p of ps || []) m[p.id] = p; profiles.value = m } catch {}
   }
   loading.value = false
+
+  const withImages = reports.value.filter(r => r.image_path)
+  if (withImages.length) {
+    const entries = await Promise.all(withImages.map(async r => [r.id, await getBugReportImageUrl(r.image_path)]))
+    const m = { ...imageUrls.value }
+    for (const [id, url] of entries) if (url) m[id] = url
+    imageUrls.value = m
+  }
 }
 
 async function changeStatus(r, status) {
   if (busy.value) return
   busy.value = r.id
   const res = await setBugReportStatus(r.id, status)
-  if (res.ok) r.status = status
+  if (res.ok) { r.status = status; emit('updated') }
   busy.value = null
+}
+
+function confirmDelete(r) { reportToDelete.value = r }
+
+async function handleDelete() {
+  if (!reportToDelete.value || deleting.value) return
+  deleting.value = true
+  const r = reportToDelete.value
+  const res = await deleteBugReport(r.id, r.image_path)
+  deleting.value = false
+  if (res.ok) {
+    reports.value = reports.value.filter(x => x.id !== r.id)
+    reportToDelete.value = null
+    emit('updated')
+  }
 }
 
 onMounted(load)
@@ -55,7 +85,7 @@ onMounted(load)
   <div class="bg-gradient-to-br from-slate-800/80 to-slate-900/50 backdrop-blur border border-white/10 rounded-2xl p-5 sm:p-6 shadow-xl">
     <div class="flex items-center justify-between gap-3 mb-5">
       <div>
-        <h2 class="text-xl font-bold text-white">Reportes de bug</h2>
+        <h2 class="text-xl font-bold text-white">Tickets</h2>
         <p class="text-sm text-slate-400">{{ openCount }} sin resolver · {{ reports.length }} en total</p>
       </div>
       <div class="flex items-center gap-2">
@@ -75,24 +105,49 @@ onMounted(load)
       <div v-for="i in 3" :key="i" class="h-20 rounded-xl bg-white/5 animate-pulse"></div>
     </div>
 
-    <div v-else-if="!filtered.length" class="text-center py-12 text-slate-400">
-      <div class="text-3xl mb-2">🐞</div>
-      <p>No hay reportes {{ filter === 'open' ? 'abiertos' : filter === 'done' ? 'cerrados' : '' }}.</p>
+    <div v-else-if="!filtered.length" class="flex flex-col items-center justify-center text-center py-12 text-slate-400">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-10 w-10 mb-3 text-slate-600">
+        <path d="M8 2l1.5 2.5M16 2l-1.5 2.5"/><rect x="7" y="6" width="10" height="12" rx="5"/><path d="M12 10v6M4 10h3M17 10h3M4 15h3M17 15h3M5 20l2.5-2M19 20l-2.5-2"/>
+      </svg>
+      <p>No hay tickets {{ filter === 'open' ? 'abiertos' : filter === 'done' ? 'cerrados' : '' }}.</p>
     </div>
 
     <ul v-else class="space-y-2.5">
       <li v-for="r in filtered" :key="r.id" class="rounded-xl border border-white/10 bg-white/[0.02] p-4">
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-[11px] font-mono text-slate-500">{{ ticketRef(r) }}</span>
+              <span class="text-slate-600">·</span>
+              <span class="text-slate-400 font-medium text-xs">{{ nameFor(r.user_id) }}</span>
+            </div>
             <p class="text-slate-100 text-sm whitespace-pre-line break-words">{{ r.message }}</p>
+
+            <button
+              v-if="imageUrls[r.id]"
+              @click="lightboxUrl = imageUrls[r.id]"
+              class="mt-2 block"
+              title="Ver captura completa"
+            >
+              <img :src="imageUrls[r.id]" alt="Captura adjunta" class="h-16 rounded-lg border border-white/10 object-cover hover:border-blue-400/50 transition" />
+            </button>
+            <span v-else-if="r.image_path" class="mt-2 inline-flex items-center gap-1 text-[11px] text-slate-500">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              captura adjunta
+            </span>
+
             <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
-              <span class="text-slate-400 font-medium">{{ nameFor(r.user_id) }}</span>
               <span>{{ fmtDate(r.created_at) }}</span>
               <span v-if="r.contact" class="text-slate-400">✉ {{ r.contact }}</span>
               <a v-if="r.url" :href="r.url" target="_blank" rel="noopener" class="text-sky-400 hover:underline truncate max-w-[220px]">{{ r.url.replace(origin, '') || r.url }}</a>
             </div>
           </div>
-          <span class="shrink-0 px-2 py-0.5 rounded-full border text-[10px] font-bold" :class="statusOf(r).cls">{{ statusOf(r).label }}</span>
+          <div class="shrink-0 flex flex-col items-end gap-2">
+            <span class="px-2 py-0.5 rounded-full border text-[10px] font-bold" :class="statusOf(r).cls">{{ statusOf(r).label }}</span>
+            <button @click="confirmDelete(r)" class="text-slate-500 hover:text-red-400 transition" title="Eliminar ticket">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg>
+            </button>
+          </div>
         </div>
         <div class="mt-3 flex flex-wrap gap-1.5">
           <button v-for="s in ['open','in_progress','done','wontfix']" :key="s"
@@ -104,5 +159,36 @@ onMounted(load)
         </div>
       </li>
     </ul>
+
+    <!-- Lightbox de captura -->
+    <div v-if="lightboxUrl" class="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-50 px-4 py-8" @click.self="lightboxUrl = ''">
+      <img :src="lightboxUrl" alt="Captura" class="max-w-full max-h-full rounded-xl border border-white/10 shadow-2xl" />
+      <button @click="lightboxUrl = ''" class="absolute top-4 right-4 h-9 w-9 grid place-items-center rounded-lg bg-slate-900/80 border border-white/15 text-white hover:bg-slate-800 transition">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <!-- Confirmación de borrado -->
+    <div
+      v-if="reportToDelete"
+      class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+      @click.self="reportToDelete = null"
+    >
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl">
+        <h3 class="text-2xl font-bold text-white mb-4">⚠️ Eliminar ticket</h3>
+        <p class="text-slate-300 mb-6">
+          ¿Seguro que querés eliminar el ticket <strong class="text-white">{{ ticketRef(reportToDelete) }}</strong>?
+          Esta acción no se puede deshacer.
+        </p>
+        <div class="flex gap-4">
+          <button @click="reportToDelete = null" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-semibold transition-colors">
+            Cancelar
+          </button>
+          <button @click="handleDelete" :disabled="deleting" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors disabled:opacity-60">
+            {{ deleting ? 'Eliminando…' : 'Eliminar' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

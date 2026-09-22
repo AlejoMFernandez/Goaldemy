@@ -35,91 +35,92 @@
             <AppLoader />
         </div>
 
-        <!-- Teams List -->
-        <div v-else-if="teams.length > 0" class="space-y-4">
-            <div
+        <!-- Teams Grid -->
+        <div v-else-if="teams.length > 0" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <button
                 v-for="team in filteredTeams"
                 :key="team.id"
-                class="bg-slate-800/50 border border-white/10 rounded-xl overflow-hidden"
+                @click="openTeam(team)"
+                class="bg-slate-800/50 border border-white/10 rounded-xl p-4 hover:border-blue-500/50 hover:bg-slate-700/30 transition-colors text-left"
             >
-                <!-- Team Header -->
-                <div 
-                    class="p-4 cursor-pointer hover:bg-slate-700/30 transition-colors flex items-center justify-between"
-                    @click="toggleTeam(team.id)"
-                >
-                    <div class="flex items-center gap-4">
-                        <img
-                            v-if="team.logo"
-                            :src="team.logo"
-                            :alt="team.name"
-                            class="w-12 h-12 object-contain"
-                        />
-                        <div>
-                            <h3 class="text-lg font-semibold text-white">{{ team.name }}</h3>
-                            <p class="text-sm text-slate-400">{{ team.players?.length || 0 }} jugadores</p>
-                        </div>
-                    </div>
-                    <svg 
-                        class="w-6 h-6 text-slate-400 transition-transform"
-                        :class="{ 'rotate-180': expandedTeams.has(team.id) }"
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                    >
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </div>
-
-                <!-- Players List (Expandable) -->
-                <div v-if="expandedTeams.has(team.id)" class="border-t border-white/10">
-                    <div class="p-4 bg-slate-900/30">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div
-                                v-for="player in team.players"
-                                :key="player.id"
-                                class="bg-slate-700/30 border border-white/10 rounded-lg p-4 hover:border-blue-500/50 transition-colors group relative"
-                            >
-                                <div class="flex items-start gap-3">
-                                    <img
-                                        v-if="player.photo"
-                                        :src="player.photo"
-                                        :alt="player.name"
-                                        class="w-16 h-16 rounded-lg object-cover border-2 border-white/20"
-                                        @error="handleImageError"
-                                    />
-                                    <div class="flex-1 min-w-0">
-                                        <h4 class="font-semibold text-white truncate">{{ player.name }}</h4>
-                                        <div class="text-xs text-slate-400 space-y-1 mt-1">
-                                            <p>Posición: <span class="text-slate-300">{{ player.position }}</span></p>
-                                            <p>Dorsal: <span class="text-slate-300">{{ player.shirtNumber }}</span></p>
-                                            <p>Edad: <span class="text-slate-300">{{ player.age }}</span></p>
-                                            <p>Nacionalidad: <span class="text-slate-300">{{ player.nationality }}</span></p>
-                                            <p v-if="player.height !== 'N/A'">Altura: <span class="text-slate-300">{{ player.height }} cm</span></p>
-                                            <p v-if="player.transferValue > 0">Valor: <span class="text-green-400">{{ formatCurrency(player.transferValue) }}</span></p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Edit Button (will be functional in future) -->
-                                <button
-                                    @click="editPlayer(team, player)"
-                                    class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg"
-                                    title="Editar jugador (próximamente)"
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <img
+                    v-if="team.logo"
+                    :src="team.logo"
+                    :alt="team.name"
+                    class="w-10 h-10 object-contain mb-2"
+                />
+                <h3 class="text-sm font-semibold text-white truncate">{{ team.name }}</h3>
+                <p class="text-xs text-slate-400">{{ team.players?.length || 0 }} jugadores</p>
+            </button>
         </div>
 
         <!-- Empty State -->
         <div v-else class="text-center py-12">
             <p class="text-slate-400">No se encontraron equipos</p>
+        </div>
+
+        <!-- Squad Modal -->
+        <div
+            v-if="selectedTeam"
+            class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4 py-8"
+            @click.self="selectedTeam = null"
+        >
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl p-6 max-w-4xl w-full max-h-full overflow-y-auto shadow-2xl">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-3">
+                        <img v-if="selectedTeam.logo" :src="selectedTeam.logo" :alt="selectedTeam.name" class="w-10 h-10 object-contain" />
+                        <div>
+                            <h3 class="text-xl font-bold text-white">{{ selectedTeam.name }}</h3>
+                            <p class="text-sm text-slate-400">{{ selectedTeam.players?.length || 0 }} jugadores</p>
+                        </div>
+                    </div>
+                    <button @click="selectedTeam = null" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div
+                        v-for="player in selectedTeam.players"
+                        :key="player.id"
+                        class="bg-slate-700/30 border border-white/10 rounded-lg p-4 hover:border-blue-500/50 transition-colors group relative"
+                    >
+                        <div class="flex items-start gap-3">
+                            <img
+                                v-if="player.photo"
+                                :src="player.photo"
+                                :alt="player.name"
+                                class="w-16 h-16 rounded-lg object-cover border-2 border-white/20"
+                                @error="handleImageError"
+                            />
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-white truncate">{{ player.name }}</h4>
+                                <div class="text-xs text-slate-400 space-y-1 mt-1">
+                                    <p>Posición: <span class="text-slate-300">{{ player.position }}</span></p>
+                                    <p>Dorsal: <span class="text-slate-300">{{ player.shirtNumber }}</span></p>
+                                    <p>Edad: <span class="text-slate-300">{{ player.age }}</span></p>
+                                    <p>Nacionalidad: <span class="text-slate-300">{{ player.nationality }}</span></p>
+                                    <p v-if="player.height !== 'N/A'">Altura: <span class="text-slate-300">{{ player.height }} cm</span></p>
+                                    <p v-if="player.transferValue > 0">Valor: <span class="text-green-400">{{ formatCurrency(player.transferValue) }}</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Button (will be functional in future) -->
+                        <button
+                            @click="editPlayer(selectedTeam, player)"
+                            class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg"
+                            title="Editar jugador (próximamente)"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -138,7 +139,7 @@ export default {
         const teams = ref([]);
         const loadingTeams = ref(false);
         const searchQuery = ref('');
-        const expandedTeams = ref(new Set());
+        const selectedTeam = ref(null);
 
         const filteredTeams = computed(() => {
             if (!searchQuery.value.trim()) {
@@ -207,14 +208,8 @@ export default {
             // La búsqueda se maneja automáticamente con el computed
         }
 
-        function toggleTeam(teamId) {
-            if (expandedTeams.value.has(teamId)) {
-                expandedTeams.value.delete(teamId);
-            } else {
-                expandedTeams.value.add(teamId);
-            }
-            // Forzar reactividad
-            expandedTeams.value = new Set(expandedTeams.value);
+        function openTeam(team) {
+            selectedTeam.value = team;
         }
 
         function editPlayer(team, player) {
@@ -245,11 +240,11 @@ export default {
             teams,
             loadingTeams,
             searchQuery,
-            expandedTeams,
+            selectedTeam,
             filteredTeams,
             loadTeams,
             handleSearch,
-            toggleTeam,
+            openTeam,
             editPlayer,
             handleImageError,
             formatCurrency
