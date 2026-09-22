@@ -25,11 +25,11 @@ import {
   fetchRecentConversations, fetchConversation, sendDirectMessage,
   subscribeConversation, markConversationRead,
 } from '../services/direct-messages'
-import { formatShortDate } from '../services/formatters'
+import { formatTimeOnly, formatDayLabel } from '../services/formatters'
 import { supabase } from '../services/supabase'
-import { pushErrorToast, pushSuccessToast } from '../stores/notifications'
+import { pushErrorToast, pushSuccessToast, pushDmToast } from '../stores/notifications'
 import { playNotifySound } from '../services/sounds'
-import { setSidebarUser } from '../stores/sidebar'
+import { setSidebarUser, sidebarState } from '../stores/sidebar'
 import UserAvatar from './common/UserAvatar.vue'
 import ChallengesModal from './rewards/ChallengesModal.vue'
 import ProfileHoverCard from './profile/ProfileHoverCard.vue'
@@ -60,6 +60,8 @@ export default {
       bugMsg: '',
       bugContact: '',
       bugBusy: false,
+      bugImageFile: null,
+      bugImagePreview: '',
       // Objetivos (desafíos) popup
       challengesOpen: false,
       // Chat
@@ -74,9 +76,19 @@ export default {
       _debounceTimer: null,
       // Hover card estilo Steam sobre los avatares del rail
       hover: { id: null, name: '', avatarUrl: '', top: 0, right: 0 },
+      // Centrado vertical real: entre el borde inferior del header y el borde
+      // inferior de la pantalla (antes usaba un offset fijo medido desde el
+      // TOPE de la pantalla, que con el header fijo arriba quedaba desparejo:
+      // muy pegado al header y con mucho más aire abajo).
+      headerH: 72,
+      sidebarGapPx: 24, // antes 80: quedaba muy corta, poco aprovechamiento vertical
+      retentionInfoOpen: false,
     }
   },
   computed: {
+    openChatRequest() { return sidebarState.openChatRequest },
+    sidebarTopPx() { return (this.headerH + this.sidebarGapPx) + 'px' },
+    sidebarBottomPx() { return this.sidebarGapPx + 'px' },
     presence() { return presenceState.value },
     selfName() { return this.user?.display_name || this.user?.email || 'Jugador' },
     selfInitial() { return (this.selfName.trim()[0] || '?').toUpperCase() },
@@ -122,9 +134,31 @@ export default {
       if (p.game) return { label: 'Jugando · ' + friendlyNameForSlug(p.game), dot: 'bg-cyan-400' }
       return { label: 'En línea', dot: 'bg-emerald-400' }
     },
+    // Agrupa los mensajes por día calendario para el separador estilo WhatsApp
+    // ("Hoy" / "Ayer") — así la fecha no se repite en cada mensaje.
+    messageDayGroups() {
+      const groups = []
+      let lastKey = null
+      for (const m of this.messages) {
+        const d = new Date(m.created_at)
+        const key = d.toDateString()
+        if (key !== lastKey) {
+          groups.push({ key, label: formatDayLabel(m.created_at), items: [] })
+          lastKey = key
+        }
+        groups[groups.length - 1].items.push(m)
+      }
+      return groups
+    },
+  },
+  watch: {
+    // Click en un toast de DM (o cualquier otro disparador externo) → abrir ese chat.
+    openChatRequest(req) {
+      if (req?.peerId) this.openFromRail(req.peerId)
+    },
   },
   methods: {
-    formatShortDate,
+    formatTimeOnly,
     initial(r) { return ((r?.name || r?.display_name || r?.email || '?').trim()[0] || '?').toUpperCase() },
     avatarPropsFor(r) {
       const c = this.cos[r.id] || {}
@@ -150,18 +184,47 @@ export default {
       this.mobileOpen = false
       if (this.view === 'chat') { this.view = 'list'; this.detachChatRealtime() }
     },
+    measureHeader() {
+      try {
+        const h = document.querySelector('header')
+        this.headerH = h ? Math.round(h.getBoundingClientRect().height) : 72
+      } catch { this.headerH = 72 }
+    },
+    onDocumentPointerDown(e) {
+      if (!this.mobileOpen) return
+      const panel = this.$refs.dockPanel
+      const toggles = [this.$refs.desktopToggleBtn, this.$refs.mobileToggleBtn].filter(Boolean)
+      if (panel && panel.contains(e.target)) return
+      if (toggles.some(el => el.contains(e.target))) return
+      this.closeMobile()
+    },
     async doLogout() {
       try { await logout() } catch {}
       this.$router.push('/login')
     },
+    onBugImageSelected(e) {
+      const file = e.target?.files?.[0]
+      if (!file) return
+      if (!file.type.startsWith('image/')) { pushErrorToast('Elegí un archivo de imagen'); return }
+      if (file.size > 5 * 1024 * 1024) { pushErrorToast('La imagen pesa demasiado (máx. 5MB)'); return }
+      this.bugImageFile = file
+      this.bugImagePreview = URL.createObjectURL(file)
+    },
+    clearBugImage() {
+      if (this.bugImagePreview) URL.revokeObjectURL(this.bugImagePreview)
+      this.bugImageFile = null
+      this.bugImagePreview = ''
+      if (this.$refs.bugImageInput) this.$refs.bugImageInput.value = ''
+    },
     async submitBug() {
       if (this.bugBusy) return
       this.bugBusy = true
-      const res = await submitBugReport({ message: this.bugMsg, contact: this.bugContact })
+      const res = await submitBugReport({ message: this.bugMsg, contact: this.bugContact, imageFile: this.bugImageFile })
       this.bugBusy = false
       if (res.ok) {
         pushSuccessToast('¡Gracias! Reporte enviado')
         this.bugOpen = false; this.bugMsg = ''; this.bugContact = ''
+        this.clearBugImage()
       } else {
         pushErrorToast(res.error || 'No se pudo enviar el reporte')
       }
@@ -227,6 +290,7 @@ export default {
       this.view = 'chat'
       this.activePeerId = peerId
       this.query = ''
+      this.retentionInfoOpen = false
       await this.loadPeerProfile(peerId)
       await this.loadConversation()
       this.attachChatRealtime()
@@ -249,10 +313,13 @@ export default {
       try {
         const { data } = await fetchConversation(this.activePeerId)
         this.messages = data || []
-        await this.$nextTick()
-        this.scrollChatToBottom()
-        await markConversationRead(this.activePeerId)
       } finally { this.chatLoading = false }
+      // El scroll tiene que pasar DESPUÉS de que chatLoading pase a false: recién ahí
+      // el DOM cambia de "Cargando…" a la lista real de mensajes (si no, se scrollea
+      // un contenedor que todavía no tiene los mensajes adentro).
+      await this.$nextTick()
+      this.scrollChatToBottom()
+      await markConversationRead(this.activePeerId)
     },
     scrollChatToBottom() { const el = this.$refs.chatContainer; if (el) el.scrollTop = el.scrollHeight },
     attachChatRealtime() {
@@ -305,15 +372,40 @@ export default {
       if (!this.user?.id) return
       try { this._rtChannel?.unsubscribe?.() } catch {}
       const ch = supabase.channel(`friends-dm:${this.user.id}`)
-      ch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `recipient_id=eq.${this.user.id}` }, () => { try { playNotifySound() } catch {}; this.loadThreads() })
+      ch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `recipient_id=eq.${this.user.id}` }, (payload) => {
+        try { playNotifySound() } catch {}
+        this.loadThreads()
+        this.maybeToastIncomingDm(payload?.new)
+      })
       ch.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'direct_messages', filter: `recipient_id=eq.${this.user.id}` }, () => this.loadThreads())
       ch.subscribe()
       this._rtChannel = ch
       try { clearInterval(this._notifInterval) } catch {}
       this._notifInterval = setInterval(() => this.loadThreads(), 30000)
     },
+    // Toast efímero estilo WhatsApp: solo si NO estoy ya mirando ese chat puntual.
+    maybeToastIncomingDm(row) {
+      if (!row?.sender_id) return
+      const viewingThisChat = this.mobileOpen && this.view === 'chat' && this.activePeerId === row.sender_id
+      if (viewingThisChat) return
+      const friend = (this.friends || []).find(f => f.id === row.sender_id)
+      const c = this.cos[row.sender_id] || {}
+      pushDmToast({
+        peerId: row.sender_id,
+        name: friend?.display_name || friend?.email || 'Mensaje nuevo',
+        avatarUrl: friend?.avatar_url || '',
+        message: row.content || '',
+        frameKey: c.frameKey || 'none',
+        iconGlyph: c.iconGlyph || '',
+        iconBg: c.iconBg || 'emerald',
+        initial: this.initial({ name: friend?.display_name || friend?.email }),
+      })
+    },
   },
   async mounted() {
+    document.addEventListener('mousedown', this.onDocumentPointerDown)
+    this.measureHeader()
+    window.addEventListener('resize', this.measureHeader)
     unsubscribeAuth = subscribeToAuthStateChanges(async (u) => {
       this.user = u || { id: null }
       setSidebarUser(!!this.user?.id)
@@ -322,6 +414,8 @@ export default {
     })
   },
   unmounted() {
+    document.removeEventListener('mousedown', this.onDocumentPointerDown)
+    window.removeEventListener('resize', this.measureHeader)
     try { unsubscribeAuth() } catch {}
     try { this._rtChannel?.unsubscribe?.() } catch {}
     try { clearInterval(this._notifInterval) } catch {}
@@ -337,9 +431,10 @@ export default {
          Ya NO es una columna full-height: es una card centrada verticalmente y
          separada del borde (right-3) para dejar la barra de scroll de la página
          totalmente libre a su derecha. Flota sobre el contenido. -->
-    <div class="hidden lg:flex fixed right-5 top-[90px] bottom-[80px] z-30 w-[58px] flex-col items-center surface-solid py-2">
+    <div class="hidden lg:flex fixed right-5 z-30 w-[58px] flex-col items-center rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 shadow-2xl py-2"
+      :style="{ top: sidebarTopPx, bottom: sidebarBottomPx }">
       <!-- Abrir lista completa -->
-      <button @click="toggleMobile" title="Ver amigos" class="relative mb-1 h-10 w-10 grid place-items-center rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition">
+      <button ref="desktopToggleBtn" @click="toggleMobile" title="Ver amigos" class="relative mb-1 h-10 w-10 grid place-items-center rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition">
         <svg viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         <span v-if="totalUnread > 0" class="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold grid place-items-center">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
       </button>
@@ -349,7 +444,7 @@ export default {
         <button v-for="r in sortedRows" :key="r.id" @click="openFromRail(r.id)"
           @mouseenter="onRailHover(r, $event)" @mouseleave="clearRailHover"
           class="relative shrink-0 hover:scale-110 transition" :class="r.status==='offline' ? 'opacity-60 hover:opacity-100' : ''">
-          <UserAvatar :size="42" v-bind="avatarPropsFor(r)" />
+          <UserAvatar :size="42" :glow="false" v-bind="avatarPropsFor(r)" />
           <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-900" :class="statusDot(r.status)"></span>
           <span v-if="r.unread > 0" class="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold grid place-items-center">{{ r.unread > 9 ? '9+' : r.unread }}</span>
         </button>
@@ -374,7 +469,7 @@ export default {
       <button @click="bugOpen = true" title="Reportar bug" class="h-11 w-11 grid place-items-center rounded-full border border-white/15 bg-slate-800/90 text-slate-300 shadow-xl hover:brightness-110 transition active:scale-95">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M8 2l1.5 2.5M16 2l-1.5 2.5"/><rect x="7" y="6" width="10" height="12" rx="5"/><path d="M12 10v6M4 10h3M17 10h3M4 15h3M17 15h3M5 20l2.5-2M19 20l-2.5-2"/></svg>
       </button>
-      <button @click="toggleMobile" title="Amigos" class="relative h-14 w-14 rounded-full grid place-items-center bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-2xl shadow-indigo-500/40 border border-white/20 hover:brightness-110 transition active:scale-95">
+      <button ref="mobileToggleBtn" @click="toggleMobile" title="Amigos" class="relative h-14 w-14 rounded-full grid place-items-center bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-2xl shadow-indigo-500/40 border border-white/20 hover:brightness-110 transition active:scale-95">
         <svg v-if="!mobileOpen" viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         <svg v-else viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         <span v-if="totalUnread > 0" class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold grid place-items-center border border-white/20">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
@@ -385,10 +480,11 @@ export default {
          Chica y con transición (antes: sidebar full-height "enorme" que aparecía/
          desaparecía sin animación). -->
     <Transition name="dock-pop">
-    <div v-if="mobileOpen"
-      class="fixed z-40 right-4 bottom-24 w-[92vw] max-w-[320px] h-[65vh] max-h-[520px]
-             lg:right-5 lg:top-[90px] lg:bottom-[80px] lg:h-auto lg:max-h-none lg:w-[320px] lg:max-w-none
-             flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 backdrop-blur-xl shadow-2xl">
+    <div v-if="mobileOpen" ref="dockPanel"
+      class="fd-dock-panel fixed z-40 right-4 bottom-24 w-[92vw] max-w-[320px] h-[65vh] max-h-[520px]
+             lg:right-5 lg:h-auto lg:max-h-none lg:w-[320px] lg:max-w-none
+             flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 backdrop-blur-xl shadow-2xl"
+      :style="{ '--fd-top': sidebarTopPx, '--fd-bottom': sidebarBottomPx }">
 
       <!-- ===== Vista LISTA ===== -->
       <template v-if="view === 'list'">
@@ -463,22 +559,51 @@ export default {
             <div class="font-bold text-white truncate leading-tight text-sm">{{ activePeer.display_name || activePeer.email || 'Usuario' }}</div>
             <div class="text-[11px] text-slate-400 truncate">{{ activePresence.label }}</div>
           </div>
+          <div class="relative shrink-0">
+            <button
+              @mouseenter="retentionInfoOpen = true" @mouseleave="retentionInfoOpen = false"
+              @click="retentionInfoOpen = !retentionInfoOpen" type="button"
+              class="h-6 w-6 grid place-items-center rounded-full text-slate-500 hover:text-slate-300 hover:bg-white/10 transition"
+              aria-label="Información sobre este chat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+            </button>
+            <div v-if="retentionInfoOpen" class="absolute right-0 top-8 z-20 w-56 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-2xl p-3 text-[11px] leading-snug text-slate-300">
+              Los mensajes de este chat se borran automáticamente después de <span class="text-white font-semibold">48 horas</span> para mantener la app liviana. Guardá lo importante por otro medio.
+            </div>
+          </div>
         </div>
 
         <div ref="chatContainer" class="flex-1 overflow-y-auto p-3 bg-black/10 rail-scroll">
-          <div v-if="chatLoading" class="text-center text-slate-400 text-sm py-8">Cargando…</div>
-          <ol v-else class="flex flex-col gap-2 items-start">
-            <li v-for="m in messages" :key="m.id" :class="['w-fit max-w-[85%] rounded-2xl px-3.5 py-2 text-slate-100 border', isOwn(m) ? 'ml-auto bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border-violet-400/40' : 'bg-slate-800/80 border-white/15']">
-              <div class="whitespace-pre-line break-words text-sm">{{ m.content }}</div>
-              <div class="mt-0.5 text-[10px] text-slate-400 flex items-center gap-1" :class="isOwn(m) ? 'justify-end' : 'justify-start'">
-                <span>{{ formatShortDate(m.created_at) }}</span>
-                <span v-if="isOwn(m) && m.failed" class="text-rose-400">⚠</span>
-                <span v-else-if="isOwn(m) && m.optimistic" class="text-slate-400/70">·</span>
-                <span v-else-if="isOwn(m) && m.read" class="text-emerald-400">✓✓</span>
-                <span v-else-if="isOwn(m)" class="text-slate-400">✓</span>
+          <div v-if="chatLoading" class="flex flex-col gap-2 items-start animate-pulse">
+            <div class="h-9 w-2/5 rounded-2xl bg-slate-700/40"></div>
+            <div class="h-9 w-1/2 rounded-2xl bg-slate-700/40 ml-auto"></div>
+            <div class="h-7 w-1/3 rounded-2xl bg-slate-700/40"></div>
+            <div class="h-9 w-2/5 rounded-2xl bg-slate-700/40 ml-auto"></div>
+            <div class="h-7 w-1/4 rounded-2xl bg-slate-700/40"></div>
+          </div>
+          <div v-else class="flex flex-col gap-3">
+            <div v-for="g in messageDayGroups" :key="g.key" class="flex flex-col gap-2">
+              <div class="flex justify-center">
+                <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 bg-white/5 border border-white/10 rounded-full px-2.5 py-1">{{ g.label }}</span>
               </div>
-            </li>
-          </ol>
+              <ol class="flex flex-col gap-2 items-start">
+                <li v-for="m in g.items" :key="m.id" :class="['w-fit max-w-[85%] rounded-2xl px-3.5 py-2 text-slate-100 border', isOwn(m) ? 'ml-auto bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border-violet-400/40' : 'bg-violet-500/10 border-violet-400/25']">
+                  <div class="whitespace-pre-line break-words text-sm">{{ m.content }}</div>
+                  <div class="mt-0.5 text-[10px] text-slate-400 flex items-center gap-1" :class="isOwn(m) ? 'justify-end' : 'justify-start'">
+                    <span>{{ formatTimeOnly(m.created_at) }}</span>
+                    <span v-if="isOwn(m) && m.failed" class="text-rose-400">⚠</span>
+                    <span v-else-if="isOwn(m) && m.optimistic" class="inline-flex items-center text-slate-400/70">
+                      <svg width="13" height="13" viewBox="0 0 16 15" fill="none"><path d="M1 7.5L5 11.5L11 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span v-else-if="isOwn(m)" class="inline-flex items-center" :class="m.read ? 'text-emerald-400' : 'text-slate-400'">
+                      <svg width="13" height="13" viewBox="0 0 16 15" fill="none"><path d="M1 7.5L5 11.5L11 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      <svg width="13" height="13" viewBox="0 0 16 15" fill="none" class="-ml-[7px]"><path d="M1 7.5L5 11.5L11 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                  </div>
+                </li>
+              </ol>
+            </div>
+          </div>
         </div>
 
         <form @submit.prevent="handleSubmit" class="p-2.5 border-t border-white/10 bg-slate-900/80">
@@ -512,6 +637,21 @@ export default {
           </div>
           <textarea v-model="bugMsg" rows="4" maxlength="2000" placeholder="¿Qué salió mal? ¿En qué parte?" class="w-full text-sm rounded-xl bg-black/30 border border-white/10 text-slate-100 placeholder:text-slate-500 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400/30 transition resize-none"></textarea>
           <input v-model="bugContact" type="text" maxlength="200" placeholder="Contacto (opcional): mail o @usuario" class="mt-2 w-full text-sm rounded-xl bg-black/30 border border-white/10 text-slate-100 placeholder:text-slate-500 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400/30 transition" />
+
+          <input ref="bugImageInput" type="file" accept="image/*" class="hidden" @change="onBugImageSelected" />
+          <div v-if="!bugImagePreview" class="mt-2">
+            <button @click="$refs.bugImageInput.click()" type="button" class="w-full text-xs font-semibold rounded-xl border border-dashed border-white/15 text-slate-400 hover:text-white hover:border-white/30 transition px-3 py-2.5 flex items-center justify-center gap-2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              Adjuntar una captura (opcional)
+            </button>
+          </div>
+          <div v-else class="mt-2 relative inline-block">
+            <img :src="bugImagePreview" alt="Captura adjunta" class="h-20 rounded-lg border border-white/10 object-cover" />
+            <button @click="clearBugImage" type="button" class="absolute -top-2 -right-2 h-6 w-6 grid place-items-center rounded-full bg-slate-900 border border-white/15 text-slate-300 hover:text-white transition">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M6 18 18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+
           <div class="mt-3 flex justify-end gap-2">
             <button @click="bugOpen = false" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition">Cancelar</button>
             <button @click="submitBug" :disabled="bugBusy" class="px-4 py-2 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:brightness-110 active:scale-95 transition disabled:opacity-60">{{ bugBusy ? 'Enviando…' : 'Enviar reporte' }}</button>
@@ -540,4 +680,10 @@ export default {
 /* Transición de la card de amigos al abrir/cerrar (antes aparecía/desaparecía sólida). */
 .dock-pop-enter-active, .dock-pop-leave-active { transition: opacity .18s ease, transform .18s ease; }
 .dock-pop-enter-from, .dock-pop-leave-to { opacity: 0; transform: translateY(8px) scale(.96); }
+
+/* Solo en desktop el panel se centra entre el header y el borde de la pantalla
+   (en mobile es un drawer anclado abajo, ver clases bottom-24 de arriba). */
+@media (min-width: 1024px) {
+  .fd-dock-panel { top: var(--fd-top, 90px); bottom: var(--fd-bottom, 80px); }
+}
 </style>

@@ -30,8 +30,13 @@ export async function checkSocialButterflyAchievement() {
 }
 
 /**
- * Check chat master achievement (100+ messages sent)
- * Call after sending a message in global chat
+ * Check chat master achievement (100+ direct messages sent, lifetime).
+ * Call after sending a direct message.
+ *
+ * Cuenta un contador persistente (user_profiles.direct_messages_sent_count,
+ * ver supabase/chat-dm-retention.sql) en vez de filas vivas de direct_messages:
+ * esa tabla se purga cada 48hs para no explotar la base, así que contar filas
+ * directamente rompería el logro apenas se borraran mensajes viejos.
  */
 export async function checkChatMasterAchievement() {
   const { id: userId } = getAuthUser() || {}
@@ -39,13 +44,14 @@ export async function checkChatMasterAchievement() {
 
   try {
     const { data, error } = await supabase
-      .from('global_chat_messages')
-      .select('id')
-      .eq('sender_id', userId)
+      .from('user_profiles')
+      .select('direct_messages_sent_count')
+      .eq('id', userId)
+      .single()
 
     if (error) return
 
-    const messageCount = (data || []).length
+    const messageCount = data?.direct_messages_sent_count || 0
 
     if (messageCount >= 100) {
       await unlockAchievementWithToast('chat_master')

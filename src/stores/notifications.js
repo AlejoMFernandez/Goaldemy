@@ -282,6 +282,24 @@ export function pushInfoToast(message, ttlMs = 4000) {
   return push({ type: 'info', title: normalizeMessage(message) }, ttlMs)
 }
 
+// Toast efímero de mensaje directo entrante (estilo WhatsApp): avatar + nombre + preview.
+// Click → abre ese chat en la sidebar (ver stores/sidebar.js requestOpenChat).
+// El ícono/marco equipado (frameKey/iconGlyph/iconBg) ya viene cacheado en FriendsDock
+// (se pidió una vez al cargar la lista de amigos), así que mostrarlo acá no pega a la red.
+export function pushDmToast({ peerId, name, avatarUrl, message, frameKey, iconGlyph, iconBg, initial }, ttlMs = 6000) {
+  return push({
+    type: 'dm',
+    peerId,
+    title: name || 'Mensaje nuevo',
+    message: (message || '').slice(0, 160),
+    avatarUrl: avatarUrl || '',
+    frameKey: frameKey || 'none',
+    iconGlyph: iconGlyph || '',
+    iconBg: iconBg || 'emerald',
+    initial: initial || (name || '?').trim().charAt(0).toUpperCase(),
+  }, ttlMs)
+}
+
 function normalizeMessage(msg) {
   if (!msg) return 'Operación realizada'
   if (typeof msg === 'string') return msg

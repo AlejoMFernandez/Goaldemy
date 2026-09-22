@@ -18,9 +18,11 @@ const props = defineProps({
   framePremium: { type: Boolean, default: false },
   size: { type: Number, default: 40 }, // px
   ring: { type: Boolean, default: true }, // false = ícono pelado, sin aro/borde
+  glow: { type: Boolean, default: true }, // false = sin el aura/shadow del marco (para avatares chicos muy pegados a otro UI)
 })
 
 const fr = computed(() => frameStyle(props.frameKey))
+const frWrapClass = computed(() => props.glow ? fr.value.wrap : fr.value.wrap.replace(/shadow-\[[^\]]*\]/g, '').trim())
 const framed = computed(() => !!props.frameKey && props.frameKey !== 'none')
 const outerRadius = computed(() => Math.round(props.size * 0.22))
 const innerRadius = computed(() => Math.max(4, outerRadius.value - 2))
@@ -33,7 +35,7 @@ const innerBg = computed(() => (props.iconGlyph ? iconThemeBg(props.iconGlyph) :
   <div
     class="inline-block shrink-0"
     :style="{ width: size + 'px', height: size + 'px', borderRadius: outerRadius + 'px' }"
-    :class="[fr.wrap, fr.pad, framePremium ? 'anim-pan' : '']"
+    :class="[frWrapClass, fr.pad, framePremium ? 'anim-pan' : '']"
   >
     <div
       class="relative w-full h-full overflow-hidden grid place-items-center text-white font-extrabold leading-none"

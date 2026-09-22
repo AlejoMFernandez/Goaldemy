@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue'
 import { notificationsState, removeNotification } from '../stores/notifications'
+import { requestOpenChat } from '../stores/sidebar'
+import UserAvatar from './common/UserAvatar.vue'
 
 const items = computed(() => notificationsState.items)
 
@@ -8,6 +10,7 @@ const STYLES = {
   error: { ring: 'ring-red-400/30', bg: 'bg-red-500/10', text: 'text-red-300', border: 'border-red-500/20' },
   success: { ring: 'ring-emerald-400/30', bg: 'bg-emerald-500/10', text: 'text-emerald-300', border: 'border-emerald-500/20' },
   info: { ring: 'ring-cyan-400/30', bg: 'bg-cyan-500/10', text: 'text-cyan-300', border: 'border-cyan-500/20' },
+  dm: { ring: 'ring-violet-400/30', bg: 'bg-violet-500/10', text: 'text-violet-300', border: 'border-violet-400/25' },
 }
 const styleFor = (type) => STYLES[type] || STYLES.info
 
@@ -15,6 +18,12 @@ const labelFor = (type) => {
   if (type === 'error') return 'Error'
   if (type === 'success') return 'Listo'
   return 'Info'
+}
+
+function onToastClick(n) {
+  if (n.type !== 'dm') return
+  if (n.peerId) requestOpenChat(n.peerId)
+  removeNotification(n.id)
 }
 </script>
 
@@ -28,9 +37,11 @@ const labelFor = (type) => {
         v-for="n in items"
         :key="n.id"
         class="rounded-2xl backdrop-blur-xl p-3 shadow-2xl flex items-start gap-3 border bg-slate-900/85"
-        :class="styleFor(n.type).border"
+        :class="[styleFor(n.type).border, n.type === 'dm' ? 'cursor-pointer hover:border-violet-400/50 hover:bg-slate-900 transition' : '']"
+        @click="onToastClick(n)"
       >
-          <div class="shrink-0 w-8 h-8 rounded-full ring-1 grid place-items-center"
+          <UserAvatar v-if="n.type === 'dm'" :size="32" :avatar-url="n.avatarUrl" :initial="n.initial" :frame-key="n.frameKey" :icon-glyph="n.iconGlyph" :icon-bg="n.iconBg" class="shrink-0" />
+          <div v-else class="shrink-0 w-8 h-8 rounded-full ring-1 grid place-items-center"
             :class="[styleFor(n.type).bg, styleFor(n.type).ring]"
           >
             <svg v-if="n.type === 'error'" class="w-4 h-4" :class="styleFor(n.type).text" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -44,10 +55,10 @@ const labelFor = (type) => {
             </svg>
           </div>
           <div class="min-w-0 flex-1">
-            <p class="text-xs font-semibold" :class="styleFor(n.type).text">{{ labelFor(n.type) }}</p>
-            <p class="text-[13px] text-slate-200 whitespace-normal break-words leading-snug mt-0.5">{{ n.title }}</p>
+            <p class="text-xs font-semibold" :class="n.type === 'dm' ? 'text-violet-300' : styleFor(n.type).text">{{ n.type === 'dm' ? n.title : labelFor(n.type) }}</p>
+            <p class="text-[13px] text-slate-200 whitespace-normal break-words leading-snug mt-0.5">{{ n.type === 'dm' ? n.message : n.title }}</p>
           </div>
-        <button @click="removeNotification(n.id)" class="shrink-0 text-slate-500 hover:text-slate-300 transition mt-0.5" aria-label="Cerrar">
+        <button @click.stop="removeNotification(n.id)" class="shrink-0 text-slate-500 hover:text-slate-300 transition mt-0.5" aria-label="Cerrar">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>

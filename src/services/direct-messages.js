@@ -48,6 +48,10 @@ export async function sendDirectMessage(toUserId, content) {
   if (!payload.content) throw new Error('Mensaje vacío')
   const { error } = await supabase.from('direct_messages').insert([payload])
   if (error) throw error
+  try {
+    const { checkChatMasterAchievement } = await import('./social-achievements')
+    await checkChatMasterAchievement()
+  } catch {}
 }
 
 export async function fetchConversation(peerId, limit = 200) {
