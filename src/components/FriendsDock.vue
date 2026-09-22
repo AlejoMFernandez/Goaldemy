@@ -81,7 +81,7 @@ export default {
       // TOPE de la pantalla, que con el header fijo arriba quedaba desparejo:
       // muy pegado al header y con mucho más aire abajo).
       headerH: 72,
-      sidebarGapPx: 24, // antes 80: quedaba muy corta, poco aprovechamiento vertical
+      sidebarGapPx: 44, // 80 (muy corta) -> 24 (muy larga) -> 34 -> 44: +10px más de aire de cada lado
       retentionInfoOpen: false,
     }
   },
@@ -547,27 +547,27 @@ export default {
 
       <!-- ===== Vista CHAT ===== -->
       <template v-else>
-        <div class="flex items-center gap-2.5 px-3 py-2 border-b border-white/10 bg-white/[0.02]">
-          <button @click="backToList" class="h-8 w-8 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition" title="Volver">
+        <div class="flex items-center gap-3 px-4 py-3.5 border-b border-white/10 bg-white/[0.02]">
+          <button @click="backToList" class="h-9 w-9 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition shrink-0" title="Volver">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <router-link :to="`/u/${activePeer.id}`" @click="closeMobile" class="relative shrink-0">
-            <UserAvatar :size="38" :avatar-url="activePeer.avatar_url" :initial="initial({ name: activePeer.display_name || activePeer.email })" :frame-key="cos[activePeerId]?.frameKey || 'none'" :icon-glyph="cos[activePeerId]?.iconGlyph || ''" :icon-bg="cos[activePeerId]?.iconBg || 'emerald'" />
-            <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-900" :class="activePresence.dot"></span>
+            <UserAvatar :size="46" :avatar-url="activePeer.avatar_url" :initial="initial({ name: activePeer.display_name || activePeer.email })" :frame-key="cos[activePeerId]?.frameKey || 'none'" :icon-glyph="cos[activePeerId]?.iconGlyph || ''" :icon-bg="cos[activePeerId]?.iconBg || 'emerald'" />
+            <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-slate-900" :class="activePresence.dot"></span>
           </router-link>
           <div class="min-w-0 flex-1">
-            <div class="font-bold text-white truncate leading-tight text-sm">{{ activePeer.display_name || activePeer.email || 'Usuario' }}</div>
-            <div class="text-[11px] text-slate-400 truncate">{{ activePresence.label }}</div>
+            <div class="font-bold text-white truncate leading-tight text-base">{{ activePeer.display_name || activePeer.email || 'Usuario' }}</div>
+            <div class="text-xs text-slate-400 truncate mt-0.5">{{ activePresence.label }}</div>
           </div>
           <div class="relative shrink-0">
             <button
               @mouseenter="retentionInfoOpen = true" @mouseleave="retentionInfoOpen = false"
               @click="retentionInfoOpen = !retentionInfoOpen" type="button"
-              class="h-6 w-6 grid place-items-center rounded-full text-slate-500 hover:text-slate-300 hover:bg-white/10 transition"
+              class="h-8 w-8 grid place-items-center rounded-full text-slate-500 hover:text-slate-300 hover:bg-white/10 transition"
               aria-label="Información sobre este chat">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-[18px] w-[18px]"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
             </button>
-            <div v-if="retentionInfoOpen" class="absolute right-0 top-8 z-20 w-56 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-2xl p-3 text-[11px] leading-snug text-slate-300">
+            <div v-if="retentionInfoOpen" class="absolute right-0 top-9 z-20 w-56 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-2xl p-3 text-[11px] leading-snug text-slate-300">
               Los mensajes de este chat se borran automáticamente después de <span class="text-white font-semibold">48 horas</span> para mantener la app liviana. Guardá lo importante por otro medio.
             </div>
           </div>
