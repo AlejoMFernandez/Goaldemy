@@ -185,6 +185,11 @@ export default {
       if (this.view === 'chat') { this.view = 'list'; this.detachChatRealtime() }
     },
     measureHeader() {
+      // Solo importa en desktop (lg+): rail y centrado del panel son lg-only.
+      // En mobile no hacemos nada acá — evita trabajo/reflow innecesario justo
+      // cuando el teclado abre y dispara resize (el mismo momento del bug que
+      // rompía la página en el chat).
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) return
       try {
         const h = document.querySelector('header')
         this.headerH = h ? Math.round(h.getBoundingClientRect().height) : 72
@@ -192,11 +197,13 @@ export default {
     },
     onDocumentPointerDown(e) {
       if (!this.mobileOpen) return
-      const panel = this.$refs.dockPanel
-      const toggles = [this.$refs.desktopToggleBtn, this.$refs.mobileToggleBtn].filter(Boolean)
-      if (panel && panel.contains(e.target)) return
-      if (toggles.some(el => el.contains(e.target))) return
-      this.closeMobile()
+      try {
+        const panel = this.$refs.dockPanel
+        const toggles = [this.$refs.desktopToggleBtn, this.$refs.mobileToggleBtn].filter(Boolean)
+        if (panel && panel.contains(e.target)) return
+        if (toggles.some(el => el.contains(e.target))) return
+        this.closeMobile()
+      } catch {}
     },
     async doLogout() {
       try { await logout() } catch {}
@@ -551,10 +558,12 @@ export default {
           <button @click="backToList" class="h-9 w-9 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition shrink-0" title="Volver">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <router-link :to="`/u/${activePeer.id}`" @click="closeMobile" class="relative shrink-0">
+          <!-- Sin activePeer.id todavía (justo al abrir, mientras carga el perfil)
+               no debe ser navegable: evita un link roto a /u/null por un instante. -->
+          <component :is="activePeer.id ? 'router-link' : 'div'" :to="activePeer.id ? `/u/${activePeer.id}` : undefined" @click="activePeer.id && closeMobile()" class="relative shrink-0">
             <UserAvatar :size="46" :avatar-url="activePeer.avatar_url" :initial="initial({ name: activePeer.display_name || activePeer.email })" :frame-key="cos[activePeerId]?.frameKey || 'none'" :icon-glyph="cos[activePeerId]?.iconGlyph || ''" :icon-bg="cos[activePeerId]?.iconBg || 'emerald'" />
             <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-slate-900" :class="activePresence.dot"></span>
-          </router-link>
+          </component>
           <div class="min-w-0 flex-1">
             <div class="font-bold text-white truncate leading-tight text-base">{{ activePeer.display_name || activePeer.email || 'Usuario' }}</div>
             <div class="text-xs text-slate-400 truncate mt-0.5">{{ activePresence.label }}</div>
