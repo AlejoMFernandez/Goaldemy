@@ -32,6 +32,8 @@ const filtered = computed(() => {
 })
 
 function nameFor(id) { const p = profiles.value[id]; return p ? (p.display_name || p.email || 'Usuario') : (id ? 'Usuario' : 'Anónimo') }
+function avatarFor(id) { return profiles.value[id]?.avatar_url || '' }
+function initialFor(id) { return nameFor(id).trim().charAt(0).toUpperCase() || '?' }
 function fmtDate(ts) { try { return new Date(ts).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) } catch { return '' } }
 function statusOf(r) { return STATUS[r.status] || STATUS.open }
 function ticketRef(r) { return '#' + (r.id || '').replace(/-/g, '').slice(0, 6).toUpperCase() }
@@ -112,16 +114,30 @@ onMounted(load)
       <p>No hay tickets {{ filter === 'open' ? 'abiertos' : filter === 'done' ? 'cerrados' : '' }}.</p>
     </div>
 
-    <ul v-else class="space-y-2.5">
-      <li v-for="r in filtered" :key="r.id" class="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-        <div class="flex items-start justify-between gap-3">
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-[11px] font-mono text-slate-500">{{ ticketRef(r) }}</span>
-              <span class="text-slate-600">·</span>
-              <span class="text-slate-400 font-medium text-xs">{{ nameFor(r.user_id) }}</span>
+    <ul v-else class="space-y-2">
+      <li v-for="r in filtered" :key="r.id" class="rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] transition-colors p-4">
+        <div class="flex items-start gap-4">
+          <!-- Ícono del usuario + nombre, en cápsula -->
+          <div class="shrink-0 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 pl-1 pr-3 py-1 max-w-[180px]">
+            <img
+              v-if="avatarFor(r.user_id)"
+              :src="avatarFor(r.user_id)"
+              :alt="nameFor(r.user_id)"
+              class="h-6 w-6 rounded-full object-cover shrink-0"
+            />
+            <div v-else class="h-6 w-6 rounded-full bg-slate-600 grid place-items-center text-[10px] font-bold text-white shrink-0">
+              {{ initialFor(r.user_id) }}
             </div>
-            <p class="text-slate-100 text-sm whitespace-pre-line break-words">{{ r.message }}</p>
+            <span class="text-xs font-semibold text-slate-200 truncate">{{ nameFor(r.user_id) }}</span>
+          </div>
+
+          <!-- Título + fecha -->
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-mono text-slate-500">{{ ticketRef(r) }}</span>
+            </div>
+            <p class="text-slate-100 text-sm font-medium whitespace-pre-line break-words mt-0.5">{{ r.message }}</p>
+            <p class="text-[11px] text-slate-500 mt-1">{{ fmtDate(r.created_at) }}</p>
 
             <button
               v-if="imageUrls[r.id]"
@@ -136,26 +152,34 @@ onMounted(load)
               captura adjunta
             </span>
 
-            <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
-              <span>{{ fmtDate(r.created_at) }}</span>
+            <div v-if="r.contact || r.url" class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
               <span v-if="r.contact" class="text-slate-400">✉ {{ r.contact }}</span>
               <a v-if="r.url" :href="r.url" target="_blank" rel="noopener" class="text-sky-400 hover:underline truncate max-w-[220px]">{{ r.url.replace(origin, '') || r.url }}</a>
             </div>
           </div>
-          <div class="shrink-0 flex flex-col items-end gap-2">
-            <span class="px-2 py-0.5 rounded-full border text-[10px] font-bold" :class="statusOf(r).cls">{{ statusOf(r).label }}</span>
-            <button @click="confirmDelete(r)" class="text-slate-500 hover:text-red-400 transition" title="Eliminar ticket">
+
+          <!-- Estado (desplegable) + borrar -->
+          <div class="shrink-0 flex items-center gap-2">
+            <div class="relative">
+              <select
+                :value="r.status"
+                @change="changeStatus(r, $event.target.value)"
+                :disabled="busy === r.id"
+                class="appearance-none pl-2.5 pr-7 py-1.5 rounded-full border text-[11px] font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400/40 disabled:opacity-40"
+                :class="statusOf(r).cls"
+              >
+                <option v-for="s in ['open','in_progress','done','wontfix']" :key="s" :value="s" class="bg-slate-800 text-white">
+                  {{ STATUS[s].label }}
+                </option>
+              </select>
+              <svg viewBox="0 0 20 20" fill="currentColor" class="h-3 w-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-70">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <button @click="confirmDelete(r)" class="h-7 w-7 grid place-items-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition" title="Eliminar ticket">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg>
             </button>
           </div>
-        </div>
-        <div class="mt-3 flex flex-wrap gap-1.5">
-          <button v-for="s in ['open','in_progress','done','wontfix']" :key="s"
-                  @click="changeStatus(r, s)" :disabled="busy === r.id || r.status === s"
-                  class="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition disabled:opacity-40"
-                  :class="r.status === s ? 'border-white/20 bg-white/10 text-white' : 'border-white/10 text-slate-400 hover:text-white hover:bg-white/5'">
-            {{ STATUS[s].label }}
-          </button>
         </div>
       </li>
     </ul>
