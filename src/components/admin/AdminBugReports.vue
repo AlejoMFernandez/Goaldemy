@@ -18,13 +18,19 @@ const lightboxUrl = ref('')
 const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
 const STATUS = {
-  open:        { label: 'Abierto',     cls: 'bg-amber-500/15 text-amber-300 border-amber-400/30' },
-  in_progress: { label: 'En progreso', cls: 'bg-sky-500/15 text-sky-300 border-sky-400/30' },
-  done:        { label: 'Resuelto',    cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30' },
-  wontfix:     { label: 'No se hará',  cls: 'bg-slate-500/15 text-slate-300 border-slate-400/30' },
+  open:        { label: 'Abierto',     cls: 'bg-amber-500/15 text-amber-300 border-amber-400/30',   option: 'bg-amber-950 text-amber-300',   card: 'border-amber-500/30 bg-amber-500/10 text-amber-300' },
+  in_progress: { label: 'En progreso', cls: 'bg-sky-500/15 text-sky-300 border-sky-400/30',          option: 'bg-sky-950 text-sky-300',       card: 'border-sky-500/30 bg-sky-500/10 text-sky-300' },
+  done:        { label: 'Resuelto',    cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30', option: 'bg-emerald-950 text-emerald-300', card: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' },
+  wontfix:     { label: 'No se hará',  cls: 'bg-slate-500/15 text-slate-300 border-slate-400/30',    option: 'bg-slate-800 text-slate-300',   card: 'border-slate-500/30 bg-slate-500/10 text-slate-300' },
 }
+const STATUS_KEYS = ['open', 'in_progress', 'done', 'wontfix']
 
 const openCount = computed(() => reports.value.filter(r => r.status === 'open' || r.status === 'in_progress').length)
+const statusCounts = computed(() => {
+  const counts = { open: 0, in_progress: 0, done: 0, wontfix: 0 }
+  for (const r of reports.value) counts[r.status] = (counts[r.status] || 0) + 1
+  return counts
+})
 const filtered = computed(() => {
   if (filter.value === 'open') return reports.value.filter(r => r.status === 'open' || r.status === 'in_progress')
   if (filter.value === 'done') return reports.value.filter(r => r.status === 'done' || r.status === 'wontfix')
@@ -84,6 +90,19 @@ onMounted(load)
 </script>
 
 <template>
+  <div>
+  <!-- Mini resumen por estado -->
+  <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4">
+    <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
+      <p class="text-2xl font-extrabold text-white leading-none">{{ reports.length }}</p>
+      <p class="text-[11px] text-slate-400 mt-1">Total</p>
+    </div>
+    <div v-for="s in STATUS_KEYS" :key="s" class="rounded-xl border px-3 py-2.5" :class="STATUS[s].card">
+      <p class="text-2xl font-extrabold leading-none">{{ statusCounts[s] }}</p>
+      <p class="text-[11px] mt-1 opacity-80">{{ STATUS[s].label }}</p>
+    </div>
+  </div>
+
   <div class="bg-gradient-to-br from-slate-800/80 to-slate-900/50 backdrop-blur border border-white/10 rounded-2xl p-5 sm:p-6 shadow-xl">
     <div class="flex items-center justify-between gap-3 mb-5">
       <div>
@@ -115,7 +134,7 @@ onMounted(load)
     </div>
 
     <ul v-else class="space-y-2">
-      <li v-for="r in filtered" :key="r.id" class="rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] transition-colors p-4">
+      <li v-for="r in filtered" :key="r.id" class="relative rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] transition-colors p-4 pb-10">
         <div class="flex items-start gap-4">
           <!-- Ícono del usuario + nombre, en cápsula -->
           <div class="shrink-0 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 pl-1 pr-3 py-1 max-w-[180px]">
@@ -158,29 +177,29 @@ onMounted(load)
             </div>
           </div>
 
-          <!-- Estado (desplegable) + borrar -->
-          <div class="shrink-0 flex items-center gap-2">
-            <div class="relative">
-              <select
-                :value="r.status"
-                @change="changeStatus(r, $event.target.value)"
-                :disabled="busy === r.id"
-                class="appearance-none pl-2.5 pr-7 py-1.5 rounded-full border text-[11px] font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400/40 disabled:opacity-40"
-                :class="statusOf(r).cls"
-              >
-                <option v-for="s in ['open','in_progress','done','wontfix']" :key="s" :value="s" class="bg-slate-800 text-white">
-                  {{ STATUS[s].label }}
-                </option>
-              </select>
-              <svg viewBox="0 0 20 20" fill="currentColor" class="h-3 w-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-70">
-                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-              </svg>
-            </div>
-            <button @click="confirmDelete(r)" class="h-7 w-7 grid place-items-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition" title="Eliminar ticket">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg>
-            </button>
+          <!-- Estado (desplegable) -->
+          <div class="shrink-0 relative">
+            <select
+              :value="r.status"
+              @change="changeStatus(r, $event.target.value)"
+              :disabled="busy === r.id"
+              class="appearance-none pl-2.5 pr-7 py-1.5 rounded-full border text-[11px] font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400/40 disabled:opacity-40"
+              :class="statusOf(r).cls"
+            >
+              <option v-for="s in STATUS_KEYS" :key="s" :value="s" :class="STATUS[s].option">
+                {{ STATUS[s].label }}
+              </option>
+            </select>
+            <svg viewBox="0 0 20 20" fill="currentColor" class="h-3 w-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-70">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+            </svg>
           </div>
         </div>
+
+        <!-- Borrar: esquina inferior derecha -->
+        <button @click="confirmDelete(r)" class="absolute bottom-2.5 right-2.5 h-7 w-7 grid place-items-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition" title="Eliminar ticket">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg>
+        </button>
       </li>
     </ul>
 
@@ -214,5 +233,6 @@ onMounted(load)
         </div>
       </div>
     </div>
+  </div>
   </div>
 </template>
