@@ -468,8 +468,12 @@ export default {
       </div>
     </div>
 
-    <!-- ───────── Mobile: cluster flotante (desafíos + bug + amigos) ───────── -->
-    <div class="lg:hidden fixed bottom-5 right-4 z-40 flex flex-col items-center gap-2.5">
+    <!-- ───────── Mobile: cluster flotante (desafíos + bug + amigos) ─────────
+         Se esconde entero mientras el panel está abierto: en mobile el panel pasa
+         a ocupar TODA la pantalla (ver más abajo), así que este cluster flotando
+         arriba tapa el compose bar del chat. El panel ya trae su propio cierre
+         (X en la lista, Volver en el chat) — igual que cualquier chat full-screen. -->
+    <div v-if="!mobileOpen" class="lg:hidden fixed bottom-5 right-4 z-40 flex flex-col items-center gap-2.5">
       <button @click="challengesOpen = true" title="Desafíos" class="h-11 w-11 grid place-items-center rounded-full border border-white/15 bg-slate-800/90 text-amber-300 shadow-xl hover:brightness-110 transition active:scale-95">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
       </button>
@@ -477,20 +481,20 @@ export default {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M8 2l1.5 2.5M16 2l-1.5 2.5"/><rect x="7" y="6" width="10" height="12" rx="5"/><path d="M12 10v6M4 10h3M17 10h3M4 15h3M17 15h3M5 20l2.5-2M19 20l-2.5-2"/></svg>
       </button>
       <button ref="mobileToggleBtn" @click="toggleMobile" title="Amigos" class="relative h-14 w-14 rounded-full grid place-items-center bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-2xl shadow-indigo-500/40 border border-white/20 hover:brightness-110 transition active:scale-95">
-        <svg v-if="!mobileOpen" viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-        <svg v-else viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         <span v-if="totalUnread > 0" class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold grid place-items-center border border-white/20">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
       </button>
     </div>
 
-    <!-- ───────── Barra de AMIGOS desplegable (card flotante, no full-height) ─────────
-         Chica y con transición (antes: sidebar full-height "enorme" que aparecía/
-         desaparecía sin animación). -->
+    <!-- ───────── Panel de AMIGOS/CHAT ─────────
+         Mobile: toma TODA la pantalla (inset-0, sin bordes redondeados ni card) —
+         antes era una card chica flotante en la esquina, quedaba apretada para
+         escribir o leer. Desktop (lg+): sigue siendo la card flotante de siempre. -->
     <Transition name="dock-pop">
     <div v-if="mobileOpen" ref="dockPanel"
-      class="fd-dock-panel fixed z-40 right-4 bottom-24 w-[92vw] max-w-[320px] h-[65vh] max-h-[520px]
-             lg:right-5 lg:h-auto lg:max-h-none lg:w-[320px] lg:max-w-none
-             flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 backdrop-blur-xl shadow-2xl"
+      class="fd-dock-panel fixed z-40 inset-0 w-full h-full
+             lg:inset-auto lg:right-5 lg:w-[320px] lg:h-auto lg:max-h-none
+             flex flex-col overflow-hidden border-0 lg:rounded-2xl lg:border lg:border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 lg:backdrop-blur-xl shadow-2xl"
       :style="{ '--fd-top': sidebarTopPx, '--fd-bottom': sidebarBottomPx }">
 
       <!-- ===== Vista LISTA ===== -->
@@ -686,12 +690,16 @@ export default {
 .rail-scroll { scrollbar-width: none; -ms-overflow-style: none; }
 .rail-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
-/* Transición de la card de amigos al abrir/cerrar (antes aparecía/desaparecía sólida). */
-.dock-pop-enter-active, .dock-pop-leave-active { transition: opacity .18s ease, transform .18s ease; }
-.dock-pop-enter-from, .dock-pop-leave-to { opacity: 0; transform: translateY(8px) scale(.96); }
+/* Transición al abrir/cerrar: en mobile (panel full-screen) es un slide-up
+   sutil; en desktop (card flotante) mantiene el fade+scale de siempre. */
+.dock-pop-enter-active, .dock-pop-leave-active { transition: opacity .2s ease, transform .2s ease; }
+.dock-pop-enter-from, .dock-pop-leave-to { opacity: 0; transform: translateY(24px); }
+@media (min-width: 1024px) {
+  .dock-pop-enter-from, .dock-pop-leave-to { transform: translateY(8px) scale(.96); }
+}
 
 /* Solo en desktop el panel se centra entre el header y el borde de la pantalla
-   (en mobile es un drawer anclado abajo, ver clases bottom-24 de arriba). */
+   (en mobile ocupa toda la pantalla, ver clases inset-0 de arriba). */
 @media (min-width: 1024px) {
   .fd-dock-panel { top: var(--fd-top, 90px); bottom: var(--fd-bottom, 80px); }
 }
