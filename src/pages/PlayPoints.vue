@@ -27,7 +27,7 @@ async function load() {
   state.loading = true
   try {
     const all = await fetchGames()
-    const list = (all || []).filter(g => !!g?.slug && gameRouteForSlug(g.slug) !== '/games')
+    const list = (all || []).filter(g => !!g?.slug && g.slug !== 'once-ideal' && gameRouteForSlug(g.slug) !== '/games')
     state.games = list
     const entriesAv = await Promise.all(list.map(async g => [g.slug, await isChallengeAvailable(g.slug)]))
     state.availability = Object.fromEntries(entriesAv)
