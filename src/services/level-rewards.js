@@ -9,7 +9,6 @@ export const GAME_UNLOCK_LEVELS = {
   'value-order': 1,
   'age-order': 1,
   'height-order': 1,
-  'once-ideal': 18,
 }
 
 const GAME_NAMES = {
@@ -21,7 +20,6 @@ const GAME_NAMES = {
   'value-order': 'Orden por Valor',
   'age-order': 'Orden por Edad',
   'height-order': 'Orden por Altura',
-  'once-ideal': 'Once Ideal',
 }
 
 export function getGameUnlockLevel(slug) {
