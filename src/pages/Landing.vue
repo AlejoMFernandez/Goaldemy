@@ -157,7 +157,7 @@ async function load() {
   try {
     state.isAuthenticated = !!(getAuthUser()?.id)
     const allGames = await fetchGames()
-    const playable = (allGames || []).filter(g => !!g?.slug && gameRouteForSlug(g.slug) !== '/games')
+    const playable = (allGames || []).filter(g => !!g?.slug && g.slug !== 'once-ideal' && gameRouteForSlug(g.slug) !== '/games')
     state.featuredGames = playable.slice(-4)
     state.totalGames = playable.length
     if (state.isAuthenticated) loadFeaturedStates()
