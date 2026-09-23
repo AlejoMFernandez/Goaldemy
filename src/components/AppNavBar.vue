@@ -480,16 +480,6 @@ export default {
                 </div>
 
                 <ul class="hidden lg:flex items-center gap-2.5 xl:gap-4 text-slate-200">
-                    <!-- Jugá gratis — píldora de acento (funnel público, sin cuenta) -->
-                    <li>
-                        <RouterLink to="/games/guess-player?mode=challenge" class="nav-pill nav-pill--cyan">
-                            <span class="relative flex h-2 w-2">
-                                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
-                                <span class="relative inline-flex h-2 w-2 rounded-full bg-cyan-400"></span>
-                            </span>
-                            Jugá gratis
-                        </RouterLink>
-                    </li>
                     <!-- Jugar (dropdown) -->
                     <li class="relative" @mouseenter="onPlayEnter" @mouseleave="onPlayLeave">
                         <button data-play-button class="nav-link" :class="{ 'text-white': playOpen }">
@@ -502,10 +492,6 @@ export default {
                             <RouterLink @click="playOpen=false" to="/play/points" class="nav-menu-item">
                                 <div class="nav-menu-item-title">Jugar por puntos</div>
                                 <p class="nav-menu-item-sub">Desafío diario con cronómetro. 1 intento por día. Sumá XP.</p>
-                            </RouterLink>
-                            <RouterLink @click="playOpen=false" to="/games/guess-player?mode=challenge" class="nav-menu-item">
-                                <div class="nav-menu-item-title">Jugá gratis</div>
-                                <p class="nav-menu-item-sub">Probá un juego real ahora mismo. Sin login.</p>
                             </RouterLink>
                         </div>
                         </transition>
@@ -764,20 +750,10 @@ export default {
 
                         <!-- Nav items -->
                         <li>
-                            <RouterLink @click="isOpen=false" to="/games/guess-player?mode=challenge" class="flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2.5 font-bold text-cyan-300 hover:bg-cyan-500/15">
-                                <span class="relative flex h-2 w-2">
-                                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
-                                    <span class="relative inline-flex h-2 w-2 rounded-full bg-cyan-400"></span>
-                                </span>
-                                Jugá gratis
-                            </RouterLink>
-                        </li>
-                        <li>
                             <details class="group">
                                 <summary class="cursor-pointer hover:text-white">Jugar</summary>
                                 <ul class="mt-1 pl-3 flex flex-col gap-1 text-slate-300">
                                     <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/play/points">Jugar por puntos</RouterLink></li>
-                                    <li><RouterLink @click="isOpen=false" class="block hover:text-white" to="/games/guess-player?mode=challenge">Jugá gratis</RouterLink></li>
                                 </ul>
                             </details>
                         </li>
