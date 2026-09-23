@@ -125,7 +125,7 @@ export default {
       nextRound(this)
     },
     blurb() { return gameSummaryBlurb('who-is') },
-    backPath() { if (this.isGuest) return '/'; return this.mode === 'free' ? '/play/free' : '/play/points' },
+    backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
     async chooseSuggestion(p) {
       // Tocar una sugerencia la manda directo (estilo who-are-ya).
       if (!p) return

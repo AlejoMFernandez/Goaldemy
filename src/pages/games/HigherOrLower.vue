@@ -121,7 +121,7 @@ export default {
     }
   },
   methods: {
-    backPath() { if (this.isGuest) return '/'; return this.mode === 'free' ? '/play/free' : '/play/points' },
+    backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
 
     async load() {
       // Filtramos randoms con estadísticas nulas (0 apariciones/goles/asistencias):

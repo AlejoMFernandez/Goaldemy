@@ -209,7 +209,7 @@ export default {
       this.xpEarned = 0
       this.loading = false
     },
-    backPath() { if (this.isGuest) return '/'; return this.mode === 'free' ? '/play/free' : '/play/points' },
+    backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
     openCell(r, c) {
       const cell = this.cells[r][c]
       if (cell.player || cell.failed || this.gameFinished) return
