@@ -5,6 +5,8 @@ import { isChallengeAvailable, startChallengeSession, completeChallengeSession }
 import { initScoring } from '../../services/scoring'
 import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
+import { getAuthUser } from '../../services/auth'
+import { setPendingGuestClaim } from '../../services/guest-play'
 import { createDailyRng } from '../../services/seeded-random'
 import { spawnXpBadge } from '../../services/ui-effects'
 import { celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
@@ -16,7 +18,8 @@ export default {
   name: 'AgeOrder',
   components: { GameShell, GamePreviewModal, GameSummaryPopup },
   computed: {
-    gameMetadata() { return getGameMetadata('age-order') }
+    gameMetadata() { return getGameMetadata('age-order') },
+    isGuest() { return !getAuthUser()?.id },
   },
   data() {
     return {
@@ -166,7 +169,11 @@ export default {
         const result = correctPositions === winThreshold ? 'win' : 'loss'
         if (result === 'win') celebrateGameWin()
         else announceGameLoss()
-        if (this.allowXp && this.xpEarned > 0) {
+        if (this.isGuest) {
+          if (this.xpEarned > 0) {
+            setPendingGuestClaim({ game: 'age-order', corrects: correctPositions, total: winThreshold, maxStreak: 0 })
+          }
+        } else if (this.allowXp && this.xpEarned > 0) {
           try { await awardXpBatch({ gameCode: 'age-order', totalXp: this.xpEarned, corrects: correctPositions }) } catch {}
         }
         try { await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, correctPositions, finalOrder: [...this.slots], correctness: [...this.correctness], items: this.items, corrects: correctPositions }) } catch {}
@@ -312,6 +319,7 @@ export default {
           :xpEarned="xpEarned"
           :difficulty="selectedDifficulty"
           :winThreshold="slots.length"
+          :guest="isGuest"
           :backPath="backPath()"
           @close="showSummary = false"
         />
