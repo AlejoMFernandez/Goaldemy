@@ -5,6 +5,8 @@ import { getBroadPosition } from '../../services/game-common'
 import { playerFlagUrl } from '../../services/countries'
 import { captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
+import { getAuthUser } from '../../services/auth'
+import { setPendingGuestClaim } from '../../services/guest-play'
 import { createDailyRng } from '../../services/seeded-random'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
 import { celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
@@ -99,6 +101,7 @@ export default {
   },
   computed: {
     gameMetadata() { return getGameMetadata('football-wordle') },
+    isGuest() { return !getAuthUser()?.id },
     guessedIds() {
       const s = new Set()
       for (const g of this.guesses) s.add(g.player.id)
@@ -281,7 +284,11 @@ export default {
         this.xpEarned = 0
         setTimeout(() => announceGameLoss(), 100)
       }
-      if (this.xpEarned > 0) {
+      if (this.isGuest) {
+        if (this.xpEarned > 0) {
+          setPendingGuestClaim({ game: 'football-wordle', corrects: this.won ? 1 : 0, total: 1, maxStreak: 0 })
+        }
+      } else if (this.xpEarned > 0) {
         await awardXpBatch({ gameCode: 'football-wordle', totalXp: this.xpEarned, corrects: this.won ? 1 : 0 }).catch(() => {})
       }
       await completeChallengeSession(this.sessionId, this.score, this.xpEarned, {
@@ -517,6 +524,8 @@ export default {
           :xpEarned="xpEarned"
           :difficulty="selectedDifficulty"
           :winThreshold="1"
+          :guest="isGuest"
+          :resultLine="isGuest ? (won ? '¡Adiviné el crack! ✅' : 'No lo adiviné esta vez') : ''"
           :backPath="backPath()"
           @close="showSummary = false"
         />

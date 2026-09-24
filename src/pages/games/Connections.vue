@@ -7,6 +7,8 @@ import { getGameMetadata, gameSummaryBlurb } from '../../services/games'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
 import { captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
+import { getAuthUser } from '../../services/auth'
+import { setPendingGuestClaim } from '../../services/guest-play'
 import { createDailyRng } from '../../services/seeded-random'
 import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { playCorrectSound, playIncorrectSound } from '../../services/sounds'
@@ -130,6 +132,7 @@ export default {
   components: { GameShell, GamePreviewModal, GameSummaryPopup },
   computed: {
     gameMetadata() { return getGameMetadata('connections') },
+    isGuest() { return !getAuthUser()?.id },
     selectedCount() { return this.selected.size },
     canVerify() { return this.selected.size === 4 && !this.gameOver },
     mistakesRemaining() { return this.maxMistakes - this.mistakes },
@@ -332,7 +335,11 @@ export default {
       } catch (e) { console.error('[Connections start]', e) }
     },
     async finishChallenge(result) {
-      if (this.allowXp && this.xpEarned > 0) {
+      if (this.isGuest) {
+        if (this.xpEarned > 0) {
+          setPendingGuestClaim({ game: 'connections', corrects: this.corrects, total: 4, maxStreak: 0 })
+        }
+      } else if (this.allowXp && this.xpEarned > 0) {
         await awardXpBatch({ gameCode: 'connections', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
       }
       try {
@@ -485,6 +492,7 @@ export default {
           :xpEarned="xpEarned"
           :difficulty="selectedDifficulty"
           :winThreshold="4"
+          :guest="isGuest"
           :backPath="backPath()"
           @close="showSummary = false"
         />
