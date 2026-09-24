@@ -3,6 +3,8 @@ import AppH1 from '../../components/common/AppH1.vue'
 import { getAllPlayersAsync } from '../../services/players'
 import { initScoring, onCorrect, onIncorrect } from '../../services/scoring'
 import { awardXpBatch } from '../../services/game-xp'
+import { getAuthUser } from '../../services/auth'
+import { setPendingGuestClaim } from '../../services/guest-play'
 import { createDailyRng } from '../../services/seeded-random'
 import { celebrateCorrect, celebrateIncorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { playTimeUpSound } from '../../services/sounds'
@@ -56,7 +58,8 @@ export default {
   components: { AppH1, GamePreviewModal, GameSummaryPopup, CircularTimer, StreakBadge },
   computed: {
     gameMetadata() { return getGameMetadata('stat-challenge') },
-    posLabel() { return POS_LABELS[this.currentCorrect?.positionId] || 'Jugador' }
+    posLabel() { return POS_LABELS[this.currentCorrect?.positionId] || 'Jugador' },
+    isGuest() { return !getAuthUser()?.id },
   },
   data() {
     return {
@@ -241,7 +244,11 @@ export default {
       }
     },
     async finishChallenge(result) {
-      if (this.allowXp && this.xpEarned > 0) {
+      if (this.isGuest) {
+        if (this.xpEarned > 0) {
+          setPendingGuestClaim({ game: 'stat-challenge', corrects: this.corrects, total: 10, maxStreak: this.maxStreak })
+        }
+      } else if (this.allowXp && this.xpEarned > 0) {
         await awardXpBatch({ gameCode: 'stat-challenge', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
       }
       try {
@@ -380,6 +387,7 @@ export default {
           :xpEarned="xpEarned"
           :difficulty="selectedDifficulty"
           :winThreshold="10"
+          :guest="isGuest"
           :backPath="backPath()"
           @close="showSummary = false"
         />

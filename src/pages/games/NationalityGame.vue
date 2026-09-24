@@ -5,6 +5,8 @@ import { initScoring } from '../../services/scoring'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
 import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
+import { getAuthUser } from '../../services/auth'
+import { setPendingGuestClaim } from '../../services/guest-play'
 import { createDailyRng } from '../../services/seeded-random'
 import { gameSummaryBlurb, getGameMetadata } from '../../services/games'
 import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp, GAME_TYPES } from '../../services/game-celebrations'
@@ -54,7 +56,8 @@ export default {
   computed: {
     gameMetadata() {
       return getGameMetadata('nationality')
-    }
+    },
+    isGuest() { return !getAuthUser()?.id },
   },
   async mounted() {
     // Detect mode from query
@@ -185,7 +188,11 @@ export default {
       }
     },
     async finishChallenge(result) {
-      if (this.allowXp && this.xpEarned > 0) {
+      if (this.isGuest) {
+        if (this.xpEarned > 0) {
+          setPendingGuestClaim({ game: 'nationality', corrects: this.corrects, total: 10, maxStreak: this.maxStreak })
+        }
+      } else if (this.allowXp && this.xpEarned > 0) {
         await awardXpBatch({ gameCode: 'nationality', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
       }
       await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects, attempts: this.attempts, errors: Math.max(0, (this.attempts || 0) - (this.corrects || 0)), maxWrongStreak: this.maxWrongStreak || 0 }).catch(()=>{})
@@ -316,6 +323,7 @@ export default {
             :xpToNextAfter="xpToNextAfter"
             :xpEarned="xpEarned"
             :difficulty="selectedDifficulty"
+            :guest="isGuest"
             backPath="/play/points"
             @close="showSummary = false"
           />
