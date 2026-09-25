@@ -57,19 +57,30 @@ function planFeatures(plan) {
     class="relative rounded-2xl border bg-white/[0.02] p-6 flex flex-col transition-transform hover:scale-[1.02]"
     :class="[planStyle(plan.slug).border, planStyle(plan.slug).ring, plan.slug === 'pro' ? 'md:-mt-2' : '']"
   >
+    <!-- Popular + Tu plan pueden coincidir en la misma card (sos PRO y PRO es el
+         plan destacado) — en vez de superponer dos ribbons sueltos, se combinan
+         en uno solo para que nunca choquen, sea cual sea el ancho de la card. -->
     <div
-      v-if="plan.slug === 'pro'"
-      class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white shadow-lg"
+      v-if="plan.slug === 'pro' && plan.slug === currentPlan"
+      class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-emerald-500 to-fuchsia-500 text-white shadow-lg whitespace-nowrap"
     >
-      Popular
+      Tu plan · Popular
     </div>
+    <template v-else>
+      <div
+        v-if="plan.slug === 'pro'"
+        class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white shadow-lg"
+      >
+        Popular
+      </div>
 
-    <div
-      v-if="plan.slug === currentPlan"
-      class="absolute -top-3 right-4 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-black"
-    >
-      Tu plan
-    </div>
+      <div
+        v-if="plan.slug === currentPlan"
+        class="absolute -top-3 right-4 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-black"
+      >
+        Tu plan
+      </div>
+    </template>
 
     <div class="mb-4">
       <div

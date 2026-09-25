@@ -49,6 +49,12 @@ export default {
     isAuthLayout() {
       return this.$route?.meta?.layout === 'auth'
     },
+    // Zona Hub (home, perfil, juegos, precios...): fondo sólido continuo entre
+    // header y contenido, sin el gradiente+aurora emerald/cyan del resto de la
+    // app — misma superficie única que ya se validó en Auth.
+    isHubZone() {
+      return this.$route?.meta?.zone === 'hub'
+    },
     // Rutas de juego inmersivas (GameShell): el <main> pierde el padding vertical
     // para que el juego ocupe todo el alto visible sin pedir scroll.
     isImmersive() {
@@ -128,8 +134,8 @@ export default {
 </script>
 
 <template>
-  <div class="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-slate-100">
-    <BrandedBackground />
+  <div class="relative min-h-screen text-slate-100" :class="isHubZone ? 'bg-[#0b1220]' : 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800'">
+    <BrandedBackground v-if="!isHubZone" />
     <!-- Shell del contenido: el rail de amigos reserva 60px SOLO en el contenido
          (main + footer), no en el header → el navbar ocupa el 100% del ancho. -->
     <div class="min-h-screen min-w-0 transition-[padding] duration-300"

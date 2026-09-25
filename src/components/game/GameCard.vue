@@ -58,9 +58,9 @@ defineProps({
           {{ getGameTypeLabel(game.slug) }}
         </span>
 
-        <div v-if="streak > 0" class="z-20 flex items-center gap-1 rounded-full bg-slate-900/90 ring-1 ring-amber-400/30 shadow-[0_0_12px_rgba(251,191,36,0.25)] px-2 py-0.5 shrink-0">
-          <svg class="w-3 h-3 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.5)]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 23c-3.6 0-8-3.1-8-8.5C4 9 8 4 11.5 1c.2-.1.4-.1.5 0 .2.1.2.3.1.5C11 4 14 6 14 6s1-1.5 1.5-4c0-.2.2-.3.4-.3s.3.1.4.3C18 5 20 9 20 14.5 20 19.9 15.6 23 12 23z"/></svg>
-          <span class="text-amber-300 font-bold text-[11px] leading-none tabular-nums">{{ streak }}</span>
+        <div v-if="streak > 0" class="streak-badge z-20 flex items-center gap-1 rounded-full bg-slate-900/90 ring-2 ring-amber-400/50 px-2.5 py-1 shrink-0">
+          <svg class="w-3.5 h-3.5 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.5)]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 23c-3.6 0-8-3.1-8-8.5C4 9 8 4 11.5 1c.2-.1.4-.1.5 0 .2.1.2.3.1.5C11 4 14 6 14 6s1-1.5 1.5-4c0-.2.2-.3.4-.3s.3.1.4.3C18 5 20 9 20 14.5 20 19.9 15.6 23 12 23z"/></svg>
+          <span class="text-amber-300 font-extrabold text-[13px] leading-none tabular-nums">{{ streak }}</span>
         </div>
       </div>
 
@@ -138,5 +138,15 @@ defineProps({
 .game-card:hover .card-cta { opacity: 1; transform: none; }
 @media (hover: none) {
   .card-cta { opacity: .9; transform: none; }
+}
+
+/* Racha: brillo que respira para que no pase desapercibida en el rail chico del Home. */
+.streak-badge { animation: streak-pulse-glow 2s ease-in-out infinite; }
+@keyframes streak-pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(251,191,36,.35); }
+  50% { box-shadow: 0 0 16px rgba(251,191,36,.75); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .streak-badge { animation: none; box-shadow: 0 0 10px rgba(251,191,36,.4); }
 }
 </style>

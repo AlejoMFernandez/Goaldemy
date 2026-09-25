@@ -7,6 +7,13 @@ import { soundManager } from '../../services/sounds'
 import PassCosmetic from './PassCosmetic.vue'
 import PowerupIcon from './PowerupIcon.vue'
 
+const props = defineProps({
+  // Versión liviana para el teaser del Home: oculta días-restantes/pulso de
+  // reclamo y los chips "sumás jugando" — esa info ya vive en el modal de
+  // detalle (Ver pase completo). RewardCenter.vue no pasa esto, sigue igual.
+  compact: { type: Boolean, default: false },
+})
+
 const router = useRouter()
 const pass = ref({ points: 0, tiers: [], is_premium: false })
 const loading = ref(true)
@@ -184,7 +191,7 @@ defineExpose({ reload: load })
       </div>
 
       <!-- Días restantes (arriba a la derecha) -->
-      <div class="shrink-0 flex flex-col items-end gap-1">
+      <div v-if="!compact" class="shrink-0 flex flex-col items-end gap-1">
         <div class="inline-flex items-center gap-1.5 rounded-full bg-black/30 border border-white/10 px-2.5 py-1 text-[11px] font-bold text-slate-200">
           <svg class="w-3.5 h-3.5 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <span class="tabular-nums">{{ daysLeft }}</span> {{ daysLeft === 1 ? 'día' : 'días' }}
@@ -193,6 +200,7 @@ defineExpose({ reload: load })
           {{ claimableCount }} para reclamar
         </div>
       </div>
+      <svg v-else class="w-4 h-4 text-slate-500 shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
     </div>
 
     <div v-if="loading" class="relative h-16 mt-4 rounded-xl bg-white/5 animate-pulse"></div>
@@ -223,7 +231,7 @@ defineExpose({ reload: load })
       </div>
 
       <!-- De dónde salen los puntos (claro y gráfico) -->
-      <div class="relative mt-3 flex items-center gap-2">
+      <div v-if="!compact" class="relative mt-3 flex items-center gap-2">
         <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Sumás jugando</span>
         <span class="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2 py-1 text-[11px] font-bold text-amber-300">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4"/></svg>

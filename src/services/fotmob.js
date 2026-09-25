@@ -134,7 +134,8 @@ export async function getUpcomingMatches(leagueId, limit = 5) {
         id: match.id, round: match.roundName, date: match.status.utcTime, time: match.status.utcTime,
         homeTeamId: match.home.id, homeTeam: match.home.name,
         awayTeamId: match.away.id, awayTeam: match.away.name,
-        status: { finished: match.status.finished, started: match.status.started, score: match.status.scoreStr, statusText: match.status.reason?.short || 'Scheduled' }
+        status: { finished: match.status.finished, started: match.status.started, score: match.status.scoreStr, statusText: match.status.reason?.short || 'Scheduled' },
+        pageUrl: match.pageUrl || null,
       }));
   } catch (error) {
     console.error('Error getting upcoming matches:', error);
@@ -180,6 +181,33 @@ export async function getAllMatches(leagueId) {
   } catch (error) {
     console.error('Error getting all matches:', error);
     return [];
+  }
+}
+
+// Estado real de una competición a partir de sus partidos (no confundir con
+// el campo `status` del catálogo, que solo indica si la página está armada).
+// `live`: hay un partido en curso ahora mismo. `inSeason`: hay actividad
+// (jugada o programada) dentro de una ventana de ±21 días.
+const SEASON_WINDOW_MS = 21 * 24 * 60 * 60 * 1000;
+
+export function deriveSeasonStatus(matches) {
+  if (!matches || !matches.length) return { live: false, inSeason: false };
+  const now = Date.now();
+  const live = matches.some(m => m.status?.started && !m.status?.finished);
+  const inSeason = matches.some(m => {
+    const t = new Date(m.time).getTime();
+    return !isNaN(t) && Math.abs(t - now) <= SEASON_WINDOW_MS;
+  });
+  return { live, inSeason };
+}
+
+export async function getSeasonStatus(leagueId) {
+  try {
+    const matches = await getAllMatches(leagueId);
+    return deriveSeasonStatus(matches);
+  } catch (error) {
+    console.error('Error getting season status:', error);
+    return { live: false, inSeason: false };
   }
 }
 
@@ -310,5 +338,6 @@ export { LEAGUES, ACTIVE_LEAGUES, PAUSED_LEAGUES };
 export default {
   getLeagueTable, getTopScorers, getTopAssists, getUpcomingMatches,
   getTodayMatches, getAllMatches, getLeagueOverview, getPlayoff, getTeamDetails, getMatchDetails,
+  getSeasonStatus, deriveSeasonStatus,
   LEAGUES, ACTIVE_LEAGUES, PAUSED_LEAGUES
 };

@@ -4,8 +4,8 @@
 // para rutas con datos dinámicos (equipo, competición), desde la propia página
 // una vez que carga el nombre real (ver TeamPage.vue / CompetitionPage.vue).
 
-const SITE_NAME = 'Fulvo';
-const DEFAULT_TITLE = 'Fulvo | Entrená tu conocimiento de fútbol';
+const SITE_NAME = 'FULVO';
+const DEFAULT_TITLE = 'FULVO | Entrená tu conocimiento de fútbol';
 const DEFAULT_DESCRIPTION = 'Entrená tu conocimiento de fútbol jugando: micro‑juegos, rachas, logros y tablas de posiciones.';
 const DEFAULT_IMAGE = 'https://fulvo.com.ar/og-image.png';
 const ORIGIN = 'https://fulvo.com.ar';
