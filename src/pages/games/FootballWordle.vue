@@ -1,17 +1,19 @@
 <script>
 import GameShell from '../../components/game/GameShell.vue'
-import { getAllPlayersAsync, sampleDistinct } from '../../services/players'
-import { getBroadPosition } from '../../services/game-common'
-import { playerFlagUrl } from '../../services/countries'
+import { getAllPlayers, getAllPlayersAsync, sampleDistinct } from '../../services/players'
+import { playerFlagUrl, countryNameEs } from '../../services/countries'
 import { captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
 import { createDailyRng } from '../../services/seeded-random'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
 import { celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
-import { getGameMetadata, gameSummaryBlurb } from '../../services/games'
+import { getGameMetadata } from '../../services/games'
 import { GAME_SCORING } from '../../services/scoring'
+import { colorsForTeam } from '../../services/team-colors'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
+import ScoreBug from '../../components/game/ScoreBug.vue'
+import PlayerSearch from '../../components/game/PlayerSearch.vue'
 
 const CONTINENTS = {
   south_america: ['Argentina','Brazil','Uruguay','Colombia','Chile','Paraguay','Ecuador','Peru','Venezuela','Bolivia'],
@@ -26,10 +28,6 @@ function getContinent(countryName) {
     if (countries.includes(countryName)) return cont
   }
   return 'other'
-}
-
-function positionClose(a, b) {
-  return Math.abs(a - b) === 1
 }
 
 const POS_LABELS = { 0: 'POR', 1: 'DEF', 2: 'MED', 3: 'DEL' }
@@ -51,27 +49,24 @@ function evaluateGuess(g, t) {
     ageArrow: g.age === t.age ? '' : g.age < t.age ? '▲' : '▼',
     heightResult: g.height === t.height ? 'green' : Math.abs((g.height || 0) - (t.height || 0)) <= 3 ? 'yellow' : 'gray',
     heightArrow: g.height === t.height ? '' : (g.height || 0) < (t.height || 0) ? '▲' : '▼',
-    dorsalResult: g.shirtNumber === t.shirtNumber ? 'green' : Math.abs((g.shirtNumber || 0) - (t.shirtNumber || 0)) <= 5 ? 'yellow' : 'gray',
+    dorsalResult: g.shirtNumber === t.shirtNumber ? 'green' : Math.abs((g.shirtNumber || 0) - (t.shirtNumber || 0)) <= 3 ? 'yellow' : 'gray',
     dorsalArrow: g.shirtNumber === t.shirtNumber ? '' : (g.shirtNumber || 0) < (t.shirtNumber || 0) ? '▲' : '▼',
   }
 }
 
 export default {
   name: 'FootballWordle',
-  components: { GameShell, GamePreviewModal, GameSummaryPopup },
+  components: { GameShell, GamePreviewModal, GameSummaryPopup, ScoreBug, PlayerSearch },
   data() {
     return {
       loading: true,
       allPlayers: [],
+      allPlayersFull: [],
       target: null,
       guesses: [],
-      guess: '',
       won: false,
       gameOver: false,
       maxGuesses: 6,
-      // autocomplete
-      suggestOpen: false,
-      selectedIndex: -1,
       // mode & session
       mode: 'normal',
       reviewMode: false,
@@ -104,40 +99,29 @@ export default {
       for (const g of this.guesses) s.add(g.player.id)
       return s
     },
-    suggestions() {
-      const q = (this.guess || '').toString().trim()
-      if (!q || q.length < 3) return []
-      const nq = q.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
-      const out = []
-      const seen = new Set()
-      for (const p of this.allPlayers) {
-        if (this.guessedIds.has(p.id)) continue
-        const n = (p?.name || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
-        if (n.includes(nq) && !seen.has(n)) {
-          seen.add(n)
-          out.push(p)
-        }
-        if (out.length >= 12) break
-      }
-      return out
-    },
     remainingGuesses() { return this.maxGuesses - this.guesses.length },
-    // Historial con el intento más nuevo arriba (aparece bajo el input, animado).
+    // Historial con el intento más nuevo arriba (aparece bajo el buscador, animado).
     guessesReversed() { return this.guesses.slice().reverse() },
-    // Atributos "revelados": si algún intento acertó (verde) equipo/liga/país/posición,
-    // se muestra en la carta estilo who-are-ya.
+    // Atributos "revelados": si algún intento acertó (verde) equipo/liga/país/posición/dorsal,
+    // se muestra en la ficha del misterioso.
     revealed() {
-      const r = { team: false, league: false, country: false, position: false }
+      const r = { team: false, league: false, country: false, position: false, dorsal: false }
       for (const g of this.guesses) {
         if (g.teamResult === 'green') r.team = true
         if (g.leagueResult === 'green') r.league = true
         if (g.countryResult === 'green') r.country = true
         if (g.posResult === 'green') r.position = true
+        if (g.dorsalResult === 'green') r.dorsal = true
       }
       return r
     },
     targetLeagueLogo() { return this.target ? leagueLogoForId(this.target.leagueId) : null },
     targetPosLabel() { return this.target ? (POS_LABELS[this.target.positionId] || 'MED') : '' },
+    shirtColors() {
+      const dim = { primary: 'hsl(220 14% 30%)', secondary: 'hsl(220 14% 45%)' }
+      if (!this.target) return dim
+      return (this.revealed.team || this.gameOver) ? colorsForTeam(this.target.teamId) : dim
+    },
   },
   async mounted() {
     const mode = (this.$route.query.mode || '').toString().toLowerCase()
@@ -147,6 +131,7 @@ export default {
     else this.mode = 'normal'
 
     this.allPlayers = await getAllPlayersAsync()
+    this.allPlayersFull = getAllPlayers()
     this.loading = false
 
     if (this.reviewMode) {
@@ -170,9 +155,8 @@ export default {
           this.won = !!m.won
           this.score = Number(last.score_final || 0)
           try { this.lifetimeMaxStreak = await mod.fetchLifetimeMaxStreak('football-wordle') || 0 } catch {}
-          // Restore target for reveal
           try {
-            const p = this.allPlayers.find(pl => pl.id === m.targetId)
+            const p = this.allPlayersFull.find(pl => pl.id === m.targetId)
             if (p) { this.target = p; this.gameOver = true }
           } catch {}
         }
@@ -181,15 +165,14 @@ export default {
       this.overlayOpen = true
       this.checkAvailability()
     } else {
-      // Free / normal mode: pick target with daily seed
       this.rng = createDailyRng('football-wordle')
       this.pickTarget()
     }
   },
   methods: {
     playerFlagUrl,
+    countryNameEs,
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
-    blurb() { return gameSummaryBlurb('football-wordle') },
     pickTarget() {
       const [t] = sampleDistinct(this.allPlayers, 1, new Set(), this.rng)
       this.target = t
@@ -199,37 +182,12 @@ export default {
       if (result === 'yellow') return 'bg-yellow-500/80 text-white'
       return 'bg-slate-600/80 text-slate-300'
     },
-    chooseSuggestion(p) {
-      // Tocar una sugerencia la manda directo (más ágil, estilo who-are-ya).
-      if (!p) return
-      this.submitPlayer(p)
-    },
-    moveSelection(dir) {
-      const n = this.suggestions.length
-      if (!n) return
-      if (this.selectedIndex < 0) this.selectedIndex = 0
-      else this.selectedIndex = (this.selectedIndex + dir + n) % n
-      this.suggestOpen = true
-    },
-    onEnterKey() {
-      // Si hay una sola coincidencia, Enter la manda directo.
-      if (this.suggestions.length === 1) { this.submitPlayer(this.suggestions[0]); return }
-      // Si hay una opción resaltada con las flechas, mandarla.
-      if (this.suggestOpen && this.selectedIndex >= 0 && this.suggestions[this.selectedIndex]) {
-        this.submitPlayer(this.suggestions[this.selectedIndex])
-        return
-      }
-      this.submit()
-    },
     submitPlayer(player) {
       if (this.gameOver || !player) return
-      if (this.guessedIds.has(player.id)) { this.guess = ''; this.suggestOpen = false; this.selectedIndex = -1; return }
+      if (this.guessedIds.has(player.id)) { this.$refs.search?.shake(); return }
 
       const row = evaluateGuess(player, this.target)
       this.guesses.push(row)
-      this.guess = ''
-      this.suggestOpen = false
-      this.selectedIndex = -1
 
       if (player.id === this.target.id) {
         this.won = true
@@ -240,17 +198,6 @@ export default {
         this.gameOver = true
         if (this.mode === 'challenge') this.finishChallenge('loss')
       }
-    },
-    submit() {
-      if (this.gameOver) return
-      const name = (this.guess || '').trim()
-      if (!name || name.length < 3) return
-      const norm = name.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
-      const player = this.allPlayers.find(
-        p => (p.name || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '') === norm
-      )
-      if (!player) return
-      this.submitPlayer(player)
     },
     async checkAvailability() {
       this.availability = await isChallengeAvailable('football-wordle')
@@ -284,9 +231,6 @@ export default {
       if (this.xpEarned > 0) {
         await awardXpBatch({ gameCode: 'football-wordle', totalXp: this.xpEarned, corrects: this.won ? 1 : 0 }).catch(() => {})
       }
-      await completeChallengeSession(this.sessionId, this.score, this.xpEarned, {
-        result, won: this.won, targetId: this.target?.id, guessCount: this.guesses.length,
-      }).catch(() => {})
       try {
         const snap = await captureLevelSnapshot()
         this.levelAfter = snap.level
@@ -297,7 +241,6 @@ export default {
           setTimeout(() => celebrateGameLevelUp(snap.level), 500)
         }
       } catch {}
-      // Save xpView snapshot
       try {
         await completeChallengeSession(this.sessionId, this.score, this.xpEarned, {
           result, won: this.won, targetId: this.target?.id, guessCount: this.guesses.length,
@@ -315,7 +258,6 @@ export default {
         this.showSummary = true
         requestAnimationFrame(() => setTimeout(() => { this.progressShown = this.afterPercent }, 40))
       }, delayMs)
-      // Lifetime streak & daily wins
       import('../../services/game-modes').then(async (mod) => {
         try { this.lifetimeMaxStreak = await mod.fetchLifetimeMaxStreak('football-wordle') || 0 } catch {}
         try { await mod.checkAndUnlockDailyWins('football-wordle') } catch {}
@@ -327,12 +269,6 @@ export default {
 
 <template>
   <GameShell title="Adiviná el Crack" :backPath="backPath()">
-    <template #stat>
-      <div class="inline-flex items-center gap-2 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
-        <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Intentos</span>
-        <span class="font-display text-white font-bold text-base leading-none">{{ guesses.length }}/{{ maxGuesses }}</span>
-      </div>
-    </template>
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="Adiviná el Crack"
@@ -344,162 +280,93 @@ export default {
       @close="overlayOpen = false"
       @start="startChallenge"
     />
-    <div class="w-full max-w-2xl mx-auto">
 
-      <!-- Loading -->
+    <div class="w-full max-w-2xl mx-auto self-start mt-3">
       <div v-if="loading" class="text-center text-slate-300 py-12">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-300"></div>
         <p class="mt-3">Cargando...</p>
       </div>
 
       <template v-else>
-        <!-- CARTA MISTERIOSA estilo who-are-ya -->
-        <div class="relative rounded-2xl border border-white/10 bg-gradient-to-b from-slate-800/70 to-slate-900/85 px-4 pt-9 pb-4 sm:px-5 overflow-hidden">
-          <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full opacity-20 blur-3xl" style="background: radial-gradient(circle, rgba(245,158,11,0.4), transparent 70%);"></div>
+        <ScoreBug :timed="false" livesMode :lives="remainingGuesses" :maxLives="maxGuesses" :xp="xpEarned" class="mb-3" />
 
-          <!-- Esquina: intentos restantes -->
-          <div class="absolute top-2.5 left-3 z-10 flex items-center gap-1.5" title="Intentos restantes">
-            <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            <div class="flex items-center gap-1">
-              <span v-for="n in maxGuesses" :key="n" class="w-1.5 h-1.5 rounded-full transition-colors" :class="n <= remainingGuesses ? 'bg-amber-300' : 'bg-white/15'"></span>
+        <div class="wd-layout">
+          <!-- FICHA DEL MISTERIOSO -->
+          <div class="wd-ficha">
+            <div class="wd-shirt" :style="{ '--shirt-color': shirtColors.primary, '--shirt-secondary': shirtColors.secondary }">
+              <span class="wd-shirt-num">{{ (revealed.dorsal || gameOver) ? (target.shirtNumber || '?') : '?' }}</span>
             </div>
-          </div>
+            <p v-if="gameOver" class="text-center" :class="won ? 'text-emerald-400' : 'text-white'">
+              <span class="font-display font-bold text-base leading-tight block">{{ target.name }}</span>
+              <span v-if="!won" class="text-red-400/80 text-xs">No lo adivinaste</span>
+            </p>
+            <p v-else class="text-slate-300 text-xs font-medium text-center">¿Quién es el crack?</p>
 
-          <!-- Esquina: leyenda -->
-          <div class="absolute top-2.5 right-3 z-10 flex items-center gap-2 text-[9px] text-slate-400">
-            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-emerald-500/80 inline-block"></span>Exacto</span>
-            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-yellow-500/80 inline-block"></span>Cerca</span>
-            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-slate-500/70 inline-block"></span>Lejos</span>
-          </div>
-
-          <div class="relative flex flex-col items-center gap-2.5">
-            <!-- Foto misteriosa -->
-            <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-slate-700/60 border border-white/10 overflow-hidden shadow-xl">
-              <img v-if="gameOver && target" :src="target.image" :alt="target.name" class="w-full h-full object-cover reveal-img" />
-              <img v-else-if="target" :src="target.image" alt="?" class="w-full h-full object-cover" style="filter: blur(18px) brightness(0.55);" draggable="false" />
-            </div>
-
-            <div v-if="gameOver" class="text-center">
-              <p :class="won ? 'text-emerald-400' : 'text-white'" class="font-display font-bold text-lg leading-tight">{{ target.name }}</p>
-              <p v-if="!won" class="text-red-400/80 text-xs mt-0.5">No lo adivinaste</p>
-            </div>
-            <p v-else class="text-slate-300 text-sm font-medium">¿Quién es el crack?</p>
-
-            <!-- Chips revelados (se destapan al acertar en verde) -->
-            <div class="grid grid-cols-4 gap-2 w-full max-w-md mt-1">
-              <div class="reveal-chip" :class="(revealed.team || gameOver) ? 'on' : 'off'">
-                <img v-if="(revealed.team || gameOver) && target.teamLogo" :src="target.teamLogo" class="w-6 h-6 object-contain" @error="e=>e.target.style.display='none'" />
-                <span v-else-if="!(revealed.team || gameOver)" class="chip-lock">🔒</span>
-                <span class="chip-lbl">{{ (revealed.team || gameOver) ? target.teamName : 'Equipo' }}</span>
+            <div class="wd-icons">
+              <div class="wd-icon" :class="(revealed.team || gameOver) ? 'on' : ''">
+                <img v-if="(revealed.team || gameOver) && target.teamLogo" :src="target.teamLogo" alt="" @error="e=>e.target.style.display='none'" />
+                <span v-else class="wd-icon-lock">🔒</span>
+                <span class="wd-icon-lbl">{{ (revealed.team || gameOver) ? target.teamName : 'Equipo' }}</span>
               </div>
-              <div class="reveal-chip" :class="(revealed.league || gameOver) ? 'on' : 'off'">
-                <img v-if="(revealed.league || gameOver) && targetLeagueLogo" :src="targetLeagueLogo" class="w-6 h-6 object-contain" @error="e=>e.target.style.display='none'" />
-                <span v-else-if="!(revealed.league || gameOver)" class="chip-lock">🔒</span>
-                <span class="chip-lbl">Liga</span>
+              <div class="wd-icon" :class="(revealed.league || gameOver) ? 'on' : ''">
+                <img v-if="(revealed.league || gameOver) && targetLeagueLogo" :src="targetLeagueLogo" alt="" />
+                <span v-else class="wd-icon-lock">🔒</span>
+                <span class="wd-icon-lbl">Liga</span>
               </div>
-              <div class="reveal-chip" :class="(revealed.country || gameOver) ? 'on' : 'off'">
-                <img v-if="(revealed.country || gameOver) && playerFlagUrl(target)" :src="playerFlagUrl(target)" class="w-6 h-4 object-cover rounded-sm" />
-                <span v-else-if="!(revealed.country || gameOver)" class="chip-lock">🔒</span>
-                <span class="chip-lbl">{{ (revealed.country || gameOver) ? target.cname : 'País' }}</span>
+              <div class="wd-icon" :class="(revealed.country || gameOver) ? 'on' : ''">
+                <img v-if="(revealed.country || gameOver) && playerFlagUrl(target)" :src="playerFlagUrl(target)" class="!rounded-sm" />
+                <span v-else class="wd-icon-lock">🔒</span>
+                <span class="wd-icon-lbl">{{ (revealed.country || gameOver) ? countryNameEs(target.cname) : 'País' }}</span>
               </div>
-              <div class="reveal-chip" :class="(revealed.position || gameOver) ? 'on' : 'off'">
-                <span v-if="(revealed.position || gameOver)" class="chip-pos">{{ targetPosLabel }}</span>
-                <span v-else class="chip-lock">🔒</span>
-                <span class="chip-lbl">Posición</span>
+              <div class="wd-icon" :class="(revealed.position || gameOver) ? 'on' : ''">
+                <span v-if="(revealed.position || gameOver)" class="wd-icon-pos">{{ targetPosLabel }}</span>
+                <span v-else class="wd-icon-lock">🔒</span>
+                <span class="wd-icon-lbl">Posición</span>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- INPUT (justo bajo la carta, siempre visible) -->
-        <div v-if="!gameOver" class="mt-3">
-          <form class="relative w-full max-w-md mx-auto" @submit.prevent="submit">
-            <div class="relative">
-              <input
-                v-model="guess"
-                @focus="suggestOpen = true"
-                @input="suggestOpen = (guess?.length || 0) >= 3; selectedIndex = -1"
-                @keydown.down.prevent="moveSelection(1)"
-                @keydown.up.prevent="moveSelection(-1)"
-                @keydown.enter.prevent="onEnterKey"
-                type="text"
-                placeholder="Escribí el nombre del jugador..."
-                class="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300/30"
-              />
-              <div v-if="suggestOpen && suggestions.length > 0" class="absolute z-30 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl max-h-56 overflow-auto">
-                <ul>
-                  <li v-for="(p, idx) in suggestions" :key="p.id" @click.prevent="chooseSuggestion(p)"
-                      :class="['px-3 py-2 cursor-pointer text-slate-200 flex items-center gap-2', idx === selectedIndex ? 'bg-white/10' : 'hover:bg-white/5']">
-                    <img :src="p.image" :alt="p.name" class="h-6 w-6 object-cover rounded flex-shrink-0" @error="e => e.target.style.display='none'" />
-                    <span class="truncate">{{ p.name }}</span>
-                    <span class="text-slate-500 text-xs ml-auto flex-shrink-0">{{ p.teamName }}</span>
-                  </li>
-                </ul>
-              </div>
+          <!-- BUSCADOR + HISTORIAL -->
+          <div class="wd-main">
+            <div v-if="!gameOver" class="mb-3">
+              <PlayerSearch ref="search" placeholder="Escribí el nombre del jugador…" @pick="submitPlayer" />
             </div>
-            <div class="flex items-center justify-center mt-2">
-              <button type="submit" :disabled="(guess?.length || 0) < 3"
-                      class="rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-900 px-6 py-2 text-sm font-bold disabled:opacity-40 transition shadow-lg shadow-amber-500/25">
-                Adivinar
-              </button>
-            </div>
-          </form>
-        </div>
 
-        <!-- HISTORIAL (más nuevo arriba, revela stat por stat) -->
-        <div v-if="guesses.length > 0" class="mt-4 overflow-x-auto">
-          <div class="min-w-[460px]">
-            <div class="grid grid-cols-[44px_repeat(7,minmax(38px,1fr))] gap-1 text-[9px] text-slate-500 font-semibold uppercase tracking-wider mb-1 px-0.5">
-              <div></div>
-              <div class="text-center">Equipo</div>
-              <div class="text-center">Liga</div>
-              <div class="text-center">País</div>
-              <div class="text-center">Pos</div>
-              <div class="text-center">Edad</div>
-              <div class="text-center">Alt</div>
-              <div class="text-center">Dorsal</div>
-            </div>
-            <TransitionGroup name="guess-row" tag="div" class="space-y-1">
-              <div v-for="row in guessesReversed" :key="row.player.id"
-                   class="grid grid-cols-[44px_repeat(7,minmax(38px,1fr))] gap-1">
-                <!-- Jugador: solo imagen (sin nombre) -->
-                <div class="rounded-lg bg-slate-700/40 overflow-hidden aspect-square" :title="row.player.name">
-                  <img :src="row.player.image" :alt="row.player.name" class="w-full h-full object-cover" @error="e => e.target.style.display='none'" />
-                </div>
-                <!-- Equipo -->
-                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square" :class="cellColor(row.teamResult)" style="animation-delay:0ms">
-                  <img v-if="row.teamLogo" :src="row.teamLogo" alt="" class="w-6 h-6 object-contain" @error="e => e.target.style.display='none'" />
-                </div>
-                <!-- Liga: sin logo gris, sólo el fondo pintado -->
-                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square" :class="cellColor(row.leagueResult)" style="animation-delay:110ms">
-                  <img v-if="row.leagueResult === 'green' && row.leagueLogo" :src="row.leagueLogo" alt="" class="w-6 h-6 object-contain" @error="e => e.target.style.display='none'" />
-                </div>
-                <!-- País -->
-                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square" :class="cellColor(row.countryResult)" style="animation-delay:220ms">
-                  <img v-if="playerFlagUrl(row.player)" :src="playerFlagUrl(row.player)" class="w-5 h-4 object-cover rounded-sm" />
-                </div>
-                <!-- Pos -->
-                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square text-[11px] font-bold" :class="cellColor(row.posResult)" style="animation-delay:330ms">
-                  {{ row.posLabel }}
-                </div>
-                <!-- Edad -->
-                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square text-[11px] font-mono" :class="cellColor(row.ageResult)" style="animation-delay:440ms">
-                  {{ row.player.age }}<span v-if="row.ageArrow" class="ml-0.5">{{ row.ageArrow }}</span>
-                </div>
-                <!-- Altura -->
-                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square text-[11px] font-mono" :class="cellColor(row.heightResult)" style="animation-delay:550ms">
-                  {{ row.player.height || '?' }}<span v-if="row.heightArrow" class="ml-0.5">{{ row.heightArrow }}</span>
-                </div>
-                <!-- Dorsal -->
-                <div class="reveal-cell rounded-lg flex items-center justify-center aspect-square text-[11px] font-mono" :class="cellColor(row.dorsalResult)" style="animation-delay:660ms">
-                  {{ row.player.shirtNumber || '?' }}<span v-if="row.dorsalArrow" class="ml-0.5">{{ row.dorsalArrow }}</span>
-                </div>
+            <div v-if="guesses.length > 0" class="wd-table">
+              <div class="wd-row wd-row-head">
+                <div></div>
+                <div class="text-center">Club</div>
+                <div class="text-center">Liga</div>
+                <div class="text-center">País</div>
+                <div class="text-center">Pos</div>
+                <div class="text-center">Edad</div>
+                <div class="text-center">Alt</div>
+                <div class="text-center">Dorsal</div>
               </div>
-            </TransitionGroup>
+              <TransitionGroup name="guess-row" tag="div">
+                <div v-for="row in guessesReversed" :key="row.player.id" class="wd-row">
+                  <div class="wd-avatar" :title="row.player.name">
+                    <img :src="row.player.image" :alt="row.player.name" @error="e => e.target.style.display='none'" />
+                  </div>
+                  <div class="wd-flap" :class="cellColor(row.teamResult)" style="animation-delay:0ms">
+                    <img v-if="row.teamLogo" :src="row.teamLogo" alt="" @error="e => e.target.style.display='none'" />
+                  </div>
+                  <div class="wd-flap" :class="cellColor(row.leagueResult)" style="animation-delay:130ms">
+                    <img v-if="row.leagueResult === 'green' && row.leagueLogo" :src="row.leagueLogo" alt="" />
+                  </div>
+                  <div class="wd-flap" :class="cellColor(row.countryResult)" style="animation-delay:260ms">
+                    <img v-if="playerFlagUrl(row.player)" :src="playerFlagUrl(row.player)" class="!rounded-sm" />
+                  </div>
+                  <div class="wd-flap text-[11px] font-bold" :class="cellColor(row.posResult)" style="animation-delay:390ms">{{ row.posLabel }}</div>
+                  <div class="wd-flap text-[11px] font-mono" :class="cellColor(row.ageResult)" style="animation-delay:520ms">{{ row.player.age }}<span v-if="row.ageArrow">{{ row.ageArrow }}</span></div>
+                  <div class="wd-flap text-[11px] font-mono" :class="cellColor(row.heightResult)" style="animation-delay:650ms">{{ row.player.height || '?' }}<span v-if="row.heightArrow">{{ row.heightArrow }}</span></div>
+                  <div class="wd-flap text-[11px] font-mono" :class="cellColor(row.dorsalResult)" style="animation-delay:780ms">{{ row.player.shirtNumber || '?' }}<span v-if="row.dorsalArrow">{{ row.dorsalArrow }}</span></div>
+                </div>
+              </TransitionGroup>
+            </div>
           </div>
         </div>
 
-        <!-- Summary Popup -->
         <GameSummaryPopup
           :show="showSummary"
           :corrects="won ? 1 : 0"
@@ -526,80 +393,73 @@ export default {
 </template>
 
 <style scoped>
-.guess-row-enter-active {
-  transition: opacity 250ms ease, transform 250ms ease;
-}
-.guess-row-enter-from {
-  opacity: 0;
-  transform: translateY(8px) scale(0.97);
-}
-.guess-row-leave-active {
-  transition: opacity 150ms ease;
-}
-.guess-row-leave-to {
-  opacity: 0;
-}
-.reveal-img {
-  animation: revealPop 400ms ease both;
-}
-@keyframes revealPop {
-  0% { transform: scale(0.7); opacity: 0; }
-  60% { transform: scale(1.05); }
-  100% { transform: scale(1); opacity: 1; }
+.wd-layout { display: flex; flex-direction: column; gap: 12px; width: 100%; min-width: 0; }
+@media (min-width: 640px) {
+  .wd-layout { display: grid; grid-template-columns: 170px minmax(0, 1fr); align-items: start; }
 }
 
-/* Chips estilo carta: se destapan al acertar el atributo en verde */
-.reveal-chip {
+.wd-ficha {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 8px;
+  padding: 14px 10px;
+  border-radius: 1rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: linear-gradient(180deg, rgba(30,41,59,0.7), rgba(15,23,42,0.85));
+}
+.wd-shirt {
+  --shirt-color: hsl(220 14% 30%);
+  --shirt-secondary: hsl(220 14% 45%);
+  position: relative;
+  box-sizing: border-box;
+  width: 76px;
+  height: 74px;
+  background: var(--shirt-color);
+  border: 3px solid var(--shirt-secondary);
+  clip-path: polygon(30% 0%, 70% 0%, 100% 18%, 84% 30%, 78% 24%, 78% 100%, 22% 100%, 22% 24%, 16% 30%, 0% 18%);
+  transition: background-color 0.5s ease, border-color 0.5s ease;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 3px;
-  min-height: 54px;
-  padding: 6px 4px;
-  border-radius: 0.7rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  transition: border-color 0.3s ease, background-color 0.3s ease, opacity 0.3s ease;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
 }
-.reveal-chip.off { opacity: 0.55; }
-.reveal-chip.on {
-  border-color: rgba(16, 185, 129, 0.4);
-  background: rgba(16, 185, 129, 0.12);
-  animation: chipPop 0.42s ease;
+.wd-shirt-num { font-family: var(--font-display, inherit); font-weight: 800; font-size: 22px; color: #fff; margin-top: 10px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.wd-icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; margin-top: 2px; }
+.wd-icon {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  min-height: 48px; padding: 5px 2px; border-radius: 0.6rem;
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03);
+  opacity: 0.55; transition: opacity 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
 }
-.chip-lbl {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: rgb(148, 163, 184);
-  text-align: center;
-  line-height: 1.1;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.wd-icon.on { opacity: 1; border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.12); animation: wdIconPop 0.4s ease; }
+.wd-icon img { width: 20px; height: 20px; object-fit: contain; }
+.wd-icon-lock { font-size: 12px; filter: grayscale(1); opacity: 0.6; }
+.wd-icon-pos { font-family: var(--font-display, inherit); font-weight: 700; font-size: 13px; color: #fff; }
+.wd-icon-lbl { font-size: 8px; text-transform: uppercase; letter-spacing: 0.03em; color: rgb(148,163,184); text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wd-icon.on .wd-icon-lbl { color: rgb(209,250,229); }
+@keyframes wdIconPop { 0% { transform: scale(0.8); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+
+.wd-main { min-width: 0; }
+.wd-table { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.wd-row { display: grid; grid-template-columns: 34px repeat(7, minmax(0, 1fr)); gap: 3px; }
+.wd-row-head { font-size: 9px; color: rgb(100,116,139); text-transform: uppercase; letter-spacing: 0.03em; font-weight: 700; margin-bottom: 2px; }
+.wd-avatar { border-radius: 0.5rem; overflow: hidden; aspect-ratio: 1; background: rgba(51,65,85,0.4); }
+.wd-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.wd-flap {
+  border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;
+  aspect-ratio: 1; perspective: 300px; animation: wdFlap 0.5s ease both;
 }
-.reveal-chip.on .chip-lbl { color: rgb(209, 250, 229); font-weight: 600; }
-.chip-lock { font-size: 13px; opacity: 0.5; filter: grayscale(1); }
-.chip-pos {
-  font-family: var(--font-display, inherit);
-  font-size: 15px;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1;
-}
-@keyframes chipPop {
-  0% { transform: scale(0.82); opacity: 0.4; }
-  60% { transform: scale(1.08); }
-  100% { transform: scale(1); opacity: 1; }
+.wd-flap img { width: 20px; height: 20px; object-fit: contain; }
+@keyframes wdFlap {
+  0% { transform: rotateX(0deg); opacity: 1; }
+  49% { transform: rotateX(90deg); opacity: 0.25; }
+  51% { transform: rotateX(-90deg); opacity: 0.25; }
+  100% { transform: rotateX(0deg); opacity: 1; }
 }
 
-/* Reveal stat por stat al mandar un jugador (cada celda aparece con delay) */
-.reveal-cell { animation: cellReveal 0.42s ease both; }
-@keyframes cellReveal {
-  0% { opacity: 0; transform: scale(0.55) rotate(-8deg); }
-  60% { opacity: 1; transform: scale(1.08); }
-  100% { opacity: 1; transform: scale(1); }
-}
+.guess-row-enter-active { transition: opacity 250ms ease, transform 250ms ease; }
+.guess-row-enter-from { opacity: 0; transform: translateY(8px) scale(0.97); }
+.guess-row-leave-active { transition: opacity 150ms ease; }
+.guess-row-leave-to { opacity: 0; }
 </style>
