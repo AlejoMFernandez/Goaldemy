@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Capturas de scripts/screenshot-games.mjs
+.shots
+
 # Environment variables
 .env
 .env.*

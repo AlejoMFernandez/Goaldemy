@@ -1,0 +1,885 @@
+<title>FULVO Los Otros Juegos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#070a1a; --panel:#0b1024; --panel2:#141a38; --line:rgba(255,255,255,.08);
+  --ink:#eef1ff; --muted:#8b93b8; --dim:#5b6388;
+  --gold:#fcd34d; --gold2:#f59e0b; --red:#ef4444; --green:#4ade80; --emerald:#10b981; --sky:#38bdf8; --pink:#e879f9;
+  --f-shout:"Anton", "Impact", "Arial Narrow", sans-serif;
+  --f-bug:"Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body:"Inter", ui-sans-serif, system-ui, sans-serif;
+}
+*{box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:15px; line-height:1.55; padding-inline:16px; padding-block:0 64px}
+.wrap{max-width:1140px; margin:0 auto}
+header.top{padding-block:40px 28px; display:grid; gap:14px; border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--f-bug); font-weight:700; letter-spacing:.14em; text-transform:uppercase; font-size:13px; color:var(--gold)}
+h1{font-family:var(--f-shout); font-weight:400; font-size:clamp(40px,7vw,76px); line-height:.95; margin:0; text-wrap:balance; text-transform:uppercase}
+h1 em{font-style:normal; color:var(--gold)}
+.lede{max-width:68ch; color:#c5cbe8; margin:0}
+.toolbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+.chip{display:inline-flex; align-items:center; gap:8px; font-family:var(--f-bug); font-weight:700; text-transform:uppercase; letter-spacing:.08em; font-size:13px; padding:7px 12px; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--ink); cursor:pointer}
+.chip[aria-pressed="false"]{color:var(--muted)}
+.hint{color:var(--dim); font-size:13px}
+button{font:inherit}
+button:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+section.moment{display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:28px; padding-block:44px; border-bottom:1px solid var(--line)}
+@media (max-width:900px){ section.moment{grid-template-columns:1fr} }
+.mhead{grid-column:1/-1; display:flex; align-items:baseline; gap:16px; flex-wrap:wrap}
+.mnum{font-family:var(--f-bug); font-weight:800; color:var(--dim); font-size:15px; letter-spacing:.1em}
+h2{font-family:var(--f-shout); font-weight:400; text-transform:uppercase; font-size:clamp(28px,4vw,42px); line-height:1; margin:0}
+h2.sm{font-size:clamp(24px,3vw,32px)}
+.mtag{font-size:13px; color:var(--muted)}
+.stage-col{display:grid; gap:12px; align-content:start; min-width:0}
+.controls{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+.btn{font-family:var(--f-bug); font-weight:800; text-transform:uppercase; letter-spacing:.08em; font-size:15px; border:0; border-radius:10px; padding:10px 18px; background:var(--gold); color:#141005; cursor:pointer; display:inline-flex; gap:8px; align-items:center; transition:transform .15s, filter .15s}
+.btn:hover{filter:brightness(1.08)} .btn:active{transform:scale(.96)}
+.btn.ghost{background:var(--panel2); color:var(--ink); border:1px solid var(--line)}
+.notes{display:grid; gap:18px; align-content:start; font-size:14px}
+.notes h3{font-family:var(--f-bug); font-weight:800; text-transform:uppercase; letter-spacing:.12em; font-size:13px; margin:0 0 6px; color:var(--muted)}
+.notes .today{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; color:#b7bedf}
+.notes .today h3{color:var(--red)}
+.notes ul{margin:0; padding-left:18px; display:grid; gap:7px; color:#d6dbf3}
+.notes code{font-size:12.5px; background:var(--panel2); padding:1px 5px; border-radius:5px; color:#dfe4ff}
+.stage{position:relative; width:100%; max-width:100%; min-height:440px; border-radius:18px; overflow:hidden; container-type:inline-size; background:radial-gradient(120% 90% at 50% 10%, #121a3d 0%, #0a0f26 55%, #060818 100%); border:1px solid var(--line); isolation:isolate; user-select:none; -webkit-user-select:none; padding:14px; display:grid; gap:12px; align-content:start}
+.fx{position:absolute; inset:0; pointer-events:none; z-index:20; overflow:hidden}
+.spark{position:absolute; left:0; top:0; width:6px; height:6px; margin:-3px 0 0 -3px; border-radius:50%}
+.road{padding-block:44px; display:grid; gap:18px}
+.road ol{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px}
+.road li{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 16px; display:grid; gap:4px}
+.road li .n{font-family:var(--f-bug); font-weight:800; color:var(--dim); letter-spacing:.1em; font-size:13px}
+.road li .t{font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:19px; letter-spacing:.03em}
+.road li p{margin:0; color:#aab1d4; font-size:13.5px}
+.sys{padding-block:44px; display:grid; gap:18px; border-bottom:1px solid var(--line)}
+.rules{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px}
+.rule{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 16px; display:grid; gap:4px}
+.rule b{font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:17px; letter-spacing:.03em}
+.rule span{font-size:13.5px; color:#b7bedf}
+@keyframes bump{35%{transform:scale(1.22)}}
+.bump{animation:bump .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes shake{20%{translate:-6px 0}40%{translate:5px 0}60%{translate:-3px 0}80%{translate:2px 0}}
+.shake{animation:shake .38s}
+
+/* ─── marcador común (ScoreBug) ─── */
+.bug{display:flex; align-items:stretch; height:36px; font-family:var(--f-bug); font-weight:800; text-transform:uppercase; border-radius:8px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,.45); justify-self:start; max-width:100%}
+.bug > span{display:flex; align-items:center; gap:5px; padding:0 10px; white-space:nowrap}
+.bug .f{background:var(--gold); color:#141005; font-family:var(--f-shout); font-weight:400; font-size:18px; aspect-ratio:1; justify-content:center; padding:0}
+.bug .w{background:#fff; color:#070a1a; font-size:19px; font-variant-numeric:tabular-nums}
+.bug .k{background:#0b1024; color:var(--gold); font-size:17px; font-variant-numeric:tabular-nums}
+.bug .x{background:#141a38; color:var(--ink); font-size:16px} .bug .x b{color:var(--gold)}
+.bug .lives{background:#2a0d12; color:#fca5a5; gap:3px}
+.bug .lives svg{width:17px; height:17px; transition:transform .3s, opacity .3s}
+.bug .lives svg.off{opacity:.2; transform:scale(.7)}
+.bug .cards{background:#1f1606; gap:4px}
+.bug .cards i{width:11px; height:15px; border-radius:2px; background:#facc15; display:block; transition:transform .3s, opacity .3s}
+.bug .cards i.used{background:#ef4444; transform:rotate(12deg)}
+.bug .cards i.gone{opacity:.2}
+
+/* ─── 1 · ¿QUIÉN ES? ─── */
+.wi{display:grid; gap:12px; justify-items:center}
+.glass{position:relative; width:min(260px,70cqw); aspect-ratio:1; border-radius:18px; overflow:hidden; background:radial-gradient(circle at 50% 35%,#2d3a7c,#141a38); box-shadow:0 0 0 2px rgba(255,255,255,.12), 0 18px 40px rgba(0,0,0,.5)}
+.glass svg.ph{position:absolute; inset:0; width:100%; height:100%; transition:filter .6s ease}
+.glass .crack{position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity .2s}
+.glass .crack.on{opacity:1}
+.glass .frost{position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.02) 40%,rgba(255,255,255,.12)); pointer-events:none; transition:opacity .5s}
+.glass .stk{position:absolute; font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:13px; padding:5px 9px; border-radius:6px; background:#fef3c7; color:#422006; box-shadow:0 6px 14px rgba(0,0,0,.45); transform:scale(0) rotate(-8deg); transition:transform .45s cubic-bezier(.34,1.56,.64,1)}
+.glass .stk.on{transform:scale(1) rotate(var(--r,-6deg))}
+.glass .nm{position:absolute; left:0; right:0; bottom:10px; text-align:center; font-family:var(--f-shout); font-size:28px; text-transform:uppercase; color:#fff; text-shadow:0 3px 0 rgba(0,0,0,.5); opacity:0; transform:scale(1.8)}
+.glass .nm.on{animation:slam .45s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes slam{from{opacity:0; transform:scale(2.2); filter:blur(8px)}to{opacity:1; transform:none; filter:none}}
+.guessbox{display:grid; gap:6px; width:min(100%,420px)}
+.guessbox .inp{display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; background:#141a38; border:1.5px solid rgba(255,255,255,.14); font-size:15px; color:#fff}
+.guessbox .inp i{font-style:normal; color:var(--muted)}
+.sugs{display:grid; grid-template-columns:1fr 1fr; gap:6px}
+.sug{display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:10px; background:#10163a; border:1.5px solid var(--line); color:var(--ink); cursor:pointer; text-align:left; font-size:13.5px; font-weight:600}
+.sug:hover{border-color:rgba(255,255,255,.3)}
+.sug .av{width:28px; height:28px; border-radius:50%; overflow:hidden; flex:none; background:#2d3a7c}
+.sug .av svg{width:100%; height:100%}
+.sug.bad{border-color:var(--red); background:rgba(239,68,68,.15)}
+.sug.ok{border-color:var(--green); background:rgba(74,222,128,.18)}
+
+/* ─── 2 · MAYOR O MENOR ─── */
+.hl{display:grid; gap:10px}
+.hl-cat{justify-self:center; display:flex; align-items:stretch; font-family:var(--f-bug); font-weight:800; text-transform:uppercase; border-radius:8px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.hl-cat span{padding:6px 12px; display:flex; align-items:center}
+.hl-cat .a{background:var(--gold); color:#141005; font-size:13px; letter-spacing:.1em}
+.hl-cat .b{background:#fff; color:#070a1a; font-size:18px}
+.vs{position:relative; display:grid; grid-template-columns:1fr 1fr; gap:0; border-radius:16px; overflow:hidden; min-height:250px}
+.side{position:relative; display:grid; align-content:end; justify-items:center; padding:12px 10px 14px; gap:4px; overflow:hidden}
+.side.l{background:linear-gradient(160deg,#1e3a8a,#0b1024)}
+.side.r{background:linear-gradient(200deg,#7f1d1d,#0b1024)}
+.side svg.ph{position:absolute; left:50%; top:4%; width:72%; transform:translateX(-50%); opacity:.95}
+.side .nm{position:relative; font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:17px; text-shadow:0 2px 6px #000}
+.side .val{position:relative; font-family:var(--f-shout); font-size:44px; line-height:1; color:#fff; text-shadow:0 3px 0 rgba(0,0,0,.4); font-variant-numeric:tabular-nums}
+.side .val.q{color:var(--gold)}
+.side .bar{position:absolute; left:0; bottom:0; width:100%; height:0; background:linear-gradient(0deg,rgba(252,211,77,.35),transparent); transition:height .7s cubic-bezier(.16,1,.3,1)}
+.vs .mid{position:absolute; left:50%; top:44%; transform:translate(-50%,-50%) skewX(-10deg); z-index:3; background:#fff; color:#070a1a; font-family:var(--f-shout); font-size:24px; padding:2px 12px; box-shadow:0 6px 16px rgba(0,0,0,.5)}
+.vs::after{content:""; position:absolute; top:0; bottom:0; left:calc(50% - 2px); width:4px; background:#fff; transform:skewX(-10deg); z-index:2}
+.side.ok{box-shadow:inset 0 0 0 3px var(--green)} .side.bad{box-shadow:inset 0 0 0 3px var(--red)}
+.hl-btns{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.hl-btns button{display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; border-radius:12px; border:0; cursor:pointer; font-family:var(--f-bug); font-weight:800; text-transform:uppercase; letter-spacing:.06em; font-size:19px; color:#fff}
+.hl-btns .up{background:linear-gradient(180deg,#16a34a,#15803d)} .hl-btns .dn{background:linear-gradient(180deg,#dc2626,#991b1b)}
+.chain{display:flex; gap:3px; justify-content:center; align-items:center; flex-wrap:wrap}
+.chain i{width:22px; height:13px; border-radius:7px; border:3px solid rgba(255,255,255,.18); display:block; transition:all .3s}
+.chain i.on{border-color:var(--gold); box-shadow:0 0 8px rgba(252,211,77,.6); animation:bump .35s}
+.chain i.broken{border-color:var(--red); transform:rotate(25deg) translateY(4px); opacity:.5}
+
+/* ─── 3 · CONEXIONES ─── */
+.cx{display:grid; gap:8px}
+.cx-rows{display:grid; gap:6px}
+.cx-row{display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px; color:#0b1024; animation:rowin .45s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes rowin{from{transform:scaleY(.2); opacity:0}to{transform:none; opacity:1}}
+.cx-row b{font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:16px; letter-spacing:.04em; flex:1}
+.cx-row .avs{display:flex}
+.cx-row .avs span{width:30px; height:30px; border-radius:50%; overflow:hidden; margin-left:-6px; box-shadow:0 0 0 2px rgba(0,0,0,.25); background:#2d3a7c}
+.cx-row .avs svg{width:100%; height:100%}
+.cx-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:6px}
+.tile{position:relative; aspect-ratio:1; border-radius:12px; overflow:hidden; border:0; padding:0; cursor:pointer; background:#1c2555; transition:transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s}
+.tile svg{position:absolute; inset:0; width:100%; height:100%}
+.tile .n{position:absolute; left:0; right:0; bottom:0; padding:12px 3px 3px; background:linear-gradient(transparent,rgba(0,0,0,.85)); font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:12px; color:#fff; text-align:center; line-height:1}
+.tile.sel{transform:translateY(-4px) scale(1.04); box-shadow:0 0 0 3px var(--gold), 0 10px 20px rgba(0,0,0,.5)}
+.tile.fly{visibility:hidden}
+.cx-bar{display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+.ref{display:inline-flex; align-items:center; gap:8px; font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:15px; padding:5px 12px; border-radius:999px; background:#fef3c7; color:#422006; transform:scale(0); transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.ref.on{transform:scale(1)}
+
+/* ─── 4 · LA GRILLA ─── */
+.gr{display:grid; grid-template-columns:auto repeat(3,1fr); gap:6px; align-items:stretch}
+.gr .hd{display:grid; justify-items:center; align-content:center; gap:3px; font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:12px; color:#dfe4ff; text-align:center; padding:4px}
+.gr .hd .crest{width:34px; height:34px}
+.gr .hd .flag{width:38px; height:26px; border-radius:4px; overflow:hidden; box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+.gr .hd .flag svg{width:100%; height:100%; display:block}
+.cell{position:relative; aspect-ratio:1; border-radius:12px; border:2px dashed rgba(255,255,255,.18); background:#10163a; display:grid; place-items:center; cursor:pointer; color:var(--muted); font-family:var(--f-bug); font-weight:800; font-size:26px; overflow:hidden; perspective:500px}
+.cell .dots{position:absolute; bottom:5px; display:flex; gap:3px} .cell .dots i{width:6px; height:6px; border-radius:50%; background:var(--gold); display:block} .cell .dots i.x{background:rgba(255,255,255,.2)}
+.cell.filled{border:2px solid var(--green); background:#0b1f18; animation:stampin .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes stampin{from{transform:rotateY(90deg) scale(.8)}to{transform:none}}
+.cell.filled svg{position:absolute; inset:0; width:100%; height:100%}
+.cell.filled .cn{position:absolute; left:0; right:0; bottom:0; padding:10px 2px 3px; background:linear-gradient(transparent,rgba(0,0,0,.85)); font-size:11px; color:#fff; text-transform:uppercase; text-align:center}
+.cell.fail{border:2px solid var(--red); background:rgba(239,68,68,.12); color:var(--red)}
+.cell.line{box-shadow:0 0 0 3px var(--gold), 0 0 18px rgba(252,211,77,.5)}
+.sheet{position:absolute; left:0; right:0; bottom:0; z-index:10; background:#141a38; border-top:1px solid rgba(255,255,255,.14); border-radius:16px 16px 0 0; padding:12px; display:grid; gap:8px; transform:translateY(105%); transition:transform .35s cubic-bezier(.16,1,.3,1)}
+.sheet.on{transform:none}
+.sheet .q{display:flex; gap:8px; align-items:center; font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:15px}
+
+/* ─── 5 · ADIVINÁ EL CRACK ─── */
+.wd{display:grid; grid-template-columns:minmax(0,150px) minmax(0,1fr); gap:12px; align-items:start}
+@container (max-width:520px){ .wd{grid-template-columns:1fr} }
+.ficha{position:relative; border-radius:14px; background:linear-gradient(170deg,#1f2a5e,#0b1024); border:2px solid rgba(255,255,255,.14); padding:10px; display:grid; gap:8px; justify-items:center}
+.ficha .shirt{position:relative; width:100px; aspect-ratio:1}
+.ficha .shirt svg{width:100%; height:100%}
+.ficha .shirt b{position:absolute; left:0; right:0; top:34%; text-align:center; font-family:var(--f-shout); font-size:34px; color:#fff; opacity:.2; transition:opacity .4s}
+.ficha .shirt b.on{opacity:1}
+.ficha .rw{display:grid; grid-template-columns:1fr 1fr; gap:5px; width:100%}
+.ficha .rw span{font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:12px; text-align:center; padding:4px; border-radius:6px; background:rgba(255,255,255,.05); color:var(--dim)}
+.ficha .rw span.on{background:rgba(74,222,128,.18); color:#bbf7d0; animation:bump .4s}
+.wrows{display:grid; gap:5px}
+.wrow{display:grid; grid-template-columns:36px repeat(6,minmax(0,1fr)); gap:4px; align-items:stretch}
+.wrow .av{width:36px; height:36px; border-radius:50%; overflow:hidden; background:#2d3a7c; align-self:center}
+.wrow .av svg{width:100%; height:100%}
+.flap{position:relative; height:44px; border-radius:7px; background:#1e293b; display:grid; place-items:center; font-family:var(--f-bug); font-weight:800; font-size:14px; color:#fff; text-transform:uppercase; transform-origin:50% 50%; line-height:1; text-align:center; padding:0 2px}
+.flap small{display:block; font-size:9px; letter-spacing:.06em; opacity:.8}
+.flap.go{animation:flap .5s ease both}
+@keyframes flap{0%{transform:rotateX(0); background:#1e293b; color:transparent}49%{transform:rotateX(90deg); color:transparent}51%{transform:rotateX(-90deg)}100%{transform:none}}
+.flap.g{background:#16a34a} .flap.y{background:#ca8a04} .flap.n{background:#334155}
+.whead{display:grid; grid-template-columns:36px repeat(6,minmax(0,1fr)); gap:4px; font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:10.5px; color:var(--muted); text-align:center; letter-spacing:.06em}
+
+/* ─── 6 · ONCE IDEAL ─── */
+.oi{display:grid; gap:10px}
+.oi-top{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between}
+.req{display:inline-flex; align-items:center; gap:8px; padding:6px 12px 6px 6px; border-radius:999px; background:#141a38; border:1px solid var(--line); font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:15px}
+.req .flag{width:30px; height:20px; border-radius:4px; overflow:hidden} .req .flag svg{width:100%; height:100%; display:block}
+.pitch{position:relative; width:100%; aspect-ratio:3/3.2; max-height:420px; border-radius:14px; overflow:hidden; background:repeating-linear-gradient(180deg,#0f5132 0 12.5%,#11603b 12.5% 25%); border:2px solid rgba(255,255,255,.3)}
+.pitch::before{content:""; position:absolute; left:0; right:0; top:50%; border-top:2px solid rgba(255,255,255,.3)}
+.pitch::after{content:""; position:absolute; left:50%; top:50%; width:24%; aspect-ratio:1; border:2px solid rgba(255,255,255,.3); border-radius:50%; transform:translate(-50%,-50%)}
+.pitch .box{position:absolute; left:28%; right:28%; height:14%; border:2px solid rgba(255,255,255,.3)}
+.pitch .box.t{top:-2px; border-top:0} .pitch .box.b{bottom:-2px; border-bottom:0}
+.pitch svg.links{position:absolute; inset:0; width:100%; height:100%; z-index:1}
+.pitch svg.links line{stroke:rgba(252,211,77,.0); stroke-width:.6; transition:stroke .5s}
+.pitch svg.links line.on{stroke:rgba(252,211,77,.7)}
+.slot{position:absolute; transform:translate(-50%,-50%); z-index:2; display:grid; justify-items:center; gap:2px; border:0; background:none; cursor:pointer; padding:0}
+.slot .c{width:44px; height:44px; border-radius:50%; display:grid; place-items:center; border:2px dashed rgba(255,255,255,.55); background:rgba(0,0,0,.25); font-family:var(--f-bug); font-weight:800; font-size:12px; color:#fff; overflow:hidden; transition:transform .25s}
+.slot.act .c{border:2px solid var(--gold); box-shadow:0 0 0 4px rgba(252,211,77,.25); animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.12)}}
+.slot.full .c{border:2px solid #fff; background:#2d3a7c; animation:drop .45s cubic-bezier(.34,1.56,.64,1)}
+@keyframes drop{from{transform:translateY(-40px) scale(1.4); opacity:0}to{transform:none; opacity:1}}
+.slot.full .c svg{width:100%; height:100%}
+.slot .l{font-family:var(--f-bug); font-weight:800; font-size:11px; text-transform:uppercase; color:#fff; text-shadow:0 1px 3px #000; white-space:nowrap}
+.oi-done{position:absolute; inset:0; z-index:5; display:grid; place-items:center; align-content:center; gap:4px; background:rgba(4,20,12,.6); opacity:0; pointer-events:none; transition:opacity .4s}
+.oi-done.on{opacity:1}
+.oi-done b{font-family:var(--f-shout); font-size:44px; text-transform:uppercase; color:#fff; text-shadow:0 4px 0 #b45309}
+.oi-done span{font-family:var(--f-bug); font-weight:800; text-transform:uppercase; color:var(--gold); letter-spacing:.1em}
+
+/* ─── 7 · DUELO DE STATS ─── */
+.ds{display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); gap:12px; align-items:center}
+@container (max-width:560px){ .ds{grid-template-columns:1fr} }
+.cromo{position:relative; justify-self:center; width:min(240px,100%); aspect-ratio:5/7; border-radius:16px; padding:12px; display:grid; grid-template-rows:auto 1fr auto; gap:8px; background:linear-gradient(160deg,#fcd34d,#b45309 60%,#78350f); color:#1f1303; box-shadow:0 16px 36px rgba(0,0,0,.5), inset 0 0 0 3px rgba(255,255,255,.35)}
+.cromo .top{display:flex; justify-content:space-between; align-items:center; font-family:var(--f-bug); font-weight:800; text-transform:uppercase}
+.cromo .top .pos{font-size:24px; font-family:var(--f-shout)}
+.cromo .mys{display:grid; place-items:center; border-radius:12px; background:rgba(31,19,3,.25); font-family:var(--f-shout); font-size:64px; color:rgba(31,19,3,.45)}
+.cromo .sts{display:grid; grid-template-columns:repeat(3,1fr); gap:6px}
+.cromo .st{display:grid; justify-items:center; padding:5px 2px; border-radius:8px; background:rgba(31,19,3,.18)}
+.cromo .st b{font-family:var(--f-shout); font-size:28px; line-height:1; font-variant-numeric:tabular-nums}
+.cromo .st span{font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:11px; letter-spacing:.08em}
+.ops{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.op{display:flex; align-items:center; gap:8px; padding:8px; border-radius:12px; background:#161d45; border:2px solid rgba(255,255,255,.1); color:var(--ink); cursor:pointer; text-align:left; font-weight:600; font-size:14px; transition:border-color .2s, background .2s, opacity .3s}
+.op .av{width:40px; height:40px; border-radius:50%; overflow:hidden; flex:none; background:#2d3a7c} .op .av svg{width:100%; height:100%}
+.op.ok{background:rgba(74,222,128,.2); border-color:var(--green)} .op.bad{background:rgba(239,68,68,.2); border-color:var(--red)} .op.dim{opacity:.35}
+.cromo.flipd .mys{background:transparent} .cromo.flipd .mys svg{width:90%; height:auto}
+
+/* ─── v2 · comunes ─── */
+.crestS{display:inline-block; vertical-align:middle; flex:none}
+.flagS{display:inline-block; vertical-align:middle; border-radius:3px; overflow:hidden; box-shadow:0 0 0 1px rgba(255,255,255,.25); flex:none; line-height:0}
+.flagS svg{width:100%; height:100%; display:block}
+.flagS.code{display:inline-grid; place-items:center; background:#334155; color:#fff; font-family:var(--f-bug); font-weight:800; font-size:10px; line-height:1}
+.lgS{display:inline-grid; place-items:center; border-radius:6px; font-family:var(--f-bug); font-weight:800; color:#fff; letter-spacing:.02em; flex:none; line-height:1}
+.typer{display:grid; gap:6px; width:min(100%,440px); position:relative}
+.typer .inp{display:flex; align-items:center; gap:8px; padding:0 12px; border-radius:12px; background:#141a38; border:1.5px solid rgba(255,255,255,.18); transition:border-color .2s, box-shadow .2s}
+.typer .inp:focus-within{border-color:var(--gold); box-shadow:0 0 0 3px rgba(252,211,77,.18)}
+.typer .inp i{font-style:normal; color:var(--muted)}
+.typer input{flex:1; min-width:0; background:none; border:0; outline:0; color:#fff; font:600 15px var(--f-body); padding:11px 0}
+.typer input::placeholder{color:#6b739a}
+.typer .list{display:grid; gap:4px}
+.typer .it{display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:10px; background:#10163a; border:1.5px solid var(--line); color:var(--ink); cursor:pointer; text-align:left; font-size:13.5px; font-weight:600}
+.typer .it:hover,.typer .it.hi{border-color:rgba(252,211,77,.6); background:#161f4c}
+.typer .it mark{background:none; color:var(--gold)}
+.typer .it .team{margin-left:auto; color:var(--muted); font-size:12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:45%}
+.typer.bad .inp{border-color:var(--red); animation:shake .38s}
+.tried{display:flex; flex-wrap:wrap; gap:6px; justify-content:center}
+.tried span{font-size:12.5px; font-weight:600; padding:3px 9px; border-radius:999px; background:rgba(239,68,68,.14); color:#fca5a5; text-decoration:line-through}
+.toast{position:absolute; left:50%; bottom:16px; z-index:30; transform:translate(-50%,-10px); opacity:0; font-family:var(--f-bug); font-weight:800; text-transform:uppercase; letter-spacing:.05em; font-size:15px; padding:6px 14px; border-radius:999px; background:#7f1d1d; color:#fff; box-shadow:0 8px 20px rgba(0,0,0,.5); transition:all .25s; pointer-events:none; white-space:nowrap}
+.toast.on{opacity:1; transform:translate(-50%,0)}
+
+/* ─── 1 · ¿QUIÉN ES? v2 ─── */
+.who{display:grid; gap:12px; justify-items:center}
+.mcard{position:relative; width:min(100%,440px); display:grid; grid-template-columns:120px minmax(0,1fr); gap:12px; padding:12px; border-radius:16px; background:linear-gradient(160deg,#1f2a5e,#0b1024); border:2px solid rgba(255,255,255,.14); box-shadow:0 16px 36px rgba(0,0,0,.45); overflow:hidden}
+@container (max-width:420px){ .mcard{grid-template-columns:92px minmax(0,1fr)} }
+.mcard .sil{position:relative; aspect-ratio:3/4; border-radius:12px; overflow:hidden; background:radial-gradient(circle at 50% 30%,#2d3a7c,#0b1024)}
+.mcard .sil svg{position:absolute; inset:0; width:100%; height:100%; transition:filter .5s}
+.mcard .sil .q{position:absolute; inset:0; display:grid; place-items:center; font-family:var(--f-shout); font-size:44px; color:rgba(255,255,255,.3); transition:opacity .3s}
+.mcard .sil.lit svg{filter:none !important}
+.mcard .sil.lit .q{opacity:0}
+.mcard .sil .sweep{position:absolute; inset:-20%; background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.75) 50%,transparent 60%); transform:translateX(-120%); pointer-events:none}
+.mcard .sil.lit .sweep{animation:sweep .8s ease-out}
+@keyframes sweep{to{transform:translateX(120%)}}
+.mdata{display:grid; gap:7px; align-content:center; min-width:0}
+.mrow{display:flex; align-items:center; gap:9px; min-width:0; font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:17px; letter-spacing:.02em}
+.mrow span.t{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.mrow .pos{font-family:var(--f-shout); font-weight:400; font-size:17px; background:#fff; color:#0b1024; padding:1px 9px; border-radius:6px}
+.extra{display:flex; gap:6px; flex-wrap:wrap}
+.extra span{font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:13px; padding:3px 9px; border-radius:6px; border:1.5px dashed rgba(255,255,255,.2); color:var(--dim)}
+.extra span.on{border:0; background:#fef3c7; color:#422006; transform:rotate(-3deg); animation:stick .45s cubic-bezier(.34,1.56,.64,1)}
+@keyframes stick{from{transform:scale(0) rotate(-12deg)}to{transform:scale(1) rotate(-3deg)}}
+.mname{position:absolute; left:12px; width:120px; bottom:12px; padding:14px 4px 6px; border-radius:0 0 12px 12px; text-align:center; font-family:var(--f-shout); font-size:18px; line-height:1.05; text-transform:uppercase; color:#fff; background:linear-gradient(transparent,rgba(0,0,0,.85)); opacity:0; pointer-events:none}
+.mname.on{animation:slam .45s cubic-bezier(.16,1,.3,1) forwards}
+.mname.lost{color:#fca5a5}
+
+/* ─── 2 · MAYOR O MENOR v2 ─── */
+.hl-cat .c{background:#0b1024; color:var(--sky); font-size:12px; letter-spacing:.08em}
+.hl-cat.flip{animation:catflip .5s ease}
+@keyframes catflip{0%{transform:rotateX(0)}45%{transform:rotateX(90deg)}55%{transform:rotateX(-90deg)}100%{transform:none}}
+.side .val small{font-family:var(--f-bug); font-weight:800; font-size:16px; margin-left:3px; opacity:.85}
+.side .tm{position:relative; display:flex; align-items:center; gap:5px; font-size:12px; color:#c5cbe8; font-weight:600}
+
+/* ─── 3 · SECCIONES ─── */
+.secs{padding-block:44px; display:grid; gap:20px; border-bottom:1px solid var(--line)}
+.secs .cols{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:20px}
+@media (max-width:900px){ .secs .cols{grid-template-columns:1fr} }
+.cat{display:grid; gap:14px}
+.cat h3,.week h3{font-family:var(--f-bug); font-weight:800; text-transform:uppercase; letter-spacing:.12em; font-size:13px; margin:0; color:var(--muted)}
+.cgroup{display:grid; gap:7px}
+.cgroup b{font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:14px; letter-spacing:.06em; color:#dfe4ff}
+.cgroup b em{font-style:normal; color:var(--dim); font-weight:700; margin-left:6px; letter-spacing:.02em; text-transform:none; font-family:var(--f-body); font-size:12.5px}
+.chips{display:flex; flex-wrap:wrap; gap:6px}
+.sc{display:inline-flex; align-items:center; gap:7px; padding:5px 10px; border-radius:999px; background:var(--panel); border:1px solid var(--line); font-size:13px; font-weight:600; color:#dfe4ff}
+.sc i{font-style:normal; font-family:var(--f-bug); font-weight:800; font-size:12.5px; color:var(--gold); background:rgba(252,211,77,.1); padding:0 6px; border-radius:999px; font-variant-numeric:tabular-nums}
+.sc.low{border-color:rgba(239,68,68,.45)} .sc.low i{color:#fca5a5; background:rgba(239,68,68,.12)}
+.sc.new{border-color:rgba(56,189,248,.5)}
+.week{display:grid; gap:10px; align-content:start}
+.wk{display:grid; gap:6px}
+.wd-row{display:grid; grid-template-columns:44px minmax(0,1fr); gap:8px; align-items:center; padding:8px 10px; border-radius:12px; background:var(--panel); border:1px solid var(--line)}
+.wd-row.today{border-color:var(--gold)}
+.wd-row .d{font-family:var(--f-bug); font-weight:800; text-transform:uppercase; color:var(--muted); font-size:13px}
+.wd-row .ss{display:flex; flex-wrap:wrap; gap:4px}
+.wd-row .ss span{font-size:11.5px; font-weight:700; padding:2px 7px; border-radius:6px; color:#0b1024; white-space:nowrap}
+.rules2{margin:0; padding-left:18px; display:grid; gap:7px; color:#d6dbf3; font-size:14px}
+.warn{background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.35); border-radius:12px; padding:12px 14px; font-size:13.5px; color:#fecaca}
+.warn b{color:#fff}
+
+/* ─── 4 · GRILLA v2 ─── */
+.sheet .typer{width:100%}
+.sheet .close{position:absolute; right:10px; top:8px; background:none; border:0; color:var(--muted); font-size:20px; cursor:pointer}
+.cell .cf{position:absolute; left:4px; top:4px; line-height:0}
+
+/* ─── 5 · CRACK v2 ─── */
+.wrow{grid-template-columns:34px repeat(7,minmax(0,1fr))}
+.whead{grid-template-columns:34px repeat(7,minmax(0,1fr))}
+.wrow .av{width:34px; height:34px}
+.flap.ic{padding:0}
+.ficha .ics{display:flex; gap:6px; justify-content:center; min-height:26px; align-items:center}
+.ficha .ics > *{opacity:.18; filter:grayscale(1); transition:all .4s}
+.ficha .ics > .on{opacity:1; filter:none; animation:bump .4s}
+.wd .typer{margin-top:8px}
+
+/* ─── 6 · ONCE v2 ─── */
+.pick[hidden]{display:none}
+.pick{display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px 10px; border-radius:12px; background:#141a38; border:1px solid rgba(252,211,77,.45); font-size:13.5px; font-weight:600}
+.pick b{font-family:var(--f-bug); font-weight:800; text-transform:uppercase; font-size:16px}
+.pick .pc{font-family:var(--f-bug); font-weight:800; font-size:14px; padding:4px 10px; border-radius:8px; border:0; background:var(--gold); color:#141005; cursor:pointer}
+.slot.cand .c{border:2px solid var(--gold); background:rgba(252,211,77,.2); animation:pulse .9s ease-in-out infinite}
+.slot.no{opacity:.35}
+.slot.full .c{border:2px solid #fff}
+.req .lgS{width:26px; height:20px; font-size:11px}
+
+@container (max-width:420px){ .mname{width:92px; font-size:15px} }
+.cell.filled{animation:none}
+.cell.filled.new{animation:stampin .5s cubic-bezier(.34,1.56,.64,1)}
+.side .tm{background:rgba(0,0,0,.55); padding:1px 7px 1px 4px; border-radius:999px; text-shadow:none}
+
+@media (prefers-reduced-motion:reduce){ *{animation-duration:.01ms !important; transition-duration:.01ms !important} }
+</style>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">FULVO · Moodboard 09 · v2</div>
+    <h1>Los otros <em>siete juegos</em></h1>
+    <p class="lede">Segunda versión, con las correcciones de Alejo: en ¿Quién es?, La grilla, Adiviná el crack y Once ideal se juega <b>escribiendo</b> (el buscador sugiere entre todos los jugadores, no entre opciones). Mayor o menor y Duelo de stats usan datos de la <b>temporada actual</b>. Conexiones sortea sus grupos de un catálogo de secciones que rota. Los jugadores son los del plantel actual de FULVO (15 clubes, 385 jugadores). Cada escenario se puede tocar.</p>
+    <div class="toolbar"><button class="chip" id="snd" aria-pressed="true">🔊 Sonido activado</button><span class="hint">Escudos, banderas y logos de liga dibujados acá; en la app van los reales de FotMob.</span></div>
+  </header>
+
+  <!-- 1 · ¿QUIÉN ES? -->
+  <section class="moment">
+    <div class="mhead"><span class="mnum">01</span><h2>¿Quién es?</h2><span class="mtag">Tres datos de entrada · escribí el nombre</span></div>
+    <div class="stage-col">
+      <div class="stage" id="s1">
+        <div class="bug"><span class="f">F</span><span class="lives" id="wiLives"></span><span class="x">XP <b id="wiXp">0</b></span></div>
+        <div class="who">
+          <div class="mcard" id="wiCard">
+            <div class="sil" id="wiSil"><svg viewBox="0 0 100 133" id="wiPh"></svg><span class="q">?</span><i class="sweep"></i></div>
+            <div class="mdata">
+              <div class="mrow" id="wiTeam"></div>
+              <div class="mrow" id="wiNat"></div>
+              <div class="mrow" id="wiPos"></div>
+              <div class="extra" id="wiExtra"><span data-k="a">Edad</span><span data-k="s">Dorsal</span></div>
+            </div>
+            <div class="mname" id="wiName"></div>
+          </div>
+          <div class="typer" id="wiTyper"></div>
+          <div class="tried" id="wiTried"></div>
+        </div>
+        <div class="fx" id="fx1"></div>
+      </div>
+      <div class="controls"><button class="btn ghost" id="wiNext">↻ Otro jugador</button><span class="hint">Probá con alguien que no es: cada error pega una pista más.</span></div>
+    </div>
+    <aside class="notes">
+      <div class="today"><h3>Hoy</h3>Una foto borrosa y un input. Los datos del jugador no están a la vista y al errar no pasa nada visible.</div>
+      <div><h3>Propuesta</h3><ul>
+        <li>Arranca con <b>tres datos grandes</b>: escudo del club, bandera y posición. La foto es una silueta.</li>
+        <li>Escribís el nombre; el buscador sugiere entre <b>todos</b> los jugadores de FULVO, así ayuda a escribir sin regalar la respuesta.</li>
+        <li>Cada error apaga una vida, tacha el nombre que probaste y <b>pega una pista más</b> como sticker: primero la edad, después el dorsal.</li>
+        <li>Al acertar, la silueta se ilumina con la foto y el nombre golpea en grande.</li>
+      </ul></div>
+    </aside>
+  </section>
+
+  <!-- 2 · MAYOR O MENOR -->
+  <section class="moment">
+    <div class="mhead"><span class="mnum">02</span><h2>Mayor o menor</h2><span class="mtag">Cara a cara de TV · la stat cambia cada ronda</span></div>
+    <div class="stage-col">
+      <div class="stage" id="s2">
+        <div class="bug"><span class="f">F</span><span class="k" id="hlK">0/12</span><span class="x">XP <b id="hlXp">0</b></span></div>
+        <div class="hl">
+          <div class="hl-cat" id="hlCatBox"><span class="a">Comparan</span><span class="b" id="hlCat">Goles</span><span class="c" id="hlTag">Temp. 26/27</span></div>
+          <div class="vs" id="vs">
+            <div class="side l" id="sl"><i class="bar" id="bl"></i><svg class="ph" id="phl" viewBox="0 0 100 100"></svg><span class="nm" id="nl"></span><span class="tm" id="tl"></span><span class="val" id="vl"></span></div>
+            <div class="side r" id="sr"><i class="bar" id="br"></i><svg class="ph" id="phr" viewBox="0 0 100 100"></svg><span class="nm" id="nr"></span><span class="tm" id="tr"></span><span class="val q" id="vr">?</span></div>
+            <span class="mid">VS</span>
+          </div>
+          <div class="hl-btns"><button class="up" id="hlUp">▲ Más</button><button class="dn" id="hlDn">▼ Menos</button></div>
+          <div class="chain" id="chain" aria-label="Cadena"></div>
+        </div>
+        <div class="fx" id="fx2"></div>
+      </div>
+      <div class="controls"><button class="btn ghost" id="hlReset">↺ Reiniciar</button></div>
+    </div>
+    <aside class="notes">
+      <div class="today"><h3>Hoy</h3>Dos tarjetas iguales y dos botones. Al revelar, el número solo cambia de color.</div>
+      <div><h3>Propuesta</h3><ul>
+        <li>Pantalla partida en diagonal, como un <b>cara a cara de TV</b>. El zócalo de arriba dice qué se compara y <b>gira</b> cuando cambia la stat.</li>
+        <li>Cada ronda puede tocar otra stat: <b>goles, asistencias y partidos de la temporada actual</b>, altura, valor de mercado y edad. Las de temporada llevan la etiqueta "Temp. 26/27".</li>
+        <li>El número de la derecha <b>cuenta</b> hasta su valor y detrás crece una barra.</li>
+        <li>Abajo, la <b>cadena</b>: cada acierto suma un eslabón; al errar se rompe.</li>
+      </ul></div>
+    </aside>
+  </section>
+
+  <!-- 3 · CONEXIONES -->
+  <section class="moment">
+    <div class="mhead"><span class="mnum">03</span><h2>Conexiones</h2><span class="mtag">Figuritas que se agrupan · tarjetas por error</span></div>
+    <div class="stage-col">
+      <div class="stage" id="s3">
+        <div class="bug"><span class="f">F</span><span class="k" id="cxK">0/4</span><span class="cards" id="cxCards"><i></i><i></i><i></i><i></i></span></div>
+        <div class="cx">
+          <div class="cx-rows" id="cxRows"></div>
+          <div class="cx-grid" id="cxGrid"></div>
+          <div class="cx-bar"><span class="ref" id="cxRef">🟨 ¡Casi! 3 de 4</span><button class="btn" id="cxGo">Verificar</button></div>
+        </div>
+        <div class="fx" id="fx3"></div>
+      </div>
+      <div class="controls"><button class="btn" id="cxNew">🎲 Sortear otro partido</button><button class="btn ghost" id="cxReset">↺ Reiniciar</button><span class="hint" id="cxDay"></span></div>
+    </div>
+    <aside class="notes">
+      <div class="today"><h3>Aprobado</h3>La escena quedó como estaba. Lo nuevo es de dónde salen los grupos: se sortean del catálogo de abajo.</div>
+      <div><h3>Escena</h3><ul>
+        <li>Las fotos son <b>figuritas</b>: al elegirlas se levantan y brillan.</li>
+        <li>Al acertar, las cuatro <b>vuelan juntas</b> a su fila y el nombre del grupo se escribe letra por letra.</li>
+        <li>Los errores son <b>tarjetas</b> en el marcador; la última es roja y termina el partido.</li>
+      </ul></div>
+    </aside>
+  </section>
+
+  <section class="secs">
+    <div class="mhead"><span class="mnum">03 · B</span><h2 class="sm">Las secciones de Conexiones</h2><span class="mtag">Catálogo, rotación y sin grupos que se pisen</span></div>
+    <div class="cols">
+      <div class="cat" id="catalog"><h3>Catálogo · cuántos jugadores tiene cada sección hoy</h3></div>
+      <div class="week">
+        <h3>Una semana de ejemplo (sorteada con estas reglas)</h3>
+        <div class="wk" id="week"></div>
+        <ul class="rules2">
+          <li><b>Cada sección es una bolsa de jugadores</b>: se sacan 4 al azar, así "Argentinos" nunca trae a los mismos cuatro.</li>
+          <li><b>Rotan</b>: una sección que salió no vuelve por 3 días. Nunca dos del mismo tipo en un partido (no dos clubes, no dos países).</li>
+          <li><b>No se pisan</b>: cada jugador del tablero cumple una sola de las cuatro secciones. Si Enzo es campeón del mundo y fichaje de +100 M€, no aparece cuando salen las dos.</li>
+          <li><b>Mínimo 8 jugadores</b> por sección para entrar al sorteo. Las que tienen menos quedan en rojo hasta que crezca el plantel.</li>
+        </ul>
+        <div class="warn"><b>Ojo con el plantel:</b> hoy entran 13 argentinos (Boca, River y Racing están excluidos y hay 15 clubes). Para tener 20 por sección conviene sumar clubes al pool: Aston Villa, Newcastle, Juventus, Roma, Atalanta, Leverkusen, Sevilla, Betis, Benfica.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · LA GRILLA -->
+  <section class="moment">
+    <div class="mhead"><span class="mnum">04</span><h2>La grilla</h2><span class="mtag">El tateti de figuritas · escribís quién va</span></div>
+    <div class="stage-col">
+      <div class="stage" id="s4">
+        <div class="bug"><span class="f">F</span><span class="k" id="grK">0/9</span><span class="x">XP <b id="grXp">0</b></span></div>
+        <div class="gr" id="gr"></div>
+        <div class="sheet" id="sheet"><button class="close" id="grClose" aria-label="Cerrar">✕</button><div class="q" id="sheetQ"></div><div class="typer" id="grTyper"></div></div>
+        <div class="toast" id="grToast"></div>
+        <div class="fx" id="fx4"></div>
+      </div>
+      <div class="controls"><button class="btn ghost" id="grReset">↺ Reiniciar</button><span class="hint">Tocá una celda y escribí un jugador que cumpla las dos cosas. Probá Vinícius en Real Madrid + Brasil.</span></div>
+    </div>
+    <aside class="notes">
+      <div class="today"><h3>Hoy</h3>Una tabla con encabezados de texto y celdas con un "+". El buscador tapa toda la pantalla.</div>
+      <div><h3>Propuesta</h3><ul>
+        <li>Encabezados con <b>escudo y bandera grandes</b>: la grilla se lee sin texto.</li>
+        <li>Tocás la celda y sube una <b>hoja desde abajo</b> con el buscador: escribís el jugador que creés que va. Sugiere entre todos los jugadores, no entre opciones.</li>
+        <li>Al acertar, la figurita <b>se estampa</b> con un giro. Al errar, la celda pierde un intento (los puntitos) y el buscador tiembla.</li>
+        <li>Cada fila o columna completa se ilumina como un <b>tateti</b> y suma un bonus.</li>
+      </ul></div>
+    </aside>
+  </section>
+
+  <!-- 5 · ADIVINÁ EL CRACK -->
+  <section class="moment">
+    <div class="mhead"><span class="mnum">05</span><h2>Adiviná el crack</h2><span class="mtag">Tablero de aeropuerto · escudos, banderas y ligas</span></div>
+    <div class="stage-col">
+      <div class="stage" id="s5">
+        <div class="bug"><span class="f">F</span><span class="k" id="wdK">Intento 0/8</span></div>
+        <div class="wd">
+          <div class="ficha">
+            <div class="shirt"><svg viewBox="0 0 100 100"><path d="M30 8 L10 20 L2 42 L18 48 L20 38 L22 96 L78 96 L80 38 L82 48 L98 42 L90 20 L70 8 Q50 18 30 8 Z" fill="#334155" stroke="#64748b" stroke-width="2.5" id="wdShirt"/></svg><b id="wdNum">?</b></div>
+            <div class="ics" id="wdIcs"></div>
+            <div class="rw"><span id="fPo">Posición</span><span id="fEd">Edad</span><span id="fAl">Altura</span><span id="fNu">Dorsal</span></div>
+          </div>
+          <div style="min-width:0">
+            <div class="whead"><span></span><span>Club</span><span>Liga</span><span>País</span><span>Pos.</span><span>Edad</span><span>Alt.</span><span>Nº</span></div>
+            <div class="wrows" id="wdRows"></div>
+            <div class="typer" id="wdTyper"></div>
+          </div>
+        </div>
+        <div class="fx" id="fx5"></div>
+      </div>
+      <div class="controls"><button class="btn ghost" id="wdReset">↻ Otro crack</button><span class="hint">Escribí cualquier jugador para empezar a acercarte.</span></div>
+    </div>
+    <aside class="notes">
+      <div class="today"><h3>Hoy</h3>La mecánica es buena, pero la tabla es de texto, densa y chica en celular.</div>
+      <div><h3>Propuesta</h3><ul>
+        <li>Se juega <b>escribiendo</b> el nombre, como hoy.</li>
+        <li>Las columnas son <b>íconos</b>: escudo del club, logo de la liga y bandera. Verde si coincide.</li>
+        <li>Cada intento se da vuelta <b>celda por celda como un tablero de aeropuerto</b>; edad, altura y dorsal con flechas ▲▼ (amarillo si está cerca).</li>
+        <li>A la izquierda, la <b>ficha del misterioso</b> se arma con lo que vas acertando: escudo, liga, bandera, y la camiseta toma su color y su número.</li>
+      </ul></div>
+    </aside>
+  </section>
+
+  <!-- 6 · ONCE IDEAL -->
+  <section class="moment">
+    <div class="mhead"><span class="mnum">06</span><h2>Once ideal</h2><span class="mtag">Escribí el jugador, elegí dónde juega</span></div>
+    <div class="stage-col">
+      <div class="stage" id="s6">
+        <div class="oi-top">
+          <div class="bug"><span class="f">F</span><span class="w" id="oiT">3:00</span><span class="k" id="oiK">0/11</span></div>
+          <span class="req" id="oiReq"></span>
+        </div>
+        <div class="typer" id="oiTyper" style="justify-self:center"></div>
+        <div class="pick" id="oiPick" hidden></div>
+        <div class="pitch" id="pitch"><div class="box t"></div><div class="box b"></div><svg class="links" id="links" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div class="oi-done" id="oiDone"><b>¡Once completo!</b><span>4-3-3 · +100 XP</span></div></div>
+        <div class="toast" id="oiToast"></div>
+        <div class="fx" id="fx6"></div>
+      </div>
+      <div class="controls"><button class="btn" id="oiAuto">▶ Armarlo solo</button><button class="btn ghost" id="oiReset">↺ Reiniciar</button><span class="hint">Probá Saka, después Mbappé (no juega en la Premier).</span></div>
+    </div>
+    <aside class="notes">
+      <div class="today"><h3>Hoy</h3>Se elige primero el puesto y después se escribe. No tiene previa, resumen ni marcador, y el reloj es un círculo aparte.</div>
+      <div><h3>Propuesta</h3><ul>
+        <li>Primero <b>escribís el jugador</b>. Si no cumple la consigna (acá: juega en la Premier), el buscador tiembla y lo avisa.</li>
+        <li>Si cumple, <b>laten los puestos donde puede jugar</b> y elegís uno (tocando la cancha o el botón del puesto). El jugador <b>cae</b> a su lugar con su cara.</li>
+        <li>Las líneas de la formación se <b>encienden</b> a medida que se completan.</li>
+        <li>Entra al sistema común: previa, pitazo, marcador con reloj y resumen. Al completar: "¡Once completo!".</li>
+      </ul></div>
+    </aside>
+  </section>
+
+  <!-- 7 · DUELO DE STATS -->
+  <section class="moment">
+    <div class="mhead"><span class="mnum">07</span><h2>Duelo de stats</h2><span class="mtag">El cromo boca abajo · contrarreloj · aprobado</span></div>
+    <div class="stage-col">
+      <div class="stage" id="s7">
+        <div class="bug"><span class="f">F</span><span class="w" id="dsT">0:45</span><span class="k" id="dsK">0/10</span><span class="x">XP <b id="dsXp">0</b></span></div>
+        <div class="ds">
+          <div class="cromo" id="cromo">
+            <div class="top"><span class="pos" id="dsPos">DEL</span><span>Temp. 26/27</span></div>
+            <div class="mys" id="dsMys">?</div>
+            <div class="sts"><div class="st"><b id="dsG">0</b><span>Goles</span></div><div class="st"><b id="dsA">0</b><span>Asist.</span></div><div class="st"><b id="dsP">0</b><span>Partidos</span></div></div>
+          </div>
+          <div class="ops" id="dsOps"></div>
+        </div>
+        <div class="fx" id="fx7"></div>
+      </div>
+      <div class="controls"><button class="btn ghost" id="dsNext">↻ Otro cromo</button><span class="hint">Números de ejemplo.</span></div>
+    </div>
+    <aside class="notes">
+      <div class="today"><h3>Aprobado</h3>Queda como estaba, con una condición: las stats son siempre de la temporada actual.</div>
+      <div><h3>Propuesta</h3><ul>
+        <li>Las stats van en un <b>cromo dorado boca abajo</b>: los números cuentan hasta su valor.</li>
+        <li>Al acertar, el cromo <b>se da vuelta</b> y muestra la cara.</li>
+        <li>Pasa a ser un contrarreloj más: mismo marcador, pitazo, ¡Basta!, ayudas y resumen.</li>
+      </ul></div>
+    </aside>
+  </section>
+
+  <section class="sys">
+    <div class="mhead"><span class="mnum">DATOS</span><h2 class="sm">Antes de todo: la temporada actual</h2></div>
+    <div class="warn">Revisé <code>dataGAMES.json</code>: los <b>partidos</b> no son reales (el script de refresco pone 1 si FotMob trae nota y 0 si no) y los <b>minutos</b> están en 0. Goles y asistencias vienen de la página del plantel y no dicen de qué temporada son. Para que Mayor o menor y Duelo de stats sean siempre "Temp. 26/27", el script tiene que bajar las stats de temporada de cada jugador (partidos, minutos, goles, asistencias), guardar la temporada y la fecha, y correr cada semana.</div>
+  </section>
+
+  <section class="sys">
+    <div class="mhead"><span class="mnum">REGLAS</span><h2 class="sm">Lo que comparten los siete</h2></div>
+    <div class="rules">
+      <div class="rule"><b>Mismo marco</b><span>GameShell, la previa nueva, el pitazo inicial y el resumen con XP, estrellas y racha.</span></div>
+      <div class="rule"><b>Marcador tipo TV</b><span>Arriba siempre el mismo marcador. Cambia el contador: vidas, cadena, tarjetas, celdas o reloj.</span></div>
+      <div class="rule"><b>Se escribe</b><span>Donde hay que nombrar a un jugador, se escribe. Un solo buscador para todos, que sugiere entre todos los jugadores.</span></div>
+      <div class="rule"><b>Íconos, no texto</b><span>Club = escudo, país = bandera, liga = logo. El texto va chico, abajo.</span></div>
+      <div class="rule"><b>Temporada actual</b><span>Toda stat de rendimiento es de la temporada en curso y lo dice.</span></div>
+    </div>
+  </section>
+
+  <section class="road">
+    <div class="mhead"><span class="mnum">ORDEN</span><h2 class="sm">Cómo lo implementaría</h2></div>
+    <ol>
+      <li><span class="n">TANDA 0</span><span class="t">Datos</span><p>Stats de temporada reales en el script de refresco + catálogo de secciones de Conexiones + buscador común.</p></li>
+      <li><span class="n">TANDA A</span><span class="t">Duelo de stats + ¿Quién es?</span><p>Los más cerca de los contrarreloj: reusan marcador, ayudas y el mixin de la partida.</p></li>
+      <li><span class="n">TANDA B</span><span class="t">Mayor o menor + Conexiones</span><p>Cadena, stats que rotan, tarjetas y el sorteo de secciones.</p></li>
+      <li><span class="n">TANDA C</span><span class="t">La grilla + Adiviná el crack</span><p>Hoja con buscador, estampado, tablero de aeropuerto con íconos.</p></li>
+      <li><span class="n">TANDA D</span><span class="t">Once ideal</span><p>Escribir y elegir puesto, cancha nueva y sistema común.</p></li>
+    </ol>
+  </section>
+</div>
+
+<script>
+(function(){
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+function restart(el,c){ el.classList.remove(c); void el.offsetWidth; el.classList.add(c); }
+function rel(el,st){ const a=el.getBoundingClientRect(), b=st.getBoundingClientRect(); return {x:a.left-b.left+a.width/2, y:a.top-b.top+a.height/2, w:a.width, h:a.height}; }
+/* sonido sintetizado */
+let AC=null, soundOn=true;
+function ac(){ try{ if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)(); } if(AC.state==='suspended') AC.resume(); }catch(e){} return AC; }
+function tone(f,vol=.12,when=0,dur=.25,type='sine'){ if(!soundOn||!ac()) return; const c=AC,t=c.currentTime+when,o=c.createOscillator(),g=c.createGain(); o.type=type; o.frequency.value=f; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+dur); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+.05); }
+function thump(f0=150,f1=45,vol=.4,when=0,dur=.28){ if(!soundOn||!ac()) return; const c=AC,t=c.currentTime+when,o=c.createOscillator(),g=c.createGain(); o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dur); g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.006); g.gain.exponentialRampToValueAtTime(.0001,t+dur); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+.05); }
+function noise(f=2500,vol=.15,dur=.08,when=0){ if(!soundOn||!ac()) return; const c=AC,t=c.currentTime+when; const len=Math.ceil(c.sampleRate*(dur+.05)); const b=c.createBuffer(1,len,c.sampleRate); const d=b.getChannelData(0); for(let i=0;i<len;i++) d[i]=Math.random()*2-1; const s=c.createBufferSource(); s.buffer=b; const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=f; const g=c.createGain(); g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+dur); s.connect(bp); bp.connect(g); g.connect(c.destination); s.start(t); s.stop(t+dur+.05); }
+const good=()=>{ tone(988,.12,0,.18,'triangle'); tone(1318,.09,.07,.25); }, bad=()=>{ tone(150,.1,0,.2,'sawtooth'); tone(115,.08,.05,.22,'sawtooth'); };
+$('#snd').addEventListener('click',e=>{ soundOn=!soundOn; e.currentTarget.setAttribute('aria-pressed',soundOn); e.currentTarget.textContent=soundOn?'🔊 Sonido activado':'🔇 Sonido apagado'; });
+function sparks(fx,x,y,n,colors,spread=70){ if(RM) return; for(let i=0;i<n;i++){ const s=document.createElement('div'); s.className='spark'; const c=colors[i%colors.length]; s.style.background=c; s.style.boxShadow='0 0 6px '+c; fx.appendChild(s); const a=Math.random()*Math.PI*2, d=spread*(.4+Math.random()*.8); s.animate([{transform:`translate(${x}px,${y}px)`,opacity:1},{transform:`translate(${x+Math.cos(a)*d}px,${y+Math.sin(a)*d}px) scale(.2)`,opacity:0}],{duration:500+Math.random()*400,easing:'cubic-bezier(.16,1,.3,1)'}).onfinish=()=>s.remove(); } }
+function flyXp(fx,st,from,to,txt,done){ const el=document.createElement('div'); el.textContent=txt; el.style.cssText='position:absolute;left:0;top:0;z-index:25;font-family:var(--f-bug);font-weight:800;font-size:18px;color:#fcd34d;text-shadow:0 0 10px rgba(252,211,77,.7);white-space:nowrap'; fx.appendChild(el); const a=rel(from,st), b=rel(to,st); el.animate([{transform:`translate(${a.x-20}px,${a.y}px) scale(1.2)`},{transform:`translate(${b.x-20}px,${b.y-10}px) scale(.8)`}],{duration:RM?10:550,easing:'cubic-bezier(.45,0,.25,1)'}).onfinish=()=>{ el.remove(); done&&done(); }; }
+function toast(el,txt){ el.textContent=txt; el.classList.add('on'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('on'),1700); }
+
+/* ─── datos: plantel actual de FULVO ─── */
+const POOL=[["Emiliano Martínez","Chelsea","ARG",0,"GK",34,195,1,15,0,0],["Teddy Sharman-Lowe","Chelsea","ENG",0,"GK",23,189,28,1,0,0],["Mike Penders","Chelsea","BEL",0,"GK",21,200,39,18,0,0],["Gabriel Słonina","Chelsea","USA",0,"GK",22,193,44,3,0,0],["Wesley Fofana","Chelsea","FRA",1,"CB",25,185,3,25,0,0],["Maxence Lacroix","Chelsea","FRA",1,"CB",26,190,5,38,0,1],["Levi Colwill","Chelsea","ENG",1,"CB",23,187,6,52,0,0],["Jorrel Hato","Chelsea","NED",1,"LB",20,182,21,40,0,2],["Reece James","Chelsea","ENG",1,"RB",26,182,24,40,0,0],["Malo Gusto","Chelsea","FRA",1,"RB",23,179,27,33,0,0],["Pep Chavarría","Chelsea","ESP",1,"LB",28,174,29,7,0,0],["Aaron Anselmino","Chelsea","ARG",1,"CB",21,186,30,11,0,0],["Josh Acheampong","Chelsea","ENG",1,"CB",20,185,34,22,0,0],["Marco Palestra","Chelsea","ITA",2,"RM",21,186,2,11,0,0],["Valentín Barco","Chelsea","ARG",2,"CDM",22,170,4,22,0,0],["Cole Palmer","Chelsea","ENG",2,"CAM",24,185,10,92,2,2],["Jordan Henderson","Chelsea","ENG",2,"CDM",36,182,14,1,0,0],["Morgan Rogers","Chelsea","ENG",2,"CAM",24,187,17,73,3,1],["Moisés Caicedo","Chelsea","ECU",2,"CDM",24,178,25,98,0,0],["Roméo Lavia","Chelsea","BEL",2,"CDM",22,181,45,27,1,0],["Dastan Satpaev","Chelsea","KAZ",3,"ST",18,170,null,3,0,0],["Pedro Neto","Chelsea","POR",3,"RW",26,172,7,47,1,0],["João Pedro","Chelsea","BRA",3,"ST",24,186,9,72,3,3],["Jamie Gittens","Chelsea","ENG",3,"LW",22,175,11,38,0,0],["Danny Welbeck","Chelsea","ENG",3,"ST",35,185,18,2,0,0],["Emanuel Emegha","Chelsea","NED",3,"ST",23,195,22,23,0,0],["Geovany Quenda","Chelsea","POR",3,"RW",19,172,23,32,0,0],["Estêvão","Chelsea","BRA",3,"RW",19,176,41,79,0,0],["Antonín Kinský","Tottenham Hotspur","CZE",0,"GK",23,190,31,14,0,0],["Martin Dúbravka","Tottenham Hotspur","SVK",0,"GK",37,190,39,1,0,0],["Brandon Austin","Tottenham Hotspur","ENG",0,"GK",27,188,40,1,0,0],["Andrew Robertson","Tottenham Hotspur","SCO",1,"LB",32,178,3,7,0,1],["Tosin Adarabioyo","Tottenham Hotspur","ENG",1,"CB",28,197,4,17,0,0],["Marcos Senesi","Tottenham Hotspur","ARG",1,"CB",29,184,5,15,0,0],["Jan Paul van Hecke","Tottenham Hotspur","NED",1,"CB",26,189,6,43,1,0],["Destiny Udogie","Tottenham Hotspur","ITA",1,"LB",23,188,13,34,0,0],["Pedro Porro","Tottenham Hotspur","ESP",1,"RB",27,176,23,36,0,0],["Ben Davies","Tottenham Hotspur","WAL",1,"CB",33,181,33,2,0,0],["Micky van de Ven","Tottenham Hotspur","NED",1,"CB",25,193,37,54,0,0],["Xavi Simons","Tottenham Hotspur","NED",2,"CAM",23,179,7,47,0,0],["Conor Gallagher","Tottenham Hotspur","ENG",2,"CAM",26,182,8,31,1,0],["James Maddison","Tottenham Hotspur","ENG",2,"ST",29,175,10,27,0,0],["Archie Gray","Tottenham Hotspur","ENG",2,"CDM",20,187,14,42,0,0],["Lucas Bergvall","Tottenham Hotspur","SWE",2,"CM",20,186,15,42,0,0],["Sandro Tonali","Tottenham Hotspur","ITA",2,"CM",26,182,16,54,0,0],["Mateus Fernandes","Tottenham Hotspur","POR",2,"CM",22,178,18,26,0,0],["Dejan Kulusevski","Tottenham Hotspur","SWE",2,"ST",26,186,21,37,0,0],["Rodrigo Bentancur","Tottenham Hotspur","URU",2,"CDM",29,187,30,15,0,0],["Richarlison","Tottenham Hotspur","BRA",3,"ST",29,184,9,22,0,0],["Mathys Tel","Tottenham Hotspur","FRA",3,"LW",21,183,11,29,0,0],["Sávio","Tottenham Hotspur","BRA",3,"RW",22,176,17,40,0,0],["Dominic Solanke","Tottenham Hotspur","ENG",3,"ST",29,187,19,28,0,0],["Mohammed Kudus","Tottenham Hotspur","GHA",3,"RW",26,175,20,45,0,1],["Omar Marmoush","Tottenham Hotspur","EGY",3,"ST",27,183,22,45,0,0],["Mykhaylo Mudryk","Tottenham Hotspur","UKR",3,"LW",25,175,27,31,0,0],["Wilson Odobert","Tottenham Hotspur","FRA",3,"LW",21,182,28,20,0,0],["Senne Lammens","Manchester United","BEL",0,"GK",24,193,1,16,0,0],["Karl Darlow","Manchester United","WAL",0,"GK",35,190,12,1,0,0],["Tom Heaton","Manchester United","ENG",0,"GK",40,188,22,1,0,0],["Diogo Dalot","Manchester United","POR",1,"RB",27,183,2,27,0,0],["Noussair Mazraoui","Manchester United","MAR",1,"RB",28,183,3,17,0,0],["Matthijs de Ligt","Manchester United","NED",1,"CB",27,187,4,40,0,0],["Harry Maguire","Manchester United","ENG",1,"CB",33,194,5,7,0,0],["Lisandro Martínez","Manchester United","ARG",1,"CB",28,178,6,30,0,0],["Leny Yoro","Manchester United","FRA",1,"CB",20,190,15,58,0,0],["Luke Shaw","Manchester United","ENG",1,"LB",31,178,23,10,0,1],["Ayden Heaven","Manchester United","ENG",1,"CB",19,189,26,18,0,0],["Mason Mount","Manchester United","ENG",2,"CAM",27,181,7,27,0,0],["Bruno Fernandes","Manchester United","POR",2,"CAM",32,179,8,30,3,1],["Andrey Santos","Manchester United","BRA",2,"CDM",22,180,17,40,0,0],["Youri Tielemans","Manchester United","BEL",2,"CDM",29,177,18,29,0,0],["Carlos Baleba","Manchester United","CMR",2,"CDM",22,179,20,48,0,0],["Manuel Ugarte","Manchester United","URU",2,"CDM",25,182,25,31,0,0],["Kobbie Mainoo","Manchester United","ENG",2,"CDM",21,184,37,53,0,1],["Harry Amass","Manchester United","ENG",2,"LM",19,181,41,5,0,0],["Marcus Rashford","Manchester United","ENG",3,"LW",28,185,9,28,0,0],["Matheus Cunha","Manchester United","BRA",3,"ST",27,184,10,53,1,1],["Joshua Zirkzee","Manchester United","NED",3,"ST",25,193,11,20,0,0],["Patrick Dorgu","Manchester United","DEN",3,"LW",21,185,13,38,0,1],["Amad Diallo","Manchester United","CIV",3,"RW",24,174,16,44,0,0],["Bryan Mbeumo","Manchester United","CMR",3,"RW",27,171,19,66,2,0],["Benjamin Šeško","Manchester United","SVN",3,"ST",23,195,30,56,1,0],["Shea Lacey","Manchester United","ENG",3,"RW",19,167,31,1,0,0],["Pietro Terracciano","Milan","ITA",0,"GK",36,192,1,1,0,0],["Mike Maignan","Milan","FRA",0,"GK",31,191,16,16,0,0],["Lorenzo Torriani","Milan","ITA",0,"GK",21,197,96,1,0,0],["Koni De Winter","Milan","BEL",1,"CB",24,188,5,21,0,0],["Sankhoun Diawara","Milan","FRA",1,"CB",20,188,13,1,0,0],["Fikayo Tomori","Milan","ENG",1,"CB",28,185,23,12,0,0],["Strahinja Pavlović","Milan","SRB",1,"CB",25,194,31,23,0,1],["Mario Gila","Milan","ESP",1,"CB",26,185,34,21,0,0],["Filippo Terracciano","Milan","ITA",1,"CB",23,186,42,5,0,0],["Matteo Gabbia","Milan","ITA",1,"CB",26,185,46,18,0,0],["Warren Bondo","Milan","FRA",2,"CM",23,177,null,7,0,0],["Pervis Estupinán","Milan","ECU",2,"LM",28,175,2,13,0,0],["Ruben Loftus-Cheek","Milan","ENG",2,"CAM",30,191,8,5,0,0],["Adrien Rabiot","Milan","FRA",2,"CM",31,191,12,14,2,2],["Luka Modrić","Milan","CRO",2,"CM",41,174,14,2,0,0],["Samuel Chukwueze","Milan","NGA",2,"LW",27,172,21,13,0,2],["Christian Comotto","Milan","ITA",2,"CM",18,null,28,2,0,0],["Ardon Jashari","Milan","SUI",2,"CM",24,181,30,25,0,0],["Davide Bartesaghi","Milan","ITA",2,"LM",20,193,33,8,0,0],["Alexis Saelemaekers","Milan","BEL",2,"RM",27,180,56,17,0,1],["Alphadjo Cissè","Milan","ITA",2,"CAM",19,181,70,3,2,0],["Yunus Musah","Milan","USA",2,"CDM",23,178,80,15,0,0],["Gonçalo Ramos","Milan","POR",3,"ST",25,185,9,49,1,1],["Christian Pulisic","Milan","USA",3,"ST",28,178,11,32,1,1],["Omari Hutchinson","Milan","ENG",3,"RW",22,174,20,25,0,0],["Diego Moreira","Milan","BEL",3,"RW",22,179,22,15,3,0],["Cheveyo Mul-Balentien","Milan","SUR",3,"Attacker",19,null,25,1,0,0],["Francesco Camarda","Milan","ITA",3,"ST",18,189,73,15,0,0],["Alex Meret","Napoli","ITA",0,"GK",29,191,1,9,0,0],["Vanja Milinković-Savić","Napoli","SRB",0,"GK",29,202,32,16,0,0],["Luca Marianucci","Napoli","ITA",1,"CB",22,183,null,7,0,0],["Alessandro Buongiorno","Napoli","ITA",1,"CB",27,191,4,13,0,0],["Benoît Badiashile","Napoli","FRA",1,"CB",25,194,5,16,0,0],["Amir Rrahmani","Napoli","KVX",1,"CB",32,192,13,8,0,1],["Rafa Marín","Napoli","ESP",1,"CB",24,191,16,11,0,0],["Mathías Olivera","Napoli","URU",1,"CB",28,185,17,13,0,0],["Giovanni Di Lorenzo","Napoli","ITA",1,"RB",33,183,22,7,0,1],["Sam Beukema","Napoli","NED",1,"CB",27,188,31,18,0,0],["Costantino Favasuli","Napoli","ITA",2,"RWB",22,178,2,2,0,1],["Billy Gilmour","Napoli","SCO",2,"CDM",25,170,6,16,1,0],["David Neres","Napoli","BRA",2,"CAM",29,175,7,22,0,0],["Scott McTominay","Napoli","SCO",2,"CDM",29,193,8,33,0,0],["Kevin De Bruyne","Napoli","BEL",2,"CAM",35,181,11,8,1,1],["Matteo Politano","Napoli","ITA",2,"RW",33,171,21,4,1,1],["Antonio Vergara","Napoli","ITA",2,"CAM",23,182,26,2,1,1],["Leonardo Spinazzola","Napoli","ITA",2,"LWB",33,185,37,2,0,0],["Stanislav Lobotka","Napoli","SVK",2,"CDM",31,170,68,9,1,0],["Frank Anguissa","Napoli","CMR",2,"CM",30,184,99,12,0,0],["Rasmus Højlund","Napoli","DEN",3,"ST",23,191,19,45,2,0],["Lorenzo Lucca","Napoli","ITA",3,"ST",26,201,20,20,0,0],["Giovane Nascimento","Napoli","BRA",3,"ST",22,184,23,8,0,0],["Noa Lang","Napoli","NED",3,"LW",27,170,70,16,0,0],["Juan Musso","Atlético Madrid","ARG",0,"GK",32,191,1,2,0,0],["Jan Oblak","Atlético Madrid","SVN",0,"GK",33,189,13,11,0,0],["Salvi Esquivel","Atlético Madrid","ESP",0,"GK",20,193,25,1,0,0],["Marcos Llorente","Atlético Madrid","ESP",1,"RB",31,180,14,13,0,1],["Dávid Hancko","Atlético Madrid","SVK",1,"CB",28,188,17,29,0,2],["Marc Pubill","Atlético Madrid","ESP",1,"CB",23,190,18,20,1,0],["Cristian Romero","Atlético Madrid","ARG",1,"CB",28,185,21,42,0,0],["Robin Le Normand","Atlético Madrid","ESP",1,"CB",29,187,24,22,1,0],["Aleksa Puric","Atlético Madrid","SRB",1,"CB",23,196,40,1,0,0],["Obed Vargas","Atlético Madrid","MEX",2,"CDM",21,175,3,8,0,0],["Rodrigo Mendoza","Atlético Madrid","ESP",2,"CM",21,182,4,13,0,0],["Johnny Cardoso","Atlético Madrid","USA",2,"CM",25,182,5,16,0,1],["Koke","Atlético Madrid","ESP",2,"CM",34,176,6,3,0,0],["Pablo Barrios","Atlético Madrid","ESP",2,"CM",23,181,8,42,0,1],["Álex Baena","Atlético Madrid","ESP",2,"LW",25,174,10,33,4,1],["Ademola Lookman","Atlético Madrid","NGA",2,"ST",28,174,11,29,1,0],["Giuliano Simeone","Atlético Madrid","ARG",2,"RM",23,173,20,33,2,2],["Alejandro Grimaldo","Atlético Madrid","ESP",2,"LWB",31,171,22,19,2,1],["Morten Hjulmand","Atlético Madrid","DEN",2,"CDM",27,185,23,32,0,0],["Kang-In Lee","Atlético Madrid","KOR",3,"RW",25,173,7,22,2,1],["Alexander Sørloth","Atlético Madrid","NOR",3,"ST",30,193,9,16,0,0],["Jonathan David","Atlético Madrid","CAN",3,"ST",26,175,15,27,3,1],["Arnau Ortiz","Atlético Madrid","ESP",3,"ST",24,175,16,1,0,0],["Julián Álvarez","Atlético Madrid","ARG",3,"ST",26,170,19,84,0,0],["Gregor Kobel","Borussia Dortmund","SUI",0,"GK",28,193,1,30,0,0],["Waldemar Anton","Borussia Dortmund","GER",1,"CB",30,189,3,14,0,1],["Nico Schlotterbeck","Borussia Dortmund","GER",1,"CB",26,191,4,32,0,0],["Ramy Bensebaini","Borussia Dortmund","ALG",1,"CB",31,186,5,10,0,0],["Joane Gadou","Borussia Dortmund","FRA",1,"CB",19,195,22,11,0,0],["Emre Can","Borussia Dortmund","GER",1,"CB",32,184,23,2,0,0],["Kauã Prates","Borussia Dortmund","BRA",1,"LB",18,184,36,2,0,0],["Filippo Mane","Borussia Dortmund","ITA",1,"CB",21,188,39,2,0,0],["Luca Reggiani","Borussia Dortmund","ITA",1,"CB",18,194,49,5,0,0],["Jobe Bellingham","Borussia Dortmund","ENG",2,"CDM",20,191,7,28,0,1],["Felix Nmecha","Borussia Dortmund","GER",2,"CDM",25,190,8,41,2,0],["Maximilian Beier","Borussia Dortmund","GER",2,"CAM",23,183,14,31,1,2],["Carney Chukwuemeka","Borussia Dortmund","AUT",2,"CAM",22,188,17,17,0,0],["Ethan Nwaneri","Borussia Dortmund","ENG",2,"CAM",19,176,18,31,0,0],["Marcel Sabitzer","Borussia Dortmund","AUT",2,"CDM",32,177,20,3,0,1],["Daniel Svensson","Borussia Dortmund","SWE",2,"LWB",24,183,24,20,0,0],["Joey Veerman","Borussia Dortmund","NED",2,"CDM",27,185,25,18,0,0],["Julian Ryerson","Borussia Dortmund","NOR",2,"RWB",28,183,26,18,0,0],["Samuele Inácio","Borussia Dortmund","ITA",2,"CAM",18,null,40,4,0,0],["Enzo Duarte","Borussia Dortmund","LUX",2,"CM",17,186,44,1,0,0],["Giannis Konstantelias","Borussia Dortmund","GRE",2,"CAM",23,175,45,16,1,0],["Serhou Guirassy","Borussia Dortmund","GUI",3,"ST",30,187,9,30,2,2],["Konstantinos Karetsas","Borussia Dortmund","GRE",3,"RW",18,171,19,26,0,1],["Fábio Silva","Borussia Dortmund","POR",3,"ST",24,185,21,23,2,0],["Mathis Albert","Borussia Dortmund","USA",3,"LW",17,null,41,1,0,0],["Alisson Becker","Liverpool","BRA",0,"GK",33,193,1,12,0,0],["Giorgi Mamardashvili","Liverpool","GEO",0,"GK",25,197,25,25,0,0],["Freddie Woodman","Liverpool","ENG",0,"GK",29,188,28,2,0,0],["Vítezslav Jaroš","Liverpool","CZE",0,"GK",25,187,56,3,0,0],["Harvey Davies","Liverpool","ENG",0,"GK",23,190,95,1,0,0],["Joseph Gomez","Liverpool","ENG",1,"CB",29,191,2,12,0,0],["Wataru Endo","Liverpool","JPN",1,"CDM",33,178,3,3,0,0],["Virgil van Dijk","Liverpool","NED",1,"CB",35,193,4,5,0,0],["Jérémy Jacquet","Liverpool","FRA",1,"CB",21,188,5,26,0,0],["Miloš Kerkez","Liverpool","HUN",1,"LB",22,180,6,50,0,0],["Conor Bradley","Liverpool","NIR",1,"RB",23,181,12,28,0,0],["Giovanni Leoni","Liverpool","ITA",1,"CB",19,196,15,25,0,0],["Jeremie Frimpong","Liverpool","NED",1,"RB",25,171,30,35,0,0],["Ronald Araujo","Liverpool","URU",1,"CB",27,192,33,23,0,0],["Dominik Szoboszlai","Liverpool","HUN",2,"CDM",25,185,8,84,1,0],["Alexis Mac Allister","Liverpool","ARG",2,"CDM",27,174,10,69,0,0],["Konstantinos Tsimikas","Liverpool","GRE",2,"LWB",30,179,21,8,0,0],["Ryan Gravenberch","Liverpool","NED",2,"CDM",24,190,38,77,0,1],["Trey Nyoni","Liverpool","ENG",2,"CDM",19,null,42,7,0,0],["Florian Wirtz","Liverpool","GER",3,"LW",23,175,7,94,0,1],["Alexander Isak","Liverpool","SWE",3,"ST",26,192,9,79,4,0],["Federico Chiesa","Liverpool","ITA",3,"RW",28,175,14,13,0,0],["Cody Gakpo","Liverpool","NED",3,"LW",27,193,18,50,1,3],["Hugo Ekitiké","Liverpool","FRA",3,"ST",24,190,22,79,0,0],["Víctor Muñoz","Liverpool","ESP",3,"LW",23,173,23,24,1,0],["Bradley Barcola","Liverpool","FRA",3,"LW",24,182,29,74,0,0],["Lewis Koumas","Liverpool","WAL",3,"LW",21,182,67,2,0,0],["Rio Ngumoha","Liverpool","ENG",3,"LW",18,null,73,22,0,0],["Joan García","Barcelona","ESP",0,"GK",25,193,1,23,0,0],["Wojciech Szczęsny","Barcelona","POL",0,"GK",36,195,13,1,0,0],["Dominik Livaković","Barcelona","CRO",0,"GK",31,188,25,2,0,0],["Eder Aller","Barcelona","ESP",0,"GK",19,194,31,1,0,0],["João Cancelo","Barcelona","POR",1,"LB",32,182,2,5,1,0],["Alejandro Balde","Barcelona","ESP",1,"LB",22,175,3,43,0,0],["Pau Cubarsí","Barcelona","ESP",1,"CB",19,184,5,137,0,0],["Xavi Espart","Barcelona","ESP",1,"LB",19,175,12,1,1,2],["Andreas Christensen","Barcelona","DEN",1,"CB",30,188,15,14,0,1],["Gerard Martín","Barcelona","ESP",1,"CB",24,186,18,16,0,0],["Jules Koundé","Barcelona","FRA",1,"RB",27,180,23,47,0,0],["Eric García","Barcelona","ESP",1,"CB",25,182,24,23,0,0],["Gavi","Barcelona","ESP",2,"CDM",22,173,6,29,0,0],["Fermín López","Barcelona","ESP",2,"CAM",23,176,7,79,4,2],["Pedri","Barcelona","ESP",2,"CDM",23,174,8,85,1,1],["Karim Adeyemi","Barcelona","GER",2,"CAM",24,176,14,36,2,2],["Rodri","Barcelona","ESP",2,"CDM",30,190,16,53,0,0],["Dani Olmo","Barcelona","ESP",2,"CAM",28,180,20,41,0,3],["Frenkie de Jong","Barcelona","NED",2,"CDM",29,181,21,31,0,0],["Marc Bernal","Barcelona","ESP",2,"CDM",19,191,22,13,0,2],["Gabriel Jesus","Barcelona","BRA",3,"ST",29,175,9,16,1,0],["Lamine Yamal","Barcelona","ESP",3,"RW",19,180,10,155,7,4],["Raphinha","Barcelona","BRA",3,"LW",29,176,11,51,12,3],["Anthony Gordon","Barcelona","ENG",3,"LW",25,182,17,64,0,4],["Roony Bardghji","Barcelona","SWE",3,"RW",20,173,19,13,0,0],["Jesse Bisiwu","Barcelona","BEL",3,"LW",18,185,27,1,0,0],["David Raya","Arsenal","ESP",0,"GK",31,183,1,22,0,0],["Kepa Arrizabalaga","Arsenal","ESP",0,"GK",31,189,13,4,0,0],["Illan Meslier","Arsenal","FRA",0,"GK",26,193,30,7,0,0],["William Saliba","Arsenal","FRA",1,"CB",25,193,2,82,0,0],["Cristhian Mosquera","Arsenal","ESP",1,"CB",22,191,3,38,0,0],["Ben White","Arsenal","ENG",1,"RB",28,186,4,25,0,1],["Piero Hincapié","Arsenal","ECU",1,"LB",24,184,5,46,0,0],["Gabriel","Arsenal","BRA",1,"CB",28,190,6,83,0,0],["Jurriën Timber","Arsenal","NED",1,"RB",25,179,12,58,0,0],["Ezri Konsa","Arsenal","ENG",1,"CB",28,183,15,32,0,0],["Riccardo Calafiori","Arsenal","ITA",1,"LB",24,188,33,45,0,2],["Myles Lewis-Skelly","Arsenal","ENG",1,"LB",19,178,49,38,0,0],["Martin Ødegaard","Arsenal","NOR",2,"CM",27,176,8,59,2,0],["Eberechi Eze","Arsenal","ENG",2,"CAM",28,178,10,45,0,0],["Mikel Merino","Arsenal","ESP",2,"CM",30,187,23,24,0,0],["Martín Zubimendi","Arsenal","ESP",2,"CDM",27,180,36,56,0,0],["Bruno Guimarães","Arsenal","BRA",2,"CM",28,182,39,51,1,0],["Declan Rice","Arsenal","ENG",2,"CDM",27,185,41,93,0,2],["Max Dowman","Arsenal","ENG",2,"RW",16,183,56,8,0,0],["Bukayo Saka","Arsenal","ENG",3,"RW",25,178,7,85,3,0],["Viktor Gyökeres","Arsenal","SWE",3,"ST",28,187,14,49,0,0],["Christos Tzolis","Arsenal","GRE",3,"LW",24,175,17,24,0,1],["Noni Madueke","Arsenal","ENG",3,"RW",24,182,20,50,0,0],["Kai Havertz","Arsenal","GER",3,"ST",27,193,29,44,2,0],["Josep Martínez","Inter","ESP",0,"GK",28,191,1,7,0,0],["Ivan Provedel","Inter","ITA",0,"GK",32,192,49,2,0,0],["John Stones","Inter","ENG",1,"CB",32,188,6,10,0,0],["Manuel Akanji","Inter","SUI",1,"CB",31,188,25,13,0,1],["Benjamin Pavard","Inter","FRA",1,"CB",30,186,28,13,0,0],["Carlos Augusto","Inter","BRA",1,"CB",27,184,30,19,1,1],["Yann Aurel Bisseck","Inter","GER",1,"CB",25,196,31,30,1,1],["Alessandro Bastoni","Inter","ITA",1,"CB",27,190,95,52,0,0],["Djed Spence","Inter","ENG",1,"LB",26,184,99,28,0,0],["Aleksandar Stanković","Inter","SRB",2,"CDM",21,185,5,16,0,0],["Piotr Zieliński","Inter","POL",2,"CM",32,177,7,5,1,1],["Petar Sučić","Inter","CRO",2,"CM",22,183,8,25,0,0],["Luis Henrique","Inter","BRA",2,"RM",24,181,11,17,0,0],["Andy Diouf","Inter","FRA",2,"RM",23,181,17,15,0,3],["Hakan Çalhanoglu","Inter","TUR",2,"CM",32,176,20,8,2,0],["Curtis Jones","Inter","ENG",2,"CDM",25,182,21,30,0,0],["Henrikh Mkhitaryan","Inter","ARM",2,"CM",37,177,22,2,0,0],["Nicolò Barella","Inter","ITA",2,"CM",29,172,23,42,1,1],["Federico Dimarco","Inter","ITA",2,"LM",28,174,32,37,0,1],["Marcus Thuram","Inter","FRA",3,"ST",29,188,9,40,2,2],["Lautaro Martínez","Inter","ARG",3,"ST",29,174,10,53,4,0],["Ange-Yoan Bonny","Inter","CIV",3,"ST",22,189,14,22,1,0],["Mattia Mosconi","Inter","ITA",3,"RW",19,179,48,1,0,0],["Francesco Pio Esposito","Inter","ITA",3,"ST",21,189,94,24,2,1],["Thibaut Courtois","Real Madrid","BEL",0,"GK",34,199,1,8,0,0],["Andriy Lunin","Real Madrid","UKR",0,"GK",27,191,13,12,0,0],["Raúl Asencio","Real Madrid","ESP",1,"CB",23,184,2,20,0,0],["Éder Militao","Real Madrid","BRA",1,"CB",28,186,3,19,0,0],["Dean Huijsen","Real Madrid","ESP",1,"CB",21,195,4,54,0,0],["Trent Alexander-Arnold","Real Madrid","ENG",1,"RB",27,180,12,58,0,1],["Ibrahima Konaté","Real Madrid","FRA",1,"CB",27,192,16,26,0,0],["Marc Cucurella","Real Madrid","ESP",1,"LB",28,177,17,33,0,0],["Alvaro Carreras","Real Madrid","ESP",1,"LB",23,186,18,42,1,0],["Antonio Rüdiger","Real Madrid","GER",1,"CB",33,190,22,5,1,0],["Ferland Mendy","Real Madrid","FRA",1,"LB",31,178,23,4,0,0],["Jude Bellingham","Real Madrid","ENG",2,"CAM",23,186,5,140,3,2],["Eduardo Camavinga","Real Madrid","FRA",2,"CDM",23,182,6,44,0,0],["Federico Valverde","Real Madrid","URU",2,"RB",28,182,8,94,0,1],["Aurélien Tchouaméni","Real Madrid","FRA",2,"CM",26,185,14,51,0,0],["Arda Güler","Real Madrid","TUR",2,"CAM",21,176,15,81,1,2],["Bernardo Silva","Real Madrid","POR",2,"CDM",32,173,20,18,0,1],["Denzel Dumfries","Real Madrid","NED",2,"RM",30,189,24,16,0,0],["Thiago Pitarch","Real Madrid","ESP",2,"CM",19,175,27,3,0,0],["Vinícius Júnior","Real Madrid","BRA",3,"LW",26,177,7,87,1,3],["Endrick","Real Madrid","BRA",3,"RW",20,173,9,28,0,0],["Kylian Mbappé","Real Madrid","FRA",3,"ST",27,178,10,121,7,2],["Rodrygo","Real Madrid","BRA",3,"LW",25,174,11,40,0,0],["Carlos Espí","Real Madrid","ESP",3,"ST",21,194,19,2,2,0],["Brahim Díaz","Real Madrid","MAR",3,"RW",27,170,21,25,0,0],["Yan Diomande","Real Madrid","CIV",3,"RW",19,180,25,52,0,1],["Manuel Neuer","Bayern München","GER",0,"GK",40,193,1,2,0,0],["Jonas Urbig","Bayern München","GER",0,"GK",23,189,40,14,0,0],["Leon Klanac","Bayern München","GER",0,"GK",19,185,48,1,0,0],["Dayot Upamecano","Bayern München","FRA",1,"CB",27,185,2,35,1,0],["Min-Jae Kim","Bayern München","KOR",1,"CB",29,188,3,21,0,0],["Jonathan Tah","Bayern München","GER",1,"CB",30,194,4,23,0,0],["Tom Bischof","Bayern München","GER",1,"LB",21,176,8,34,0,2],["Nathaniel Brown","Bayern München","GER",1,"LB",23,180,11,34,0,0],["Alphonso Davies","Bayern München","CAN",1,"LB",25,183,19,33,0,2],["Hiroki Ito","Bayern München","JPN",1,"CB",27,186,21,14,0,0],["Sacha Boey","Bayern München","FRA",1,"RB",26,178,23,11,0,0],["Konrad Laimer","Bayern München","AUT",1,"RB",29,180,27,25,0,0],["Cassiano Kiala","Bayern München","GER",1,"CB",17,null,30,2,0,0],["Josip Stanišić","Bayern München","CRO",1,"RB",26,186,44,29,0,0],["Joshua Kimmich","Bayern München","GER",2,"CDM",31,176,6,31,0,2],["Serge Gnabry","Bayern München","GER",2,"CAM",31,175,7,12,0,0],["Jamal Musiala","Bayern München","GER",2,"CAM",23,180,10,102,1,1],["Ismael Saibari","Bayern München","MAR",2,"CAM",25,185,34,50,1,2],["Erblin Osmani","Bayern München","GER",2,"Midfielder",17,null,38,2,0,0],["Bara Ndiaye","Bayern München","SEN",2,"CDM",18,180,39,2,0,0],["Aleksandar Pavlović","Bayern München","GER",2,"CDM",22,188,45,46,1,1],["David Santos Daiber","Bayern München","POR",2,"CM",19,185,47,1,0,0],["Harry Kane","Bayern München","ENG",3,"ST",33,188,9,78,3,0],["Luis Díaz","Bayern München","COL",3,"LW",29,180,14,65,1,0],["Michael Olise","Bayern München","FRA",3,"RW",24,184,17,140,4,1],["Lennart Karl","Bayern München","GER",3,"RW",18,168,42,42,1,0],["Alessandro Longoni","Paris Saint-Germain","ITA",0,"Keeper",18,null,16,1,0,0],["Lucas Chevalier","Paris Saint-Germain","FRA",0,"GK",24,189,30,25,0,0],["Matvey Safonov","Paris Saint-Germain","RUS",0,"GK",27,192,39,17,0,0],["Achraf Hakimi","Paris Saint-Germain","MAR",1,"RB",27,181,2,59,0,0],["Lucas Beraldo","Paris Saint-Germain","BRA",1,"CB",22,186,4,20,0,0],["Marquinhos","Paris Saint-Germain","BRA",1,"CB",32,183,5,21,2,0],["Ilya Zabarnyi","Paris Saint-Germain","UKR",1,"CB",24,189,6,35,0,0],["Lucas Digne","Paris Saint-Germain","FRA",1,"LB",33,178,12,6,0,0],["Lucas Hernández","Paris Saint-Germain","FRA",1,"LB",30,183,21,15,0,0],["Nuno Mendes","Paris Saint-Germain","POR",1,"LB",24,184,25,54,0,0],["Willian Pacho","Paris Saint-Germain","ECU",1,"CB",24,188,51,55,0,0],["Fabián Ruiz","Paris Saint-Germain","ESP",2,"CM",30,189,8,24,0,2],["Vítinha","Paris Saint-Germain","POR",2,"CM",26,172,17,100,1,1],["Senny Mayulu","Paris Saint-Germain","FRA",2,"CM",20,183,24,28,0,0],["Dro Fernández","Paris Saint-Germain","ESP",2,"CM",18,180,27,7,0,0],["Warren Zaïre-Emery","Paris Saint-Germain","FRA",2,"CM",20,178,33,64,0,0],["João Neves","Paris Saint-Germain","POR",2,"CM",21,174,87,74,0,0],["Khvicha Kvaratskhelia","Paris Saint-Germain","GEO",3,"LW",25,183,7,92,0,1],["Ferrán Torres","Paris Saint-Germain","ESP",3,"ST",26,184,9,34,3,0],["Ousmane Dembélé","Paris Saint-Germain","FRA",3,"ST",29,178,10,70,0,1],["Maghnes Akliouche","Paris Saint-Germain","FRA",3,"RW",24,183,11,40,0,0],["Désiré Doué","Paris Saint-Germain","FRA",3,"RW",21,178,14,89,0,0],["Mika Godts","Paris Saint-Germain","BEL",3,"LW",21,176,22,34,0,1],["Gianluigi Donnarumma","Manchester City","ITA",0,"GK",27,196,1,34,0,0],["Marcus Bettinelli","Manchester City","ENG",0,"GK",34,194,13,1,0,0],["Gerónimo Rulli","Manchester City","ARG",0,"GK",34,189,28,3,0,0],["Rúben Dias","Manchester City","POR",1,"CB",29,187,3,38,0,0],["Marc Guéhi","Manchester City","ENG",1,"CB",26,182,6,51,1,1],["Rayan Aït-Nouri","Manchester City","ALG",1,"LB",25,180,21,35,0,0],["Vitor Reis","Manchester City","BRA",1,"CB",20,186,22,31,0,0],["Joško Gvardiol","Manchester City","CRO",1,"CB",24,185,24,55,1,2],["Matheus Nunes","Manchester City","POR",1,"RB",28,183,27,38,0,0],["Nico O'Reilly","Manchester City","ENG",1,"LB",21,193,33,42,0,0],["Abdukodir Khusanov","Manchester City","UZB",1,"CB",22,186,45,34,0,0],["Rico Lewis","Manchester City","ENG",1,"RB",21,169,82,33,0,0],["Josh Wilson-Esbrand","Manchester City","ENG",1,"LB",23,176,97,2,0,0],["Elliot Anderson","Manchester City","ENG",2,"CDM",23,179,5,69,0,0],["Mateo Kovačić","Manchester City","CRO",2,"CDM",32,178,8,8,0,0],["Rayan Cherki","Manchester City","FRA",2,"CAM",23,177,10,68,3,2],["Enzo Fernández","Manchester City","ARG",2,"CAM",25,178,17,83,1,0],["Ayyoub Bouaddi","Manchester City","MAR",2,"CDM",18,185,32,53,0,0],["Phil Foden","Manchester City","ENG",2,"CAM",26,171,47,56,0,2],["Iliman Ndiaye","Manchester City","SEN",3,"RW",26,180,7,54,0,1],["Erling Haaland","Manchester City","NOR",3,"ST",26,195,9,159,5,0],["Jérémy Doku","Manchester City","BEL",3,"LW",24,171,11,57,0,0],["Allan","Manchester City","BRA",3,"RW",22,174,37,8,0,0],["Antoine Semenyo","Manchester City","GHA",3,"RW",26,185,42,52,2,3]].map(r=>({n:r[0],t:r[1],c:r[2],p:r[3],pd:r[4],a:r[5],h:r[6],s:r[7],v:r[8],g:r[9],as:r[10]}));
+const TEAMS={'Arsenal':['ARS','#ef0107','#fff','PL'],'Atlético Madrid':['ATM','#cb3524','#fff','LL'],'Barcelona':['FCB','#a50044','#004d98','LL'],'Bayern München':['FCB','#dc052d','#fff','BL'],'Borussia Dortmund':['BVB','#fde100','#111','BL'],'Chelsea':['CFC','#034694','#fff','PL'],'Inter':['INT','#0068a8','#111','SA'],'Liverpool':['LFC','#c8102e','#fff','PL'],'Manchester City':['MCI','#6cabdd','#fff','PL'],'Manchester United':['MUN','#da291c','#111','PL'],'Milan':['ACM','#fb090b','#111','SA'],'Napoli':['NAP','#12a0d7','#fff','SA'],'Paris Saint-Germain':['PSG','#004170','#da291c','L1'],'Real Madrid':['RMA','#fff','#febe10','LL'],'Tottenham Hotspur':['TOT','#fff','#132257','PL']};
+const SHORT={'Paris Saint-Germain':'PSG','Manchester City':'Man. City','Manchester United':'Man. United','Tottenham Hotspur':'Tottenham','Atlético Madrid':'Atlético','Bayern München':'Bayern','Borussia Dortmund':'Dortmund'};
+POOL.forEach(p=>p.l=(TEAMS[p.t]||[])[3]);
+const tn=t=>SHORT[t]||t;
+const surname=n=>{ const w=n.split(' '); if(w.length<2) return n; if(/^(júnior|junior|jr\.?)$/i.test(w[w.length-1])) return w[0]; return w.slice(1).join(' '); };
+const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const LIGHT=new Set(['#fff','#fde100','#6cabdd','#12a0d7']);
+function crest(t,size=24){ const [ab,c1,c2]=TEAMS[t]||['?','#334155','#94a3b8']; const tx=LIGHT.has(c1)?'#0b1024':'#fff';
+  return `<svg class="crestS" width="${size}" height="${size}" viewBox="0 0 24 24" aria-label="${t}"><path d="M12 1.5 3.5 4.6v6.2c0 5.3 3.6 9.9 8.5 11.7 4.9-1.8 8.5-6.4 8.5-11.7V4.6z" fill="${c1}" stroke="${c2}" stroke-width="1.5"/><text x="12" y="14.6" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="800" font-size="6.8" fill="${tx}">${ab}</text></svg>`; }
+const FLAG={
+ ARG:'<rect width="30" height="20" fill="#74acdf"/><rect y="6.67" width="30" height="6.67" fill="#fff"/><circle cx="15" cy="10" r="2" fill="#f6b40e"/>',
+ BRA:'<rect width="30" height="20" fill="#009c3b"/><path d="M15 2 L28 10 L15 18 L2 10z" fill="#ffdf00"/><circle cx="15" cy="10" r="4.2" fill="#002776"/>',
+ FRA:'<rect width="30" height="20" fill="#ef4135"/><rect width="20" height="20" fill="#fff"/><rect width="10" height="20" fill="#0055a4"/>',
+ ESP:'<rect width="30" height="20" fill="#aa151b"/><rect y="5" width="30" height="10" fill="#f1bf00"/>',
+ ENG:'<rect width="30" height="20" fill="#fff"/><rect x="12.5" width="5" height="20" fill="#ce1124"/><rect y="7.5" width="30" height="5" fill="#ce1124"/>',
+ ITA:'<rect width="30" height="20" fill="#ce2b37"/><rect width="20" height="20" fill="#fff"/><rect width="10" height="20" fill="#009246"/>',
+ GER:'<rect width="30" height="20" fill="#ffce00"/><rect width="30" height="13.3" fill="#dd0000"/><rect width="30" height="6.67" fill="#000"/>',
+ NED:'<rect width="30" height="20" fill="#21468b"/><rect width="30" height="13.3" fill="#fff"/><rect width="30" height="6.67" fill="#ae1c28"/>',
+ POR:'<rect width="30" height="20" fill="#da291c"/><rect width="12" height="20" fill="#046a38"/><circle cx="12" cy="10" r="3.4" fill="#ffe900"/>',
+ BEL:'<rect width="30" height="20" fill="#ef3340"/><rect width="20" height="20" fill="#fdda24"/><rect width="10" height="20" fill="#000"/>',
+ URU:'<rect width="30" height="20" fill="#fff"/><rect y="2.2" width="30" height="2.2" fill="#0038a8"/><rect y="6.7" width="30" height="2.2" fill="#0038a8"/><rect y="11.1" width="30" height="2.2" fill="#0038a8"/><rect y="15.6" width="30" height="2.2" fill="#0038a8"/><rect width="11" height="11" fill="#fff"/><circle cx="5.5" cy="5.5" r="2.6" fill="#fcd116"/>',
+ NOR:'<rect width="30" height="20" fill="#ba0c2f"/><rect x="8" width="5" height="20" fill="#fff"/><rect y="7.5" width="30" height="5" fill="#fff"/><rect x="9.25" width="2.5" height="20" fill="#00205b"/><rect y="8.75" width="30" height="2.5" fill="#00205b"/>',
+ CRO:'<rect width="30" height="20" fill="#171796"/><rect width="30" height="13.3" fill="#fff"/><rect width="30" height="6.67" fill="#ff0000"/>',
+ EGY:'<rect width="30" height="20" fill="#000"/><rect width="30" height="13.3" fill="#fff"/><rect width="30" height="6.67" fill="#ce1126"/>'};
+const CN={ARG:'Argentina',BRA:'Brasil',FRA:'Francia',ESP:'España',ENG:'Inglaterra',ITA:'Italia',GER:'Alemania',NED:'Países Bajos',POR:'Portugal',BEL:'Bélgica',URU:'Uruguay',NOR:'Noruega',CRO:'Croacia',EGY:'Egipto',MAR:'Marruecos',USA:'Estados Unidos',SWE:'Suecia',DEN:'Dinamarca',SRB:'Serbia',ECU:'Ecuador',GRE:'Grecia',SCO:'Escocia',UKR:'Ucrania',SUI:'Suiza',AUT:'Austria',CIV:'Costa de Marfil',CMR:'Camerún',JPN:'Japón',KOR:'Corea del Sur',COL:'Colombia'};
+const cname=c=>CN[c]||c;
+function flag(c,w=30){ const h=Math.round(w*2/3); return FLAG[c]? `<span class="flagS" style="width:${w}px;height:${h}px" title="${cname(c)}"><svg viewBox="0 0 30 20" preserveAspectRatio="none">${FLAG[c]}</svg></span>` : `<span class="flagS code" style="width:${w}px;height:${h}px" title="${cname(c)}">${c}</span>`; }
+const LG={PL:['#3d195b','PL','Premier League'],LL:['#ee2523','LL','LaLiga'],SA:['#0a4fa3','SA','Serie A'],BL:['#d20515','BL','Bundesliga'],L1:['#0d1d44','L1','Ligue 1']};
+function lg(l,w=28){ const [c,ab,nm]=LG[l]||['#334155','?','']; return `<span class="lgS" style="width:${w}px;height:${Math.round(w*.72)}px;background:${c};font-size:${Math.round(w*.4)}px" title="${nm}">${ab}</span>`; }
+const POS=['ARQ','DEF','MED','DEL'];
+function face(j1='#1d4ed8',j2='#fff',skin='#e8c4a0',hair='#2b1d12'){ return `<circle cx="50" cy="34" r="17" fill="${skin}"/><path d="M33 28 q17 -20 34 0 q-3 -15 -17 -15 q-14 0 -17 15z" fill="${hair}"/><path d="M12 100 q2 -34 24 -38 q14 9 28 0 q22 4 24 38z" fill="${j1}"/><path d="M42 62 q8 5 16 0 v38 h-16z" fill="${j2}" opacity=".55"/>`; }
+const SKIN=['#f1c27d','#e0ac69','#c68642','#8d5a3b','#6b3e26','#f5d0b0'], HAIR=['#111','#2b1d12','#5a3a22','#8b6b4a','#c9a36b','#222'];
+function hsh(s){ let h=0; for(const ch of s) h=(h*31+ch.charCodeAt(0))>>>0; return h; }
+function faceOf(p){ const tm=TEAMS[p.t]||['','#334155','#94a3b8']; const h=hsh(p.n); return face(tm[1],tm[2],SKIN[h%SKIN.length],HAIR[(h>>3)%HAIR.length]); }
+const svgFace=p=>`<svg viewBox="0 0 100 100">${faceOf(p)}</svg>`;
+function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function shuffle(arr,rng=Math.random){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const byName=n=>POOL.find(p=>p.n===n);
+
+/* ─── buscador común ─── */
+function makeTyper(host,{ph,onPick,showTeam=true}){
+  host.innerHTML=`<label class="inp"><i>🔎</i><input type="text" autocomplete="off" spellcheck="false" placeholder="${ph}" aria-label="${ph}"></label><div class="list"></div>`;
+  const inp=$('input',host), list=$('.list',host); let items=[];
+  function mark(n,q){ const i=norm(n).indexOf(q); return i<0? n : n.slice(0,i)+'<mark>'+n.slice(i,i+q.length)+'</mark>'+n.slice(i+q.length); }
+  function render(){ const q=norm(inp.value.trim()); if(q.length<2){ list.innerHTML=''; items=[]; return; }
+    items=POOL.filter(p=>norm(p.n).includes(q)).sort((a,b)=>(norm(a.n).indexOf(q)-norm(b.n).indexOf(q))||(b.v-a.v)).slice(0,4);
+    list.innerHTML=items.length? items.map((p,i)=>`<button class="it${i===0?' hi':''}" data-i="${i}"><span class="av" style="width:24px;height:24px;border-radius:50%;overflow:hidden;background:#2d3a7c;flex:none">${svgFace(p)}</span><span>${mark(p.n,q)}</span>${showTeam?`<span class="team">${tn(p.t)}</span>`:''}</button>`).join('') : '<span class="hint" style="padding:4px 8px">Ningún jugador con ese nombre.</span>';
+    $$('.it',list).forEach(b=>b.addEventListener('click',()=>pick(items[+b.dataset.i]))); }
+  function pick(p){ ac(); inp.value=''; list.innerHTML=''; items=[]; onPick(p); }
+  inp.addEventListener('input',()=>{ render(); if(inp.value.length%2) tone(1500,.015,0,.02,'square'); });
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&items[0]){ e.preventDefault(); pick(items[0]); } });
+  return { bad(){ restart(host,'bad'); }, clear(){ inp.value=''; list.innerHTML=''; items=[]; },
+    typeAndPick(p,done){ const s=p.n.slice(0,Math.min(6,p.n.length)); let k=0; const iv=setInterval(()=>{ k++; inp.value=s.slice(0,k); render(); if(k>=s.length){ clearInterval(iv); setTimeout(()=>{ pick(p); done&&done(); },220); } },55); } };
+}
+
+/* ═════ 1 · ¿QUIÉN ES? ═════ */
+(function(){
+  const st=$('#s1'), fx=$('#fx1');
+  const HEART='<svg viewBox="0 0 24 24" fill="#f87171"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.8 1.1 5.3 2.8 1.5-1.7 3.2-2.8 5.3-2.8 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg>';
+  const CANDS=POOL.filter(p=>p.v>=40);
+  let tgt, L, done, tried;
+  const T=makeTyper($('#wiTyper'),{ph:'Escribí el nombre del jugador…',onPick:guess,showTeam:false});
+  function lives(){ $('#wiLives').innerHTML=[0,1,2].map(i=>HEART.replace('<svg',`<svg class="${i<L?'':'off'}"`)).join(''); }
+  function build(p){ tgt=p||CANDS[Math.floor(Math.random()*CANDS.length)]; L=3; done=false; tried=[];
+    $('#wiTeam').innerHTML=crest(tgt.t,30)+`<span class="t">${tn(tgt.t)}</span>`;
+    $('#wiNat').innerHTML=flag(tgt.c,30)+`<span class="t">${cname(tgt.c)}</span>`;
+    $('#wiPos').innerHTML=`<span class="pos">${POS[tgt.p]}</span><span class="t" style="color:var(--muted);font-size:14px">${tgt.pd}</span>`;
+    $$('#wiExtra span').forEach(s=>{ s.classList.remove('on'); s.textContent=s.dataset.k==='a'?'Edad':'Dorsal'; });
+    const sil=$('#wiSil'); sil.classList.remove('lit'); $('#wiPh').style.filter='brightness(0) opacity(.55)'; $('#wiPh').innerHTML=`<g transform="translate(0,33)">${faceOf(tgt)}</g>`;
+    const nm=$('#wiName'); nm.className='mname'; nm.textContent=tgt.n; $('#wiTried').innerHTML=''; $('#wiXp').textContent='0'; T.clear(); lives(); }
+  function reveal(){ $('#wiSil').classList.add('lit'); $('#wiPh').style.filter=''; }
+  function guess(p){ if(done) return;
+    if(p.n===tgt.n){ done=true; reveal(); good(); thump(160,50,.4); noise(4000,.12,.15); const nm=$('#wiName'); setTimeout(()=>nm.classList.add('on'),250); const c=rel($('#wiCard'),st); sparks(fx,c.x,c.y,30,['#fff','#fcd34d','#4ade80'],c.w*.6); const xp=[100,200,300][L-1]; flyXp(fx,st,$('#wiCard'),$('#wiXp'),`+${xp} XP`,()=>{ $('#wiXp').textContent=xp; restart($('#wiXp').parentElement,'bump'); }); return; }
+    if(tried.includes(p.n)) return; tried.push(p.n);
+    $('#wiTried').innerHTML=tried.map(n=>`<span>${n}</span>`).join(''); T.bad(); bad(); thump(90,40,.3); L--; lives(); restart($('#wiLives'),'bump');
+    const ex=$$('#wiExtra span')[2-L-1+1-1+ (L===2?0:1) - (L===2?0:0)];
+    if(L===2){ const s=$$('#wiExtra span')[0]; s.textContent=`${tgt.a} años`; setTimeout(()=>{ s.classList.add('on'); tone(1175,.08,0,.2); },200); }
+    if(L===1){ const s=$$('#wiExtra span')[1]; s.textContent=`Dorsal ${tgt.s??'—'}`; setTimeout(()=>{ s.classList.add('on'); tone(1175,.08,0,.2); },200); }
+    if(L<=0){ done=true; setTimeout(()=>{ reveal(); const nm=$('#wiName'); nm.classList.add('lost','on'); },350); } }
+  $('#wiNext').addEventListener('click',()=>build()); build(byName('Vinícius Júnior')||undefined);
+})();
+
+/* ═════ 2 · MAYOR O MENOR ═════ */
+(function(){
+  const st=$('#s2'), fx=$('#fx2');
+  const CATS=[{k:'g',l:'Goles',tag:'Temp. 26/27',u:''},{k:'h',l:'Altura',tag:'',u:'cm'},{k:'as',l:'Asistencias',tag:'Temp. 26/27',u:''},{k:'v',l:'Valor',tag:'Mercado',u:'M€'},{k:'a',l:'Edad',tag:'',u:'años'}];
+  const BASE=POOL.filter(p=>p.v>=30 && p.h && p.a);
+  const TARGET=12; let round=0, chainN=0, busy=false, Lp, Rp, xp=0;
+  const cat=()=>CATS[round%CATS.length];
+  function pickR(){ const k=cat().k; let pool=BASE.filter(p=>p!==Lp && p[k]!==Lp[k]); if(k==='g'||k==='as') pool=pool.filter(p=>p[k]>0||Lp[k]>0||Math.random()<.2); return pool[Math.floor(Math.random()*pool.length)]; }
+  const fmt=(p,reveal)=>reveal? `${p[cat().k]}${cat().u?`<small>${cat().u}</small>`:''}` : '?';
+  function side(s,p,reveal){ $('#ph'+s).innerHTML=faceOf(p); $('#n'+s).textContent=surname(p.n); $('#t'+s).innerHTML=crest(p.t,16)+tn(p.t); const v=$('#v'+s); v.innerHTML=fmt(p,reveal); v.classList.toggle('q',!reveal); }
+  function bars(showR){ const k=cat().k, m=Math.max(Lp[k],Rp[k])||1; $('#bl').style.height=(Lp[k]/m*80)+'%'; $('#br').style.height=showR?(Rp[k]/m*80)+'%':'0'; }
+  function setCat(anim){ const c=cat(); $('#hlCat').textContent=c.l; const t=$('#hlTag'); t.textContent=c.tag; t.hidden=!c.tag; if(anim){ restart($('#hlCatBox'),'flip'); tone(900,.05,0,.06,'square'); tone(1200,.05,.08,.06,'square'); } }
+  function render(anim){ setCat(anim); side('l',Lp,true); side('r',Rp,false); bars(false); $('#sl').className='side l'; $('#sr').className='side r'; $('#hlK').textContent=chainN+'/'+TARGET; $('#chain').innerHTML=Array.from({length:TARGET},(_,k)=>`<i class="${k<chainN?'on':''}"></i>`).join(''); }
+  function count(el,to,u,done){ const t0=performance.now(); el.classList.remove('q'); (function s(now){ const k=Math.min(1,(now-t0)/650); el.innerHTML=Math.round(to*(1-Math.pow(1-k,3)))+(u?`<small>${u}</small>`:''); if(Math.random()<.3) tone(700+k*600,.03,0,.04,'square'); if(k<1) requestAnimationFrame(s); else done&&done(); })(t0); }
+  function next(){ round++; Lp=Rp; Rp=pickR(); render(true); count($('#vl'),Lp[cat().k],cat().u); busy=false; }
+  function guess(up){ if(busy) return; busy=true; ac(); const k=cat().k; bars(true);
+    count($('#vr'),Rp[k],cat().u,()=>{ const ok= up? Rp[k]>Lp[k] : Rp[k]<Lp[k]; const sr=$('#sr');
+      if(ok){ sr.classList.add('ok'); good(); chainN=Math.min(TARGET,chainN+1); $('#hlK').textContent=chainN+'/'+TARGET; const l=$$('#chain i')[chainN-1]; l&&l.classList.add('on'); restart($('#hlK'),'bump'); const c=rel(sr,st); sparks(fx,c.x,c.y,14,['#4ade80','#fff'],60); flyXp(fx,st,sr,$('#hlXp'),'+20 XP',()=>{ xp+=20; $('#hlXp').textContent=xp; }); setTimeout(next,1000); }
+      else { sr.classList.add('bad'); restart($('#vs'),'shake'); bad(); thump(80,40,.35); $$('#chain i').slice(0,chainN).forEach((l,j)=>setTimeout(()=>l.classList.add('broken'),j*40)); setTimeout(()=>{ chainN=0; next(); },1400); } }); }
+  $('#hlUp').addEventListener('click',()=>guess(true)); $('#hlDn').addEventListener('click',()=>guess(false));
+  function reset(){ round=0; chainN=0; xp=0; busy=false; $('#hlXp').textContent='0'; Lp=byName('Kylian Mbappé')||BASE[0]; Rp=byName('Erling Haaland')||pickR(); render(false); }
+  $('#hlReset').addEventListener('click',reset); reset();
+})();
+
+/* ═════ 3 · CONEXIONES + SECCIONES ═════ */
+const SEC=[];
+(function(){
+  const add=(id,t,type,test,extra={})=>SEC.push({id,t,type,test,...extra});
+  const list=names=>{ const s=new Set(names); return p=>s.has(p.n); };
+  const ARG22=['Emiliano Martínez','Lisandro Martínez','Cristian Romero','Julián Álvarez','Alexis Mac Allister','Lautaro Martínez','Gerónimo Rulli','Enzo Fernández'];
+  const ESP26=['David Raya','Joan García','Marc Cucurella','Alejandro Grimaldo','Pau Cubarsí','Marc Pubill','Eric García','Marcos Llorente','Pedro Porro','Pedri','Fabián Ruiz','Martín Zubimendi','Gavi','Rodri','Álex Baena','Mikel Merino','Dani Olmo','Ferrán Torres','Víctor Muñoz','Lamine Yamal'];
+  const F100=['Enzo Fernández','Moisés Caicedo','Declan Rice','Jude Bellingham','Kylian Mbappé','Ousmane Dembélé','Florian Wirtz','Alexander Isak'];
+  add('h-22','Campeones del mundo 2022','Hitos',list(ARG22),{hand:1});
+  add('h-26','Campeones del mundo 2026','Hitos',list(ESP26),{hand:1});
+  add('h-100','Fichajes de +100 M€','Hitos',list(F100),{hand:1});
+  [['ARG','Argentinos'],['BRA','Brasileños'],['FRA','Franceses'],['ENG','Ingleses'],['ESP','Españoles'],['ITA','Italianos'],['GER','Alemanes'],['NED','Neerlandeses'],['POR','Portugueses'],['BEL','Belgas'],['URU','Uruguayos']].forEach(([c,t])=>add('n-'+c,t,'País',p=>p.c===c));
+  Object.keys(TEAMS).forEach(t=>add('c-'+t,'Juegan en '+tn(t),'Club',p=>p.t===t));
+  [['PL','la Premier'],['LL','LaLiga'],['SA','la Serie A'],['BL','la Bundesliga']].forEach(([l,t])=>add('l-'+l,'Juegan en '+t,'Liga',p=>p.l===l));
+  add('t-g','Goleadores de la temporada (3+)','Temporada',p=>p.g>=3); add('t-a','Asistidores de la temporada (2+)','Temporada',p=>p.as>=2);
+  add('f-190','Miden 1,90 o más','Físico',p=>p.h>=190); add('f-172','Miden 1,72 o menos','Físico',p=>p.h&&p.h<=172);
+  add('e-21','Tienen 21 años o menos','Edad',p=>p.a<=21); add('e-33','Tienen 33 años o más','Edad',p=>p.a>=33);
+  add('d-10','Usan la 10','Dorsal',p=>p.s===10); add('d-9','Usan la 9','Dorsal',p=>p.s===9); add('d-7','Usan la 7','Dorsal',p=>p.s===7);
+  add('p-0','Arqueros','Puesto',p=>p.p===0); add('v-80','Valen 80 M€ o más','Valor',p=>p.v>=80);
+  SEC.forEach(s=>s.size=POOL.filter(s.test).length);
+})();
+const GCOL=['#fcd34d','#4ade80','#38bdf8','#c4b5fd'];
+function excl(c,set){ return POOL.filter(p=>c.test(p) && set.every(o=>o===c||!o.test(p))); }
+function genBoard(rng,blocked){ for(let tries=0;tries<300;tries++){ const order=shuffle(SEC.filter(s=>s.size>=8&&!blocked.has(s.id)),rng); const ch=[];
+    for(const s of order){ if(ch.length===4) break; if(ch.some(c=>c.type===s.type)) continue; const cand=[...ch,s]; if(cand.every(c=>excl(c,cand).length>=4)) ch.push(s); }
+    if(ch.length===4) return ch.map(c=>({sec:c,players:shuffle(excl(c,ch),rng).slice(0,4)})); } return null; }
+const DAYS=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const HISTORY=[]; const RNG=mulberry(2609);
+function dayBoard(i){ while(HISTORY.length<=i){ const blocked=new Set(HISTORY.slice(-3).flatMap(b=>b.map(g=>g.sec.id))); HISTORY.push(genBoard(RNG,blocked)); } return HISTORY[i]; }
+(function(){
+  /* catálogo */
+  const cat=$('#catalog'); const types=[...new Set(SEC.map(s=>s.type))];
+  const NOTE={Hitos:'lista armada a mano',Temporada:'temporada actual',País:'automática',Club:'automática',Liga:'automática'};
+  cat.insertAdjacentHTML('beforeend',types.map(t=>`<div class="cgroup"><b>${t}<em>${NOTE[t]||'automática'}</em></b><div class="chips">${SEC.filter(s=>s.type===t).map(s=>`<span class="sc${s.size<8?' low':''}${s.hand?' new':''}">${s.t}<i>${s.size}</i></span>`).join('')}</div></div>`).join(''));
+  /* semana */
+  $('#week').innerHTML=DAYS.map((d,i)=>`<div class="wd-row${i===0?' today':''}"><span class="d">${d}</span><span class="ss">${dayBoard(i).map((g,k)=>`<span style="background:${GCOL[k]}">${g.sec.t}</span>`).join('')}</span></div>`).join('');
+})();
+(function(){
+  const st=$('#s3'), fx=$('#fx3');
+  let day=0, T=[], G=[], sel=[], solved=[], miss=0;
+  function load(){ const b=dayBoard(day); G=b.map((g,k)=>({t:g.sec.t,c:GCOL[k]})); T=shuffle(b.flatMap((g,k)=>g.players.map(p=>({p,g:k})))); $('#cxDay').textContent=`Partido del ${DAYS[day%7]}${day>6?' (semana '+(Math.floor(day/7)+1)+')':''}: ${G.map(g=>g.t).join(' · ')}`; build(); }
+  function build(){ sel=[]; solved=[]; miss=0; $('#cxRows').innerHTML=''; $('#cxRef').classList.remove('on'); $('#cxK').textContent='0/4'; $$('#cxCards i').forEach(c=>{ c.className=''; c.style.opacity=''; }); grid(); }
+  function grid(){ $('#cxGrid').innerHTML=T.map((x,k)=>solved.includes(x.g)?'':`<button class="tile" data-k="${k}">${svgFace(x.p)}<span class="n">${surname(x.p.n)}</span></button>`).join(''); $$('.tile',st).forEach(b=>b.addEventListener('click',()=>tog(b))); }
+  function tog(b){ ac(); const k=+b.dataset.k; if(sel.includes(k)){ sel=sel.filter(x=>x!==k); b.classList.remove('sel'); tone(600,.05,0,.06); } else if(sel.length<4){ sel.push(k); b.classList.add('sel'); tone(880,.06,0,.06); } }
+  $('#cxGo').addEventListener('click',()=>{ ac(); if(sel.length<4||miss>=4) return; const gs=sel.map(k=>T[k].g); const g=gs[0];
+    if(gs.every(x=>x===g)){ const tiles=sel.map(k=>$(`.tile[data-k="${k}"]`,st)); const row=document.createElement('div'); row.className='cx-row'; row.style.background=G[g].c; row.innerHTML=`<b></b><span class="avs">${sel.map(k=>`<span>${svgFace(T[k].p)}</span>`).join('')}</span>`; $('#cxRows').appendChild(row); row.style.visibility='hidden';
+      const tr=rel(row,st); tiles.forEach((t,j)=>{ const a=rel(t,st); const cl=t.cloneNode(true); cl.style.cssText=`position:absolute;left:${a.x-a.w/2}px;top:${a.y-a.h/2}px;width:${a.w}px;height:${a.h}px;z-index:15;margin:0`; fx.appendChild(cl); t.classList.add('fly'); cl.animate([{transform:'none'},{transform:`translate(${tr.x-a.x+(j-1.5)*24}px,${tr.y-a.y}px) scale(.35)`}],{duration:RM?10:520,delay:j*60,easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'}).onfinish=()=>cl.remove(); });
+      setTimeout(()=>{ row.style.visibility=''; good(); tone(1318,.1,.1,.3); const b=$('b',row); [...G[g].t].forEach((ch,i)=>setTimeout(()=>{ b.textContent+=ch; },i*30)); sparks(fx,tr.x,tr.y,16,[G[g].c,'#fff'],80); solved.push(g); sel=[]; $('#cxK').textContent=solved.length+'/4'; restart($('#cxK'),'bump'); grid(); },RM?20:720); }
+    else { const m=Math.max(...[0,1,2,3].map(x=>gs.filter(y=>y===x).length)); sel.map(k=>$(`.tile[data-k="${k}"]`,st)).forEach(t=>restart(t,'shake')); bad();
+      const cards=$$('#cxCards i'); miss++; const c=cards[miss-1]; if(c){ if(miss>=4) c.classList.add('used'); else c.style.opacity=.25; restart(c,'bump'); }
+      if(m===3){ const r=$('#cxRef'); r.classList.add('on'); setTimeout(()=>r.classList.remove('on'),1800); tone(1400,.06,0,.08,'square'); } } });
+  $('#cxReset').addEventListener('click',build);
+  $('#cxNew').addEventListener('click',()=>{ day++; load(); });
+  load();
+})();
+
+/* ═════ 4 · LA GRILLA ═════ */
+(function(){
+  const st=$('#s4'), fx=$('#fx4');
+  const ROWS=['Real Madrid','Paris Saint-Germain','Arsenal'], COLS=['BRA','FRA','ESP'];
+  let cells, cur=null, filled=0, fresh=null;
+  const T=makeTyper($('#grTyper'),{ph:'¿Quién va acá? Escribí un jugador…',onPick:guess,showTeam:false});
+  function build(){ cells=ROWS.map(()=>COLS.map(()=>({s:'',left:3,p:null}))); filled=0; $('#grK').textContent='0/9'; $('#grXp').textContent='0'; close(); draw(); }
+  function draw(){ let h='<span></span>'+COLS.map(c=>`<span class="hd">${flag(c,38)}${cname(c)}</span>`).join('');
+    ROWS.forEach((r,ri)=>{ h+=`<span class="hd">${crest(r,34)}${tn(r)}</span>`; COLS.forEach((c,ci)=>{ const x=cells[ri][ci];
+      if(x.s==='ok') h+=`<button class="cell filled${fresh===x?' new':''}" data-r="${ri}" data-c="${ci}">${svgFace(x.p)}<span class="cn">${surname(x.p.n)}</span></button>`;
+      else if(x.s==='x') h+=`<button class="cell fail">✕</button>`;
+      else h+=`<button class="cell${cur&&cur.r===ri&&cur.c===ci?' line':''}" data-r="${ri}" data-c="${ci}">+<span class="dots">${[0,1,2].map(k=>`<i class="${k<x.left?'':'x'}"></i>`).join('')}</span></button>`; }); });
+    $('#gr').innerHTML=h; $$('.cell:not(.filled):not(.fail)',st).forEach(b=>b.addEventListener('click',()=>open(+b.dataset.r,+b.dataset.c))); lines(); }
+  function open(r,c){ ac(); cur={r,c}; $('#sheetQ').innerHTML=`${crest(ROWS[r],26)} ${tn(ROWS[r])} <span style="color:var(--muted)">+</span> ${flag(COLS[c],28)} ${cname(COLS[c])}`; $('#sheet').classList.add('on'); T.clear(); draw(); setTimeout(()=>$('#grTyper input').focus({preventScroll:true}),300); tone(700,.05,0,.08); }
+  function close(){ cur=null; $('#sheet').classList.remove('on'); }
+  function guess(p){ if(!cur) return; const {r,c}=cur; const x=cells[r][c];
+    if(cells.flat().some(y=>y.p===p)){ toast($('#grToast'),'Ya lo usaste en otra celda'); T.bad(); return; }
+    if(p.t===ROWS[r] && p.c===COLS[c]){ x.s='ok'; x.p=p; filled++; fresh=x; close(); good(); thump(160,50,.3); draw(); fresh=null; const cell=$(`.cell.filled[data-r="${r}"][data-c="${c}"]`,st); const q=rel(cell,st); sparks(fx,q.x,q.y,14,['#4ade80','#fff'],50); $('#grK').textContent=filled+'/9'; restart($('#grK'),'bump'); flyXp(fx,st,cell,$('#grXp'),'+30 XP',()=>{ $('#grXp').textContent=filled*30; }); }
+    else { T.bad(); bad(); x.left--; toast($('#grToast'),`${surname(p.n)}: ${tn(p.t)} · ${cname(p.c)}`); if(x.left<=0){ x.s='x'; close(); } draw(); } }
+  function lines(){ const L=[]; for(let r=0;r<3;r++) if(cells[r].every(x=>x.s==='ok')) L.push([[r,0],[r,1],[r,2]]); for(let c=0;c<3;c++) if(cells.every(row=>row[c].s==='ok')) L.push([[0,c],[1,c],[2,c]]);
+    L.flat().forEach(([r,c])=>{ const el=$(`.cell.filled[data-r="${r}"][data-c="${c}"]`,st); el&&el.classList.add('line'); }); }
+  $('#grClose').addEventListener('click',()=>{ close(); draw(); });
+  $('#grReset').addEventListener('click',build); build();
+})();
+
+/* ═════ 5 · ADIVINÁ EL CRACK ═════ */
+(function(){
+  const st=$('#s5'), fx=$('#fx5');
+  const CANDS=POOL.filter(p=>p.v>=50);
+  let TGT, n, done, seen;
+  const T=makeTyper($('#wdTyper'),{ph:'Escribí un jugador…',onPick:guess});
+  function build(p){ TGT=p||CANDS[Math.floor(Math.random()*CANDS.length)]; n=0; done=false; seen=new Set(); $('#wdRows').innerHTML=''; $('#wdK').textContent='Intento 0/8'; $('#wdNum').classList.remove('on'); $('#wdNum').textContent='?'; $('#wdShirt').setAttribute('fill','#334155');
+    $('#wdIcs').innerHTML=crest(TGT.t,26)+lg(TGT.l,30)+flag(TGT.c,28); ['fPo','fEd','fAl','fNu'].forEach((id,i)=>{ const e=$('#'+id); e.textContent=['Posición','Edad','Altura','Dorsal'][i]; e.classList.remove('on'); }); T.clear(); }
+  function cmp(a,b,tol){ if(a===b) return 'g'; return Math.abs(a-b)<=tol?'y':'n'; }
+  const arrow=(g,t)=>g===t?'':(t>g?'▲':'▼');
+  function guess(g){ if(done||seen.has(g.n)) return; seen.add(g.n); n++; $('#wdK').textContent=`Intento ${n}/8`;
+    const cells=[[g.t===TGT.t?'g':'n',crest(g.t,24),1],[g.l===TGT.l?'g':'n',lg(g.l,28),1],[g.c===TGT.c?'g':'n',flag(g.c,26),1],[g.p===TGT.p?'g':'n',POS[g.p],0],
+      [cmp(g.a,TGT.a,2),`${g.a}<small>${arrow(g.a,TGT.a)}</small>`,0],[cmp(g.h,TGT.h,3),`${g.h}<small>${arrow(g.h,TGT.h)}</small>`,0],[cmp(g.s,TGT.s,3),`${g.s??'–'}<small>${arrow(g.s,TGT.s)}</small>`,0]];
+    const row=document.createElement('div'); row.className='wrow'; row.innerHTML=`<span class="av">${svgFace(g)}</span>`+cells.map(c=>`<span class="flap${c[2]?' ic':''}"></span>`).join(''); $('#wdRows').prepend(row);
+    const ics=$$('#wdIcs > *');
+    $$('.flap',row).forEach((f,i)=>setTimeout(()=>{ f.innerHTML=cells[i][1]; f.classList.add(cells[i][0],'go'); noise(3000,.08,.04); tone(cells[i][0]==='g'?1100:500,.04,0,.05,'square');
+      if(cells[i][0]==='g'){ if(i<3){ ics[i].classList.add('on'); if(i===0) $('#wdShirt').setAttribute('fill',TEAMS[TGT.t][1]); }
+        if(i===3){ $('#fPo').textContent=POS[TGT.p]; $('#fPo').classList.add('on'); } if(i===4){ $('#fEd').textContent=TGT.a+' años'; $('#fEd').classList.add('on'); } if(i===5){ $('#fAl').textContent=TGT.h+' cm'; $('#fAl').classList.add('on'); } if(i===6){ $('#fNu').textContent='#'+TGT.s; $('#fNu').classList.add('on'); $('#wdNum').textContent=TGT.s; $('#wdNum').classList.add('on'); } } },i*130));
+    if(g.n===TGT.n){ done=true; setTimeout(()=>{ good(); thump(150,45,.4); $('#wdK').textContent=`¡${surname(TGT.n)}! en ${n}`; restart($('#wdK'),'bump'); const c=rel($('.ficha',st),st); sparks(fx,c.x,c.y,30,['#4ade80','#fcd34d','#fff'],90); },950); }
+    else if(n>=8){ done=true; setTimeout(()=>{ bad(); $('#wdK').textContent='Era '+TGT.n; },950); } }
+  $('#wdReset').addEventListener('click',()=>build()); build(byName('Julián Álvarez')||undefined);
+})();
+
+/* ═════ 6 · ONCE IDEAL ═════ */
+(function(){
+  const st=$('#s6'), fx=$('#fx6');
+  const SLOTS=[['ARQ',50,90,0],['LD',84,72,1],['DFC',62,76,1],['DFC',38,76,1],['LI',16,72,1],['MC',50,56,2],['MC',28,50,2],['MC',72,50,2],['ED',82,24,3],['DC',50,18,3],['EI',18,24,3]];
+  const LINKS=[[0,2],[0,3],[1,2],[2,3],[3,4],[2,5],[3,5],[5,6],[5,7],[1,7],[4,6],[7,8],[6,10],[5,9],[8,9],[9,10]];
+  const ok=p=>p.l==='PL';
+  let full, pend=null, auto=false, t=180, iv=null;
+  $('#oiReq').innerHTML=lg('PL',26)+'Solo Premier League';
+  const T=makeTyper($('#oiTyper'),{ph:'Escribí un jugador de la Premier…',onPick:choose});
+  function build(){ full=Array(11).fill(null); pend=null; auto=false; $('#oiPick').hidden=true; $('#oiDone').classList.remove('on'); $('#oiK').textContent='0/11'; t=180; tick(); T.clear(); draw(); }
+  function tick(){ $('#oiT').textContent=`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`; }
+  clearInterval(iv); iv=setInterval(()=>{ if(full&&full.filter(Boolean).length<11&&t>0){ t--; tick(); } },1000);
+  const cands=p=>SLOTS.map((s,i)=>i).filter(i=>!full[i]&&SLOTS[i][3]===p.p);
+  function draw(){ const pitch=$('#pitch'); $$('.slot',pitch).forEach(s=>s.remove()); const cs=pend?cands(pend):[];
+    $('#links').innerHTML=LINKS.map(([a,b])=>`<line x1="${SLOTS[a][1]}" y1="${SLOTS[a][2]}" x2="${SLOTS[b][1]}" y2="${SLOTS[b][2]}" class="${full[a]&&full[b]?'on':''}"/>`).join('');
+    SLOTS.forEach(([l,x,y],i)=>{ const b=document.createElement('button'); const p=full[i]; b.className='slot'+(p?' full':'')+(pend&&cs.includes(i)?' cand':'')+(pend&&!p&&!cs.includes(i)?' no':''); b.style.left=x+'%'; b.style.top=y+'%';
+      b.innerHTML=`<span class="c">${p?svgFace(p):l}</span><span class="l">${p?surname(p.n):''}</span>`; b.addEventListener('click',()=>place(i)); pitch.appendChild(b); }); }
+  function choose(p){ if(full.includes(p)){ toast($('#oiToast'),'Ya está en tu once'); T.bad(); return; }
+    if(!ok(p)){ T.bad(); bad(); toast($('#oiToast'),`${surname(p.n)} no juega en la Premier`); return; }
+    const cs=cands(p); if(!cs.length){ T.bad(); toast($('#oiToast'),`No quedan puestos de ${POS[p.p]}`); return; }
+    pend=p; tone(880,.06,0,.08); const labels=[...new Set(cs.map(i=>SLOTS[i][0]))];
+    const pk=$('#oiPick'); pk.hidden=false; pk.innerHTML=`${crest(p.t,22)}<b>${p.n}</b><span style="color:var(--muted)">¿Dónde lo ponés?</span>`+labels.map(l=>`<button class="pc" data-l="${l}">${l}</button>`).join('');
+    $$('.pc',pk).forEach(b=>b.addEventListener('click',()=>place(cs.find(i=>SLOTS[i][0]===b.dataset.l)))); draw(); }
+  function place(i){ if(!pend||full[i]||!cands(pend).includes(i)) return; ac(); full[i]=pend; pend=null; $('#oiPick').hidden=true; draw(); good(); thump(140,50,.25); const el=$$('.slot',st)[i]; const c=rel(el,st); setTimeout(()=>sparks(fx,c.x,c.y,10,['#fcd34d','#fff'],40),150);
+    const k=full.filter(Boolean).length; $('#oiK').textContent=k+'/11'; restart($('#oiK'),'bump');
+    if(k===11){ setTimeout(()=>{ $('#oiDone').classList.add('on'); thump(120,38,.6); [523,659,784,1046].forEach((f,j)=>tone(f,.08,j*.05,.8)); const p=rel($('#pitch'),st); sparks(fx,p.x,p.y,50,['#fcd34d','#fff','#a78bfa'],200); },400); } }
+  function autoStep(){ if(!auto) return; const i=full.findIndex(x=>!x); if(i<0){ auto=false; return; }
+    const p=POOL.filter(q=>ok(q)&&q.p===SLOTS[i][3]&&!full.includes(q)).sort((a,b)=>b.v-a.v)[0]; if(!p){ auto=false; return; }
+    T.typeAndPick(p,()=>setTimeout(()=>{ if(!auto) return; place(i); setTimeout(autoStep,250); },420)); }
+  $('#oiAuto').addEventListener('click',()=>{ build(); auto=true; autoStep(); });
+  $('#oiReset').addEventListener('click',build); build();
+})();
+
+/* ═════ 7 · DUELO DE STATS ═════ */
+(function(){
+  const st=$('#s7'), fx=$('#fx7');
+  const R=[{pos:'DEL',g:9,a:2,p:8,ok:'Erling Haaland',opts:['Erling Haaland','Harry Kane','Alexander Isak','Lautaro Martínez']},
+           {pos:'MED',g:3,a:6,p:8,ok:'Bruno Fernandes',opts:['Declan Rice','Bruno Fernandes','Martin Ødegaard','Pedri']}];
+  let r=0, k=0, xp=0, busy=false;
+  const P=n=>byName(n)||{n,t:'',c:''};
+  function count(el,to){ const t0=performance.now(); (function s(now){ const q=Math.min(1,(now-t0)/700); el.textContent=Math.round(to*(1-Math.pow(1-q,3))); if(q<1) requestAnimationFrame(s); })(t0); }
+  function show(){ const x=R[r%R.length]; busy=false; const c=$('#cromo'); c.classList.remove('flipd'); $('#dsMys').innerHTML='?'; $('#dsPos').textContent=x.pos; count($('#dsG'),x.g); count($('#dsA'),x.a); count($('#dsP'),x.p); restart(c,'bump');
+    $('#dsOps').innerHTML=x.opts.map((o,i)=>`<button class="op" data-i="${i}"><span class="av">${svgFace(P(o))}</span>${o}</button>`).join(''); $$('#dsOps .op').forEach(b=>b.addEventListener('click',()=>pick(b))); }
+  function pick(b){ if(busy) return; busy=true; ac(); const x=R[r%R.length]; const o=x.opts[b.dataset.i]; const okB=$$('#dsOps .op').find(e=>x.opts[e.dataset.i]===x.ok);
+    if(o===x.ok){ b.classList.add('ok'); good(); k++; $('#dsK').textContent=k+'/10'; restart($('#dsK'),'bump'); const c=$('#cromo');
+      c.animate([{transform:'rotateY(0)'},{transform:'rotateY(90deg)'}],{duration:RM?1:200}).onfinish=()=>{ c.classList.add('flipd'); $('#dsMys').innerHTML=svgFace(P(o)); c.animate([{transform:'rotateY(-90deg)'},{transform:'rotateY(0)'}],{duration:RM?1:250}); };
+      flyXp(fx,st,b,$('#dsXp'),'+20 XP',()=>{ xp+=20; $('#dsXp').textContent=xp; }); }
+    else { b.classList.add('bad'); restart(b,'shake'); okB.classList.add('ok'); $$('#dsOps .op').forEach(e=>{ if(e!==b&&e!==okB) e.classList.add('dim'); }); bad(); }
+    setTimeout(()=>{ r++; show(); },1300); }
+  $('#dsNext').addEventListener('click',()=>{ r++; show(); });
+  let t=45; setInterval(()=>{ t=t<=1?45:t-1; $('#dsT').textContent='0:'+String(t).padStart(2,'0'); },1000);
+  show();
+})();
+})();
+</script>

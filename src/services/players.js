@@ -17,15 +17,41 @@
  * IMÁGENES:
  * - Las fotos de jugadores vienen de FotMob CDN
  * - URL pattern: https://images.fotmob.com/image_resources/playerimages/{id}.png
- * 
+ *
+ * FAMA (src/data/player-fame.json):
+ * - getAllPlayers()/getAllPlayersAsync() devuelven el roster COMPLETO, cada
+ *   jugador con `fame` (1 crack, 2 conocido, 3 del plantel; sin entrada = 3).
+ * - getAllPlayersAsync() además filtra por fama según la dificultad elegida
+ *   (ver difficulty.js) — ESE es el pool que deben usar los juegos para
+ *   elegir targets/opciones (fame 3 nunca debe ser respuesta/opción).
+ * - Los juegos "donde se escribe" (La Grilla, Once Ideal, ¿Quién es?,
+ *   Adiviná el Crack) usan además el roster completo (getAllPlayers(), sin
+ *   filtrar) para su buscador, así un fame 3 tipeado puede valer como acierto.
+ *
  * UTILIDADES:
- * - getAllPlayers(): Retorna array flat de todos los jugadores
+ * - getAllPlayers(): Retorna array flat de todos los jugadores (roster completo)
+ * - getAllPlayersAsync(): Igual, filtrado por fama según la dificultad activa
  * - sampleDistinct(): Selecciona N jugadores aleatorios sin repetir
  * - buildOptions(): Crea opciones múltiple choice con la correcta incluida
  */
 import teams from '../dataGAMES.json'
+import fameData from '../data/player-fame.json'
 import { getDifficulty, filterPlayersByDifficulty } from './difficulty';
 
+// Fama por id de FotMob (1 crack, 2 conocido, 3 del plantel). Si un jugador no
+// figura en player-fame.json, se asume fame 3 (nunca aparece como respuesta,
+// opción, figurita o cromo salvo en los juegos donde se escribe — ver difficulty.js).
+const FAME_BY_ID = new Map(
+  Object.entries(fameData?.players || {}).map(([id, v]) => [Number(id), v?.fame])
+)
+function withFame(p) {
+  p.fame = FAME_BY_ID.get(p.id) ?? 3
+  return p
+}
+
+// Planteles excluidos del pool de juego (liga argentina). Excepción: un
+// jugador de players-extra.json (member.fromExtra) entra siempre, aunque su
+// club actual sea uno de estos.
 const EXCLUDED_TEAMS = new Set(['Boca Juniors', 'River Plate', 'Racing Club'])
 
 const MIN_TRANSFER_VALUE = 500_000
@@ -108,13 +134,17 @@ export function playerImageUrl(playerId) {
  * @returns {Array} Array de objetos jugador con todas sus propiedades
  */
 export function getAllPlayers({ includeExcluded = false } = {}) {
-  if (_fotmobCache && _fotmobCache.length > 0 && !includeExcluded) return _fotmobCache.filter(isNotablePlayer)
+  if (_fotmobCache && _fotmobCache.length > 0 && !includeExcluded) return _fotmobCache.filter(isNotablePlayer).map(withFame)
 
   const players = [];
   for (const team of teams) {
-    if (!includeExcluded && EXCLUDED_TEAMS.has(team.name)) continue
+    const teamExcluded = !includeExcluded && EXCLUDED_TEAMS.has(team.name)
     for (const section of team.squad) {
       for (const member of section.members) {
+        // Los planteles de Boca/River/Racing quedan afuera del pool de juego,
+        // salvo los jugadores que vienen de players-extra.json (fromExtra):
+        // esos entran siempre, sea cual sea su club actual.
+        if (teamExcluded && !member.fromExtra) continue
         const p = {
           id: member.id,
           name: member.name,
@@ -133,7 +163,7 @@ export function getAllPlayers({ includeExcluded = false } = {}) {
           stats: member.stats || null,
           leagueId: TEAM_LEAGUE_MAP[team.id] ?? null,
         }
-        if (isNotablePlayer(p)) players.push(p)
+        if (isNotablePlayer(p)) players.push(withFame(p))
       }
     }
   }

@@ -1,10 +1,15 @@
 /**
  * DIFFICULTY SERVICE
  *
- * Controla qué jugadores se usan en los juegos según la dificultad elegida.
- *  - easy:   solo Premier League + La Liga (jugadores conocidos)
- *  - medium: las 5 grandes ligas europeas (sin Argentina)
- *  - hard:   todas las ligas configuradas
+ * Controla qué jugadores pueden ser TARGET/RESPUESTA/OPCIÓN en los juegos,
+ * según la dificultad elegida y la fama del jugador (src/data/player-fame.json):
+ *  - easy:   solo fame 1 (cracks)
+ *  - medium: fame 1 y 2 (cracks + conocidos)
+ *  - hard:   fame 1 y 2 (cracks + conocidos)
+ *
+ * Fame 3 ("del plantel") NUNCA es elegible como target/respuesta/opción en
+ * ningún nivel de dificultad — sólo puede aparecer como sugerencia/acierto
+ * tipeado en los juegos "donde se escribe" (ver services/players.js).
  *
  * La preferencia se guarda en localStorage y se aplica automáticamente
  * cuando el juego carga jugadores con getAllPlayersAsync().
@@ -12,19 +17,20 @@
 
 /** Definición de los niveles para mostrar en UI */
 export const DIFFICULTIES = [
-  { id: 'easy',   label: 'Fácil',    desc: 'Premier + LaLiga' },
-  { id: 'medium', label: 'Medio',    desc: '5 grandes ligas' },
-  { id: 'hard',   label: 'Difícil',  desc: 'Todas las ligas' },
+  { id: 'easy',   label: 'Fácil',    desc: 'Solo cracks' },
+  { id: 'medium', label: 'Medio',    desc: 'Cracks + conocidos' },
+  { id: 'hard',   label: 'Difícil',  desc: 'Cracks + conocidos' },
 ]
 
 /**
- * IDs de ligas de FotMob habilitadas por nivel.
- * null significa "sin filtro" (todas las ligas).
+ * Niveles de fama habilitados por dificultad (1 crack, 2 conocido, 3 del plantel).
+ * 3 nunca está incluido: eso es lo que garantiza que un jugador del plantel
+ * jamás sea elegido como respuesta/opción por el juego.
  */
-export const DIFFICULTY_LEAGUES = {
-  easy:   [47, 87],               // Premier League + La Liga española
-  medium: [47, 87, 55, 54, 53],   // + Serie A + Bundesliga + Ligue 1
-  hard:   null,                   // Todas las ligas (incl. Liga Argentina)
+export const DIFFICULTY_FAME = {
+  easy:   [1],
+  medium: [1, 2],
+  hard:   [1, 2],
 }
 
 const STORAGE_KEY = 'goaldemy_difficulty'
@@ -40,11 +46,11 @@ export function setDifficulty(d) {
 }
 
 /**
- * Filtra un array de jugadores según la dificultad indicada.
- * Si un jugador no tiene leagueId (datos del JSON estático), siempre pasa el filtro.
+ * Filtra un array de jugadores según la dificultad indicada, por fama.
+ * Un jugador sin `fame` (no debería pasar, players.js siempre lo asigna)
+ * se trata como fame 3 y queda afuera.
  */
 export function filterPlayersByDifficulty(players, difficulty) {
-  const leagues = DIFFICULTY_LEAGUES[difficulty ?? 'medium']
-  if (!leagues) return players
-  return players.filter(p => !p.leagueId || leagues.includes(p.leagueId))
+  const allowed = DIFFICULTY_FAME[difficulty ?? 'medium'] || DIFFICULTY_FAME.medium
+  return players.filter(p => allowed.includes(p.fame ?? 3))
 }

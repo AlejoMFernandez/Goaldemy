@@ -16,9 +16,15 @@ function mulberry32(a) {
   }
 }
 
+/** RNG determinístico para una fecha (YYYY-MM-DD) + juego puntuales — permite
+ * "recalcular" el sorteo de un día pasado sin guardar nada en base de datos. */
+export function createRngForDate(dateStr, gameSlug) {
+  return mulberry32(hashCode(`${dateStr}:${gameSlug}`))
+}
+
 export function createDailyRng(gameSlug) {
   const today = new Date().toISOString().slice(0, 10)
-  return mulberry32(hashCode(`${today}:${gameSlug}`))
+  return createRngForDate(today, gameSlug)
 }
 
 export function seededShuffle(arr, rng) {
