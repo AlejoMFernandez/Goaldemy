@@ -78,7 +78,7 @@ const routes = [
     { path: '/games/higher-or-lower', component: HigherOrLower, meta: { immersive: true, zone: 'play', seo: { title: 'Mayor o menor', noindex: true } } },
     { path: '/games/connections', component: Connections, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Conexiones', noindex: true } } },
     { path: '/games/football-grid', component: FootballGrid, meta: { immersive: true, zone: 'play', seo: { title: 'La Grilla', noindex: true } } },
-    { path: '/games/stat-challenge', component: StatChallenge, meta: { requiresAuth: true, zone: 'play', seo: { title: 'Desafío de estadísticas', noindex: true } } },
+    { path: '/games/stat-challenge', component: StatChallenge, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Desafío de estadísticas', noindex: true } } },
     { path: '/leaderboards', component: Leaderboards, meta: { zone: 'data', seo: { title: 'Tabla de posiciones', description: 'Mirá el ranking global de jugadores de Fulvo por XP, rachas y logros.' } } },
     { path: '/u/:id', component: Profile, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Perfil de usuario', noindex: true } } },
     { path: '/notifications', component: Notifications, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Notificaciones', noindex: true } } },

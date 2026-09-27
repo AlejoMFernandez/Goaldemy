@@ -1,120 +1,101 @@
-import { spawnXpBadge } from './ui-effects'
 import { onCorrect } from './scoring'
 import { flagUrl, countryCodeFromName } from './countries'
-import { celebrateCorrect, celebrateIncorrect } from './game-celebrations'
-import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, getBroadPosition, selectRandomPlayerFromBucket } from './game-common'
+import { loadAndClassifyPlayersAsync, getBroadPosition, selectRandomPlayerFromBucket } from './game-common'
 import countryMap from '../codeCOUNTRYS.json'
 
 export function initState() {
   return {
-    allPlayers: [],
+    allPlayers: [], // pool elegible como TARGET (fame 1-2, ver difficulty.js)
     byPos: {},
-    posOrder: ['FW','MF','DF','GK'],
+    posOrder: ['FW', 'MF', 'DF', 'GK'],
     posIndex: 0,
     current: null,
-    // typing game state
-    guess: '',
-    minGuessLen: 3,
+    // ficha (moodboard 09, sección 01)
     lives: 3,
+    maxLives: 3,
+    tried: [], // jugadores ya probados esta ronda (se tachan abajo)
+    hintsShown: [], // 'age' | 'shirt', en orden de aparición
     answered: false,
-    feedback: null,
-    // scoring fields will merge from initScoring() in component
+    lit: false, // silueta iluminada (acierto o derrota)
+    lost: false,
     score: 0,
     attempts: 0,
     streak: 0,
     roundKey: 0,
     loading: true,
-    // modes
     allowXp: true,
     xpEarned: 0,
   }
 }
 
-/**
- * Carga jugadores y los clasifica por posición amplia
- */
+/** Carga jugadores y los clasifica por posición amplia (pool = target elegible). */
 export async function loadPlayers(state) {
   await loadAndClassifyPlayersAsync(state)
 }
 
-function normalize(s) {
-  return (s || '')
-    .toString()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .trim()
-}
+export function broadPos(p) { return getBroadPosition(p) }
 
-/**
- * Retorna posición amplia del jugador (GK, DF, MF, FW)
- */
-export function broadPos(p) {
-  return getBroadPosition(p)
-}
+const POS_ES = { GK: 'ARQ', DF: 'DEF', MF: 'MED', FW: 'DEL' }
+export function posLabel(p) { return POS_ES[broadPos(p)] || 'MED' }
 
-export function posLabel(p) { return broadPos(p) }
 export function countryFlag(p, width = 32) {
-  // Prefer validated code from codeCOUNTRYS.json; fallback to mapping by name
   const raw = (p?.ccode || '').toString().toLowerCase()
   const validCode = raw && Object.prototype.hasOwnProperty.call(countryMap, raw) ? raw : null
   const code = validCode || countryCodeFromName(p?.cname)
   return flagUrl(code, width)
 }
 export function teamLogo(p) { return p?.teamLogo || null }
-// Progressive reveal: strong blur until hints reduce it
-export function blurForLives(lives) { return lives >= 3 ? 18 : lives === 2 ? 12 : lives === 1 ? 7 : 0 }
 
-/**
- * Selecciona siguiente jugador rotando entre posiciones
- */
+/** Selecciona el próximo jugador a adivinar (rotando entre posiciones). */
 export function nextRound(state) {
   if (!state.allPlayers.length) return
-  
   state.current = selectRandomPlayerFromBucket(state)
-  
-  // Si no hay jugador en buckets, tomar aleatorio
   if (!state.current) {
     const rand = state.rng || Math.random
     const idx = Math.floor(rand() * state.allPlayers.length)
     state.current = state.allPlayers[idx]
   }
-  
-  state.lives = 3
-  state.guess = ''
+  state.lives = state.maxLives || 3
+  state.tried = []
+  state.hintsShown = []
   state.answered = false
-  state.feedback = null
+  state.lit = false
+  state.lost = false
   state.roundKey += 1
 }
 
-export function submitGuess(state, confettiHost) {
-  if (state.answered) return false
-  const val = normalize(state.guess)
-  if (!val || val.length < state.minGuessLen) return false
-  const target = normalize(state.current?.name)
-  const correct = target.includes(val) || val.includes(target)
-  if (correct) {
+/**
+ * Recibe el jugador elegido en el buscador (PlayerSearch busca entre TODOS
+ * los jugadores, incluido fame 3 — cualquiera puede probarse). Devuelve
+ * true si acertó.
+ */
+export function submitGuess(state, player) {
+  if (state.answered || !player || !state.current) return false
+  if (player.id === state.current.id) {
     state.answered = true
+    state.lit = true
     const nextStreak = state.streak + 1
     if (state.allowXp) {
       const xpAmount = state.difficultyConfig?.xpPerCorrect || 100
       state.xpEarned += xpAmount
-      spawnXpBadge(confettiHost, `+${xpAmount} XP`, { position: 'top-right' })
+      state._lastXpGained = xpAmount
     }
     onCorrect(state)
     state.streak = nextStreak
     state.maxStreak = Math.max(state.maxStreak || 0, nextStreak)
-    celebrateCorrect()
-    state.feedback = ''
     return true
-  } else {
-    celebrateIncorrect()
-    state.lives = Math.max(0, state.lives - 1)
-    if (state.lives === 0) {
-      state.answered = true
-      state.streak = 0
-      state.attempts += 1
-    }
-    return false
   }
+  if (!state.tried.some((t) => t.id === player.id)) state.tried.push(player)
+  state.lives = Math.max(0, state.lives - 1)
+  // Primer error → pista de edad; segundo error → pista de dorsal (moodboard 09).
+  if (state.lives === 2 && !state.hintsShown.includes('age')) state.hintsShown.push('age')
+  else if (state.lives === 1 && !state.hintsShown.includes('shirt')) state.hintsShown.push('shirt')
+  if (state.lives <= 0) {
+    state.answered = true
+    state.lit = true
+    state.lost = true
+    state.streak = 0
+    state.attempts += 1
+  }
+  return false
 }

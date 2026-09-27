@@ -76,6 +76,64 @@ export function countryCodeFromName(name) {
   if (ALIASES.has(n)) return ALIASES.get(n)
   return null;
 }
+// Nombre en español por país (clave = nombre normalizado, sin acentos/minúscula).
+// FotMob entrega `cname` siempre en inglés — esto es lo único que traduce para
+// mostrar en pantalla; el nombre en inglés se sigue usando para comparar/matchear.
+const ES_NAMES = {
+  algeria: 'Argelia', argentina: 'Argentina', armenia: 'Armenia', austria: 'Austria',
+  belgium: 'Bélgica', brazil: 'Brasil', bulgaria: 'Bulgaria', cameroon: 'Camerún',
+  canada: 'Canadá', chile: 'Chile', colombia: 'Colombia', croatia: 'Croacia',
+  czechia: 'Chequia', 'czech republic': 'Chequia', denmark: 'Dinamarca', ecuador: 'Ecuador',
+  egypt: 'Egipto', england: 'Inglaterra', france: 'Francia', georgia: 'Georgia',
+  germany: 'Alemania', ghana: 'Ghana', greece: 'Grecia', guinea: 'Guinea',
+  hungary: 'Hungría', italy: 'Italia', 'ivory coast': 'Costa de Marfil', "cote d'ivoire": 'Costa de Marfil',
+  japan: 'Japón', kazakhstan: 'Kazajistán', kosovo: 'Kosovo', luxembourg: 'Luxemburgo',
+  mexico: 'México', morocco: 'Marruecos', netherlands: 'Países Bajos', nigeria: 'Nigeria',
+  'northern ireland': 'Irlanda del Norte', norway: 'Noruega', paraguay: 'Paraguay',
+  poland: 'Polonia', portugal: 'Portugal', russia: 'Rusia', scotland: 'Escocia',
+  senegal: 'Senegal', serbia: 'Serbia', slovakia: 'Eslovaquia', slovenia: 'Eslovenia',
+  'south korea': 'Corea del Sur', 'korea republic': 'Corea del Sur', spain: 'España',
+  suriname: 'Surinam', sweden: 'Suecia', switzerland: 'Suiza',
+  turkiye: 'Turquía', turkey: 'Turquía', usa: 'Estados Unidos', 'united states': 'Estados Unidos',
+  'united states of america': 'Estados Unidos',
+  ukraine: 'Ucrania', uruguay: 'Uruguay', uzbekistan: 'Uzbekistán', wales: 'Gales',
+  // Cobertura extra (selecciones que pueden sumarse con el plantel)
+  'bosnia and herzegovina': 'Bosnia y Herzegovina', 'north macedonia': 'Macedonia del Norte',
+  albania: 'Albania', montenegro: 'Montenegro', finland: 'Finlandia', iceland: 'Islandia',
+  ireland: 'Irlanda', 'republic of ireland': 'Irlanda', romania: 'Rumania', belarus: 'Bielorrusia',
+  moldova: 'Moldavia', cyprus: 'Chipre', malta: 'Malta', israel: 'Israel', tunisia: 'Túnez',
+  mali: 'Malí', 'burkina faso': 'Burkina Faso', 'dr congo': 'RD del Congo', congo: 'Congo',
+  'south africa': 'Sudáfrica', zambia: 'Zambia', zimbabwe: 'Zimbabue', mozambique: 'Mozambique',
+  gabon: 'Gabón', 'equatorial guinea': 'Guinea Ecuatorial', 'cape verde': 'Cabo Verde',
+  comoros: 'Comoras', gambia: 'Gambia', 'sierra leone': 'Sierra Leona', togo: 'Togo',
+  benin: 'Benín', 'central african republic': 'República Centroafricana', angola: 'Angola',
+  qatar: 'Catar', 'saudi arabia': 'Arabia Saudita', uae: 'Emiratos Árabes Unidos',
+  'united arab emirates': 'Emiratos Árabes Unidos', iran: 'Irán', iraq: 'Irak', jordan: 'Jordania',
+  lebanon: 'Líbano', syria: 'Siria', australia: 'Australia', 'new zealand': 'Nueva Zelanda',
+  china: 'China', thailand: 'Tailandia', vietnam: 'Vietnam', indonesia: 'Indonesia',
+  philippines: 'Filipinas', india: 'India', pakistan: 'Pakistán', bangladesh: 'Bangladés',
+  venezuela: 'Venezuela', bolivia: 'Bolivia', peru: 'Perú', panama: 'Panamá',
+  'costa rica': 'Costa Rica', honduras: 'Honduras', 'el salvador': 'El Salvador',
+  guatemala: 'Guatemala', nicaragua: 'Nicaragua', jamaica: 'Jamaica', haiti: 'Haití',
+  'trinidad and tobago': 'Trinidad y Tobago', cuba: 'Cuba', 'dominican republic': 'República Dominicana',
+  'puerto rico': 'Puerto Rico', 'north korea': 'Corea del Norte', mongolia: 'Mongolia',
+  kyrgyzstan: 'Kirguistán', tajikistan: 'Tayikistán', turkmenistan: 'Turkmenistán',
+  azerbaijan: 'Azerbaiyán', estonia: 'Estonia', latvia: 'Letonia', lithuania: 'Lituania',
+  andorra: 'Andorra', monaco: 'Mónaco', 'san marino': 'San Marino', liechtenstein: 'Liechtenstein',
+}
+
+/**
+ * Nombre del país en español para MOSTRAR en pantalla (nunca para comparar/matchear
+ * — para eso se sigue usando el `cname` en inglés que da FotMob, sin tocar).
+ * Si no está en el diccionario, devuelve el nombre tal cual llegó (nunca undefined).
+ * @param {string} name - cname en inglés (ej: "Brazil", "Ivory Coast")
+ * @returns {string} Nombre en español, o el original si no se encontró
+ */
+export function countryNameEs(name) {
+  if (!name) return ''
+  return ES_NAMES[norm(name)] || String(name)
+}
+
 /**
  * Genera la URL de la bandera de un país desde flagcdn.com
  * @param {string} code - Código ISO del país (ej: "ar", "br", "es")

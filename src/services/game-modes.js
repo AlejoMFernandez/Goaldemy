@@ -221,7 +221,30 @@ export async function isChallengeAvailable(slug) {
     }
   }
   const remaining = dailyLimit - finished.length
-  return { available: !already, reason: already ? `Ya usaste tus ${dailyLimit} intentos de hoy` : null, result, remaining }
+  // Ficha del partido de hoy para el póster del índice (moodboard 07)
+  const ficha = last ? matchFicha(slug, last.metadata || {}, Number(last.score_final || 0), result) : null
+  return { available: !already, reason: already ? `Ya usaste tus ${dailyLimit} intentos de hoy` : null, result, remaining, ficha }
+}
+
+/**
+ * Resumen corto del último partido para mostrar en el póster: marcador y
+ * estrellas por PRECISIÓN (decidido en el moodboard 07): 3 = sin errores,
+ * 2 = hasta 2 errores, 1 = más. Solo se dan estrellas si ganó.
+ */
+export function matchFicha(slug, m = {}, scoreFinal = 0, result = null) {
+  const s = (slug || '').toLowerCase()
+  const win = result === 'win'
+  if (['value-order', 'age-order', 'height-order'].includes(s)) {
+    const ok = Number(m.correctPositions ?? m.corrects ?? Math.round(scoreFinal / 10))
+    return { score: `${Number.isFinite(ok) ? ok : 0}/5`, stars: win ? 3 : 0 }
+  }
+  if (Number.isFinite(Number(m.corrects)) && ['guess-player', 'nationality', 'player-position', 'shirt-number', 'stat-challenge'].includes(s)) {
+    const corrects = Number(m.corrects) || 0
+    const errors = Number(m.errors ?? Math.max(0, (Number(m.attempts) || corrects) - corrects))
+    const stars = win ? (errors === 0 ? 3 : errors <= 2 ? 2 : 1) : 0
+    return { score: `${Math.min(corrects, 10)}/10`, stars, errors }
+  }
+  return { score: '', stars: win ? 3 : 0 }
 }
 
 // Start a challenge session and return session id

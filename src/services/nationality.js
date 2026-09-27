@@ -1,4 +1,4 @@
-import { countryCodeFromName, flagUrl } from './countries'
+import { countryCodeFromName, flagUrl, countryNameEs } from './countries'
 import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
 import { celebrateCorrect, celebrateIncorrect } from './game-celebrations'
@@ -49,8 +49,8 @@ export function buildOptions(state) {
     picked.push(distractors.splice(j, 1)[0])
   }
   const opts = [state.current.cname, ...picked].map(c => ({
-    label: c,
-    value: c,
+    label: countryNameEs(c),
+    value: c, // se compara contra p.cname (inglés, sin traducir) — no tocar
     code: countryCodeFromName(c),
   }))
   state.options = shuffleArray(opts, state.rng)

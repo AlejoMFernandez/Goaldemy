@@ -1,6 +1,9 @@
 <script>
 import GameShell from '../../components/game/GameShell.vue'
-import { initState, loadPlayers, nextRound, submitGuess, blurForLives, posLabel, countryFlag, teamLogo } from '../../services/guess-player-typing'
+import PlayerSearch from '../../components/game/PlayerSearch.vue'
+import ScoreBug from '../../components/game/ScoreBug.vue'
+import { initState, loadPlayers, nextRound, submitGuess, posLabel, countryFlag, teamLogo } from '../../services/guess-player-typing'
+import { countryNameEs } from '../../services/countries'
 import { initScoring, GAME_SCORING } from '../../services/scoring'
 import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
@@ -13,14 +16,14 @@ import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLeve
 import { getGameMetadata } from '../../services/games'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
-import StreakBadge from '../../components/game/StreakBadge.vue'
+import * as fx from '../../services/game-fx'
 
 export default {
   name: 'WhoIs',
-  components: { GameShell, GamePreviewModal, GameSummaryPopup, StreakBadge },
+  components: { GameShell, GamePreviewModal, GameSummaryPopup, PlayerSearch, ScoreBug },
   data() {
-    return { 
-      ...initState(), 
+    return {
+      ...initState(),
       ...initScoring(GAME_SCORING['who-is']?.pointsPerCorrect || 50),
       mode: 'normal',
       reviewMode: false,
@@ -30,12 +33,6 @@ export default {
       showSummary: false,
       lifetimeMaxStreak: 0,
       timeOver: false,
-      // UI extras
-      suggestOpen: false,
-      selectedIndex: -1,
-      revealImage: false,
-      justPicked: false,
-      lastResultOk: false,
       // XP progress summary
       levelBefore: null,
       levelAfter: null,
@@ -48,34 +45,12 @@ export default {
       // difficulty
       selectedDifficulty: 'normal',
       difficultyConfig: null,
-      // explicit win tracking (avoids lives-timing edge cases)
       gameWon: false,
     }
   },
   computed: {
-    gameMetadata() {
-      return getGameMetadata('who-is')
-    },
+    gameMetadata() { return getGameMetadata('who-is') },
     isGuest() { return !getAuthUser()?.id },
-    maxLives() { return this.difficultyConfig?.lives ?? 3 },
-    // Suggestions after 3+ chars, up to 12
-    suggestions() {
-      const q = (this.guess || '').toString().trim()
-      if (!q || q.length < 3) return []
-      const nq = q.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
-      const arr = this.allPlayers || []
-      const out = []
-      const seen = new Set()
-      for (const p of arr) {
-        const n = (p?.name || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
-        if (n.includes(nq)) {
-          const key = n
-          if (!seen.has(key)) { seen.add(key); out.push(p) }
-        }
-        if (out.length >= 12) break
-      }
-      return out
-    }
   },
   watch: {},
   async mounted() {
@@ -88,7 +63,7 @@ export default {
     if (this.mode === 'free') this.allowXp = false
 
     await loadPlayers(this)
-    nextRound(this)
+    this.nextRound()
 
     if (this.reviewMode) {
       import('../../services/game-modes').then(async (mod) => {
@@ -96,22 +71,15 @@ export default {
         if (last) {
           const m = last.metadata || {}
           this.showSummary = true
-          this.levelBefore = null
-          this.xpBeforeTotal = 0
-          this.levelAfter = null
-          this.xpAfterTotal = 0
-          this.progressShown = 0
           this.maxStreak = Number(m.maxStreak || 0)
-          // Lifetime best streak in review
           try { this.lifetimeMaxStreak = Math.max(await mod.fetchLifetimeMaxStreak('who-is') || 0, this.maxStreak || 0) } catch {}
-          // Show the exact player that was played today
           try {
-            if (!this.allPlayers || !this.allPlayers.length) { await loadPlayers(this) }
-            const p = (this.allPlayers || []).find(pl => pl.id === m.playerId)
-            if (p) { this.current = p; this.revealImage = true; this.answered = true }
+            const { getAllPlayers } = await import('../../services/players')
+            const p = getAllPlayers().find((pl) => pl.id === m.playerId)
+            if (p) { this.current = p; this.lit = true; this.answered = true }
           } catch {}
         }
-      }).catch(()=>{})
+      }).catch(() => {})
     } else if (this.mode === 'challenge') {
       this.overlayOpen = true
       this.checkAvailability()
@@ -119,128 +87,100 @@ export default {
   },
   methods: {
     nextRound() {
-      // Ensure the new round starts blurred again
-      this.revealImage = false
       this.gameWon = false
       nextRound(this)
     },
     blurb() { return gameSummaryBlurb('who-is') },
     backPath() { if (this.isGuest) return '/'; return this.mode === 'free' ? '/play/free' : '/play/points' },
-    async chooseSuggestion(p) {
-      // Tocar una sugerencia la manda directo (estilo who-are-ya).
-      if (!p) return
-      this.guess = p.name || ''
-      this.suggestOpen = false
-      this.selectedIndex = -1
-      await this.submit()
-    },
-    moveSelection(dir) {
-      const n = this.suggestions.length
-      if (!n) return
-      if (this.selectedIndex < 0) this.selectedIndex = 0
-      else this.selectedIndex = (this.selectedIndex + dir + n) % n
-      this.suggestOpen = true
-    },
-    async onEnterKey() {
-      // Con una sola coincidencia, Enter la manda directo.
-      if (this.suggestions.length === 1) { await this.chooseSuggestion(this.suggestions[0]); return }
-      if (this.suggestOpen && this.selectedIndex >= 0 && this.suggestions[this.selectedIndex]) {
-        await this.chooseSuggestion(this.suggestions[this.selectedIndex])
-        return
-      }
-      await this.submit()
-    },
-    async submit() {
-      const ok = await submitGuess(this, this.$refs.confettiHost)
-      this.lastResultOk = !!ok
-      if (!ok) {
-        // clear input and reopen suggestions for a fresh try
-        this.guess = ''
-        this.suggestOpen = true
-        this.selectedIndex = -1
-        this.justPicked = false
-      }
-      if (ok) this.revealImage = true
-      if (ok) this.gameWon = true
-      if (this.mode === 'challenge' && (ok || this.lives === 0)) {
-        // Trigger confetti and sound based on result
-        const result = (this.lives > 0) ? 'win' : 'loss'
-        
-        // 🎉 Celebrate based on result
-        if (result === 'win') {
-          setTimeout(() => celebrateGameWin(), 100)
-        } else {
-          setTimeout(() => announceGameLoss(), 100)
-        }
-        if (this.isGuest) {
-          // Sin cuenta: no hay a quién otorgarle XP server-side. Guardamos el
-          // resultado para reclamarlo de verdad si se registra (guest-play.js).
-          if (this.xpEarned > 0) {
-            setPendingGuestClaim({ game: 'who-is', corrects: this.gameWon ? 1 : 0, total: 1, maxStreak: this.maxStreak })
-          }
-        } else if (this.allowXp && this.xpEarned > 0) {
-          await awardXpBatch({ gameCode: 'who-is', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
-        }
-        try {
-          await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, maxStreak: this.maxStreak, playerId: this.current?.id })
-        } catch (e) { console.error('[WhoIs complete]', e) }
-        try {
-          const snap = await captureLevelSnapshot()
-          this.levelAfter = snap.level
-          this.xpAfterTotal = snap.xpTotal
-          this.afterPercent = snap.percent
-          this.xpToNextAfter = snap.xpToNext
-          if (snap.level && this.levelBefore && snap.level > this.levelBefore) {
-            setTimeout(() => celebrateGameLevelUp(snap.level), 500)
-          }
-        } catch {}
-        // Delay summary so el acierto no se tapa enseguida
-        const delayMs = GAME_SCORING['who-is']?.summaryDelayMs ?? 3000
-        setTimeout(() => {
-          this.progressShown = this.beforePercent
-          this.showSummary = true
-          requestAnimationFrame(() => setTimeout(() => { this.progressShown = this.afterPercent }, 40))
-        }, delayMs)
-        // Save a snapshot so review can show the same progress
-        try {
-          await completeChallengeSession(this.sessionId, this.score, this.xpEarned, {
-            xpView: {
-              levelBefore: this.levelBefore, xpBeforeTotal: this.xpBeforeTotal,
-              levelAfter: this.levelAfter, xpAfterTotal: this.xpAfterTotal,
-              beforePercent: this.beforePercent, afterPercent: this.afterPercent,
-              xpToNextAfter: this.xpToNextAfter, xpEarned: this.xpEarned
-            }
-          })
-        } catch {}
-        // fetch lifetime for summary
-        try { const mod = await import('../../services/game-modes'); const v = await mod.fetchLifetimeMaxStreak('who-is'); this.lifetimeMaxStreak = Math.max(v || 0, this.maxStreak || 0) } catch(_) {}
-        // Daily achievements after completing challenge
-        try { const mod = await import('../../services/game-modes'); await mod.checkAndUnlockDailyWins('who-is') } catch {}
-        return
-      }
-      if (ok || this.lives === 0) {
-        // reveal image briefly, then reset and go to next round (blur must be back)
-        this.revealImage = true
-        setTimeout(() => {
-          this.nextRound()
-        }, 1000)
-      }
-    },
-    blurPx() { return this.revealImage ? 0 : blurForLives(this.lives) },
     posBadge() { return this.current ? posLabel(this.current) : '' },
-    flagSrc() { return this.current ? countryFlag(this.current, 40) : '' },
-    teamLogo() { return this.current ? teamLogo(this.current) : '' },
+    flagSrc() { return this.current ? countryFlag(this.current, 36) : '' },
+    countryLabel() { return this.current ? countryNameEs(this.current.cname) : '' },
+    teamLogoSrc() { return this.current ? teamLogo(this.current) : '' },
+    hintText(key) {
+      if (key === 'age') return this.hintsShown.includes('age') ? `${this.current?.age ?? '—'} años` : 'Edad'
+      return this.hintsShown.includes('shirt') ? `Dorsal ${this.current?.shirtNumber ?? '—'}` : 'Dorsal'
+    },
     async checkAvailability() { this.availability = await isChallengeAvailable('who-is') },
+    async onPick(player) {
+      if (!player || this.answered) return
+      const card = this.$refs.card
+      const bug = this.$refs.bug
+      const ok = submitGuess(this, player)
+
+      if (ok) {
+        celebrateCorrect()
+        if (card) {
+          const c = fx.center(card)
+          fx.sparks(c.x, c.y, 28, ['#fff', '#fcd34d', '#4ade80'], c.w * 0.6)
+        }
+        const xp = this._lastXpGained || 0
+        if (xp > 0 && card && bug) {
+          fx.flyTo({ from: card, to: bug.xpEl(), html: `+${xp} XP`, className: 'gfx-xp', duration: 550 })
+            .then(() => bug.bumpXp())
+        }
+        this.gameWon = true
+        this.afterRoundResult('win')
+      } else {
+        this.$refs.search?.shake()
+        if (this.lives <= 0) this.afterRoundResult('loss')
+      }
+    },
+    afterRoundResult(result) {
+      if (this.mode === 'challenge') {
+        setTimeout(() => this.finishRound(result), result === 'win' ? 1300 : 1600)
+      } else {
+        setTimeout(() => this.nextRound(), result === 'win' ? 1300 : 1800)
+      }
+    },
+    async finishRound(result) {
+      if (result === 'win') setTimeout(() => celebrateGameWin(), 100)
+      else setTimeout(() => announceGameLoss(), 100)
+
+      if (this.isGuest) {
+        if (this.xpEarned > 0) {
+          setPendingGuestClaim({ game: 'who-is', corrects: this.gameWon ? 1 : 0, total: 1, maxStreak: this.maxStreak })
+        }
+      } else if (this.allowXp && this.xpEarned > 0) {
+        await awardXpBatch({ gameCode: 'who-is', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
+      }
+      try {
+        await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { result, maxStreak: this.maxStreak, playerId: this.current?.id })
+      } catch (e) { console.error('[WhoIs complete]', e) }
+      try {
+        const snap = await captureLevelSnapshot()
+        this.levelAfter = snap.level
+        this.xpAfterTotal = snap.xpTotal
+        this.afterPercent = snap.percent
+        this.xpToNextAfter = snap.xpToNext
+        if (snap.level && this.levelBefore && snap.level > this.levelBefore) {
+          setTimeout(() => celebrateGameLevelUp(snap.level), 500)
+        }
+      } catch {}
+      const delayMs = GAME_SCORING['who-is']?.summaryDelayMs ?? 1200
+      setTimeout(() => {
+        this.progressShown = this.beforePercent
+        this.showSummary = true
+        requestAnimationFrame(() => setTimeout(() => { this.progressShown = this.afterPercent }, 40))
+      }, delayMs)
+      try {
+        await completeChallengeSession(this.sessionId, this.score, this.xpEarned, {
+          xpView: {
+            levelBefore: this.levelBefore, xpBeforeTotal: this.xpBeforeTotal,
+            levelAfter: this.levelAfter, xpAfterTotal: this.xpAfterTotal,
+            beforePercent: this.beforePercent, afterPercent: this.afterPercent,
+            xpToNextAfter: this.xpToNextAfter, xpEarned: this.xpEarned
+          }
+        })
+      } catch {}
+      try { const mod = await import('../../services/game-modes'); const v = await mod.fetchLifetimeMaxStreak('who-is'); this.lifetimeMaxStreak = Math.max(v || 0, this.maxStreak || 0) } catch (_) {}
+      try { const mod = await import('../../services/game-modes'); await mod.checkAndUnlockDailyWins('who-is') } catch {}
+    },
     async startChallenge({ difficulty, config }) {
       if (!this.availability.available) return
-      
-      // Guardar configuración de dificultad
       this.selectedDifficulty = difficulty
       this.difficultyConfig = config
-      this.lives = config.lives
-      
+      this.maxLives = config.lives
       try {
-        // capture level/xp before
         try {
           const snap = await captureLevelSnapshot()
           this.levelBefore = snap.level
@@ -248,9 +188,9 @@ export default {
           this.beforePercent = snap.percent
         } catch {}
         this.rng = createDailyRng('who-is')
-        this.difficultyConfig = config
         this.sessionId = await startChallengeSession('who-is', null)
         this.overlayOpen = false
+        this.nextRound()
       } catch (e) {
         console.error('[WhoIs challenge start]', e)
       }
@@ -261,17 +201,10 @@ export default {
 
 <template>
   <GameShell title="¿Quién es?" :backPath="backPath()">
-    <template #stat>
-      <div class="inline-flex items-center gap-2 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
-        <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Puntaje</span>
-        <span class="font-display text-white font-bold text-base leading-none whitespace-nowrap">{{ score }}/{{ attempts * (pointsPerCorrect || 10) }}</span>
-        <StreakBadge :streak="streak" />
-      </div>
-    </template>
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="¿Quién es?"
-      gameDescription="Adiviná el jugador con 3 vidas"
+      gameDescription="Adiviná el jugador con pistas de club, país y posición"
       gameType="lives"
       :mechanic="gameMetadata.mechanic"
       :videoUrl="gameMetadata.videoUrl"
@@ -279,76 +212,68 @@ export default {
       @close="overlayOpen = false"
       @start="startChallenge"
     />
-    <div class="w-full max-w-md mx-auto">
+    <div class="w-full max-w-md mx-auto self-start mt-3">
 
       <div v-if="loading" class="text-center text-slate-300 py-12">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-300"></div>
         <p class="mt-3">Cargando...</p>
       </div>
-      <div v-else>
-        <!-- CARTA MISTERIOSA estilo who-are-ya -->
-        <div class="relative rounded-2xl border border-white/10 bg-gradient-to-b from-slate-800/70 to-slate-900/85 px-4 pt-9 pb-4 overflow-hidden">
-          <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl z-20"></div>
-          <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full opacity-20 blur-3xl" style="background: radial-gradient(circle, rgba(245,158,11,0.4), transparent 70%);"></div>
+      <div v-else class="space-y-3">
+        <ScoreBug
+          ref="bug"
+          :timed="false"
+          :livesMode="true"
+          :lives="lives"
+          :maxLives="maxLives"
+          :xp="xpEarned"
+        />
 
-          <!-- Vidas (esquina) -->
-          <div class="absolute top-2.5 left-3 z-10 flex items-center gap-1" title="Vidas">
-            <svg v-for="i in maxLives" :key="'life-'+i" class="h-4 w-4 transition-colors duration-300" :class="i <= lives ? 'text-rose-500 drop-shadow-[0_0_4px_rgba(244,63,94,0.5)]' : 'text-white/15'" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        <Transition name="round-fade" mode="out-in">
+          <div :key="roundKey" ref="card" class="wi-card">
+            <div class="wi-sil" :class="{ lit }">
+              <img
+                v-if="current"
+                :src="current.image"
+                :alt="lit ? current.name : 'Jugador misterioso'"
+                :style="{ filter: lit ? 'none' : 'brightness(0) opacity(.55)' }"
+                draggable="false" @dragstart.prevent @contextmenu.prevent
+              />
+              <span v-if="!lit" class="wi-q">?</span>
+              <i v-if="lit" class="wi-sweep"></i>
+            </div>
+            <div class="wi-data">
+              <div v-if="current" class="wi-row">
+                <img v-if="teamLogoSrc()" :src="teamLogoSrc()" alt="" class="wi-crest" />
+                <span class="wi-t">{{ current.teamName }}</span>
+              </div>
+              <div v-if="current" class="wi-row">
+                <img v-if="flagSrc()" :src="flagSrc()" alt="" class="wi-flag" />
+                <span class="wi-t">{{ countryLabel() }}</span>
+              </div>
+              <div v-if="current" class="wi-row">
+                <span class="wi-pos">{{ posBadge() }}</span>
+              </div>
+              <div class="wi-extra">
+                <span :class="{ on: hintsShown.includes('age') }">{{ hintText('age') }}</span>
+                <span :class="{ on: hintsShown.includes('shirt') }">{{ hintText('shirt') }}</span>
+              </div>
+            </div>
+            <div class="wi-name" :class="{ on: answered, lost }">{{ current?.name }}</div>
           </div>
+        </Transition>
 
-          <Transition name="round-fade" mode="out-in">
-            <div :key="roundKey" class="relative flex flex-col items-center gap-3">
-              <!-- Foto blureada (se revela al responder) -->
-              <div v-if="current" class="w-36 h-36 sm:w-44 sm:h-44 rounded-2xl overflow-hidden shadow-xl bg-slate-700/60 border border-white/10 no-peek" @contextmenu.prevent>
-                <img :src="current.image" :alt="answered ? current.name : '?'"
-                     :style="{ filter: 'blur(' + (answered ? 0 : blurPx()) + 'px)' }"
-                     class="w-full h-full object-cover blur-img" draggable="false"
-                     @dragstart.prevent @contextmenu.prevent @error="e => e.target.style.display='none'" />
-              </div>
-
-              <!-- Nombre al acertar / perder -->
-              <div v-if="answered" class="text-center -mt-0.5">
-                <p :class="lastResultOk ? 'text-emerald-400' : 'text-white'" class="font-display font-bold text-lg leading-tight">{{ current?.name }}</p>
-                <p v-if="!lastResultOk && lives === 0" class="text-rose-400/80 text-xs mt-0.5">No lo adivinaste</p>
-              </div>
-              <p v-else class="text-slate-300 text-sm font-medium">¿Quién es este jugador?</p>
-
-              <!-- Pistas: posición, país, equipo -->
-              <div class="flex items-center justify-center gap-2 flex-wrap">
-                <span v-if="posBadge()" class="wi-chip">{{ posBadge() }}</span>
-                <span v-if="flagSrc()" class="wi-chip"><img :src="flagSrc()" alt="país" class="w-6 h-4 object-cover rounded-sm" /></span>
-                <span v-if="teamLogo()" class="wi-chip"><img :src="teamLogo()" alt="equipo" class="w-5 h-5 object-contain" @error="e => e.target.style.display='none'" /></span>
-              </div>
-            </div>
-          </Transition>
+        <div v-if="!answered" class="mt-1">
+          <PlayerSearch ref="search" :show-team="false" @pick="onPick" />
+          <div v-if="tried.length" class="wi-tried">
+            <span v-for="p in tried" :key="p.id">{{ p.name }}</span>
+          </div>
+        </div>
+        <div v-else-if="mode !== 'challenge'" class="text-center">
+          <button class="rounded-full bg-white/10 hover:bg-white/15 border border-white/15 px-5 py-2 text-sm text-slate-200 transition" @click="nextRound">
+            Otro jugador
+          </button>
         </div>
 
-        <!-- INPUT -->
-        <div v-if="!answered" class="mt-3">
-          <form class="relative w-full max-w-md mx-auto" @submit.prevent="submit">
-            <div class="relative">
-              <input v-model="guess" @focus="suggestOpen=true" @input="suggestOpen = (guess?.length||0) >= 3; selectedIndex=-1"
-                     @keydown.down.prevent="moveSelection(1)" @keydown.up.prevent="moveSelection(-1)" @keydown.enter.prevent="onEnterKey"
-                     type="text" placeholder="Escribí el nombre del jugador..."
-                     class="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300/30" />
-              <div v-if="suggestOpen && suggestions.length>0" class="absolute z-30 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl max-h-56 overflow-auto">
-                <ul>
-                  <li v-for="(p,idx) in suggestions" :key="p.id" @click.prevent="chooseSuggestion(p)"
-                      :class="['px-3 py-2 cursor-pointer text-slate-200 flex items-center gap-2', idx===selectedIndex ? 'bg-white/10' : 'hover:bg-white/5']">
-                    <img :src="p.image" :alt="p.name" class="h-6 w-6 object-cover rounded flex-shrink-0" @error="e => e.target.style.display='none'" />
-                    <span class="truncate">{{ p.name }}</span>
-                    <span v-if="p.teamName" class="text-slate-500 text-xs ml-auto flex-shrink-0">{{ p.teamName }}</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div class="flex items-center justify-center mt-2">
-              <button type="submit" :disabled="(guess?.length || 0) < 3" class="rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 text-slate-900 px-6 py-2 text-sm font-bold disabled:opacity-40 transition shadow-lg shadow-amber-500/25">Adivinar</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- Summary Popup -->
         <GameSummaryPopup
           :show="showSummary"
           :corrects="gameWon ? 1 : 0"
@@ -371,8 +296,6 @@ export default {
           :backPath="backPath()"
           @close="showSummary = false"
         />
-        
-        <div v-if="timeOver && mode==='challenge'" class="mt-3 text-center text-amber-300 text-sm">Tiempo agotado. ¡Buen intento!</div>
       </div>
     </div>
   </GameShell>
@@ -387,42 +310,64 @@ export default {
   transform: translateY(6px) scale(0.99);
 }
 
-/* Chips de pistas (posición / país / equipo) */
-.wi-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 30px;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgb(226, 232, 240);
-  font-size: 12px;
-  font-weight: 700;
+.wi-card {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: linear-gradient(160deg, #1f2a5e, #0b1024);
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+@media (max-width: 400px) {
+  .wi-card { grid-template-columns: 92px minmax(0, 1fr); }
 }
 
-/* reserved for game local styles */
-/* Smooth blur change on reveal/hints */
-.blur-img { transition: filter 220ms ease; }
-.no-peek {
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-  pointer-events: auto;
+.wi-sil {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 30%, #2d3a7c, #0b1024);
 }
-.no-peek img {
-  -webkit-user-drag: none;
-  user-select: none;
-  -webkit-user-select: none;
+.wi-sil img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: filter 0.5s; user-select: none; }
+.wi-sil .wi-q { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-display, inherit); font-size: 40px; font-weight: 800; color: rgba(255, 255, 255, 0.3); }
+.wi-sweep {
+  position: absolute; inset: -20%;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.75) 50%, transparent 60%);
+  transform: translateX(-120%);
   pointer-events: none;
+  animation: wi-sweep 0.8s ease-out;
 }
+@keyframes wi-sweep { to { transform: translateX(120%); } }
 
-/* Lives loss animation using TransitionGroup */
-.life-leave-active { transition: transform 220ms ease, opacity 220ms ease; }
-.life-leave-to { transform: scale(0); opacity: 0; }
-.life-enter-active { transition: transform 160ms ease, opacity 160ms ease; }
-.life-enter-from { transform: scale(0.8); opacity: 0.6; }
+.wi-data { display: grid; gap: 7px; align-content: center; min-width: 0; }
+.wi-row { display: flex; align-items: center; gap: 9px; min-width: 0; font-weight: 800; text-transform: uppercase; font-size: 16px; letter-spacing: 0.02em; color: #eef1ff; }
+.wi-crest { width: 26px; height: 26px; object-fit: contain; flex: none; }
+.wi-flag { width: 30px; height: 20px; object-fit: cover; border-radius: 3px; flex: none; }
+.wi-t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wi-pos { font-weight: 400; font-size: 15px; background: #fff; color: #0b1024; padding: 2px 10px; border-radius: 6px; font-weight: 800; }
+
+.wi-extra { display: flex; gap: 6px; flex-wrap: wrap; }
+.wi-extra span { font-weight: 800; text-transform: uppercase; font-size: 12px; padding: 3px 9px; border-radius: 6px; border: 1.5px dashed rgba(255, 255, 255, 0.2); color: #5b6388; }
+.wi-extra span.on { border: 0; background: #fef3c7; color: #422006; transform: rotate(-3deg); animation: wi-stick 0.45s cubic-bezier(.34,1.56,.64,1); }
+@keyframes wi-stick { from { transform: scale(0) rotate(-12deg); } to { transform: scale(1) rotate(-3deg); } }
+
+.wi-name {
+  position: absolute; left: 12px; width: 96px; bottom: 12px;
+  padding: 14px 4px 6px; border-radius: 0 0 12px 12px; text-align: center;
+  font-family: var(--font-display, inherit); font-size: 16px; line-height: 1.05; text-transform: uppercase; color: #fff;
+  background: linear-gradient(transparent, rgba(0,0,0,.85));
+  opacity: 0; pointer-events: none;
+}
+.wi-name.on { animation: wi-slam 0.45s cubic-bezier(.16,1,.3,1) forwards; animation-delay: 0.2s; }
+.wi-name.lost { color: #fca5a5; }
+@keyframes wi-slam { from { opacity: 0; transform: scale(2.2); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+
+.wi-tried { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; }
+.wi-tried span { font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: rgba(239,68,68,.14); color: #fca5a5; text-decoration: line-through; }
 </style>
-
-
