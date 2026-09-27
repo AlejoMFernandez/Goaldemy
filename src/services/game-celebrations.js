@@ -18,6 +18,7 @@ export const GAME_TYPES = {
   CHAIN: 'chain',           // Cadena de comparaciones (Higher or Lower)
   PUZZLE: 'puzzle',         // Agrupación lógica (Connections)
   GRID: 'grid',             // Grilla con restricciones cruzadas
+  SQUAD: 'squad',           // Armar un equipo contra reloj (Once Ideal)
 }
 
 /**
