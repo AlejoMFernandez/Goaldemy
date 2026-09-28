@@ -27,7 +27,14 @@ const EMOJI_MAP = {
   '⚽': 'ball', '👟': 'boot', '🧤': 'gloves', '🏅': 'medal',
   '🏆': 'trophy', '🐐': 'goat', '👑': 'crown', '⭐': 'star', '🛡️': 'shield', '🛡': 'shield',
 }
-const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel', 'chat', 'butterfly', 'globe', 'comet', 'phoenix', 'rank_bronze', 'rank_silver', 'rank_gold', 'rank_emerald', 'rank_cyan', 'rank_champion', 'rank_figura', 'rank_idolo', 'rank_icono', 'rank_leyenda', 'rank_goat'])
+// Vestuario nuevo (09/2026): los 23 íconos aprobados. Solo existen como arte raster (.webp), sin SVG:
+// tienen que estar en KNOWN (si no, la clave se toma por desconocida y se dibuja el texto crudo)
+// y en RASTER_ICONS (para usar el .webp).
+const VESTUARIO_ICONS = [
+  'bufanda', 'bombo', 'corneta', 'silbato', 'banderin', 'tarjeta_roja', 'cinta', 'cronometro', 'pizarra', 'tunel', 'lobo', 'toro',
+  'leon', 'tiburon', 'aguila', 'dragon', 'zapatillas', 'arco_oxidado', 'pelota_trapo', 'taco', 'botin_alado', 'pelota_oro', 'camiseta_10',
+]
+const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel', 'chat', 'butterfly', 'globe', 'comet', 'phoenix', 'rank_bronze', 'rank_silver', 'rank_gold', 'rank_emerald', 'rank_cyan', 'rank_champion', 'rank_figura', 'rank_idolo', 'rank_icono', 'rank_leyenda', 'rank_goat', ...VESTUARIO_ICONS])
 
 const key = computed(() => {
   const k = (props.iconKey || '').trim()
@@ -59,10 +66,7 @@ const accent = computed(() => ACCENT[props.rarity] || ACCENT.common)
 // Arte raster opcional (DROP-IN): si existe /cosmetics/icons/<key>.webp se usa como
 // imagen full-bleed; si el archivo no existe (404) @error cae al SVG. Solo íconos cuadrados
 // (no framed). Para sumar un ícono raster: pegá el .webp y agregá su clave al set.
-const RASTER_ICONS = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'sun', 'clover', 'sword', 'hat', 'laurel', 'bolt', 'flame', 'gem', 'owl', 'broom', 'chat', 'butterfly', 'globe', 'comet', 'phoenix',
-  // Vestuario nuevo (09/2026): los 23 íconos aprobados. Sin filas en la base todavía: cómo se consiguen se decide aparte.
-  'bufanda', 'bombo', 'corneta', 'silbato', 'banderin', 'tarjeta_roja', 'cinta', 'cronometro', 'pizarra', 'tunel', 'lobo', 'toro',
-  'leon', 'tiburon', 'aguila', 'dragon', 'zapatillas', 'arco_oxidado', 'pelota_trapo', 'taco', 'botin_alado', 'pelota_oro', 'camiseta_10'])
+const RASTER_ICONS = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'sun', 'clover', 'sword', 'hat', 'laurel', 'bolt', 'flame', 'gem', 'owl', 'broom', 'chat', 'butterfly', 'globe', 'comet', 'phoenix', ...VESTUARIO_ICONS])
 const rasterFailed = ref(false)
 // ¿Hay arte raster para esta clave? (independiente de framed)
 const rasterAvailable = computed(() => RASTER_ICONS.has(key.value) && !RASTER_FAILED.has(key.value) && !rasterFailed.value)

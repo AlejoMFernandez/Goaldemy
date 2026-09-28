@@ -20,7 +20,15 @@ const props = defineProps({
   premium: { type: Boolean, default: false }, // banners viejos: gradiente que se mueve (PRO)
   animate: { type: Boolean, default: true },
   score: { type: String, default: '3 - 0' },  // "Marcador del estadio"
+  // Banner de ancho completo (perfil): el dibujo se ancla al borde derecho de la COLUMNA de
+  // contenido (el padre, menos su padding), no al de la pantalla, y en lg+ nunca queda a menos
+  // de `edgeGap` px del borde de la ventana (ahí vive la barra de amigos: 58 px + right-5).
+  contain: { type: Boolean, default: false },
+  edgeGap: { type: Number, default: 96 },
 })
+
+// El dibujo escala por alto y no ocupa más de este % del ancho del banner (modo contain).
+const SCENE_MAX_SHARE = 0.6
 
 const el = ref(null)
 const scene = computed(() => isSceneBanner(props.styleKey))
@@ -30,7 +38,8 @@ const ready = ref(false)
 const onScreen = ref(true)
 const reduced = ref(false)
 const still = computed(() => !props.animate || reduced.value)
-const boxStyle = computed(() => scene.value ? { '--k': k.value.toFixed(4), '--bh': bh.value + 'px' } : undefined)
+const right = ref(0) // px entre el dibujo y el borde derecho del banner
+const boxStyle = computed(() => scene.value ? { '--k': k.value.toFixed(4), '--bh': bh.value + 'px', '--bs-right': right.value.toFixed(1) + 'px' } : undefined)
 
 let ro = null
 let io = null
@@ -41,7 +50,22 @@ function measure() {
   const h = el.value?.clientHeight || 0
   if (!h) return
   bh.value = h
-  k.value = h / 120
+  let scale = h / 120
+  let gap = 0
+  if (props.contain) {
+    const r = el.value.getBoundingClientRect()
+    const parent = el.value.parentElement
+    const pr = parent?.getBoundingClientRect()
+    const padR = parent ? parseFloat(getComputedStyle(parent).paddingRight) || 0 : 0
+    const vw = document.documentElement.clientWidth // sin la barra de scroll
+    const colRight = pr ? pr.right - padR : r.right
+    const edge = vw >= 1024 ? vw - props.edgeGap : vw // lg+: lejos de la barra de amigos
+    gap = Math.max(0, r.right - Math.min(colRight, edge))
+    // por alto, sin deformar, y sin pasar del 60 % del ancho del banner
+    scale = Math.min(scale, (r.width * SCENE_MAX_SHARE) / 300)
+  }
+  k.value = scale
+  right.value = gap
   ready.value = true
 }
 
@@ -52,7 +76,12 @@ onMounted(() => {
   // .bs:not(.bs-ready) escondía las capas: banner en color plano).
   if (!el.value) return
   measure()
-  if (typeof ResizeObserver !== 'undefined') { ro = new ResizeObserver(measure); ro.observe(el.value) }
+  if (typeof ResizeObserver !== 'undefined') {
+    ro = new ResizeObserver(measure)
+    ro.observe(el.value)
+    if (props.contain && el.value.parentElement) ro.observe(el.value.parentElement)
+  }
+  if (props.contain) window.addEventListener('resize', measure)
   if (typeof IntersectionObserver !== 'undefined') {
     io = new IntersectionObserver(([e]) => { onScreen.value = e.isIntersecting })
     io.observe(el.value)
@@ -62,6 +91,7 @@ onMounted(() => {
 watch(() => props.styleKey, () => nextTick(measure))
 onBeforeUnmount(() => {
   ro?.disconnect(); io?.disconnect()
+  window.removeEventListener('resize', measure)
   try { mq?.removeEventListener?.('change', onMq) } catch { /* noop */ }
   stopClock()
 })
@@ -113,7 +143,7 @@ function tickStop() {
       <div v-if="styleKey === 'live'" class="bs-fill"><div class="bs-live-fx"></div></div>
       <div v-else-if="styleKey === 'rain'" class="bs-fill"><div class="bs-rain-fx"></div></div>
       <!-- patrón que continúa hacia la izquierda (banners anchos) -->
-      <div v-else-if="['leather', 'newspaper', 'passmap', 'commentary'].includes(styleKey)" class="bs-fill"><div class="bs-lead" :class="'bs-lead-' + styleKey"></div></div>
+      <div v-else-if="['leather', 'newspaper', 'passmap', 'commentary'].includes(styleKey)" class="bs-fill bs-lead" :class="styleKey === 'leather' ? 'bs-lead-nofade' : ''"><div :class="'bs-lead-' + styleKey"></div></div>
       <div v-else-if="styleKey === 'ticker_tape'" class="bs-fill bs-paper">
         <i v-for="(p, i) in papers" :key="i" :style="{ left: p.left + '%', animationDuration: p.dur + 's', animationDelay: p.delay + 's', background: p.bg }"></i>
       </div>

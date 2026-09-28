@@ -47,7 +47,7 @@ const props = defineProps({
          lado de otros), pero pegado ABAJO del box (no centrado verticalmente) para
          que quede pegado a la rareza que va justo debajo, no flotando en el medio. -->
     <div v-else class="flex items-end justify-center text-center px-1 text-[11px] leading-tight" :style="{ width: size + 'px', height: size + 'px' }">
-      <span :class="titleClass(cos.rarity)">{{ cos.name }}</span>
+      <span class="ttl-sm" :class="[titleClass(cos.rarity), (cos.name || '').split(' ').some(w => w.length >= 9) ? 'text-[9px]' : 'text-[10px]']">{{ cos.name }}</span>
     </div>
   </div>
 </template>
