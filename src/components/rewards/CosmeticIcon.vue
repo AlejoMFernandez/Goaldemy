@@ -59,7 +59,10 @@ const accent = computed(() => ACCENT[props.rarity] || ACCENT.common)
 // Arte raster opcional (DROP-IN): si existe /cosmetics/icons/<key>.webp se usa como
 // imagen full-bleed; si el archivo no existe (404) @error cae al SVG. Solo íconos cuadrados
 // (no framed). Para sumar un ícono raster: pegá el .webp y agregá su clave al set.
-const RASTER_ICONS = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'sun', 'clover', 'sword', 'hat', 'laurel', 'bolt', 'flame', 'gem', 'owl', 'broom', 'chat', 'butterfly', 'globe', 'comet', 'phoenix'])
+const RASTER_ICONS = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'sun', 'clover', 'sword', 'hat', 'laurel', 'bolt', 'flame', 'gem', 'owl', 'broom', 'chat', 'butterfly', 'globe', 'comet', 'phoenix',
+  // Vestuario nuevo (09/2026): los 23 íconos aprobados. Sin filas en la base todavía: cómo se consiguen se decide aparte.
+  'bufanda', 'bombo', 'corneta', 'silbato', 'banderin', 'tarjeta_roja', 'cinta', 'cronometro', 'pizarra', 'tunel', 'lobo', 'toro',
+  'leon', 'tiburon', 'aguila', 'dragon', 'zapatillas', 'arco_oxidado', 'pelota_trapo', 'taco', 'botin_alado', 'pelota_oro', 'camiseta_10'])
 const rasterFailed = ref(false)
 // ¿Hay arte raster para esta clave? (independiente de framed)
 const rasterAvailable = computed(() => RASTER_ICONS.has(key.value) && !RASTER_FAILED.has(key.value) && !rasterFailed.value)

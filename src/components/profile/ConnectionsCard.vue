@@ -1,8 +1,9 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { getEquippedCosmeticsBatch, frameStyle, iconBgStyle, iconThemeBg } from '../../services/cosmetics'
+import { getEquippedCosmeticsBatch, iconBgStyle, iconThemeBg } from '../../services/cosmetics'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 import ProfileHoverCard from './ProfileHoverCard.vue'
+import AvatarFrame from '../common/AvatarFrame.vue'
 
 const props = defineProps({
   followerCount: { type: Number, default: 0 },
@@ -44,13 +45,13 @@ function initial(c) { return ((c.display_name || c.email || '?').trim()[0] || '?
         @mouseleave="hoveredId = null"
       >
         <router-link :to="`/u/${c.id}`" class="block">
-          <div class="size-11 rounded-[14px] transition-transform hover:scale-110" :class="[frameStyle(cos[c.id]?.frameKey || 'none').wrap, frameStyle(cos[c.id]?.frameKey || 'none').pad]">
+          <AvatarFrame class="transition-transform hover:scale-110" :frame-key="cos[c.id]?.frameKey || 'none'" :size="44" rounded="rounded-[14px]" :level="cos[c.id]?.frameLevel ?? null" :streak="cos[c.id]?.dailyStreak || 0">
             <div class="w-full h-full rounded-[11px] overflow-hidden grid place-items-center text-xs font-bold text-white" :class="cos[c.id]?.iconGlyph ? iconThemeBg(cos[c.id].iconGlyph) : iconBgStyle(cos[c.id]?.iconBg || 'emerald')">
               <CosmeticIcon v-if="cos[c.id]?.iconGlyph" :iconKey="cos[c.id].iconGlyph" :size="28" />
               <img v-else-if="c.avatar_url" :src="c.avatar_url" class="w-full h-full object-cover" alt="" />
               <span v-else>{{ initial(c) }}</span>
             </div>
-          </div>
+          </AvatarFrame>
         </router-link>
 
         <!-- Previsualización tipo Steam (al hover) -->

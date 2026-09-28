@@ -1,9 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getEquippedCosmetics, frameStyle, bannerStyle, iconBgStyle, iconThemeBg, rarity } from '../../services/cosmetics'
+import { getEquippedCosmetics, iconBgStyle, iconThemeBg } from '../../services/cosmetics'
 import { getUserLevel } from '../../services/xp'
 import { getTierForLevel } from '../../services/tiers'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
+import AvatarFrame from '../common/AvatarFrame.vue'
+import BannerScene from '../common/BannerScene.vue'
 
 const props = defineProps({
   userId: { type: String, required: true },
@@ -31,16 +33,16 @@ const initial = computed(() => (props.name || '?').trim()[0]?.toUpperCase() || '
 <template>
   <div class="w-60 rounded-xl border border-white/15 bg-slate-900 shadow-2xl shadow-black/50 overflow-hidden">
     <!-- Banner de fondo -->
-    <div class="h-14 relative" :class="[bannerStyle(eq?.bannerKey || 'default'), eq?.bannerPremium ? 'anim-pan' : '']"></div>
+    <BannerScene class="h-14" :style-key="eq?.bannerKey || 'default'" :premium="!!eq?.bannerPremium" :animate="false" />
     <div class="relative z-10 px-3 pb-3 -mt-7">
       <!-- Avatar (ícono + borde) -->
-      <div class="inline-block size-12 rounded-xl" :class="[frameStyle(eq?.frameKey || 'none').wrap, frameStyle(eq?.frameKey || 'none').pad, eq?.framePremium ? 'anim-pan' : '']">
-        <div class="w-full h-full rounded-[9px] overflow-hidden grid place-items-center text-white font-bold ring-2 ring-slate-900" :class="eq?.iconGlyph ? iconThemeBg(eq.iconGlyph) : iconBgStyle(eq?.iconBg || 'emerald')">
+      <AvatarFrame :frame-key="eq?.frameKey || 'none'" :size="48" rounded="rounded-xl" :premium="!!eq?.framePremium" :level="level" :streak="eq?.dailyStreak || 0">
+        <div class="w-full h-full rounded-[9px] overflow-hidden grid place-items-center text-white font-bold border-2 border-slate-900" :class="eq?.iconGlyph ? iconThemeBg(eq.iconGlyph) : iconBgStyle(eq?.iconBg || 'emerald')">
           <CosmeticIcon v-if="eq?.iconGlyph" :iconKey="eq.iconGlyph" :size="34" />
           <img v-else-if="avatarUrl" :src="avatarUrl" class="w-full h-full object-cover" alt="" />
           <span v-else>{{ initial }}</span>
         </div>
-      </div>
+      </AvatarFrame>
       <!-- Nombre + rango -->
       <p class="mt-1.5 text-sm font-bold text-white truncate">{{ name }}</p>
       <div class="mt-1.5 flex items-center gap-1.5">

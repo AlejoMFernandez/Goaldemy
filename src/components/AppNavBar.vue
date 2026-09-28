@@ -124,6 +124,8 @@ export default {
                 frameKey: c.frameKey || 'none',
                 iconGlyph: c.iconGlyph || '',
                 iconBg: c.iconBg || 'emerald',
+                streak: c.dailyStreak || 0,
+                level: c.frameLevel ?? null,
             }
         },
         userLabel(u) { return u?.display_name || u?.username || u?.email || 'Usuario' },
@@ -147,7 +149,7 @@ export default {
             try {
                 const { getEquippedCosmetics } = await import('../services/cosmetics')
                 const e = await getEquippedCosmetics(id)
-                if (e) this.equipped = { frameKey: e.frameKey || 'none', iconGlyph: e.iconGlyph || '', iconBg: e.iconBg || 'emerald', framePremium: !!e.framePremium }
+                if (e) this.equipped = { frameKey: e.frameKey || 'none', iconGlyph: e.iconGlyph || '', iconBg: e.iconBg || 'emerald', framePremium: !!e.framePremium, dailyStreak: e.dailyStreak || 0 }
             } catch { /* sin cosméticos: queda el default */ }
         },
         // Dropdown controls (less sensitive hover)
@@ -669,14 +671,14 @@ export default {
                         <!-- User avatar dropdown (desktop) -->
                         <li class="relative">
                             <button data-user-button data-avatar-anchor aria-label="Menú de usuario" @click.stop="menuOpen = !menuOpen" class="inline-flex items-center rounded-full hover:opacity-90 hover:scale-105 transition active:scale-95">
-                                <UserAvatar :size="38" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" />
+                                <UserAvatar :size="38" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" :level="levelInfo?.level ?? null" :streak="equipped.dailyStreak || 0" />
                             </button>
                             <transition name="fade-slide">
                             <div v-if="menuOpen" data-user-menu class="absolute right-0 mt-2 w-64 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-hidden z-50">
                                 <!-- Cabecera: avatar + nivel/XP -->
                                 <div class="px-3 py-3 border-b border-white/10">
                                     <div class="flex items-center gap-2.5">
-                                        <UserAvatar :size="40" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" />
+                                        <UserAvatar :size="40" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" :level="levelInfo?.level ?? null" :streak="equipped.dailyStreak || 0" />
                                         <div class="min-w-0">
                                             <div class="font-display font-bold text-white truncate leading-tight">{{ user.display_name || user.email || 'Mi cuenta' }}</div>
                                             <div class="text-[11px] text-slate-400">Nivel {{ levelInfo?.level ?? 1 }} · {{ xpNow }} XP</div>
@@ -730,7 +732,7 @@ export default {
                                     </template>
                                     <template v-else>
                                         <button data-user-button data-avatar-anchor aria-label="Menú de usuario" @click.stop="menuOpen = !menuOpen" class="inline-flex items-center gap-2 rounded-full border border-white/10 px-2 py-1.5 text-sm text-slate-200 hover:border-white/20">
-                                            <UserAvatar :size="28" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" />
+                                            <UserAvatar :size="28" :avatar-url="user.avatar_url" :initial="avatarInitial()" :frame-key="equipped.frameKey" :icon-glyph="equipped.iconGlyph" :icon-bg="equipped.iconBg" :frame-premium="equipped.framePremium" :level="levelInfo?.level ?? null" :streak="equipped.dailyStreak || 0" />
                                             <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" class="text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
                                         </button>
                                         <div v-if="menuOpen" data-user-menu class="absolute right-0 mt-2 w-64 rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-xl overflow-hidden z-50">

@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FULVO · Vestuario nuevo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#08110e;--bg2:#0d1a16;--card:#11201b;--line:rgba(255,255,255,.08);
+  --tx:#e8f3ee;--mut:#8fa89f;--em:#10b981;--cy:#22d3ee;--gold:#fbbf24;
+  --common:#cbd5e1;--rare:#38bdf8;--epic:#e879f9;--leg:#fbbf24;
+  --disp:'Anton',Impact,'Arial Narrow',sans-serif;--num:'Barlow Condensed','Arial Narrow',sans-serif;--ui:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font:14px/1.5 var(--ui);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 110px}
+h1,h2{font-family:var(--disp);font-weight:400;letter-spacing:.01em;text-wrap:balance;margin:0;line-height:1}
+h1{font-size:clamp(44px,8vw,86px);text-transform:uppercase}
+h1 span{background:linear-gradient(90deg,var(--em),var(--cy));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:clamp(30px,5vw,46px);text-transform:uppercase}
+.lead{color:var(--mut);max-width:62ch;margin:14px 0 0;font-size:15px}
+.hero{padding-bottom:28px;border-bottom:1px solid var(--line)}
+.count{display:flex;gap:26px;flex-wrap:wrap;margin-top:22px;font-family:var(--num);text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-size:14px}
+.count b{display:block;font-size:34px;color:var(--tx);line-height:1;font-weight:700}
+.count b i{font-style:normal;color:var(--em);font-size:22px}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+nav.jump a{color:var(--tx);text-decoration:none;border:1px solid var(--line);padding:6px 12px;border-radius:99px;font-family:var(--num);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+nav.jump a:hover{border-color:var(--em)}
+section{padding-top:56px}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+.sec-head p{color:var(--mut);margin:6px 0 0;max-width:60ch}
+.tag{font-family:var(--num);font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:12px}
+.r-common{color:var(--common)}.r-rare{color:var(--rare)}.r-epic{color:var(--epic)}.r-legendary{color:var(--leg)}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));margin-top:18px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;position:relative}
+.item h3{margin:0;font-family:var(--num);font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;line-height:1.05}
+.item p{margin:0;color:var(--mut);font-size:13px}
+.item .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.like{background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:99px;padding:4px 10px;font:600 12px var(--ui);cursor:pointer}
+.like[aria-pressed="true"]{background:var(--em);border-color:var(--em);color:#04120c}
+.like:focus-visible,.copy:focus-visible,button:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+/* ---------- prompts ---------- */
+.base{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:18px;display:grid;gap:12px}
+.base pre{white-space:pre-wrap;margin:0;font:13px/1.55 ui-monospace,Menlo,Consolas,monospace;color:#cfe7dd}
+.tips{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:14px}
+.tips div{border-left:2px solid var(--em);padding:2px 0 2px 12px;color:var(--mut);font-size:13px}
+.tips b{color:var(--tx)}
+.coll-h{margin:34px 0 0;font-family:var(--num);font-size:15px;text-transform:uppercase;letter-spacing:.14em;color:var(--mut);display:flex;gap:10px;align-items:center}
+.coll-h:after{content:"";flex:1;height:1px;background:var(--line)}
+.ico{width:100%;aspect-ratio:1;max-width:100%;border-radius:10px;display:grid;place-items:center;font-family:var(--disp);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);position:relative;overflow:hidden}
+.ico span{position:relative;z-index:1;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+.prompt{font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;color:#b9d3c9;background:rgba(0,0,0,.25);border-radius:8px;padding:10px;max-height:130px;overflow:auto}
+.copy{background:var(--em);color:#04120c;border:0;border-radius:8px;padding:8px 12px;font:600 13px var(--ui);cursor:pointer}
+.copy.done{background:var(--cy)}
+/* ---------- avatar + frames ---------- */
+.stage{height:150px;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,#16302a,#0a1512 70%);border-radius:10px}
+.fr{width:108px;height:108px;border-radius:50%;padding:7px;position:relative;display:grid;place-items:center}
+.av{width:100%;height:100%;border-radius:50%;background:#3a4643 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='17' fill='%23626f6b'/%3E%3Cpath d='M18 96c2-22 16-32 32-32s30 10 32 32z' fill='%23626f6b'/%3E%3C/svg%3E") center/cover;position:relative;z-index:2;box-shadow:inset 0 0 0 2px rgba(0,0,0,.35)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes flick{0%,100%{filter:brightness(1) blur(0)}50%{filter:brightness(1.35) blur(.4px)}}
+/* común */
+.f-tiza{padding:6px}
+.f-tiza svg{position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);z-index:3}
+.f-cesped{background:repeating-conic-gradient(#2f9e57 0 15deg,#257f46 15deg 30deg);box-shadow:0 0 0 2px #e8f3ee inset}
+.f-red{background:repeating-linear-gradient(45deg,rgba(255,255,255,.85) 0 1.5px,transparent 1.5px 7px),repeating-linear-gradient(-45deg,rgba(255,255,255,.85) 0 1.5px,transparent 1.5px 7px),#1b2b27;box-shadow:0 0 0 2px #cfd8d4}
+/* rara */
+.f-bufanda{background:repeating-conic-gradient(#38bdf8 0 12deg,#f8fafc 12deg 24deg);padding:9px}
+.f-bufanda:before{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(0,0,0,.18) 1px,transparent 1.6px) 0 0/4px 4px}
+.f-bufanda i{position:absolute;bottom:-12px;right:6px;width:22px;height:26px;background:repeating-linear-gradient(90deg,#38bdf8 0 2px,transparent 2px 4px);transform:rotate(-24deg);z-index:1}
+.f-pelota{background:radial-gradient(circle,#111 3.2px,transparent 3.6px) 0 0/12px 12px,radial-gradient(circle,#111 2px,transparent 2.4px) 6px 6px/12px 12px,#f5f5f4;box-shadow:0 0 16px rgba(56,189,248,.35)}
+.f-capitan{background:linear-gradient(135deg,#fde68a,#d97706 55%,#92400e)}
+.f-capitan b{position:absolute;right:-6px;bottom:6px;z-index:4;width:34px;height:22px;border-radius:5px;background:linear-gradient(#fbbf24,#b45309);color:#1c1204;font:700 16px/22px var(--num);text-align:center;transform:rotate(-12deg);box-shadow:0 3px 8px rgba(0,0,0,.5)}
+.f-alambrado{background:repeating-linear-gradient(60deg,transparent 0 5px,#94a3b8 5px 6.5px),repeating-linear-gradient(-60deg,transparent 0 5px,#94a3b8 5px 6.5px),#2a3432;box-shadow:0 0 0 2px #64748b}
+/* épica */
+.f-led{background:#1a0f02;box-shadow:0 0 18px rgba(251,191,36,.35)}
+.f-led:before{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#fbbf24 1.3px,transparent 1.8px) 0 0/5px 5px;-webkit-mask:conic-gradient(#000 0 70%,rgba(0,0,0,.25) 0);mask:conic-gradient(#000 0 70%,rgba(0,0,0,.25) 0);animation:spin 2.4s steps(24) infinite}
+.f-reflectores{background:radial-gradient(circle at 50% 0,#fff 0 4px,transparent 5px),radial-gradient(circle at 100% 50%,#fff 0 4px,transparent 5px),radial-gradient(circle at 50% 100%,#fff 0 4px,transparent 5px),radial-gradient(circle at 0 50%,#fff 0 4px,transparent 5px),conic-gradient(from 0deg,#0f172a,#334155,#0f172a,#334155,#0f172a);animation:spin 9s linear infinite;box-shadow:0 0 24px rgba(255,255,255,.25)}
+.f-reflectores .av{animation:spin 9s linear infinite reverse}
+.f-fuego{background:conic-gradient(from 0deg,#f97316,#facc15,#dc2626,#fb923c,#fde047,#ef4444,#f97316);animation:spin 3s linear infinite,flick .35s ease-in-out infinite;box-shadow:0 0 22px rgba(249,115,22,.7),0 -6px 18px rgba(250,204,21,.45)}
+.f-fuego .av{animation:spin 3s linear infinite reverse}
+.f-laurel{background:linear-gradient(135deg,#fde68a,#b45309);padding:5px}
+.f-laurel svg{position:absolute;inset:-14px;width:calc(100% + 28px);height:calc(100% + 28px);z-index:3}
+/* legendaria */
+.f-estrellas{background:linear-gradient(135deg,#fff7cc,#fbbf24 40%,#b45309);box-shadow:0 0 24px rgba(251,191,36,.55)}
+.f-estrellas .orb{position:absolute;inset:-16px;animation:spin 8s linear infinite;z-index:4}
+.f-estrellas .orb i{position:absolute;left:50%;top:0;width:14px;height:14px;margin-left:-7px;background:#fde047;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);filter:drop-shadow(0 0 4px #fbbf24);transform-origin:7px 70px}
+.f-holo{background:conic-gradient(from var(--a,0deg),#f0abfc,#67e8f9,#bef264,#fde68a,#f0abfc);animation:holo 4s linear infinite;box-shadow:0 0 22px rgba(232,121,249,.45)}
+.f-holo:after{content:"";position:absolute;inset:0;border-radius:50%;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.8) 45%,transparent 60%) 0 0/250% 100%;animation:shine 2.2s linear infinite;z-index:1}
+@property --a{syntax:'<angle>';inherits:false;initial-value:0deg}
+@keyframes holo{to{--a:360deg}}
+@keyframes shine{from{background-position:150% 0}to{background-position:-100% 0}}
+.f-tormenta{background:conic-gradient(#0e7490,#22d3ee,#0c4a6e,#67e8f9,#0e7490);box-shadow:0 0 20px rgba(34,211,238,.6);animation:zap 2.6s steps(1) infinite}
+.f-tormenta svg{position:absolute;inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);z-index:4;animation:bolt 2.6s steps(1) infinite}
+@keyframes zap{0%,100%{filter:none}62%{filter:brightness(2) saturate(1.4)}66%{filter:none}70%{filter:brightness(1.8)}}
+@keyframes bolt{0%,100%{opacity:0}62%{opacity:1}66%{opacity:0}70%{opacity:1}74%{opacity:0}}
+/* bordes vivos */
+.f-racha0{background:#334155}
+.f-racha{background:conic-gradient(#f97316 0 72%,#334155 72% 100%);box-shadow:0 0 16px rgba(249,115,22,.5)}
+.f-racha b{position:absolute;top:-8px;right:-4px;z-index:4;background:#f97316;color:#1a0a02;font:700 14px/1 var(--num);padding:4px 6px;border-radius:6px}
+.f-nivel{background:linear-gradient(135deg,#10b981,#22d3ee)}
+.f-nivel b{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);z-index:4;background:#08110e;border:2px solid #22d3ee;color:#e8f3ee;font:700 15px/1 var(--num);padding:3px 9px;border-radius:99px;letter-spacing:.04em;white-space:nowrap}
+/* ---------- banners ---------- */
+.bn{height:120px;border-radius:10px;position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;padding:0 16px}
+.bn .mini{width:56px;height:56px;border-radius:50%;padding:3px;background:linear-gradient(135deg,#10b981,#22d3ee);position:relative;z-index:3;flex:none}
+.bn .who{position:relative;z-index:3;text-shadow:0 1px 8px rgba(0,0,0,.7)}
+.bn .who b{display:block;font:700 22px/1 var(--num);text-transform:uppercase;letter-spacing:.02em}
+.bn .who small{color:rgba(255,255,255,.75);font-size:12px}
+.bn>.fx{position:absolute;inset:0;z-index:1}
+.b-rayas{background:repeating-linear-gradient(90deg,#2e8b4f 0 34px,#277a45 34px 68px)}
+.b-rayas .fx{background:radial-gradient(circle at 78% 50%,transparent 38px,rgba(255,255,255,.8) 39px 41px,transparent 42px),linear-gradient(90deg,transparent calc(78% - 1px),rgba(255,255,255,.8) calc(78% - 1px) calc(78% + 1px),transparent 0)}
+.b-pizarra{background:radial-gradient(ellipse at 30% 30%,#1f4a3a,#12291f)}
+.b-marcador{background:#050505}
+.b-marcador .fx{display:flex;align-items:center;justify-content:flex-end;padding-right:18px;font:700 50px/1 var(--num);color:#fbbf24;letter-spacing:.08em;text-shadow:0 0 12px rgba(245,158,11,.7)}
+.b-marcador .fx:after{content:"";position:absolute;inset:0;background:radial-gradient(circle,transparent 1.4px,rgba(5,5,5,.7) 1.9px) 0 0/4px 4px}
+.b-potrero{background:linear-gradient(#f97316 0%,#be185d 45%,#3b0764 70%)}
+.b-potrero .fx{background:linear-gradient(transparent 72%,#6b3a1e 72%),repeating-linear-gradient(60deg,transparent 0 9px,rgba(0,0,0,.55) 9px 10px),repeating-linear-gradient(-60deg,transparent 0 9px,rgba(0,0,0,.55) 9px 10px);-webkit-mask:linear-gradient(#000,#000);}
+.b-potrero .sun{position:absolute;right:22%;top:26%;width:46px;height:46px;border-radius:50%;background:#fde68a;box-shadow:0 0 40px #fbbf24;z-index:0}
+.b-tunel{background:repeating-radial-gradient(ellipse at 80% 50%,#1e293b 0 14px,#0f172a 14px 28px)}
+.b-tunel .fx{background:radial-gradient(ellipse 60px 44px at 80% 50%,#fff,#d1fae5 40%,rgba(16,185,129,.35) 70%,transparent 100%);animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.7;transform:scale(1.06)}}
+.b-tribuna{background:linear-gradient(#0b1220,#1e293b)}
+.b-tribuna .fx{background:radial-gradient(circle at 50% 30%,#475569 4px,transparent 4.6px) 0 0/12px 13px,radial-gradient(ellipse 5px 7px at 50% 80%,#334155 98%,transparent) 0 0/12px 13px}
+.flag{position:absolute;bottom:34px;width:28px;height:18px;z-index:2;transform-origin:left center;animation:wave 1.1s ease-in-out infinite alternate}
+.flag:before{content:"";position:absolute;left:0;top:0;width:2px;height:40px;background:#cbd5e1}
+@keyframes wave{from{transform:skewY(-8deg) scaleX(.9)}to{transform:skewY(8deg) scaleX(1.05)}}
+.b-lluvia{background:linear-gradient(#020617,#0f2a24)}
+.b-lluvia .fx{background:repeating-linear-gradient(100deg,transparent 0 12px,rgba(186,230,253,.35) 12px 13px) 0 0/40px 60px;animation:rain .5s linear infinite}
+.b-lluvia .cone{position:absolute;right:10%;top:-10px;width:160px;height:150px;background:linear-gradient(rgba(255,255,255,.45),transparent);clip-path:polygon(45% 0,55% 0,100% 100%,0 100%);z-index:0}
+@keyframes rain{to{background-position:-12px 60px}}
+.b-bengalas{background:#12060a}
+.b-bengalas .fx{background:radial-gradient(circle at 20% 70%,rgba(239,68,68,.85),transparent 40%),radial-gradient(circle at 60% 30%,rgba(16,185,129,.7),transparent 42%),radial-gradient(circle at 90% 75%,rgba(239,68,68,.7),transparent 38%);filter:blur(10px);animation:drift 6s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translateX(-18px) scale(1.12)}}
+.b-papelitos{background:linear-gradient(#0c4a6e,#082f49)}
+.b-papelitos .fx i{position:absolute;top:-10px;width:6px;height:4px;background:#f8fafc;animation:fall linear infinite}
+@keyframes fall{to{transform:translateY(140px) rotate(540deg)}}
+.b-figuritas{background:#1c1330}
+.b-figuritas .fx{background:linear-gradient(rgba(28,19,48,.2),rgba(28,19,48,.6))}
+.b-figuritas .fx i{position:absolute;width:40px;height:54px;border-radius:4px;background:linear-gradient(160deg,#c084fc,#7c3aed 60%,#4c1d95);border:2px solid #f5d0fe;opacity:.55}
+.b-estadio{background:radial-gradient(ellipse 150px 60px at 72% 55%,#166534,#052e16 60%,#020617 61%,#0f172a 80%)}
+.b-estadio .fx{background:radial-gradient(ellipse 110px 38px at 72% 55%,transparent 98%,rgba(255,255,255,.6) 99%,transparent 100%),radial-gradient(circle at 72% 55%,transparent 11px,rgba(255,255,255,.6) 12px,transparent 13px)}
+
+/* ---- banners ronda 2 ---- */
+.ball{position:absolute;width:46px;height:46px;border-radius:50%;z-index:2;background:radial-gradient(circle at 50% 50%,#141414 0 7px,transparent 7.5px),radial-gradient(circle at 16% 32%,#141414 0 5px,transparent 5.5px),radial-gradient(circle at 84% 32%,#141414 0 5px,transparent 5.5px),radial-gradient(circle at 30% 90%,#141414 0 5px,transparent 5.5px),radial-gradient(circle at 70% 90%,#141414 0 5px,transparent 5.5px),radial-gradient(circle at 35% 30%,#fff,#cbd5e1 70%,#64748b);box-shadow:0 6px 14px rgba(0,0,0,.5)}
+.b-red{background:radial-gradient(circle at 78% 50%,#1f3b33,#07100d 75%)}
+.b-red .fx{background:repeating-linear-gradient(45deg,rgba(255,255,255,.4) 0 1.2px,transparent 1.2px 12px),repeating-linear-gradient(-45deg,rgba(255,255,255,.4) 0 1.2px,transparent 1.2px 12px);animation:bulge 2.6s ease-out infinite;transform-origin:78% 50%}
+.b-red .ball{right:calc(22% - 23px);top:37px;animation:hit 2.6s ease-out infinite}
+@keyframes hit{0%{transform:scale(.6);opacity:0}12%{transform:scale(1.12);opacity:1}30%,100%{transform:scale(1)}}
+@keyframes bulge{0%,8%{transform:scale(1)}14%{transform:scale(1.08)}35%,100%{transform:scale(1)}}
+.b-penal{background:repeating-linear-gradient(90deg,#2e8b4f 0 30px,#277a45 30px 60px)}
+.b-penal .area{position:absolute;right:-2px;top:12px;bottom:12px;width:34%;border:2px solid rgba(255,255,255,.85);border-right:0;z-index:1}
+.b-penal .area:before{content:"";position:absolute;right:0;top:28%;bottom:28%;width:38%;border:2px solid rgba(255,255,255,.85);border-right:0}
+.b-penal .d{position:absolute;right:34%;top:50%;width:40px;height:52px;border:2px solid rgba(255,255,255,.85);border-radius:50%;transform:translate(50%,-50%);clip-path:inset(0 50% 0 0);z-index:1}
+.b-penal .ball{width:22px;height:22px;right:calc(22% - 11px);top:49px;background:radial-gradient(circle at 50% 50%,#141414 0 3.5px,transparent 4px),radial-gradient(circle at 35% 30%,#fff,#cbd5e1 70%,#64748b)}
+.b-cuero{background:linear-gradient(135deg,#8a5a2e,#4a2a12)}
+.b-banda{background:linear-gradient(115deg,transparent 50%,#10b981 50% 64%,transparent 64%),radial-gradient(circle,rgba(255,255,255,.07) 1px,transparent 1.5px) 0 0/4px 4px,#0f172a}
+.b-banda .num{position:absolute;right:16px;top:50%;transform:translateY(-50%);font:700 88px/1 var(--num);color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.85);letter-spacing:-.02em;z-index:1}
+.b-vivo{background:#0b3d24}
+.b-vivo .fx{background:linear-gradient(90deg,rgba(0,0,0,.55),transparent 60%),repeating-linear-gradient(100deg,#1f7a45 0 40px,#1a6b3c 40px 80px);filter:blur(1.5px)}
+.bug{position:absolute;top:10px;right:10px;display:flex;z-index:3;font:700 12px/1 var(--num);letter-spacing:.04em;box-shadow:0 4px 10px rgba(0,0,0,.4)}
+.bug span{padding:6px 8px}.bug .lv{background:#dc2626;color:#fff}.bug .lv:before{content:"● ";animation:blink 1s steps(1) infinite}
+.bug .sc{background:#08110e;color:#e8f3ee}.bug .clk{background:#10b981;color:#04120c;font-variant-numeric:tabular-nums}
+@keyframes blink{50%{opacity:0}}
+.b-vivo .lt{position:absolute;left:0;bottom:12px;width:62%;height:3px;background:linear-gradient(90deg,#22d3ee,transparent);z-index:3}
+.b-var{background:repeating-linear-gradient(90deg,#2e8b4f 0 28px,#277a45 28px 56px)}
+.b-var .zone{position:absolute;top:-20%;bottom:-20%;left:60%;width:9%;background:rgba(239,68,68,.25);transform:skewX(-18deg);z-index:1;animation:varin 4s ease-out infinite}
+.b-var .zone:before,.b-var .zone:after{content:"";position:absolute;top:0;bottom:0;width:3px}
+.b-var .zone:before{left:0;background:#ef4444;box-shadow:0 0 8px #ef4444}.b-var .zone:after{right:0;background:#3b82f6;box-shadow:0 0 8px #3b82f6}
+@keyframes varin{0%{transform:skewX(-18deg) translateX(120px);opacity:0}25%,85%{transform:skewX(-18deg) translateX(0);opacity:1}100%{opacity:0}}
+.b-var .vt{position:absolute;right:10px;bottom:10px;z-index:3;background:#08110e;color:#fff;font:700 13px/1 var(--num);letter-spacing:.08em;padding:6px 8px;border-left:3px solid #ef4444}
+.b-calor{background:#0b2a1c}
+.b-calor .pitch{position:absolute;top:10px;bottom:10px;left:40%;right:10px;border:1.5px solid rgba(255,255,255,.45);z-index:1}
+.b-calor .pitch:before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1.5px;background:rgba(255,255,255,.45)}
+.b-calor .pitch:after{content:"";position:absolute;left:50%;top:50%;width:30px;height:30px;border:1.5px solid rgba(255,255,255,.45);border-radius:50%;transform:translate(-50%,-50%)}
+.b-calor .heat{position:absolute;top:10px;bottom:10px;left:40%;right:10px;background:radial-gradient(circle at 70% 40%,rgba(239,68,68,.9),rgba(250,204,21,.7) 16%,rgba(16,185,129,.35) 30%,transparent 42%),radial-gradient(circle at 40% 70%,rgba(250,204,21,.8),rgba(16,185,129,.3) 18%,transparent 30%),radial-gradient(circle at 88% 22%,rgba(250,204,21,.7),transparent 18%);filter:blur(5px);animation:pulse 3.5s ease-in-out infinite}
+.b-pases{background:radial-gradient(ellipse at 70% 50%,#13235a,#070d24 75%)}
+.b-pases svg{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.b-pases .lk{stroke:#22d3ee;stroke-width:1.6;stroke-dasharray:4 6;animation:flow 1.2s linear infinite;opacity:.85}
+@keyframes flow{to{stroke-dashoffset:-20}}
+.b-reflectores{background:linear-gradient(#020617 55%,#0b3d24)}
+.b-reflectores .tw{position:absolute;top:8px;width:26px;height:12px;background:radial-gradient(circle,#fff 1.8px,transparent 2.4px) 0 0/6.5px 6px;z-index:2;animation:lighton 4s infinite;filter:drop-shadow(0 0 6px #fff)}
+.b-reflectores .tw:after{content:"";position:absolute;top:10px;left:50%;width:120px;height:110px;transform:translateX(-50%);background:linear-gradient(rgba(255,255,255,.35),transparent);clip-path:polygon(45% 0,55% 0,100% 100%,0 100%)}
+@keyframes lighton{0%{opacity:.08}8%,85%{opacity:1}100%{opacity:.08}}
+.b-diario{background:radial-gradient(circle,rgba(0,0,0,.07) 1.2px,transparent 1.6px) 0 0/5px 5px,#efe7d6}
+.b-diario:before{content:"";position:absolute;left:0;right:0;top:0;height:6px;background:#dc2626;z-index:2}
+.b-diario .who{text-shadow:none;color:#111}.b-diario .who small{color:#555}
+.b-diario .hd{position:absolute;right:14px;top:14px;text-align:right;z-index:2;font:400 34px/.9 var(--disp);color:#111;text-transform:uppercase;transform:rotate(-2deg);max-width:48%}
+.b-diario .hd small{display:block;font:600 11px/1.4 var(--ui);color:#dc2626;letter-spacing:.12em}
+.b-diario .cl{position:absolute;right:14px;bottom:12px;width:40%;height:26px;background:repeating-linear-gradient(#9c9384 0 2px,transparent 2px 6px);-webkit-mask:linear-gradient(90deg,#000 30%,transparent 31% 35%,#000 36% 64%,transparent 65% 69%,#000 70%);mask:linear-gradient(90deg,#000 30%,transparent 31% 35%,#000 36% 64%,transparent 65% 69%,#000 70%);z-index:1}
+.b-relato{background:#06120e}
+.b-relato .gol{position:absolute;right:-6px;top:50%;transform:translateY(-50%);font:400 84px/1 var(--disp);color:rgba(16,185,129,.13);letter-spacing:.02em;z-index:0;white-space:nowrap}
+.b-relato .wave{position:absolute;right:16px;top:22px;bottom:22px;width:42%;display:flex;align-items:center;gap:3px;z-index:1}
+.b-relato .wave i{flex:1;height:100%;border-radius:2px;background:linear-gradient(#22d3ee,#10b981);transform:scaleY(.15);animation:eq 1.1s ease-in-out infinite alternate}
+@keyframes eq{to{transform:scaleY(1)}}
+.b-estrellas{background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px),#0b0b0c}
+.b-estrellas:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,236,170,.25) 45%,transparent 55%) 0 0/250% 100%;animation:shine 3.2s linear infinite;z-index:2}
+.b-estrellas .st{position:absolute;z-index:1;background:linear-gradient(135deg,#fff7cc,#fbbf24 45%,#b45309);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);filter:drop-shadow(0 0 6px rgba(251,191,36,.6))}
+.b-nieve{background:linear-gradient(#0b1a3a 0 62%,#dbe7f0 62%)}
+.b-nieve:before{content:"";position:absolute;left:0;right:0;top:62%;height:2px;background:rgba(255,255,255,.9);z-index:1}
+.b-nieve .fx{background:radial-gradient(circle,#fff 1.3px,transparent 1.8px) 0 0/22px 22px,radial-gradient(circle,rgba(255,255,255,.7) 1px,transparent 1.4px) 11px 7px/15px 15px;animation:snow 2.4s linear infinite;z-index:2}
+@keyframes snow{to{background-position:6px 22px,15px 22px}}
+.b-nieve .ball{width:30px;height:30px;right:18%;top:66px;background:radial-gradient(circle at 50% 50%,#1c1917 0 4.5px,transparent 5px),radial-gradient(circle at 18% 32%,#1c1917 0 3px,transparent 3.5px),radial-gradient(circle at 82% 32%,#1c1917 0 3px,transparent 3.5px),radial-gradient(circle at 35% 30%,#fdba74,#f97316 60%,#9a3412)}
+/* ---------- titles ---------- */
+.titles{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));margin-top:18px}
+.tt{font-family:var(--num);font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:20px;line-height:1.1;align-self:flex-start;padding:4px 10px;border-radius:6px}
+.tt.common{color:var(--common);background:rgba(255,255,255,.05)}
+.tt.rare{color:#bae6fd;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.35)}
+.tt.rare:before{content:"◆ ";color:var(--rare)}
+.tt.epic{background:linear-gradient(90deg,#f0abfc,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent;border:1px solid rgba(232,121,249,.5);transform:rotate(-2deg)}
+.tt.legendary{background:linear-gradient(100deg,#b45309 20%,#fef3c7 40%,#fbbf24 50%,#b45309 70%) 0 0/250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;border:1px solid rgba(251,191,36,.6);animation:shine 3s linear infinite;font-family:var(--disp);font-weight:400;letter-spacing:.06em}
+.treat{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:16px}
+.treat div{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:8px}
+.treat p{margin:0;color:var(--mut);font-size:13px}
+/* ---------- collections / new types ---------- */
+.cols{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));margin-top:18px}
+.col{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:10px}
+.col h3{margin:0;font-family:var(--disp);font-weight:400;font-size:28px;text-transform:uppercase}
+.col ul{margin:0;padding:0;list-style:none;display:grid;gap:4px;font-size:13px}
+.col li{display:flex;gap:8px}.col li b{min-width:62px;font-family:var(--num);text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
+.col .bonus{border-top:1px dashed var(--line);padding-top:10px;color:var(--gold);font-size:13px}
+/* ---------- dock ---------- */
+.dock{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:rgba(8,17,14,.92);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;justify-content:center;gap:12px;align-items:center;z-index:20;flex-wrap:wrap}
+.dock span{color:var(--mut);font-size:13px}
+#out{position:fixed;left:16px;right:16px;bottom:74px;max-width:640px;margin:0 auto;height:140px;z-index:21;background:#000;color:#cfe7dd;border:1px solid var(--em);border-radius:10px;padding:10px;font:12px ui-monospace,monospace}
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important}}
+</style></head><body>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="tag" style="color:var(--em)">Moodboard · Vestuario</div>
+    <h1>Más <span>vestuario</span> para FULVO</h1>
+    <p class="lead">Propuesta para ampliar íconos, bordes, banners y títulos con más variedad y con identidad de fútbol. Todo lo de bordes, banners y títulos está dibujado en vivo con CSS, así se ve cómo quedaría en la app. Marcá lo que te guste y copiá tu selección para pasármela.</p>
+    <div class="count">
+      <div><b>28</b>íconos nuevos</div>
+      <div><b>16</b>bordes</div>
+      <div><b>18</b>banners</div>
+      <div><b>30</b>títulos</div>
+      <div><b>5</b>colecciones</div>
+    </div>
+    <nav class="jump"><a href="#colecciones">Colecciones</a><a href="#iconos">Íconos + prompts</a><a href="#bordes">Bordes</a><a href="#banners">Banners</a><a href="#titulos">Títulos</a><a href="#tipos">Tipos nuevos</a></nav>
+  </header>
+
+  <section id="colecciones">
+    <div class="sec-head"><div><h2>Colecciones</h2><p>La variedad se siente más cuando las piezas vienen en familias. Cada colección trae ícono, borde, banner y título que combinan, y completar la página del álbum da un premio extra. Encaja directo con el álbum de figuritas que ya tenés.</p></div></div>
+    <div class="cols" id="cols"></div>
+  </section>
+
+  <section id="iconos">
+    <div class="sec-head"><div><h2>Íconos · prompts</h2><p>Mismo brief que ya usás (estilo ícono de invocador de LoL / ítem de Rocket League), escrito en inglés porque ChatGPT respeta mejor las restricciones así. Cada tarjeta trae el prompt completo listo para copiar.</p></div></div>
+    <div class="base">
+      <div class="row" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><b class="tag" style="color:var(--em)">Plantilla base</b><button class="copy" data-copy="base">Copiar plantilla</button></div>
+      <pre id="basePrompt"></pre>
+    </div>
+    <div class="tips">
+      <div><b>Consistencia:</b> generá todos en el mismo chat y adjuntá goat.webp y gloves.webp como referencia de estilo en el primero.</div>
+      <div><b>Tamaño:</b> pedí 1024×1024. Después va a <code>public/cosmetics/icons/</code> y corrés <code>build-icons.mjs</code>.</div>
+      <div><b>Si mete texto o marco:</b> respondé “same image, remove all text and the border, full-bleed”.</div>
+      <div><b>Rareza visible:</b> el modificador del final cambia la energía del fondo (común calmo → legendaria con rayos dorados).</div>
+    </div>
+    <div id="iconColls"></div>
+  </section>
+
+  <section id="bordes">
+    <div class="sec-head"><div><h2>Bordes</h2><p>Hoy son casi todos aros con degradé. La idea es que cada borde tenga forma y material propios: tiza, césped, red, bufanda, alambrado, LEDs de estadio. Los de rareza alta se mueven.</p></div></div>
+    <div class="grid" id="frames"></div>
+    <h3 class="coll-h">Bordes vivos · reaccionan a tu juego</h3>
+    <div class="grid" id="framesLive"></div>
+  </section>
+
+  <section id="banners">
+    <div class="sec-head"><div><h2>Banners</h2><p>Ronda 2. Quedan tus 5 elegidos y suman 13 nuevos en la misma línea: situaciones reales del fútbol, gráficas y fáciles de leer, sin paisajes ni hinchada en silueta.</p></div></div>
+    <h3 class="coll-h">Elegidos</h3>
+    <div class="grid" id="banners-ok" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))"></div>
+    <h3 class="coll-h">Ronda 2 · nuevos</h3>
+    <div class="grid" id="banners-g" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))"></div>
+  </section>
+
+  <section id="titulos">
+    <div class="sec-head"><div><h2>Títulos</h2><p>Lista final, en criollo. 24 se desbloquean con logros que ya existen y 6 por nivel, así que no hace falta lógica nueva. Cada rareza tiene su tratamiento visual para que un título legendario se note a la distancia.</p></div></div>
+    <div class="treat">
+      <div><span class="tt common">Común</span><p>Texto liso, sin adorno.</p></div>
+      <div><span class="tt rare">Rara</span><p>Rombo celeste y marco fino.</p></div>
+      <div><span class="tt epic">Épica</span><p>Degradé violeta, se estampa torcido como un sello.</p></div>
+      <div><span class="tt legendary">Legendaria</span><p>Anton dorado con brillo que pasa.</p></div>
+    </div>
+    <div class="titles" id="titles"></div>
+  </section>
+
+  <section id="tipos">
+    <div class="sec-head"><div><h2>Tipos nuevos</h2><p>Además de sumar piezas, se pueden sumar lugares donde se ven. Estos le dan variedad a la colección sin tener que dibujar 100 íconos.</p></div></div>
+    <div class="grid" id="types"></div>
+  </section>
+</div>
+
+<div class="dock"><span id="nsel">0 elegidos</span><button class="copy" id="copySel">Copiar mi selección</button></div>
+<textarea id="out" hidden readonly aria-label="Selección"></textarea>
+
+<script>
+const BASE=`Square 1:1 video-game profile icon in the style of a League of Legends summoner icon or a Rocket League item.
+Subject: {SUBJECT}, centered. The whole subject must fit inside the central circle of the image (the icon is shown cropped as a round avatar), nothing important near the corners.
+Stylized painterly 3D render, not photorealistic: slightly exaggerated shapes, strong rim light, AAA polish, bold silhouette that still reads at 48 px.
+Full-bleed themed background: {BACKGROUND}, bathed in one saturated dominant color glow rather than a realistic photo backdrop.
+Brand accents: emerald-to-cyan glow and gold highlights.
+{RARITY}
+No text, no letters, no numbers, no logos, no real club crests or brands, no frame or border, no watermark.`;
+const RMOD={
+ common:'Rarity: common. Clean and simple, one light source, calm background, very few particles.',
+ rare:'Rarity: rare. Cool blue energy accents and a soft glow around the subject.',
+ epic:'Rarity: epic. Magenta-violet energy, swirling particles and dramatic lighting.',
+ legendary:'Rarity: legendary. Divine golden light, god rays, embers and sparkles, the most spectacular version.'
+};
+const RL={common:'Común',rare:'Rara',epic:'Épica',legendary:'Legendaria'};
+const RC={common:'#64748b',rare:'#0369a1',epic:'#86198f',legendary:'#b45309'};
+const ICONS=[
+ ['La Hinchada',[
+  ['bufanda','Bufanda','common','a knitted football supporter scarf with emerald and white stripes and fringed ends, draped in a loose loop','blurred stadium stands at night with warm lights'],
+  ['bombo','Bombo','rare','a battered supporter bass drum painted with sky-blue and white stripes, two wooden mallets crossed on top','dark stands with smoke and blue floodlight haze'],
+  ['bengala','Bengala','rare','a raised hand holding a burning red flare, thick red smoke curling upward','night stands engulfed in red smoke'],
+  ['corneta','Corneta','common','a dented brass supporter trumpet with a small emerald ribbon tied to it','stadium stands in soft evening light'],
+  ['trapo','Trapo gigante','legendary','a gigantic supporter flag unfurling over a packed stand, forming a golden star pattern, paper streamers flying','roaring stadium at night, thousands of tiny paper pieces in the air'],
+ ]],
+ ['El Potrero',[
+  ['pelota_trapo','Pelota de trapo','common','a homemade rag ball made of tied old socks and string, resting on dusty dirt','empty dirt pitch at golden hour'],
+  ['zapatillas','Zapatillas gastadas','common','a pair of worn-out sneakers with knotted laces tied together, hanging from a wire','sunset sky over a neighborhood dirt field'],
+  ['arco_oxidado','Arco oxidado','rare','a rusty metal goal frame with a torn net on a dirt field, a ball resting in the corner of the net','orange and purple sunset, chain-link fence silhouette'],
+ ]],
+ ['Día de partido',[
+  ['silbato','Silbato','common','a silver referee whistle on a black lanyard','green pitch with stadium light bokeh'],
+  ['banderin','Banderín de córner','common','a corner flag with a checkered emerald and white pennant bending in the wind, chalk corner arc on the grass','green pitch at dusk'],
+  ['tarjeta_roja','Tarjeta roja','rare','a referee hand raising a glowing red card high','dark stormy stadium sky'],
+  ['cinta','Cinta de capitán','rare','a gold captain armband showing only a bold letter C (the only allowed letter)','deep emerald background with light streaks'],
+  ['cronometro','Cronómetro','rare','a chrome stopwatch with a glowing cyan dial, sand grains flying around it','dark blue background with speed lines'],
+  ['pizarra','Pizarra táctica','rare','a tactics board with chalk circles, crosses and curved arrows, small magnetic player pieces','dark green locker room wall'],
+  ['tunel','Túnel','epic','view from inside the players tunnel toward a blinding bright pitch, two faceless player silhouettes walking out','dark concrete tunnel with emerald light spilling in'],
+ ]],
+ ['Bestias',[
+  ['lobo','Lobo','rare','a wolf howling, a football shaped like a full moon behind it','night sky with blue mist'],
+  ['toro','Toro','rare','a charging bull head with steaming nostrils and gold-tipped horns','dusty red arena haze'],
+  ['leon','León','epic','a roaring lion head made of emerald crystal','dark emerald background with crystal shards'],
+  ['aguila','Águila','epic','an eagle with wings spread wide clutching a football in its talons','stormy sky with violet lightning'],
+  ['tiburon','Tiburón','epic','a shark bursting through a goal net as if it were water, net strands splashing','deep ocean blue turning into stadium lights'],
+  ['dragon','Dragón','legendary','a golden dragon coiled around a football, breathing emerald fire','dark cavern lit by fire and gold'],
+ ]],
+ ['Jugadas',[
+  ['taco','Taco','rare','the heel of a football boot back-heeling a ball, motion trails','green pitch blurred with speed'],
+  ['tiro_libre','Tiro libre','epic','a football curving over a wall of silhouetted defenders, glowing curved trail','night stadium with violet energy'],
+  ['atajada','Atajada','epic','goalkeeper gloves stopping a blazing ball, a shockwave ring of energy','dark blue background with sparks'],
+  ['chilena','Chilena','legendary','a faceless athlete silhouette mid bicycle kick, body made of starlight, the ball trailing a comet tail','cosmic night sky over a stadium'],
+ ]],
+ ['Gloria',[
+  ['botin_alado','Botín alado','epic','a golden football boot with white feathered wings','sky with clouds and violet light'],
+  ['pelota_oro','Pelota de oro','legendary','a football made of polished gold with diamond seams','golden radiant background with god rays'],
+  ['camiseta_10','La 10','legendary','a football shirt hanging in a locker, a glowing number 10 on the back (the only allowed text)','dark locker room lit by a single golden spotlight'],
+ ]],
+];
+const BG={bufanda:'#0f5132,#052e16',bombo:'#0c4a6e,#082f49',bengala:'#991b1b,#1c0606',corneta:'#854d0e,#1c1917',trapo:'#b45309,#1e1b4b',pelota_trapo:'#a16207,#422006',zapatillas:'#c2410c,#3b0764',arco_oxidado:'#9a3412,#2e1065',silbato:'#166534,#052e16',banderin:'#15803d,#052e16',tarjeta_roja:'#b91c1c,#0f172a',cinta:'#047857,#022c22',cronometro:'#0e7490,#082f49',pizarra:'#14532d,#052e16',tunel:'#10b981,#0f172a',lobo:'#1e3a8a,#020617',toro:'#991b1b,#431407',leon:'#059669,#022c22',aguila:'#7e22ce,#1e1b4b',tiburon:'#0369a1,#082f49',dragon:'#ca8a04,#1c1917',taco:'#15803d,#052e16',tiro_libre:'#a21caf,#1e1b4b',atajada:'#1d4ed8,#020617',chilena:'#fbbf24,#1e1b4b',botin_alado:'#c084fc,#fbbf24',pelota_oro:'#fbbf24,#78350f',camiseta_10:'#f59e0b,#0c0a09'};
+
+const FRAMES=[
+ ['tiza','Tiza','common','Círculo dibujado a mano con cal, como el círculo central. Irregular a propósito.'],
+ ['cesped','Césped cortado','common','Gajos de pasto claro y oscuro alrededor, como la cancha recién cortada.'],
+ ['red','Red de arco','common','Malla blanca cruzada. Barato de hacer y se reconoce al toque.'],
+ ['bufanda','Bufanda','rare','Rayas tejidas con flecos colgando. Se puede ofrecer en varios pares de colores.'],
+ ['pelota','Gajos de pelota','rare','El aro es el cuero de una pelota clásica con sus pentágonos.'],
+ ['capitan','Capitán','rare','Aro dorado con la cinta de capitán pegada abajo.'],
+ ['alambrado','Alambrado','rare','Tejido romboidal del potrero, gris metal.'],
+ ['led','Tablero LED','epic','Puntos ámbar que se encienden en barrido, como la pantalla del estadio.'],
+ ['reflectores','Reflectores','epic','Cuatro torres de luz que giran lento alrededor del avatar.'],
+ ['fuego','Fuego','epic','Aro de llamas que titila. Pensado para rachas o para premio de temporada.'],
+ ['laurel','Laurel dorado','epic','Corona de laurel abrazando la parte de abajo del avatar.'],
+ ['estrellas','Estrellas de campeón','legendary','Aro de oro con estrellas en órbita, una por cada título.'],
+ ['holo','Figurita holográfica','legendary','Brillo tornasolado que cambia con el ángulo, como la figurita difícil.'],
+ ['tormenta','Tormenta','legendary','Aro eléctrico que cada tanto larga un rayo.'],
+];
+const FRAMES_LIVE=[
+ ['racha','Racha encendida','epic','Sin racha es un aro gris. Cada día seguido lo va llenando de fuego y muestra el número.'],
+ ['nivel','Placa de nivel','rare','Chapita con tu nivel pegada al borde. Cambia sola cuando subís.'],
+];
+const BANNERS_OK=[
+ ['rayas','Cancha cortada','common','Franjas de césped y el círculo central con cal.'],
+ ['pizarra','Pizarra táctica','rare','Pizarra verde con cruces, círculos y flechas de tiza.'],
+ ['marcador','Marcador del estadio','rare','Tablero de puntos ámbar. Podría mostrar tu mejor resultado.'],
+ ['lluvia','Noche de lluvia','epic','Reflector cortando la lluvia en la cancha.'],
+ ['papelitos','Recibimiento','legendary','Papelitos cayendo, el recibimiento del equipo.'],
+];
+const BANNERS=[
+ ['red','Adentro del arco','common','La red vista desde atrás del arco: la pelota entra y la malla se infla.'],
+ ['penal','Punto penal','common','El área grande vista desde arriba, con la pelota esperando en el punto.'],
+ ['cuero','Pelota de cuero','common','Gajos de cuero viejo con costura y tiento, como la pelota de antes.'],
+ ['banda','Camiseta suplente','rare','Tela de camiseta con banda cruzada y dorsal cosido. Va con tu número y tus colores.'],
+ ['vivo','En vivo','rare','Placa de transmisión de TV con el reloj corriendo. Tu nombre va como zócalo.'],
+ ['var','Revisión del VAR','rare','Las dos líneas del offside entran barriendo la cancha.'],
+ ['diario','Tapa de diario','rare','Portada de deportes en papel de diario con el título del día.'],
+ ['calor','Mapa de calor','epic','La cancha con tu mapa de calor, como en las estadísticas de la tele.'],
+ ['pases','Red de pases','epic','Nodos y pases que circulan en loop, estilo análisis táctico.'],
+ ['reflectores','Se prenden las luces','epic','Las torres de luz se encienden de a una, como tu pantalla de arranque.'],
+ ['relato','El relato','epic','Onda de sonido del relator con un GOOOL gigante detrás.'],
+ ['nieve','Partido en la nieve','epic','Nieve cayendo sobre la cancha blanca y la pelota naranja.'],
+ ['estrellas','Tres estrellas','legendary','Tela negra de camiseta con tres estrellas bordadas en oro y un brillo que pasa.'],
+];
+const TITLES=[
+ ['Pibe de potrero','common','Nivel 3'],
+ ['Suplente de lujo','common','Nivel 8'],
+ ['Alcanzapelotas','common','Logro Debut ganador · ganá tu primer juego del día'],
+ ['Buen compañero','common','Logro Mariposa social · conectá con 10 usuarios'],
+ ['Hincha de ley','common','Logro Semana perfecta · 7 días sin faltar'],
+ ['DT de café','common','Logro Técnico táctico · 50 posiciones acertadas'],
+ ['Enganche','rare','Nivel 16'],
+ ['Pasaporte lleno','rare','Logro Experto en banderas · 50 nacionalidades'],
+ ['Primera intención','rare','Logro Suertudo · 10 aciertos al primer intento'],
+ ['Pura garra','rare','Logro Revancha · ganá el juego que perdiste ayer'],
+ ['Muralla','rare','Logro Salvado por el escudo'],
+ ['Ojeador','rare','Logro Scout · 10 cromos seguidos en Duelo de Stats'],
+ ['Tiempista','rare','Logro Ni la mitad · ¡Basta! con menos de la mitad del reloj'],
+ ['Reloj suizo','rare','Logro Relojero · ¡Basta! 3 días seguidos'],
+ ['Olfato de gol','rare','Logro Ojo de halcón · Adiviná el Crack en 3 intentos'],
+ ['Capitán','epic','Nivel 25'],
+ ['Símbolo del club','epic','Nivel 40'],
+ ['Sobre la hora','epic','Logro Tiempo de descuento · último acierto en los 3 s finales'],
+ ['Arco en cero','epic','Logro Invicto · 10 victorias seguidas'],
+ ['A pura gambeta','epic','Logro Sin red · 5 difíciles seguidos sin ayudas'],
+ ['Titular indiscutido','epic','Logro Jornada de Primera · todo el día en Difícil'],
+ ['Fiel a la camiseta','epic','Logro Especialista · el mismo juego 14 días'],
+ ['Polifuncional','epic','Logro Todoterreno · ganá en todos los juegos'],
+ ['Memoria de videoteca','epic','Logro Enciclopedia · 1000 respuestas correctas'],
+ ['Doblete','epic','Logro Doble jornada · todos los juegos 2 días seguidos'],
+ ['El que sabe','legendary','Nivel 50 · rango Crack'],
+ ['Distinto','legendary','Logro Decena perfecta · 10 juegos distintos en un día'],
+ ['Dueño de la pelota','legendary','Logro Grand Slam · todos los juegos en una semana'],
+ ['Campeón invicto','legendary','Logro Invicto de temporada · 30 victorias seguidas'],
+ ['Abonado de por vida','legendary','Logro Mes legendario · 30 días seguidos']
+];
+const COLLS=[
+ ['La Hinchada','#38bdf8',{Ícono:'Bufanda, Bombo, Bengala, Corneta, Trapo gigante',Borde:'Bufanda',Banner:'Tribuna → Recibimiento',Título:'Hincha de ley'},'Completala: banner Recibimiento animado'],
+ ['El Potrero','#f97316',{Ícono:'Pelota de trapo, Zapatillas, Arco oxidado',Borde:'Alambrado, Tiza',Banner:'Potrero al atardecer',Título:'Pibe de potrero'},'Completala: título Crack de barrio'],
+ ['Día de partido','#10b981',{Ícono:'Silbato, Banderín, Tarjeta roja, Cinta, Cronómetro, Pizarra, Túnel',Borde:'Capitán, Tablero LED',Banner:'Pizarra, Marcador, Túnel',Título:'Titular indiscutido'},'Completala: borde Reflectores'],
+ ['Bestias','#e879f9',{Ícono:'Lobo, Toro, León, Águila, Tiburón, Dragón',Borde:'Fuego',Banner:'Noche de lluvia',Título:'Copero'},'Completala: borde Fuego'],
+ ['Gloria','#fbbf24',{Ícono:'Chilena, Botín alado, Pelota de oro, La 10',Borde:'Laurel, Estrellas, Holográfica',Banner:'Estadio de noche, Álbum',Título:'Leyenda, El que sabe'},'Solo por rango, temporada o álbum completo'],
+];
+const TYPES=[
+ ['Estela del acierto','epic','La pelota y el XP que vuelan al acertar dejan una estela elegible: fuego, rayo, papelitos, estrellas. Se ve en cada partida, así que se luce mucho.'],
+ ['Grito de gol','legendary','Variantes de la escena ¡GOL! de ascenso: “¡GOOOL!” clásico, relator con eco, estallido de papelitos. El grito es tuyo cuando subís de rango.'],
+ ['Camiseta de perfil','rare','Elegís diseño (lisa, rayas, bastones, banda cruzada), dos colores y dorsal. Reutiliza el arte de la espalda de camiseta que ya hiciste.'],
+ ['Placa del ranking','rare','El fondo de tu fila en el ranking y en amigos. Versión angosta de los banners, así sirven para dos lugares.'],
+ ['Figurita de perfil','epic','Tu perfil se muestra como una figurita del álbum con marco por rareza. Quien la toca ve tu ícono, título y récords.'],
+ ['Stickers para reaccionar','common','Reacciones rápidas en amigos y equipos: ¡Golazo!, Palo, Tarjeta roja, Olé. Ideal como premio común de sobres.'],
+];
+
+const $=s=>document.querySelector(s);
+const likeBtn=id=>`<button class="like" data-id="${id}" aria-pressed="false">Me gusta</button>`;
+const head=(name,r,id)=>`<div class="row"><span class="tag r-${r}">${RL[r]}</span>${likeBtn(id)}</div><h3>${name}</h3>`;
+const prompt=(s,b,r)=>BASE.replace('{SUBJECT}',s).replace('{BACKGROUND}',b).replace('{RARITY}',RMOD[r]);
+$('#basePrompt').textContent=BASE+'\n\n— Modificadores de rareza —\n'+Object.values(RMOD).join('\n');
+
+const P={};
+$('#iconColls').innerHTML=ICONS.map(([c,list])=>`<h3 class="coll-h">${c}</h3><div class="grid">`+list.map(([k,n,r,s,b])=>{
+ P[k]=prompt(s,b,r);const [c1,c2]=BG[k].split(',');
+ return `<div class="item">${head(n,r,'Ícono · '+n)}<div class="ico" style="background:radial-gradient(circle at 50% 40%,${c1},${c2});box-shadow:inset 0 0 0 2px ${RC[r]}"><span>${k}.png</span></div><div class="prompt">${P[k].replace(/</g,'&lt;')}</div><button class="copy" data-copy="${k}">Copiar prompt</button></div>`}).join('')+'</div>').join('');
+
+const tiza=`<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46.5" fill="none" stroke="#f8fafc" stroke-width="5" stroke-linecap="round" stroke-dasharray="40 4 22 3 60 5 30 4 50 2" opacity=".9" transform="rotate(-20 50 50)"/><circle cx="50" cy="50" r="47.5" fill="none" stroke="#f8fafc" stroke-width="1.2" stroke-dasharray="8 6 3 9" opacity=".5"/></svg>`;
+const laurel=(()=>{let l='';for(let i=0;i<9;i++){const a=(200+i*16)*Math.PI/180,x=50+44*Math.cos(a),y=50-44*Math.sin(a);const a2=(-20-i*16)*Math.PI/180,x2=50+44*Math.cos(a2),y2=50-44*Math.sin(a2);l+=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="7" ry="3" fill="#fbbf24" stroke="#92400e" stroke-width=".6" transform="rotate(${(-(200+i*16)+60).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})"/><ellipse cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" rx="7" ry="3" fill="#fbbf24" stroke="#92400e" stroke-width=".6" transform="rotate(${(20+i*16-60).toFixed(0)} ${x2.toFixed(1)} ${y2.toFixed(1)})"/>`}return `<svg viewBox="0 0 100 100">${l}</svg>`})();
+const bolt=`<svg viewBox="0 0 100 100"><path d="M78 4 64 30l9 1-15 26" fill="none" stroke="#e0f2fe" stroke-width="2.5" stroke-linejoin="round" style="filter:drop-shadow(0 0 3px #22d3ee)"/><path d="M14 70l14 6-6 8 14 12" fill="none" stroke="#e0f2fe" stroke-width="2" style="filter:drop-shadow(0 0 3px #22d3ee)"/></svg>`;
+const extra={tiza,laurel,tormenta:bolt,capitan:'<b>C</b>',bufanda:'<i></i>',estrellas:'<div class="orb">'+[0,72,144,216,288].map(d=>`<i style="transform:rotate(${d}deg)"></i>`).join('')+'</div>',racha:'<b>🔥 12</b>',nivel:'<b>NV 24</b>'};
+const frameCard=([k,n,r,d])=>`<div class="item">${head(n,r,'Borde · '+n)}<div class="stage">${k==='racha'?`<div style="display:flex;gap:26px"><div class="fr f-racha0" style="width:84px;height:84px"><div class="av"></div></div><div class="fr f-racha" style="width:84px;height:84px"><div class="av"></div>${extra.racha}</div></div>`:`<div class="fr f-${k}"><div class="av"></div>${extra[k]||''}</div>`}</div><p>${d}</p></div>`;
+$('#frames').innerHTML=FRAMES.map(frameCard).join('');
+$('#framesLive').innerHTML=FRAMES_LIVE.map(frameCard).join('');
+
+const bx={
+ pizarra:`<svg class="fx" viewBox="0 0 300 120" preserveAspectRatio="none" style="opacity:.8"><g fill="none" stroke="#e7f5ee" stroke-width="2.2" stroke-linecap="round"><circle cx="170" cy="36" r="8"/><circle cx="210" cy="84" r="8"/><path d="M240 28l12 12m0-12-12 12M262 70l12 12m0-12-12 12"/><path d="M178 42q24 18 26 34" stroke-dasharray="5 5"/><path d="M218 80q20-4 34-34" /><path d="M248 50l4-6 3 7"/></g></svg>`,
+ marcador:'<div class="fx">3 - 0</div>',
+ potrero:'<div class="sun"></div><div class="fx"></div>',
+ lluvia:'<div class="cone"></div><div class="fx"></div>',
+ tribuna:'<div class="fx"></div>'+[['58%','#10b981',0],['72%','#f8fafc',.3],['86%','#22d3ee',.6]].map(([l,c,dl])=>`<div class="flag" style="left:${l};background:${c};animation-delay:${dl}s"></div>`).join(''),
+ papelitos:'<div class="fx">'+Array.from({length:36},(_,i)=>`<i style="left:${(i*97)%100}%;animation-duration:${2+((i*7)%10)/5}s;animation-delay:-${(i*13)%30/10}s;background:${i%4?'#f8fafc':'#7dd3fc'}"></i>`).join('')+'</div>',
+ figuritas:'<div class="fx">'+Array.from({length:9},(_,i)=>`<i style="left:${28+i*8}%;top:${i%2?48:10}%;transform:rotate(${(i%3-1)*9}deg)"></i>`).join('')+'</div>',
+ red:'<div class="fx"></div><div class="ball"></div>',
+ penal:'<div class="area"></div><div class="d"></div><div class="ball"></div>',
+ cuero:`<svg class="fx" viewBox="0 0 300 120" preserveAspectRatio="none"><g stroke="#f5deb3" stroke-width="1.6" stroke-dasharray="5 4" opacity=".75"><path d="M110 0v120M170 0v120M230 0v120"/><path d="M0 60h110M170 40h60M230 80h70"/></g><g stroke="rgba(0,0,0,.35)" stroke-width="3"><path d="M107 0v120M167 0v120M227 0v120"/></g><path d="M250 24l14 8-14 8 14 8-14 8 14 8-14 8 14 8" fill="none" stroke="#f5deb3" stroke-width="4" stroke-linejoin="round"/></svg>`,
+ banda:'<div class="num">10</div>',
+ vivo:'<div class="fx"></div><div class="bug"><span class="lv">EN VIVO</span><span class="sc">2 - 1</span><span class="clk">89:40</span></div><div class="lt"></div>',
+ var:'<div class="zone"></div><div class="vt">VAR · REVISANDO</div>',
+ calor:'<div class="heat"></div><div class="pitch"></div>',
+ pases:(()=>{const n=[[150,60],[195,28],[195,92],[240,48],[240,80],[282,60]],l=[[0,1],[0,2],[1,3],[2,4],[3,4],[3,5],[4,5],[1,2]];return `<svg viewBox="0 0 300 120" preserveAspectRatio="xMidYMid slice">${l.map(([a,b])=>`<line class="lk" x1="${n[a][0]}" y1="${n[a][1]}" x2="${n[b][0]}" y2="${n[b][1]}"/>`).join('')}${n.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="${i==3?7:5}" fill="#e0f2fe" style="filter:drop-shadow(0 0 4px #22d3ee)"/>`).join('')}</svg>`})(),
+ reflectores:[46,61,76,91].map((l,i)=>`<div class="tw" style="left:${l}%;animation-delay:${i*.35}s"></div>`).join(''),
+ diario:'<div class="hd"><small>DEPORTES · EDICIÓN DEL DÍA</small>¡GOLEADA!</div><div class="cl"></div>',
+ relato:'<div class="gol">GOOOOL</div><div class="wave">'+Array.from({length:30},(_,i)=>`<i style="animation-delay:-${((i*37)%11)/10}s;animation-duration:${.6+((i*13)%7)/10}s"></i>`).join('')+'</div>',
+ nieve:'<div class="ball"></div><div class="fx"></div>',
+ estrellas:[[62,34,34],[73,20,46],[85,34,34]].map(([l,t,z])=>`<div class="st" style="left:${l}%;top:${t}px;width:${z}px;height:${z}px"></div>`).join(''),
+};
+const bnCard=([k,n,r,d])=>`<div class="item">${head(n,r,'Banner · '+n)}<div class="bn b-${k}">${bx[k]||'<div class="fx"></div>'}<div class="mini"><div class="av"></div></div><div class="who"><b>alejo</b><small>Nivel 24 · Crack</small></div></div><p>${d}</p></div>`;
+$('#banners-ok').innerHTML=BANNERS_OK.map(bnCard).join('');
+let _clk=580;setInterval(()=>{_clk=_clk>=5459?5380:_clk+1;document.querySelectorAll('.clk').forEach(e=>e.textContent=String(Math.floor(_clk/60)).padStart(2,'0')+':'+String(_clk%60).padStart(2,'0'))},1000);_clk=5380;
+$('#banners-g').innerHTML=BANNERS.map(([k,n,r,d])=>`<div class="item">${head(n,r,'Banner · '+n)}<div class="bn b-${k}">${bx[k]||'<div class="fx"></div>'}<div class="mini"><div class="av"></div></div><div class="who"><b>alejo</b><small>Nivel 24 · Crack</small></div></div><p>${d}</p></div>`).join('');
+
+$('#titles').innerHTML=TITLES.map(([n,r,c])=>`<div class="item"><div class="row"><span class="tag r-${r}">${RL[r]}</span>${likeBtn('Título · '+n)}</div><span class="tt ${r}">${n}</span><p>${c}</p></div>`).join('');
+$('#cols').innerHTML=COLLS.map(([n,c,parts,b])=>`<div class="col" style="border-top:3px solid ${c}"><div class="row" style="display:flex;justify-content:space-between;align-items:center"><h3 style="color:${c}">${n}</h3>${likeBtn('Colección · '+n)}</div><ul>${Object.entries(parts).map(([k,v])=>`<li><b>${k}</b><span>${v}</span></li>`).join('')}</ul><div class="bonus">★ ${b}</div></div>`).join('');
+$('#types').innerHTML=TYPES.map(([n,r,d])=>`<div class="item">${head(n,r,'Tipo · '+n)}<p>${d}</p></div>`).join('');
+
+let liked=new Set();try{liked=new Set(JSON.parse(localStorage.getItem('fulvo-vest')||'[]'))}catch(e){}
+const sync=()=>{document.querySelectorAll('.like').forEach(b=>b.setAttribute('aria-pressed',liked.has(b.dataset.id)));$('#nsel').textContent=liked.size+' elegidos';try{localStorage.setItem('fulvo-vest',JSON.stringify([...liked]))}catch(e){}};
+sync();
+async function copyText(t,btn,label){try{await navigator.clipboard.writeText(t);btn.classList.add('done');btn.textContent='Copiado';setTimeout(()=>{btn.classList.remove('done');btn.textContent=label},1400)}catch(e){const o=$('#out');o.hidden=false;o.value=t;o.focus();o.select()}}
+document.addEventListener('click',e=>{
+ const l=e.target.closest('.like');if(l){const id=l.dataset.id;liked.has(id)?liked.delete(id):liked.add(id);sync();return}
+ const c=e.target.closest('[data-copy]');if(c){const k=c.dataset.copy;copyText(k==='base'?$('#basePrompt').textContent:P[k],c,c.textContent);return}
+ if(e.target.id==='copySel'){copyText(liked.size?'Me gustan del vestuario:\n- '+[...liked].join('\n- '):'(no elegí nada todavía)',e.target,'Copiar mi selección');return}
+ if(!e.target.closest('#out'))$('#out').hidden=true;
+});
+</script>
+
+</body></html>

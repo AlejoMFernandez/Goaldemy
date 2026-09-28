@@ -2,12 +2,16 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import {
   getCosmetics, equipCosmetic,
-  frameStyle, bannerStyle, iconBgStyle, iconThemeBg, rarity, hintFor,
+  iconBgStyle, iconThemeBg, rarity, hintFor, titleClass, getDailyStreak,
 } from '../../services/cosmetics'
+import { getUserLevel } from '../../services/xp'
+import { getAuthUser } from '../../services/auth'
 import { pushSuccessToast, pushErrorToast } from '../../stores/notifications'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 import RarityGem from '../rewards/RarityGem.vue'
 import UserAvatar from '../common/UserAvatar.vue'
+import AvatarFrame from '../common/AvatarFrame.vue'
+import BannerScene from '../common/BannerScene.vue'
 import { sparks, center } from '../../services/game-fx'
 import { soundManager } from '../../services/sounds'
 
@@ -27,6 +31,11 @@ const RARITY_DASH_ORDER = ['common', 'rare', 'epic', 'legendary']
 const items = ref([])
 const loading = ref(true)
 const busy = ref(null)
+// Datos reales del usuario para los bordes vivos (Placa de nivel / Racha encendida) en la vista previa
+const myLevel = ref(null)
+const myStreak = ref(0)
+// Las grillas se ven quietas; el borde/banner bajo el mouse se anima
+const hoverCode = ref(null)
 const activeTab = ref('icon')
 
 const TABS = [
@@ -138,6 +147,11 @@ async function load() {
   loading.value = true
   items.value = await getCosmetics()
   loading.value = false
+  const uid = getAuthUser()?.id
+  if (uid) {
+    getDailyStreak(uid).then(n => { myStreak.value = n }).catch(() => {})
+    getUserLevel(uid).then(r => { const info = Array.isArray(r?.data) ? r.data[0] : r?.data; myLevel.value = Number(info?.level) || null }).catch(() => {})
+  }
 }
 async function equip(c) {
   if (!c.owned || busy.value) return
@@ -204,15 +218,15 @@ onMounted(load)
         <!-- ── Preview fijo del perfil (no cambia por sección) ── -->
         <aside class="lg:sticky lg:top-4 self-start space-y-3">
           <div ref="previewEl" class="rounded-2xl border border-white/10 bg-slate-900/40 overflow-hidden shadow-lg">
-            <div :key="'b' + (equipFx.type === 'banner' ? equipFx.n : 0)" class="h-24 eq-banner" :class="[bannerStyle(eqBannerKey), eqBannerPremium ? 'anim-pan' : '', equipFx.type === 'banner' && equipFx.n ? 'eq-fx-banner' : '']"></div>
+            <BannerScene :key="'b' + (equipFx.type === 'banner' ? equipFx.n : 0)" class="h-24 eq-banner" :style-key="eqBannerKey" :premium="eqBannerPremium" :class="equipFx.type === 'banner' && equipFx.n ? 'eq-fx-banner' : ''" />
             <!-- relative z-10 → el avatar/borde pinta POR ENCIMA del banner (antes se veía por debajo) -->
             <div class="relative z-10 px-4 pb-5 -mt-10 flex flex-col items-center text-center">
               <div :key="'a' + ((equipFx.type === 'icon' || equipFx.type === 'frame') ? equipFx.n : 0)" class="eq-avatar" :class="equipFx.n && equipFx.type === 'icon' ? 'eq-fx-icon' : (equipFx.n && equipFx.type === 'frame' ? 'eq-fx-frame' : '')">
-                <UserAvatar :size="88" :avatar-url="avatarUrl" :initial="initial" :frame-key="eqFrameKey" :icon-glyph="eqIconGlyph" :frame-premium="eqFramePremium" />
+                <UserAvatar :size="88" :avatar-url="avatarUrl" :initial="initial" :frame-key="eqFrameKey" :icon-glyph="eqIconGlyph" :frame-premium="eqFramePremium" :level="myLevel" :streak="myStreak" />
                 <i v-if="equipFx.n && equipFx.type === 'frame'" class="eq-ring" aria-hidden="true"></i>
               </div>
               <h3 class="mt-2.5 text-lg font-bold text-white leading-tight truncate max-w-full">{{ name || 'Tu perfil' }}</h3>
-              <p v-if="equippedTitle" :key="'t' + (equipFx.type === 'title' ? equipFx.n : 0)" class="eq-title text-sm font-bold mt-0.5 truncate max-w-full" :class="[equippedTitle.premium_only ? 'title-premium-anim' : rarity(equippedTitle.rarity).text, equipFx.n && equipFx.type === 'title' ? 'eq-fx-title' : '']">{{ equippedTitle.name }}</p>
+              <p v-if="equippedTitle" :key="'t' + (equipFx.type === 'title' ? equipFx.n : 0)" class="eq-title text-sm mt-0.5 max-w-full" :class="equipFx.n && equipFx.type === 'title' ? 'eq-fx-title' : ''"><span :class="titleClass(equippedTitle.rarity, equippedTitle.premium_only)">{{ equippedTitle.name }}</span></p>
               <p v-else class="text-xs text-slate-500 mt-0.5">Sin título</p>
             </div>
           </div>
@@ -295,12 +309,13 @@ onMounted(load)
             <div v-else-if="activeTab === 'frame'" class="grid grid-cols-3 sm:grid-cols-4 xl:grid-cols-5 gap-x-2.5 gap-y-8">
               <button v-for="c in sec.items" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
                       :data-alb="albumNo[c.code]" :data-new="isNew(c) ? '' : undefined"
+                      @mouseenter="hoverCode = c.code" @mouseleave="hoverCode = null" @focus="hoverCode = c.code" @blur="hoverCode = null"
                       class="alb-stk relative group aspect-square rounded-xl grid place-items-center bg-slate-900/40 transition hover:z-30"
                       :class="[ c.owned ? 'cursor-pointer hover:brightness-110' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : (c.premium_only ? 'ring-2 ring-amber-400/70' : 'ring-1 ring-white/5') ]">
                 <!-- Borde solo, alrededor de un disco liso (sin persona/emoji adentro) -->
-                <div class="size-[64%] rounded-full" :class="[frameStyle(c.style_key).wrap, frameStyle(c.style_key).pad, c.premium_only ? 'anim-pan' : '', !c.owned ? 'grayscale opacity-45' : '']">
+                <AvatarFrame :frame-key="c.style_key" :size="64" rounded="rounded-full" :premium="c.premium_only" :animate="hoverCode === c.code" :level="myLevel || 24" :streak="myStreak || 12" :class="!c.owned ? 'grayscale opacity-45' : ''">
                   <div class="w-full h-full rounded-full bg-gradient-to-br from-slate-700 to-slate-900"></div>
-                </div>
+                </AvatarFrame>
                 <span v-if="c.premium_only" class="absolute top-0.5 right-0.5 z-10 px-1 rounded bg-amber-400 text-[7px] font-extrabold text-amber-950">PRO</span>
                 <span v-if="!c.owned" class="absolute top-0.5 left-0.5 z-10 grid place-items-center size-4 rounded-full bg-slate-950/85 text-slate-200">
                   <svg viewBox="0 0 24 24" fill="currentColor" class="size-2.5"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 1 1 6 0v3z"/></svg>
@@ -328,15 +343,16 @@ onMounted(load)
             <div v-else-if="activeTab === 'banner'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button v-for="c in sec.items" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
                       :data-alb="albumNo[c.code]" :data-new="isNew(c) ? '' : undefined"
+                      @mouseenter="hoverCode = c.code" @mouseleave="hoverCode = null" @focus="hoverCode = c.code" @blur="hoverCode = null"
                       class="alb-stk alb-stk--wide relative group rounded-xl transition hover:z-30"
                       :class="[ c.owned ? 'cursor-pointer hover:brightness-110' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : (c.premium_only ? 'ring-2 ring-amber-400/70' : '') ]">
-                <div class="h-20 rounded-xl overflow-hidden border border-white/10 relative"
-                     :class="[ bannerStyle(c.style_key), c.premium_only ? 'anim-pan' : '', !c.owned ? 'grayscale opacity-50' : '' ]">
+                <BannerScene class="h-20 rounded-xl overflow-hidden border border-white/10" :style-key="c.style_key" :premium="c.premium_only" :animate="hoverCode === c.code"
+                     :class="!c.owned ? 'grayscale opacity-50' : ''">
                   <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2.5 py-1.5">
                     <div class="text-[11px] font-bold text-white truncate">{{ displayName(c) }}</div>
                   </div>
                   <span class="absolute top-1.5 left-1.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"><RarityGem :rarity="c.rarity" :size="15" /></span>
-                </div>
+                </BannerScene>
                 <span v-if="c.premium_only" class="absolute top-1.5 right-1.5 z-10 px-1 rounded bg-amber-400 text-[8px] font-extrabold text-amber-950">PRO</span>
                 <span v-if="!c.owned" class="absolute top-1.5 right-1.5 z-10 grid place-items-center size-5 rounded-full bg-slate-950/85 text-slate-200">
                   <svg viewBox="0 0 24 24" fill="currentColor" class="size-3"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 1 1 6 0v3z"/></svg>
@@ -363,7 +379,7 @@ onMounted(load)
                       :data-alb="albumNo[c.code]" :data-new="isNew(c) ? '' : undefined"
                       class="alb-stk alb-stk--wide group relative rounded-xl border px-3.5 py-3 text-left transition-all"
                       :class="[ c.equipped ? 'border-emerald-400/50 bg-emerald-500/[0.07]' : (c.premium_only ? 'border-amber-400/50 bg-amber-500/[0.05]' : rarity(c.rarity).border + ' ' + rarity(c.rarity).bg), c.owned ? 'hover:brightness-110 cursor-pointer' : 'opacity-60 cursor-not-allowed' ]">
-                <div class="text-sm font-bold truncate" :class="c.premium_only ? 'title-premium-anim' : rarity(c.rarity).text">{{ c.name }}</div>
+                <div class="text-sm truncate"><span :class="titleClass(c.rarity, c.premium_only)">{{ c.name }}</span></div>
                 <div class="text-[10px] mt-0.5 truncate" :class="c.owned ? 'text-slate-500' : 'text-slate-600'">
                   <span v-if="c.equipped" class="text-emerald-400 font-bold">Equipado</span>
                   <span v-else-if="c.owned">Disponible</span>
@@ -422,9 +438,11 @@ onMounted(load)
 @keyframes eq-ring { from { transform: scale(.8); opacity: 1; } to { transform: scale(1.35); opacity: 0; } }
 .eq-fx-banner { animation: eq-banner .6s cubic-bezier(.65,0,.35,1) both; }
 @keyframes eq-banner { from { clip-path: inset(0 100% 0 0); filter: brightness(1.6); } to { clip-path: inset(0 0 0 0); filter: none; } }
+.eq-fx-frame :deep(.avf-badge) { animation: eq-badge .5s .35s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes eq-badge { from { opacity: 0; scale: .3; } to { opacity: 1; scale: 1; } }
 .eq-fx-title { animation: eq-title .45s cubic-bezier(.34,1.56,.64,1) both; }
 @keyframes eq-title { 0% { transform: scale(1.8); opacity: 0; letter-spacing: .3em; } 100% { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
-  .alb-stk[data-new], .alb-stk[data-new]::after, .eq-fx-icon, .eq-fx-frame, .eq-ring, .eq-fx-banner, .eq-fx-title { animation: none !important; }
+  .alb-stk[data-new], .alb-stk[data-new]::after, .eq-fx-icon, .eq-fx-frame, .eq-ring, .eq-fx-banner, .eq-fx-title, .eq-fx-frame :deep(.avf-badge) { animation: none !important; }
 }
 </style>

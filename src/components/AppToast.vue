@@ -40,7 +40,7 @@ function onToastClick(n) {
         :class="[styleFor(n.type).border, n.type === 'dm' ? 'cursor-pointer hover:border-violet-400/50 hover:bg-slate-900 transition' : '']"
         @click="onToastClick(n)"
       >
-          <UserAvatar v-if="n.type === 'dm'" :size="32" :avatar-url="n.avatarUrl" :initial="n.initial" :frame-key="n.frameKey" :icon-glyph="n.iconGlyph" :icon-bg="n.iconBg" class="shrink-0" />
+          <UserAvatar v-if="n.type === 'dm'" :size="32" :avatar-url="n.avatarUrl" :initial="n.initial" :frame-key="n.frameKey" :icon-glyph="n.iconGlyph" :icon-bg="n.iconBg" :level="n.level ?? null" :streak="n.streak || 0" class="shrink-0" />
           <div v-else class="shrink-0 w-8 h-8 rounded-full ring-1 grid place-items-center"
             :class="[styleFor(n.type).bg, styleFor(n.type).ring]"
           >
