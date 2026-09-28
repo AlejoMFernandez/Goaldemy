@@ -87,6 +87,20 @@ export async function getAchievementByCode(code) {
   return catalog[code] || null
 }
 
+// ── Caché SINCRÓNICA del catálogo ──
+// Para textos que se arman en un v-for del template (hover de cosméticos bloqueados
+// en el vestuario) no se puede esperar una promesa ahí adentro. `preloadAchievementsSync()`
+// llena esta copia en memoria (comparte el caché de 5 min de arriba) y `achievementSync()`
+// la lee al toque; si todavía no cargó, devuelve null y el que llama cae a un texto genérico.
+let _syncCatalog = {}
+export async function preloadAchievementsSync(force = false) {
+  _syncCatalog = await getAchievementsCatalog(force)
+  return _syncCatalog
+}
+export function achievementSync(code) {
+  return (code && _syncCatalog[code]) || null
+}
+
 /**
  * Get achievement unlock percentage: (users with achievement / total users) * 100
  * Returns a map: { achievement_code: percentage }
