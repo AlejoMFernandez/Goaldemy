@@ -111,7 +111,7 @@ export default {
 .teo-box { position: relative; display: grid; justify-items: center; gap: 10px; text-align: center; padding: 0 16px; }
 .teo-eyebrow { font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; font-size: clamp(12px, 2.4vw, 16px); color: #fff; opacity: 0; transition: opacity 0.4s 0.2s; }
 .teo-title {
-  position: relative; font-family: var(--font-shout); text-transform: uppercase; line-height: 0.95;
+  position: relative; font-family: var(--font-shout); font-weight: 800; font-style: italic; text-transform: uppercase; line-height: 0.95;
   font-size: clamp(56px, 16vw, 150px); color: #fff; padding: 0 0.2em; clip-path: inset(0 100% 0 0);
 }
 .teo-title::before { content: ""; position: absolute; inset: 18% -0.1em 10%; background: var(--mb-danger, #ef4444); transform: skewX(-12deg); z-index: -1; }

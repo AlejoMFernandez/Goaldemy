@@ -31,11 +31,17 @@ const SOUND_FILES = {
   goal: '/sounds/goal.mp3',                  // ¡GOL! que abre el ascenso de rango
   forge: '/sounds/forge.mp3',                // el escudo nuevo se forja
   cardFlip: '/sounds/card-flip.mp3',         // carta que se da vuelta (común)
+  pop: '/sounds/pop.mp3',                    // carta común que sube en la revelación una por una
   cardRare: '/sounds/card-rare.mp3',
   cardEpic: '/sounds/card-epic.mp3',
   cardLegendary: '/sounds/card-legendary.mp3',
   coin: '/sounds/coin.mp3',                  // recompensa que llega a su contador
 }
+
+// Sonidos "grandes" (pitazo, ¡PUM!, ¡GOL!, medalla, cartas raras+): nunca dos
+// a la vez. Si llega otro mientras uno está sonando, espera a que libere el
+// candado en vez de sonar encima (ver soundManager.playBig()).
+const BIG_SOUND_GAP_MS = 350
 
 class SoundManager {
   constructor() {
@@ -45,6 +51,8 @@ class SoundManager {
     this._buffers = {}
     this._loading = {}
     this._missing = new Set() // archivos que dieron 404: no se vuelven a pedir
+    this._bigLockUntil = 0
+    this._pendingBigTimer = null
 
     const stored = localStorage.getItem('goaldemy_sound_enabled')
     if (stored !== null) this.enabled = stored === 'true'
@@ -336,6 +344,11 @@ class SoundManager {
         makeOsc(659.25, 'sine', 0.5, 0.12)
         makeOsc(987.77, 'sine', 0.55, 0.20, 0.08)
         break
+      case 'pop':
+        // "Pop" liviano de dos notas (carta común que sube en la revelación una por una)
+        makeOsc(1046.5, 'sine', 0.4, 0.08)
+        makeOsc(1318.5, 'sine', 0.35, 0.1, 0.04)
+        break
     }
   }
 
@@ -351,6 +364,26 @@ class SoundManager {
     } catch {
       try { this._oscillatorFallback(name) } catch {}
     }
+  }
+
+  // Variante de play() para los cues "grandes" de las escenas de recompensa:
+  // si otro sonido grande está sonando, este espera su turno en vez de
+  // pisarlo (a lo sumo uno pendiente — el más nuevo gana).
+  playBig(name) {
+    if (!this.enabled) return
+    const now = performance.now()
+    const wait = this._bigLockUntil - now
+    if (this._pendingBigTimer) { clearTimeout(this._pendingBigTimer); this._pendingBigTimer = null }
+    if (wait <= 0) {
+      this._bigLockUntil = now + BIG_SOUND_GAP_MS
+      this.play(name)
+      return
+    }
+    this._pendingBigTimer = setTimeout(() => {
+      this._pendingBigTimer = null
+      this._bigLockUntil = performance.now() + BIG_SOUND_GAP_MS
+      this.play(name)
+    }, wait)
   }
 
   toggle() {

@@ -9,8 +9,10 @@ export default {
     currentStreak: { type: Number, default: 0 },
     bestStreak: { type: Number, default: 0 },
     playedToday: { type: Boolean, default: false },
+    // El sobre del día (DailyEnvelope) es la recompensa real: el calendario solo lo refleja
+    todayOpened: { type: Boolean, default: false },
   },
-  emits: ['claim'],
+  emits: ['claim', 'open-today'],
   setup(props, { emit }) {
     const claimedToday = ref(false)
     const chestOpening = ref(-1)
@@ -31,8 +33,8 @@ export default {
         const isToday = i === mondayOffset
         const isFuture = i > mondayOffset
         const played = isPast && i >= (mondayOffset - streakInWeek)
-        const canClaim = isToday && props.playedToday && !claimedToday.value
-        const claimed = isToday && claimedToday.value
+        const canClaim = isToday && !props.todayOpened
+        const claimed = isToday && props.todayOpened
         const isSpecial = i === 6
 
         return { label, isPast, isToday, isFuture, played, canClaim, claimed, isSpecial, xp: xpRewards[i] }
@@ -90,7 +92,7 @@ export default {
       try { const key = streakKey(); if (key) localStorage.setItem(key, '1') } catch {}
     }
 
-    return { days, streakEmoji, claimedToday, chestOpening, timeLeft, claimToday, persistClaim }
+    return { days, streakEmoji, claimedToday, chestOpening, timeLeft, claimToday, persistClaim, emit }
   }
 }
 </script>
@@ -132,7 +134,7 @@ export default {
           <!-- Chest -->
           <button
             :disabled="!day.canClaim"
-            @click="() => { if (day.canClaim) { claimToday(i); persistClaim() } }"
+            @click="() => { if (day.canClaim) emit('open-today') }"
             class="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl grid place-items-center transition-all duration-200"
             :class="[
               day.played || day.claimed
@@ -146,26 +148,21 @@ export default {
               chestOpening === i ? 'scale-110' : '',
             ]"
           >
-            <!-- Played / claimed -->
-            <template v-if="day.played || day.claimed">
-              <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-              </svg>
-            </template>
-
-            <!-- Claimable -->
-            <template v-else-if="day.canClaim">
-              <svg class="w-6 h-6 text-amber-300" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
-              </svg>
-            </template>
-
-            <!-- Future / not played -->
-            <template v-else>
-              <svg class="w-5 h-5" :class="day.isFuture ? 'text-slate-600' : 'text-slate-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </template>
+            <!-- Sobres: abierto (jugado / reclamado), cerrado que brilla (hoy), cerrado apagado (futuro) -->
+            <svg class="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 32 26" aria-hidden="true"
+                 :class="day.played || day.claimed ? 'env-open' : day.canClaim ? 'env-today' : 'env-off'"
+                 :data-gold="day.isSpecial ? '' : undefined">
+              <template v-if="day.played || day.claimed">
+                <path d="M2 10 L16 1 L30 10" class="env-flap-open" />
+                <rect x="2" y="10" width="28" height="15" rx="2.5" class="env-body" />
+                <path d="M11 17.5 l3.2 3.2 L21 14" class="env-check" />
+              </template>
+              <template v-else>
+                <rect x="2" y="5" width="28" height="19" rx="2.5" class="env-body" />
+                <path d="M2.5 6 L16 15.5 L29.5 6" class="env-flap" />
+                <circle cx="16" cy="15" r="2.6" class="env-seal" />
+              </template>
+            </svg>
 
             <!-- Special day 7 indicator -->
             <div v-if="day.isSpecial" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-yellow-500 grid place-items-center">
@@ -192,6 +189,18 @@ export default {
 </template>
 
 <style scoped>
+.env-body { fill: #1e2a5e; stroke: #38bdf8; stroke-opacity: .55; stroke-width: 1.5; }
+.env-flap { fill: none; stroke: #38bdf8; stroke-opacity: .55; stroke-width: 1.5; stroke-linejoin: round; }
+.env-flap-open { fill: #141d45; stroke: #34d399; stroke-opacity: .6; stroke-width: 1.5; stroke-linejoin: round; }
+.env-open .env-body { stroke: #34d399; fill: rgba(16, 185, 129, .18); }
+.env-check { fill: none; stroke: #34d399; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.env-seal { fill: #f59e0b; }
+.env-off { opacity: .45; }
+.env-off .env-seal { fill: #64748b; }
+.env-today { filter: drop-shadow(0 0 6px rgba(252, 211, 77, .7)); }
+.env-today .env-body { stroke: #fcd34d; stroke-opacity: .9; }
+[data-gold] .env-body { fill: #7c4a0a; stroke: #fcd34d; }
+[data-gold] .env-flap { stroke: #fcd34d; }
 .chest-pulse {
   animation: claim-pulse 2s ease-in-out infinite;
 }

@@ -1,10 +1,9 @@
 /**
  * Sistema centralizado de celebraciones para TODOS los juegos
- * Maneja confetti, sonidos y feedback visual de victoria/derrota
+ * Maneja sonidos y feedback de victoria/derrota
  */
 
-import { celebrateWin, celebrateLevelUp } from './confetti'
-import { playWinSound, playLoseSound, playLevelUpSound, playCorrectSound, playIncorrectSound } from './sounds'
+import { playCorrectSound, playIncorrectSound } from './sounds'
 
 /**
  * Tipos de juegos soportados
@@ -77,38 +76,16 @@ export function checkVictory(gameType, stats = {}) {
   }
 }
 
-/**
- * Celebra victoria del juego (confetti + sonido)
- * @param {number} delay - Delay en ms antes de celebrar (default 100)
+/*
+ * Victoria / derrota / subida de nivel: ya NO suenan desde acá. El resultado
+ * lo suena GameSummaryPopup cuando aparece en pantalla y el nivel lo suena
+ * LevelUpOverlay cuando le toca su turno en la cola (cada sonido suena SOLO
+ * cuando su escena está en pantalla, nunca todos juntos al terminar). Las
+ * funciones quedan como no-op porque las llaman todos los juegos.
  */
-export function celebrateGameWin(delay = 100) {
-  setTimeout(() => {
-    celebrateWin()
-    playWinSound()
-  }, delay)
-}
-
-/**
- * Indica derrota del juego (solo sonido)
- * @param {number} delay - Delay en ms antes de reproducir (default 100)
- */
-export function announceGameLoss(delay = 100) {
-  setTimeout(() => {
-    playLoseSound()
-  }, delay)
-}
-
-/**
- * Celebra subida de nivel (confetti especial + sonido)
- * @param {number} newLevel - Nivel alcanzado
- * @param {number} delay - Delay en ms (default 500)
- */
-export function celebrateGameLevelUp(newLevel, delay = 500) {
-  setTimeout(() => {
-    celebrateLevelUp(newLevel)
-    playLevelUpSound()
-  }, delay)
-}
+export function celebrateGameWin() {}
+export function announceGameLoss() {}
+export function celebrateGameLevelUp() {}
 
 /**
  * Maneja el final del juego de forma completa

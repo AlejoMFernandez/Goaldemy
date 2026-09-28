@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import {
   getCosmetics, equipCosmetic,
   frameStyle, bannerStyle, iconBgStyle, iconThemeBg, rarity, hintFor,
@@ -8,6 +8,8 @@ import { pushSuccessToast, pushErrorToast } from '../../stores/notifications'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 import RarityGem from '../rewards/RarityGem.vue'
 import UserAvatar from '../common/UserAvatar.vue'
+import { sparks, center } from '../../services/game-fx'
+import { soundManager } from '../../services/sounds'
 
 const props = defineProps({
   avatarUrl: { type: String, default: '' },
@@ -87,6 +89,51 @@ const eqIconGlyph = computed(() => equippedIcon.value?.style_key || '')
 const eqBannerKey = computed(() => equippedBanner.value?.style_key || 'default')
 const eqBannerPremium = computed(() => !!equippedBanner.value?.premium_only)
 
+// ── Álbum (Moodboard 02): cada cosmético es una figurita con su número ──
+// Número fijo por tipo: ordenado por cómo se consigue (nivel, después código).
+const albumNo = computed(() => {
+  const map = {}
+  for (const t of ['icon', 'frame', 'banner', 'title']) {
+    byType(t).slice().sort((a, b) => (a.unlock_level || 0) - (b.unlock_level || 0) || String(a.code).localeCompare(String(b.code)))
+      .forEach((c, i) => { map[c.code] = String(i + 1).padStart(2, '0') })
+  }
+  return map
+})
+const pagePct = computed(() => totalCount.value ? Math.round(ownedCount.value / totalCount.value * 100) : 0)
+// Lo nuevo se "pega" con etiqueta NUEVA la primera vez que lo ves en el álbum.
+const SEEN_KEY = 'fulvo:album_seen'
+function readSeen() { try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')) } catch { return new Set() } }
+const seen = ref(readSeen())
+const firstVisit = ref(seen.value.size === 0) // la primera vez no marcamos todo como nuevo
+function isNew(c) { return c.owned && !firstVisit.value && !seen.value.has(c.code) }
+function markSeen() {
+  const next = new Set(seen.value)
+  for (const c of items.value) if (c.owned) next.add(c.code)
+  try { localStorage.setItem(SEEN_KEY, JSON.stringify([...next])) } catch {}
+}
+watch(loading, (l) => { if (!l) setTimeout(markSeen, 400) })
+
+// ── Vestuario: cada cosmético se equipa con su animación en la vista previa ──
+const previewEl = ref(null)
+const equipFx = ref({ type: '', n: 0 })
+function playEquip(type) {
+  equipFx.value = { type, n: equipFx.value.n + 1 }
+  soundManager.play(type === 'title' ? 'stamp' : 'swoosh')
+  nextTick(() => {
+    const el = previewEl.value
+    if (!el) return
+    const target = type === 'banner' ? el.querySelector('.eq-banner') : type === 'title' ? el.querySelector('.eq-title') : el.querySelector('.eq-avatar')
+    const c = center(target || el)
+    setTimeout(() => sparks(c.x, c.y, type === 'banner' ? 16 : 12, ['#fcd34d', '#fff', '#34d399'], type === 'banner' ? 110 : 60), type === 'banner' ? 250 : 180)
+  })
+}
+function previewVisible() {
+  const el = previewEl.value
+  if (!el) return false
+  const r = el.getBoundingClientRect()
+  return r.bottom > 40 && r.top < window.innerHeight - 40
+}
+
 async function load() {
   loading.value = true
   items.value = await getCosmetics()
@@ -98,7 +145,9 @@ async function equip(c) {
   const res = await equipCosmetic(c.code)
   if (res.ok) {
     items.value = items.value.map(x => x.type === c.type ? { ...x, equipped: x.code === c.code } : x)
-    pushSuccessToast('Equipado')
+    playEquip(c.type)
+    // Si la vista previa no está en pantalla (celular), el aviso de texto queda de respaldo
+    if (!previewVisible()) pushSuccessToast('Equipado')
   } else { pushErrorToast('No se pudo equipar') }
   busy.value = null
 }
@@ -154,13 +203,16 @@ onMounted(load)
       <div v-if="isCosmeticTab" class="grid grid-cols-1 lg:grid-cols-[268px_1fr] gap-5">
         <!-- ── Preview fijo del perfil (no cambia por sección) ── -->
         <aside class="lg:sticky lg:top-4 self-start space-y-3">
-          <div class="rounded-2xl border border-white/10 bg-slate-900/40 overflow-hidden shadow-lg">
-            <div class="h-24" :class="[bannerStyle(eqBannerKey), eqBannerPremium ? 'anim-pan' : '']"></div>
+          <div ref="previewEl" class="rounded-2xl border border-white/10 bg-slate-900/40 overflow-hidden shadow-lg">
+            <div :key="'b' + (equipFx.type === 'banner' ? equipFx.n : 0)" class="h-24 eq-banner" :class="[bannerStyle(eqBannerKey), eqBannerPremium ? 'anim-pan' : '', equipFx.type === 'banner' && equipFx.n ? 'eq-fx-banner' : '']"></div>
             <!-- relative z-10 → el avatar/borde pinta POR ENCIMA del banner (antes se veía por debajo) -->
             <div class="relative z-10 px-4 pb-5 -mt-10 flex flex-col items-center text-center">
-              <UserAvatar :size="88" :avatar-url="avatarUrl" :initial="initial" :frame-key="eqFrameKey" :icon-glyph="eqIconGlyph" :frame-premium="eqFramePremium" />
+              <div :key="'a' + ((equipFx.type === 'icon' || equipFx.type === 'frame') ? equipFx.n : 0)" class="eq-avatar" :class="equipFx.n && equipFx.type === 'icon' ? 'eq-fx-icon' : (equipFx.n && equipFx.type === 'frame' ? 'eq-fx-frame' : '')">
+                <UserAvatar :size="88" :avatar-url="avatarUrl" :initial="initial" :frame-key="eqFrameKey" :icon-glyph="eqIconGlyph" :frame-premium="eqFramePremium" />
+                <i v-if="equipFx.n && equipFx.type === 'frame'" class="eq-ring" aria-hidden="true"></i>
+              </div>
               <h3 class="mt-2.5 text-lg font-bold text-white leading-tight truncate max-w-full">{{ name || 'Tu perfil' }}</h3>
-              <p v-if="equippedTitle" class="text-sm font-bold mt-0.5 truncate max-w-full" :class="equippedTitle.premium_only ? 'title-premium-anim' : rarity(equippedTitle.rarity).text">{{ equippedTitle.name }}</p>
+              <p v-if="equippedTitle" :key="'t' + (equipFx.type === 'title' ? equipFx.n : 0)" class="eq-title text-sm font-bold mt-0.5 truncate max-w-full" :class="[equippedTitle.premium_only ? 'title-premium-anim' : rarity(equippedTitle.rarity).text, equipFx.n && equipFx.type === 'title' ? 'eq-fx-title' : '']">{{ equippedTitle.name }}</p>
               <p v-else class="text-xs text-slate-500 mt-0.5">Sin título</p>
             </div>
           </div>
@@ -169,6 +221,9 @@ onMounted(load)
               <span class="text-2xl font-display font-bold text-white leading-none">{{ ownedCount }}</span>
               <span class="text-xs text-slate-500">de {{ totalCount }}</span>
             </div>
+            <!-- Página del álbum: cuánto llenaste -->
+            <div class="alb-bar mt-2" :aria-label="`Página ${currentTabLabel}: ${pagePct}%`"><i :style="{ width: pagePct + '%' }"></i></div>
+            <p class="mt-1 text-center text-[11px] text-slate-500">Página {{ currentTabLabel }} · {{ pagePct }}%</p>
             <!-- Mini-dashboard: cuántos tenés por rareza -->
             <div class="mt-3 grid grid-cols-4 gap-1">
               <div v-for="r in RARITY_DASH_ORDER" :key="r" :title="rarity(r).label" class="flex flex-col items-center gap-1 rounded-lg py-1">
@@ -200,9 +255,10 @@ onMounted(load)
             </div>
 
             <!-- ═══ ÍCONOS: grilla apretada (7 col), gema abajo-centro, hover con detalle ═══ -->
-            <div v-if="activeTab === 'icon'" class="grid grid-cols-4 sm:grid-cols-6 xl:grid-cols-7 gap-x-2.5 gap-y-4">
+            <div v-if="activeTab === 'icon'" class="grid grid-cols-4 sm:grid-cols-6 xl:grid-cols-7 gap-x-2.5 gap-y-8">
               <button v-for="c in sec.items" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
-                      class="relative group aspect-square rounded-xl transition hover:z-30"
+                      :data-alb="albumNo[c.code]" :data-new="isNew(c) ? '' : undefined"
+                      class="alb-stk relative group aspect-square rounded-xl transition hover:z-30"
                       :class="[ c.owned ? 'cursor-pointer hover:brightness-110' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : (c.premium_only ? 'ring-2 ring-amber-400/70' : '') ]">
                 <div v-if="!c.owned && c.unlock_achievement" class="absolute inset-0 rounded-xl overflow-hidden border border-amber-500/20 grid place-items-center bg-gradient-to-br from-slate-800 to-slate-950">
                   <span class="text-3xl font-black text-slate-500 group-hover:text-slate-300 transition-colors">?</span>
@@ -219,6 +275,9 @@ onMounted(load)
                 <span v-else-if="c.equipped" class="absolute top-0.5 right-0.5 z-10 grid place-items-center size-4 rounded-full bg-emerald-500 text-white shadow">
                   <svg viewBox="0 0 24 24" fill="currentColor" class="size-2.5"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                 </span>
+                <span v-if="isNew(c)" class="alb-new">Nueva</span>
+                <span class="alb-no">#{{ albumNo[c.code] }}</span>
+                <span v-if="!c.owned" class="alb-req">{{ c.unlock_achievement ? 'Logro secreto' : shortReq(c) }}</span>
                 <!-- Gema de rareza: abajo-centro, mitad afuera / mitad adentro -->
                 <span class="absolute left-1/2 -translate-x-1/2 -bottom-2 z-10 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"><RarityGem :rarity="c.rarity" :size="16" /></span>
                 <!-- Popup (nombre, cómo, y la gema en una esquina) -->
@@ -233,9 +292,10 @@ onMounted(load)
             </div>
 
             <!-- ═══ BORDES: como los íconos — borde SOLO + gema + hover informativo ═══ -->
-            <div v-else-if="activeTab === 'frame'" class="grid grid-cols-3 sm:grid-cols-4 xl:grid-cols-5 gap-x-2.5 gap-y-4">
+            <div v-else-if="activeTab === 'frame'" class="grid grid-cols-3 sm:grid-cols-4 xl:grid-cols-5 gap-x-2.5 gap-y-8">
               <button v-for="c in sec.items" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
-                      class="relative group aspect-square rounded-xl grid place-items-center bg-slate-900/40 transition hover:z-30"
+                      :data-alb="albumNo[c.code]" :data-new="isNew(c) ? '' : undefined"
+                      class="alb-stk relative group aspect-square rounded-xl grid place-items-center bg-slate-900/40 transition hover:z-30"
                       :class="[ c.owned ? 'cursor-pointer hover:brightness-110' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : (c.premium_only ? 'ring-2 ring-amber-400/70' : 'ring-1 ring-white/5') ]">
                 <!-- Borde solo, alrededor de un disco liso (sin persona/emoji adentro) -->
                 <div class="size-[64%] rounded-full" :class="[frameStyle(c.style_key).wrap, frameStyle(c.style_key).pad, c.premium_only ? 'anim-pan' : '', !c.owned ? 'grayscale opacity-45' : '']">
@@ -248,6 +308,9 @@ onMounted(load)
                 <span v-else-if="c.equipped" class="absolute top-0.5 right-0.5 z-10 grid place-items-center size-4 rounded-full bg-emerald-500 text-white shadow">
                   <svg viewBox="0 0 24 24" fill="currentColor" class="size-2.5"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                 </span>
+                <span v-if="isNew(c)" class="alb-new">Nueva</span>
+                <span class="alb-no">#{{ albumNo[c.code] }}</span>
+                <span v-if="!c.owned" class="alb-req">{{ shortReq(c) }}</span>
                 <!-- Gema de rareza: abajo-centro (la rareza va acá, no en el hover) -->
                 <span class="absolute left-1/2 -translate-x-1/2 -bottom-2 z-10 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"><RarityGem :rarity="c.rarity" :size="16" /></span>
                 <!-- Popup informativo: título centrado, sin rareza -->
@@ -264,7 +327,8 @@ onMounted(load)
             <!-- ═══ BANNERS: cards HORIZONTALES (como se ven en el perfil real), hover como íconos ═══ -->
             <div v-else-if="activeTab === 'banner'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button v-for="c in sec.items" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
-                      class="relative group rounded-xl transition hover:z-30"
+                      :data-alb="albumNo[c.code]" :data-new="isNew(c) ? '' : undefined"
+                      class="alb-stk alb-stk--wide relative group rounded-xl transition hover:z-30"
                       :class="[ c.owned ? 'cursor-pointer hover:brightness-110' : 'cursor-not-allowed', c.equipped ? 'ring-2 ring-emerald-400' : (c.premium_only ? 'ring-2 ring-amber-400/70' : '') ]">
                 <div class="h-20 rounded-xl overflow-hidden border border-white/10 relative"
                      :class="[ bannerStyle(c.style_key), c.premium_only ? 'anim-pan' : '', !c.owned ? 'grayscale opacity-50' : '' ]">
@@ -280,6 +344,8 @@ onMounted(load)
                 <span v-else-if="c.equipped" class="absolute bottom-1.5 right-1.5 z-10 grid place-items-center size-5 rounded-full bg-emerald-500 text-white shadow-lg">
                   <svg viewBox="0 0 24 24" fill="currentColor" class="size-3.5"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                 </span>
+                <span v-if="isNew(c)" class="alb-new">Nueva</span>
+                <span class="alb-no alb-no--bn">#{{ albumNo[c.code] }}<template v-if="!c.owned"> · {{ shortReq(c) }}</template></span>
                 <!-- Popup (como los íconos): título centrado, sin rareza -->
                 <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 w-44 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                   <div class="relative rounded-lg bg-slate-950/95 border border-white/15 shadow-xl px-3 py-2 text-center">
@@ -294,7 +360,8 @@ onMounted(load)
             <!-- ═══ TÍTULOS: chips, hover = por qué lo desbloqueaste ═══ -->
             <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <button v-for="c in sec.items" :key="c.code" :disabled="!c.owned || busy === c.code" @click="equip(c)"
-                      class="group relative rounded-xl border px-3.5 py-3 text-left transition-all"
+                      :data-alb="albumNo[c.code]" :data-new="isNew(c) ? '' : undefined"
+                      class="alb-stk alb-stk--wide group relative rounded-xl border px-3.5 py-3 text-left transition-all"
                       :class="[ c.equipped ? 'border-emerald-400/50 bg-emerald-500/[0.07]' : (c.premium_only ? 'border-amber-400/50 bg-amber-500/[0.05]' : rarity(c.rarity).border + ' ' + rarity(c.rarity).bg), c.owned ? 'hover:brightness-110 cursor-pointer' : 'opacity-60 cursor-not-allowed' ]">
                 <div class="text-sm font-bold truncate" :class="c.premium_only ? 'title-premium-anim' : rarity(c.rarity).text">{{ c.name }}</div>
                 <div class="text-[10px] mt-0.5 truncate" :class="c.owned ? 'text-slate-500' : 'text-slate-600'">
@@ -302,6 +369,8 @@ onMounted(load)
                   <span v-else-if="c.owned">Disponible</span>
                   <span v-else>{{ shortReq(c) }}</span>
                 </div>
+                <span v-if="isNew(c)" class="alb-new">Nueva</span>
+                <span class="alb-no alb-no--in">#{{ albumNo[c.code] }}</span>
                 <!-- Popup: por qué lo desbloqueaste -->
                 <div class="pointer-events-none absolute bottom-full left-4 mb-2 z-30 w-52 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                   <div class="rounded-lg bg-slate-950/95 border border-white/15 shadow-xl px-3 py-2">
@@ -322,3 +391,40 @@ onMounted(load)
     </template>
   </div>
 </template>
+
+<style scoped>
+/* ── Álbum ── */
+.alb-bar { height: 6px; border-radius: 6px; background: rgba(255,255,255,.08); overflow: hidden; }
+.alb-bar i { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, #10b981, #fcd34d); transition: width .8s cubic-bezier(.16,1,.3,1); }
+.alb-no { position: absolute; right: 3px; bottom: 3px; z-index: 10; font-family: var(--font-bug, sans-serif); font-weight: 800; font-size: 10px; line-height: 1; letter-spacing: .02em;
+  padding: 2px 4px; border-radius: 4px; background: rgba(2,6,23,.75); color: #cbd5e1; pointer-events: none; }
+.alb-no--in { right: 6px; bottom: 6px; }
+.alb-no--bn { right: auto; bottom: auto; top: 6px; left: 26px; }
+.alb-req { position: absolute; left: 50%; top: calc(100% + 10px); transform: translateX(-50%); width: max-content; max-width: 110%; z-index: 5; pointer-events: none;
+  font-size: 10px; line-height: 1.1; font-weight: 600; color: #8b93b8; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.alb-new { position: absolute; top: -7px; left: 50%; transform: translateX(-50%) rotate(-4deg); z-index: 20; pointer-events: none;
+  font-family: var(--font-bug, sans-serif); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; font-size: 10px; padding: 2px 6px; border-radius: 4px;
+  background: #fcd34d; color: #141005; box-shadow: 0 3px 8px rgba(0,0,0,.4); }
+/* Lo nuevo se "pega": entra girado y cae en su lugar con un brillo */
+.alb-stk[data-new] { animation: alb-stick .7s cubic-bezier(.34,1.56,.64,1) both; }
+.alb-stk[data-new]::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 15;
+  background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%) -150% 0 / 250% 100% no-repeat; animation: alb-shine .9s ease .5s both; }
+@keyframes alb-stick { 0% { transform: rotate(-10deg) scale(1.25) translateY(-8px); opacity: 0; box-shadow: 0 18px 30px rgba(0,0,0,.5); } 70% { opacity: 1; } 100% { transform: none; } }
+@keyframes alb-shine { to { background-position: 150% 0; } }
+
+/* ── Vestuario: animación por tipo al equipar ── */
+.eq-avatar { position: relative; display: inline-block; }
+.eq-fx-icon { animation: eq-icon .55s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes eq-icon { 0% { transform: scale(.6) rotate(-12deg); filter: brightness(2); } 60% { transform: scale(1.08) rotate(3deg); } 100% { transform: none; filter: none; } }
+.eq-fx-frame { animation: eq-frame .6s cubic-bezier(.34,1.3,.64,1) both; }
+@keyframes eq-frame { 0% { transform: rotate(-120deg) scale(.85); filter: brightness(1.8) saturate(1.4); } 100% { transform: none; filter: none; } }
+.eq-ring { position: absolute; inset: -8px; border-radius: 50%; border: 3px solid #fcd34d; pointer-events: none; animation: eq-ring .7s ease-out forwards; }
+@keyframes eq-ring { from { transform: scale(.8); opacity: 1; } to { transform: scale(1.35); opacity: 0; } }
+.eq-fx-banner { animation: eq-banner .6s cubic-bezier(.65,0,.35,1) both; }
+@keyframes eq-banner { from { clip-path: inset(0 100% 0 0); filter: brightness(1.6); } to { clip-path: inset(0 0 0 0); filter: none; } }
+.eq-fx-title { animation: eq-title .45s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes eq-title { 0% { transform: scale(1.8); opacity: 0; letter-spacing: .3em; } 100% { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .alb-stk[data-new], .alb-stk[data-new]::after, .eq-fx-icon, .eq-fx-frame, .eq-ring, .eq-fx-banner, .eq-fx-title { animation: none !important; }
+}
+</style>

@@ -2,10 +2,13 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { notificationsState, shiftCosmeticQueue, setCosmeticActive } from '@/stores/notifications'
 import { soundManager } from '@/services/sounds'
-import { triggerConfetti } from '@/services/confetti'
 import { equipCosmetic } from '@/services/cosmetics'
-import CosmeticPreview from './CosmeticPreview.vue'
 import RarityGem from './RarityGem.vue'
+import PrizeCard from './PrizeCard.vue'
+import RarityReveal from './RarityReveal.vue'
+import { prizeFromCosmetic } from '@/services/prize-card'
+import { RARITY_WAIT, RARITY_SOUND, RARITY_COLOR } from '@/services/prize-reveal'
+import { sparks, center, fxOnTop } from '@/services/game-fx'
 
 const TYPE_LABEL = { frame: 'Borde', title: 'Título', icon: 'Ícono', banner: 'Banner' }
 
@@ -23,7 +26,7 @@ const RARITY_RANK = { common: 0, rare: 1, epic: 2, legendary: 3 }
 
 export default {
   name: 'CosmeticUnlockOverlay',
-  components: { CosmeticPreview, RarityGem },
+  components: { RarityGem, PrizeCard, RarityReveal },
   setup() {
     // Con 1 sola recompensa: un sobre → lo abrís → pantalla de detalle grande.
     // Con varias: una GRILLA de sobres individuales (estilo caja de Overwatch /
@@ -64,12 +67,18 @@ export default {
     function themeFor(item) { return RARITY_THEME[item?.rarity] || RARITY_THEME.common }
 
     function canShow() {
-      // Prioridad: bienvenida PRO → logros → COSMÉTICOS → nivel/rango.
-      // El level-up espera a que este carrusel termine (ver LevelUpOverlay).
+      // Cola (moodboard 03): bienvenida PRO → logros → NIVEL/RANGO → COSMÉTICOS.
+      // Los cosméticos exclusivos esperan a que termine la escena de nivel.
       return !notificationsState.suppressOverlays
         && !notificationsState.proWelcome
         && notificationsState.achievementQueue.length === 0
+        && !notificationsState.levelUpActive
+        && notificationsState.levelUpQueue.length === 0
     }
+    // Carta estándar (moodboard 08) para cada cosmético
+    function prizeOf(item) { return prizeFromCosmetic(item) }
+    const cardRef = ref(null)
+    const spotlight = ref(false)
 
     function showBatch() {
       clearTimers()
@@ -86,38 +95,48 @@ export default {
       phase.value = 0
       unboxed.value = false
       cracking.value = false
-      setCosmeticActive(true)   // la subida de nivel espera hasta que cerremos esto
+      setCosmeticActive(true)
+      fxOnTop(true)
       soundManager.play('notify') // ding sutil: "tenés algo esperando"
     }
 
     // Modo "1 sola": el usuario toca el sobre cerrado → apertura (suspenso corto) →
     // pantalla de detalle grande con la secuencia de reveal + confeti de siempre.
+    // Escalera de rareza (moodboard 02): cuanto más rara, más suspenso.
+    // Común ~0,6 s · Rara ~1 s · Épica ~1,6 s · Legendaria ~2,6 s con apagón y reflector.
     function openPack() {
       if (cracking.value || unboxed.value) return
       cracking.value = true
+      const r = current.value?.rarity || 'common'
+      const wait = 300 + (RARITY_WAIT[r] || 250)
       soundManager.play('combo') // riser corto de tensión mientras "cruje" el sobre
+      if (r === 'legendary') spotlight.value = true
       phaseTimers.push(setTimeout(() => {
         unboxed.value = true
         cracking.value = false
         nextTick(() => {
+          const k = r === 'legendary' ? 1.6 : r === 'epic' ? 1.25 : r === 'rare' ? 1 : 0.7
           phaseTimers.push(setTimeout(() => { phase.value = 1 }, 50))
-          phaseTimers.push(setTimeout(() => { phase.value = 2 }, 450))
-          phaseTimers.push(setTimeout(() => { phase.value = 3 }, 850))
-          phaseTimers.push(setTimeout(() => { phase.value = 4 }, 1150))
-          soundManager.play('achievement')
-          triggerConfetti({ particleCount: 80, colors: theme.value.confetti })
+          phaseTimers.push(setTimeout(() => { phase.value = 2 }, 400 * k))
+          phaseTimers.push(setTimeout(() => { phase.value = 3 }, 800 * k))
+          phaseTimers.push(setTimeout(() => { phase.value = 4 }, 1100 * k))
+          soundManager.play(RARITY_SOUND[r] || 'cardFlip')
+          phaseTimers.push(setTimeout(() => {
+            const el = cardRef.value?.$el
+            if (el) { const c = center(el); sparks(c.x, c.y, r === 'legendary' ? 60 : r === 'epic' ? 34 : 16, [RARITY_COLOR[r], '#ffffff'], Math.max(120, c.w)) }
+          }, 120))
         })
-      }, 550))
+      }, wait))
     }
 
     // Modo grilla: cada carta se abre de forma independiente al tocarla.
     function revealCard(item, event) {
       if (!item || revealed.value[item.code]) return
       revealed.value = { ...revealed.value, [item.code]: true }
-      soundManager.play('starReveal')
-      const rect = event?.currentTarget?.getBoundingClientRect?.()
-      const origin = rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : null
-      triggerConfetti({ particleCount: 34, colors: themeFor(item).confetti, origin })
+      const r = item.rarity || 'common'
+      soundManager.play(RARITY_SOUND[r] || 'cardFlip')
+      const el = event?.currentTarget
+      if (el) { const c = center(el); sparks(c.x, c.y, r === 'legendary' ? 36 : r === 'epic' ? 20 : 10, [RARITY_COLOR[r], '#ffffff'], Math.max(60, c.w * 0.8)) }
     }
 
     async function equipItem(item) {
@@ -133,7 +152,18 @@ export default {
       busy.value = false
     }
 
+    // ── Escena por carta (moodboard 02 · 03): se revelan de a una, cada rareza con su escena ──
+    const idx = ref(0)
+    const shownItem = computed(() => items.value[idx.value] || null)
+    const shownRevealed = ref(false)
+    function onRevealed() { shownRevealed.value = true }
+    function nextCard() {
+      if (idx.value < items.value.length - 1) { idx.value++; shownRevealed.value = false }
+      else close()
+    }
+
     function close() {
+      idx.value = 0; shownRevealed.value = false
       clearTimers()
       items.value = []
       equipped.value = {}
@@ -141,6 +171,8 @@ export default {
       phase.value = 0
       unboxed.value = false
       cracking.value = false
+      spotlight.value = false
+      fxOnTop(false)
       if (notificationsState.cosmeticQueue.length > 0) {
         // Quedan más cosméticos: seguimos "activos" y mostramos otra tanda.
         phaseTimers.push(setTimeout(showBatch, 400))
@@ -158,6 +190,12 @@ export default {
         setTimeout(() => { if (canShow()) showBatch() }, 700)
       }
     })
+    // La escena de nivel terminó → ahora sí, los cosméticos exclusivos
+    watch(() => notificationsState.levelUpActive, (a) => {
+      if (!a && notificationsState.cosmeticQueue.length > 0 && !active.value) {
+        setTimeout(() => { if (canShow()) showBatch() }, 500)
+      }
+    })
     watch(() => notificationsState.proWelcome, (pw) => {
       if (!pw && notificationsState.cosmeticQueue.length > 0 && !active.value) {
         setTimeout(() => { if (canShow()) showBatch() }, 500)
@@ -167,7 +205,8 @@ export default {
     return {
       items, phase, busy, active, current, total, theme, typeLabel, isEquipped,
       unboxed, cracking, batchTheme, equipped, revealed, revealedCount, allRevealed,
-      equipItem, close, openPack, revealCard, themeFor,
+      equipItem, close, openPack, revealCard, themeFor, prizeOf, cardRef, spotlight,
+      idx, shownItem, shownRevealed, onRevealed, nextCard, TYPE_LABEL,
     }
   }
 }
@@ -175,149 +214,19 @@ export default {
 
 <template>
   <Teleport to="body">
-    <Transition name="overlay-fade">
-      <div v-if="active" class="fixed inset-0 z-[60] grid place-items-center p-4 overflow-y-auto"
-           @click.self="(total === 1 ? unboxed : allRevealed) && close()">
-        <div class="absolute inset-0 bg-black/92"></div>
-
-        <!-- ═══ MODO "1 SOLA": sobre → detalle grande (sin cambios de comportamiento) ═══ -->
-        <template v-if="total === 1">
-          <!-- SOBRE CERRADO -->
-          <div v-if="!unboxed" class="relative flex flex-col items-center text-center">
-            <p class="mb-5 text-xs font-bold uppercase tracking-wider" :class="batchTheme.text">Tenés una recompensa</p>
-            <button
-              type="button"
-              @click="openPack"
-              :disabled="cracking"
-              class="pack-box relative w-40 h-48 grid place-items-center rounded-3xl border-2 transition-transform active:scale-95"
-              :class="[batchTheme.ringBorder, cracking ? 'pack-cracking' : 'pack-idle']"
-              :style="`box-shadow: 0 0 42px ${batchTheme.glow}, inset 0 0 30px ${batchTheme.glow}`"
-            >
-              <div class="pack-sheen absolute inset-0 rounded-3xl overflow-hidden"></div>
-              <svg class="w-16 h-16 relative" :class="batchTheme.text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M4 7.5l8 4.5 8-4.5" />
-              </svg>
+    <Transition name="cu-fade">
+      <div v-if="active && shownItem" class="cu" role="dialog" aria-modal="true" aria-label="Desbloqueaste un cosmético">
+        <div class="cu-bg" aria-hidden="true"></div>
+        <div class="cu-stage">
+          <p class="cu-kick">Desbloqueaste<template v-if="total > 1"> · {{ idx + 1 }}/{{ total }}</template></p>
+          <RarityReveal :key="shownItem.code + '-' + idx" :prize="prizeOf(shownItem)" @revealed="onRevealed" />
+          <p v-if="shownItem.reason" class="cu-why" :class="{ in: shownRevealed }">{{ shownItem.reason }}</p>
+          <div class="cu-actions" :class="{ in: shownRevealed }">
+            <button v-if="shownItem.type !== 'powerup'" type="button" class="cu-btn ghost" :disabled="busy || equipped[shownItem.code]" @click="equipItem(shownItem)">
+              {{ equipped[shownItem.code] ? '✓ Equipado' : 'Equipar' }}
             </button>
-            <p class="mt-5 text-sm font-semibold text-white" :style="cracking ? '' : 'animation: pulse-soft 1.6s ease-in-out infinite'">
-              {{ cracking ? 'Abriendo…' : 'Tocá para abrir' }}
-            </p>
+            <button type="button" class="cu-btn" @click="nextCard">{{ idx < total - 1 ? 'Siguiente' : 'Listo' }}</button>
           </div>
-
-          <!-- DETALLE REVELADO -->
-          <div v-else class="relative flex flex-col items-center text-center max-w-md w-full">
-            <div class="mb-4 transition-all duration-500" :class="phase >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'">
-              <span class="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-extrabold uppercase tracking-wider backdrop-blur"
-                    :class="[theme.ringBorder, theme.text]"
-                    :style="`box-shadow: 0 0 18px ${theme.glow}`">
-                <RarityGem :rarity="current.rarity" :size="15" />
-                {{ theme.label }}
-              </span>
-            </div>
-
-            <div class="relative mb-6 grid place-items-center transition-all duration-500" :class="phase >= 1 ? 'opacity-100' : 'opacity-0'"
-                 style="animation: scale-spring 0.5s var(--ease-bounce, cubic-bezier(0.34,1.56,0.64,1)) both">
-              <CosmeticPreview
-                :type="current.type" :style-key="current.styleKey" :rarity="current.rarity" :name="current.name"
-                :glow="theme.glow" :ring-border="theme.ringBorder" :text-class="theme.text"
-                :size="150" :animated="phase >= 2"
-              />
-            </div>
-
-            <div class="mb-2 transition-all duration-500" :class="phase >= 2 ? 'opacity-100' : 'opacity-0'">
-              <div class="font-display text-xs font-bold uppercase mb-3 tracking-wider" :class="theme.text">{{ typeLabel }} desbloqueado</div>
-              <h2 class="font-display text-3xl font-bold text-white mb-2">{{ current.name }}</h2>
-            </div>
-
-            <div v-if="current.reason" class="mb-5 -mt-1 max-w-xs transition-all duration-400" :class="phase >= 3 ? 'opacity-100' : 'opacity-0'">
-              <p class="text-sm text-slate-300"><span class="text-slate-500">Lo conseguiste por:</span> <span class="font-semibold text-white">{{ current.reason }}</span></p>
-            </div>
-
-            <div class="flex items-center gap-3 transition-all duration-400" :class="phase >= 4 ? 'opacity-100' : 'opacity-0'">
-              <button @click="equipItem(current)" :disabled="busy || isEquipped"
-                      class="rounded-2xl px-6 py-3.5 font-display font-bold text-base transition-all duration-200 border"
-                      :class="isEquipped
-                        ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300'
-                        : 'border-white/15 bg-white/5 text-white hover:bg-white/10 active:scale-95'">
-                <span v-if="isEquipped" class="flex items-center gap-2">
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  Equipado
-                </span>
-                <span v-else>{{ busy ? 'Equipando…' : 'Equipar' }}</span>
-              </button>
-
-              <button @click="close"
-                      class="rounded-2xl px-8 py-3.5 font-display font-bold text-base text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 shadow-lg shadow-amber-500/25 transition-all duration-200"
-                      style="animation: claim-pulse 2s ease-in-out infinite">
-                Continuar
-              </button>
-            </div>
-          </div>
-        </template>
-
-        <!-- ═══ MODO GRILLA (2+): un sobre por recompensa, se abren de a uno ═══ -->
-        <div v-else class="relative flex flex-col items-center text-center max-w-2xl w-full py-6">
-          <p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-300">
-            {{ revealedCount }} de {{ total }} abiertas
-          </p>
-          <p class="mb-6 text-sm text-slate-400">Tocá cada sobre para ver qué te tocó</p>
-
-          <div class="grid gap-4 justify-center w-full" style="grid-template-columns: repeat(auto-fit, minmax(120px, 140px));">
-            <div v-for="item in items" :key="item.code" class="pack-flip" :class="{ 'is-flipped': revealed[item.code] }">
-              <div class="pack-flip-inner relative w-full aspect-[3/4]">
-
-                <!-- Cara cerrada -->
-                <button
-                  type="button"
-                  @click="revealCard(item, $event)"
-                  class="pack-face pack-face-front absolute inset-0 rounded-2xl border-2 grid place-items-center pack-idle"
-                  :class="themeFor(item).ringBorder"
-                  :style="`box-shadow: 0 0 26px ${themeFor(item).glow}, inset 0 0 20px ${themeFor(item).glow}`"
-                >
-                  <div class="pack-sheen absolute inset-0 rounded-2xl overflow-hidden"></div>
-                  <svg class="w-9 h-9 relative" :class="themeFor(item).text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M4 7.5l8 4.5 8-4.5" />
-                  </svg>
-                </button>
-
-                <!-- Cara revelada: sin caja dura — un halo radial detrás y la pieza -->
-                <!-- (ícono/anillo/cinta) con SU propia silueta, no un rectángulo genérico. -->
-                <div class="pack-face pack-face-back absolute inset-0 rounded-2xl flex flex-col items-center justify-center gap-1 p-2"
-                     :style="revealed[item.code] ? `background: radial-gradient(circle at 50% 40%, ${themeFor(item).glow}, transparent 72%)` : ''">
-                  <RarityGem :rarity="item.rarity" :size="11" />
-                  <CosmeticPreview
-                    :type="item.type" :style-key="item.styleKey" :rarity="item.rarity" :name="item.name"
-                    :glow="themeFor(item).glow" :ring-border="themeFor(item).ringBorder" :text-class="themeFor(item).text"
-                    :size="52"
-                  />
-                  <p v-if="item.type !== 'title'" class="text-[10px] font-semibold text-white leading-tight text-center line-clamp-2">{{ item.name }}</p>
-                  <button
-                    v-if="revealed[item.code]"
-                    @click="equipItem(item)"
-                    :disabled="busy || !!equipped[item.code]"
-                    class="mt-0.5 rounded-full px-2.5 py-1 text-[10px] font-bold border transition"
-                    :class="equipped[item.code]
-                      ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300'
-                      : 'border-white/15 bg-white/5 text-white hover:bg-white/10'">
-                    {{ equipped[item.code] ? 'Equipado ✓' : 'Equipar' }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <button
-            @click="close"
-            :disabled="!allRevealed"
-            class="mt-8 rounded-2xl px-8 py-3.5 font-display font-bold text-base transition-all duration-200"
-            :class="allRevealed
-              ? 'text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 shadow-lg shadow-amber-500/25'
-              : 'text-slate-500 bg-white/5 border border-white/10 cursor-not-allowed'"
-            :style="allRevealed ? 'animation: claim-pulse 2s ease-in-out infinite' : ''"
-          >
-            {{ allRevealed ? 'Continuar' : `Abrí las ${total - revealedCount} que faltan` }}
-          </button>
         </div>
       </div>
     </Transition>
@@ -325,53 +234,18 @@ export default {
 </template>
 
 <style scoped>
-.overlay-fade-enter-active { transition: opacity 0.3s ease; }
-.overlay-fade-leave-active { transition: opacity 0.25s ease; }
-.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
-
-/* Sobre cerrado: bg sutil + respiración lenta para invitar al tap */
-.pack-box, .pack-face-front { background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(0,0,0,0.25)); cursor: pointer; }
-.pack-idle { animation: pack-breathe 2.2s ease-in-out infinite, pack-wiggle 4.5s ease-in-out infinite; }
-.pack-cracking { animation: pack-shake 0.5s ease-in-out; cursor: default; }
-@keyframes pack-breathe {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.18); }
-}
-@keyframes pack-wiggle {
-  0%, 92%, 100% { transform: rotate(0deg); }
-  94% { transform: rotate(-2deg); }
-  97% { transform: rotate(2deg); }
-}
-@keyframes pack-shake {
-  0% { transform: scale(1) rotate(0deg); }
-  20% { transform: scale(1.03) rotate(-3deg); }
-  40% { transform: scale(1.05) rotate(3deg); }
-  60% { transform: scale(1.08) rotate(-4deg); }
-  80% { transform: scale(1.15) rotate(2deg); }
-  100% { transform: scale(1.5) rotate(0deg); opacity: 0; }
-}
-.pack-sheen { background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.25) 48%, transparent 66%); background-size: 220% 220%; animation: pack-sheen-sweep 2.8s ease-in-out infinite; }
-@keyframes pack-sheen-sweep {
-  0% { background-position: 120% 0%; }
-  55%, 100% { background-position: -20% 0%; }
-}
-@keyframes pulse-soft {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-/* Grilla de sobres (2+ recompensas): cada carta se "da vuelta" al tocarla. */
-.pack-flip { perspective: 1200px; }
-.pack-flip-inner {
-  transform-style: preserve-3d;
-  transition: transform 0.55s var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
-}
-.pack-flip.is-flipped .pack-flip-inner { transform: rotateY(180deg); }
-.pack-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.pack-face-back { transform: rotateY(180deg); }
-
-@media (prefers-reduced-motion: reduce) {
-  .pack-idle, .pack-cracking, .pack-sheen { animation: none; }
-  .pack-flip-inner { transition: none; }
-}
+.cu { position: fixed; inset: 0; z-index: 62; display: grid; place-items: center; padding: 16px; overflow: hidden; }
+.cu-bg { position: absolute; inset: 0; background: radial-gradient(90% 80% at 50% 45%, rgba(20, 28, 68, .92) 0%, rgba(4, 6, 16, .97) 70%); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.cu-stage { position: relative; width: min(100%, 560px); display: grid; justify-items: center; gap: 14px; }
+.cu-kick { position: relative; z-index: 8; margin: 0; font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .2em; font-size: 14px; color: #fcd34d; }
+.cu-why { position: relative; z-index: 8; margin: 0; font-size: 14px; color: #c5cbe8; text-align: center; opacity: 0; transition: opacity .4s; }
+.cu-actions { position: relative; z-index: 8; display: flex; gap: 10px; opacity: 0; transform: translateY(10px); transition: opacity .35s, transform .35s; pointer-events: none; }
+.cu-why.in, .cu-actions.in { opacity: 1; transform: none; pointer-events: auto; }
+.cu-btn { font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .1em; font-size: 17px; padding: 12px 30px; border-radius: 14px; border: 0; cursor: pointer; color: #141005; background: linear-gradient(180deg, #fde68a, #f59e0b); box-shadow: 0 10px 26px rgba(245, 158, 11, .35); }
+.cu-btn.ghost { color: #fff; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .18); box-shadow: none; }
+.cu-btn:disabled { opacity: .7; cursor: default; }
+.cu-btn:active { transform: scale(.96); }
+.cu-fade-enter-active { transition: opacity .3s ease; }
+.cu-fade-leave-active { transition: opacity .25s ease; }
+.cu-fade-enter-from, .cu-fade-leave-to { opacity: 0; }
 </style>

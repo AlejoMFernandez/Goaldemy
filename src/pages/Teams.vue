@@ -215,6 +215,7 @@
 import { ref, computed, onMounted } from 'vue';
 import AppLoader from '../components/common/AppLoader.vue';
 import { getLeagueOverview, LEAGUES } from '../services/fotmob';
+import { normalizeSearch } from '../services/text';
 
 export default {
     name: 'Teams',
@@ -243,14 +244,14 @@ export default {
                 if (selectedLeague.value === 'all') return teams.value;
                 return teams.value.filter(team => String(teamLeagueMap.value[String(team.id)]?.id || '') === selectedLeague.value);
             }
-            const query = searchQuery.value.toLowerCase();
+            const query = normalizeSearch(searchQuery.value);
             return teams.value.filter(team => {
                 const matchesLeague = selectedLeague.value === 'all'
                     || String(teamLeagueMap.value[String(team.id)]?.id || '') === selectedLeague.value;
                 if (!matchesLeague) return false;
-                const teamMatch = team.name.toLowerCase().includes(query);
-                const playerMatch = team.players?.some(player => 
-                    player.name.toLowerCase().includes(query)
+                const teamMatch = normalizeSearch(team.name).includes(query);
+                const playerMatch = team.players?.some(player =>
+                    normalizeSearch(player.name).includes(query)
                 );
                 return teamMatch || playerMatch;
             });

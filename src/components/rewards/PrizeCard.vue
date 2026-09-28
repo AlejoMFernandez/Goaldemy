@@ -228,7 +228,7 @@ function onLeave() { tiltStyle.value = {}; shinePos.value = null }
 /* boca abajo */
 .pc-back { position: absolute; inset: 2.2cqw; border-radius: 5.4cqw; z-index: 6; display: grid; place-items: center;
   background: repeating-linear-gradient(45deg, rgba(255, 255, 255, .06) 0 3cqw, transparent 3cqw 7cqw), radial-gradient(60% 60% at 50% 50%, color-mix(in srgb, var(--rk) 40%, transparent), transparent), #0b1024; }
-.pc-back span { font-family: var(--font-shout, 'Anton', sans-serif); font-size: 34cqw; line-height: 1; color: rgba(255, 255, 255, .85); text-shadow: 0 1.5cqw 0 rgba(0, 0, 0, .3); }
+.pc-back span { font-family: var(--font-shout, 'Barlow Condensed', sans-serif); font-weight: 800; font-style: italic; font-size: 34cqw; line-height: 1; color: rgba(255, 255, 255, .85); text-shadow: 0 1.5cqw 0 rgba(0, 0, 0, .3); }
 .is-flipping { animation: pc-flip .45s ease-in-out; }
 @keyframes pc-flip { 0% { transform: rotateY(90deg); } 100% { transform: rotateY(0); } }
 .is-tilt { will-change: transform; }

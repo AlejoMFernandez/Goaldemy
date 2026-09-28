@@ -65,6 +65,39 @@ export const ACHIEVEMENT_ICONS = {
   // daily_wins_3 (Triplete) se BORRÓ del todo (duplicaba hat_trick) — ver supabase/achievements-delete-triplete.sql
   early_bird:         { icon: 'ach_sunrise',           rarity: 'common' },
   weekend_warrior:    { icon: 'ach_crossed_swords',    rarity: 'rare' },
+
+  // ── achievements-new-1 (supabase/achievements-new-1.sql) ─────────────
+  // XP por rareza: común 15 · rara 35 · épica 80 · legendaria 180.
+  // Un glyph propio por logro (ninguno repite otro logro ni un cosmético de tienda).
+  // Tiempo y ayudas
+  tiempo_descuento:   { icon: 'ach_last_seconds',      rarity: 'rare' },
+  ni_la_mitad:        { icon: 'ach_half_clock',        rarity: 'rare' },
+  relampago:          { icon: 'ach_storm_cloud',       rarity: 'epic' },
+  salvado_escudo:     { icon: 'ach_bubble',            rarity: 'common' },
+  ascenso:            { icon: 'ach_promotion',         rarity: 'epic' },
+  // Por juego
+  ojo_halcon:         { icon: 'ach_hawk',              rarity: 'epic' },
+  cadena_oro:         { icon: 'ach_chain_links',       rarity: 'epic' },
+  scout:              { icon: 'ach_binoculars',        rarity: 'rare' },
+  once_gala:          { icon: 'ach_bow_tie',           rarity: 'epic' },
+  // Colección
+  trotamundos:        { icon: 'ach_suitcase',          rarity: 'rare' },
+  todoterreno:        { icon: 'ach_peaks',             rarity: 'epic' },
+  coleccionista:      { icon: 'ach_envelope',          rarity: 'rare' },
+  // Varios días
+  semana_primera:     { icon: 'ach_week_strip',        rarity: 'epic' },
+  relojero:           { icon: 'ach_wristwatch',        rarity: 'epic' },
+  especialista:       { icon: 'ach_pushpin',         rarity: 'epic' },
+  doble_jornada:      { icon: 'ach_two_days',          rarity: 'legendary' },
+  // Sostener el nivel
+  invicto:            { icon: 'ach_brick_wall',        rarity: 'epic' },
+  invicto_temporada:  { icon: 'ach_castle',            rarity: 'legendary' },
+  sin_red:            { icon: 'ach_net_crossed',       rarity: 'epic' },
+  jornada_primera:    { icon: 'ach_stadium',           rarity: 'legendary' },
+  // Hazañas repetidas
+  fuego_azul:         { icon: 'ach_burner',            rarity: 'epic' },
+  cazador_cracks:     { icon: 'ach_crosshair',         rarity: 'epic' },
+  enciclopedia:       { icon: 'ach_book',              rarity: 'legendary' },
 }
 
 export function achievementIcon(code) {

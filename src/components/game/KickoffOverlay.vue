@@ -100,7 +100,7 @@ export default {
 .ko-open .ko-line, .ko-open .ko-circ, .ko-open .ko-go, .ko-open .ko-skip { opacity: 0; transition: opacity 0.25s; }
 .ko-num {
   position: absolute; inset: 0; display: grid; place-items: center;
-  font-family: var(--font-shout); font-size: min(40vw, 16rem); line-height: 1; color: #fff;
+  font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: min(40vw, 16rem); line-height: 1; color: #fff;
   text-shadow: 0 0.05em 0 rgba(0, 0, 0, 0.4); pointer-events: none;
 }
 .ko-slam { animation: ko-slam 0.6s cubic-bezier(.2, 0, 0, 1) both; }
@@ -113,7 +113,7 @@ export default {
 }
 .ko-go {
   position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
-  font-family: var(--font-shout); font-size: min(18vw, 7rem); color: var(--play-400, #fcd34d);
+  font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: min(18vw, 7rem); color: var(--play-400, #fcd34d);
   text-transform: uppercase; white-space: nowrap; opacity: 0;
 }
 .ko-go-in { animation: ko-go 0.5s cubic-bezier(.16, 1, .3, 1) both; }

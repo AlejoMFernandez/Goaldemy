@@ -58,6 +58,7 @@ export default {
 
 <template>
   <div
+    :data-reward-id="reward.id"
     class="rounded-xl border p-3 flex items-center gap-3 transition-all duration-200"
     :class="[borderColor, reward.claimed ? 'opacity-50 bg-white/2' : 'bg-white/5']"
   >
@@ -81,7 +82,7 @@ export default {
 
     <div v-if="!reward.claimed" class="shrink-0">
       <button
-        @click="$emit('claim', reward.id)"
+        @click="$emit('claim', reward.id, $event.currentTarget)"
         class="rounded-lg px-3 py-1.5 text-xs font-display font-bold text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 transition-all"
       >
         +{{ points }} XP

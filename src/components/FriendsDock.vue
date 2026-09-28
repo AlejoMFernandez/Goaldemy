@@ -28,6 +28,7 @@ import {
 import { formatTimeOnly, formatDayLabel } from '../services/formatters'
 import { supabase } from '../services/supabase'
 import { pushErrorToast, pushSuccessToast, pushDmToast } from '../stores/notifications'
+import { normalizeSearch } from '../services/text'
 import { playNotifySound } from '../services/sounds'
 import { setSidebarUser, sidebarState } from '../stores/sidebar'
 import UserAvatar from './common/UserAvatar.vue'
@@ -119,9 +120,9 @@ export default {
       })
     },
     filteredRows() {
-      const q = (this.query || '').trim().toLowerCase()
+      const q = normalizeSearch(this.query)
       const rows = this.baseRows
-      return q ? rows.filter(r => r.name.toLowerCase().includes(q)) : rows
+      return q ? rows.filter(r => normalizeSearch(r.name).includes(q)) : rows
     },
     sortedRows() {
       const rank = { playing: 0, online: 1, offline: 2 }

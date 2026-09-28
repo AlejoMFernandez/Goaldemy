@@ -15,7 +15,7 @@
  * RACHAS DIARIAS:
  * - Se cuentan los días consecutivos ganando un juego específico
  * - Ejemplo: ganaste "who-is" hoy, ayer y anteayer = racha de 3 días
- * - Desbloquea logros como streak_3, streak_5, streak_10, streak_15
+ * - Desbloquea logros como streak_5, streak_10, streak_15
  * 
  * SUPERLOGRO daily_super_5x3:
  * - Requiere tener racha de 5+ días en 3 juegos diferentes simultáneamente
@@ -32,7 +32,7 @@ import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { fetchGameBySlug, friendlyNameForSlug } from './games'
 import { unlockAchievementWithToast } from './xp'
-import { checkAllAchievementsAfterChallenge, checkTimeBasedAchievements } from './achievement-triggers'
+import { checkAllAchievementsAfterChallenge } from './achievement-triggers'
 import { getDailyChallengeLimit } from './premium'
 
 // Cache de game_id por slug para evitar consultas repetitivas
@@ -112,9 +112,6 @@ export async function getPlayableGameCount() {
  */
 export async function checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
   try {
-    // Verificar logros basados en tiempo (ej: jugar de madrugada)
-    await checkTimeBasedAchievements()
-
     // FUENTE DE VERDAD: la sesión recién terminada. Antes los juegos llamaban
     // sin `won`/`metadata` (quedaban en true/{}), por lo que perfectionist/comeback/
     // lucky_first nunca podían dispararse y `won` era siempre true. Ahora derivamos
@@ -143,9 +140,9 @@ export async function checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
 
     // RACHAS DE ACIERTOS: aciertos SEGUIDOS dentro de este juego (no días).
     // Los logros de constancia por días son daily_streak_* (otro sistema).
+    // streak_3 quedó `active = false` (saturaba la primera partida): ya no se evalúa.
     try {
       const inStreak = Number(metadata.maxStreak || 0)
-      if (inStreak >= 3) await unlockAchievementWithToast('streak_3', { game: slugJustPlayed, streak: inStreak })
       if (inStreak >= 5) await unlockAchievementWithToast('streak_5', { game: slugJustPlayed, streak: inStreak })
       if (inStreak >= 10) await unlockAchievementWithToast('streak_10', { game: slugJustPlayed, streak: inStreak })
       if (inStreak >= 15) await unlockAchievementWithToast('streak_15', { game: slugJustPlayed, streak: inStreak })

@@ -6,15 +6,15 @@ import { initScoring } from '../../services/scoring'
 import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
 import { createDailyRng } from '../../services/seeded-random'
-import { spawnXpBadge } from '../../services/ui-effects'
 import { celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { getGameMetadata } from '../../services/games'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
+import OrderLadder from '../../components/game/OrderLadder.vue'
 
 export default {
   name: 'ValueOrder',
-  components: { GameShell, GamePreviewModal, GameSummaryPopup },
+  components: { GameShell, GamePreviewModal, GameSummaryPopup, OrderLadder },
   computed: {
     gameMetadata() { return getGameMetadata('value-order') }
   },
@@ -28,7 +28,12 @@ export default {
       // ordering state
       items: [], // source pool
       slots: [null, null, null, null, null], // indices into items
-      selectedIndex: null, // index into items currently "picked up"
+      selectedIndex: null,
+      // tablero OrderLadder (Moodboard 04)
+      ladderResult: null,
+      ladderInstant: false,
+      revealDone: false,
+      afterRevealQueue: [], // index into items currently "picked up"
       // scoring
       ...initScoring(10),
       answered: false,
@@ -72,6 +77,9 @@ export default {
           this.items = saved.items || this.items
           this.slots = saved.finalOrder
           this.correctness = saved.correctness || []
+          this.ladderInstant = true
+          this.revealDone = true
+          this.ladderResult = { correctness: [...this.correctness], desiredOrder: this.desiredFor(this.items) }
           this.answered = true
           this.score = Number(last.score_final || 0)
           this.xpEarned = Number(last.xp_earned || 0)
@@ -90,11 +98,34 @@ export default {
       const count = this.difficultyConfig?.itemCount || 5
       const picks = sampleDistinct(all, count, new Set(), this.rng)
       this.items = picks
-      this.slots = new Array(count).fill(null)
+      this.slots = this.shuffledOrder(picks)
+      this.ladderResult = null; this.ladderInstant = false; this.revealDone = false; this.afterRevealQueue = []
       this.answered = false
       this.showSummary = false
       this.selectedIndex = null
       this.score = 0; this.attempts = 0; this.corrects = 0
+    },
+  shuffledOrder(list) {
+      const n = list.length
+      const o = Array.from({ length: n }, (_, i) => i)
+      const sortedKey = [...o].sort((a, b) => this.metric(list[b]) - this.metric(list[a])).map(i => this.metric(list[i])).join()
+      for (let tries = 0; tries < 8; tries++) {
+        for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [o[i], o[j]] = [o[j], o[i]] }
+        if (n < 2 || o.map(i => this.metric(list[i])).join() !== sortedKey) break
+      }
+      return o
+    },
+    desiredFor(list) { return list.map((_, i) => i).sort((a, b) => this.metric(list[b]) - this.metric(list[a])) },
+    formatValue: v => '€' + (v / 1e6).toFixed(1) + 'M',
+    // Lo que depende del final de la revelación espera a que el tablero termine
+    afterReveal(fn, ms = 0) {
+      const run = () => setTimeout(fn, ms)
+      if (this.revealDone) run(); else this.afterRevealQueue.push(run)
+    },
+    onLadderDone() {
+      this.revealDone = true
+      const q = this.afterRevealQueue; this.afterRevealQueue = []
+      q.forEach(f => f())
     },
   metric(p) { return Number(p?.transferValue || 0) },
   selectCard(i) { if (this.locked) return; this.selectedIndex = i },
@@ -186,18 +217,17 @@ export default {
       this.attempts = this.slots.length
       this.score = correctPositions * 20
       this.answered = true
+      this.locked = true
+      this.revealDone = false
+      this.afterRevealQueue = []
+      this.ladderResult = { correctness: [...this.correctness], desiredOrder: [...this.desiredOrder] }
       // XP = bonus de completar (100/200/300) proporcional a los aciertos
       const xpFull = this.difficultyConfig?.xpCompletion || 100
       this.xpEarned = this.allowXp ? Math.round(xpFull * (correctPositions / Math.max(1, this.slots.length))) : 0
-      if (this.allowXp && this.xpEarned > 0) {
-        spawnXpBadge(this.$refs.confettiHost, `+${this.xpEarned} XP`, { position: 'top-right' })
-      }
-      const delayMs = 1200
       if (this.mode === 'challenge') {
         const winThreshold = this.slots.length
         const result = correctPositions === winThreshold ? 'win' : 'loss'
-        if (result === 'win') celebrateGameWin()
-        else announceGameLoss()
+        this.afterReveal(() => { if (result === 'win') celebrateGameWin(); else announceGameLoss() })
         if (this.allowXp && this.xpEarned > 0) {
           try { await awardXpBatch({ gameCode: 'value-order', totalXp: this.xpEarned, corrects: correctPositions }) } catch {}
         }
@@ -211,15 +241,15 @@ export default {
           this.afterPercent = snap.percent
           this.xpToNextAfter = snap.xpToNext
           if ((this.levelAfter || 0) > (this.levelBefore || 0)) {
-            celebrateGameLevelUp(this.levelAfter, 500)
+            const lv = this.levelAfter; this.afterReveal(() => celebrateGameLevelUp(lv, 500), 600)
           }
         } catch {}
         // Show colors for a moment, then popup; allow closing to review board
-        setTimeout(() => { this.progressShown = this.beforePercent; this.showSummary = true; requestAnimationFrame(()=> setTimeout(()=>{ this.progressShown = this.afterPercent }, 40)) }, delayMs)
+        this.afterReveal(() => { this.progressShown = this.beforePercent; this.showSummary = true; requestAnimationFrame(()=> setTimeout(()=>{ this.progressShown = this.afterPercent }, 40)) }, 700)
     this.locked = true
       } else if (this.mode === 'free') {
         // In free mode, auto-reset after a short pause so the user can keep playing
-        setTimeout(() => { this.setup() }, delayMs)
+        this.afterReveal(() => { this.setup() }, 1400)
       }
     },
     async checkAvailability() { this.availability = await isChallengeAvailable('value-order') },
@@ -274,58 +304,24 @@ export default {
     <div class="space-y-4 w-full max-w-2xl">
 
       <div class="relative surface-solid p-4 sm:p-6 ring-1 ring-white/5" ref="confettiHost">
-        <div class="flex items-center justify-between text-[11px] text-slate-400 mb-2 px-1">
-          <span class="flex items-center gap-1">💰 Más caro</span>
-          <span class="flex items-center gap-1">Más barato 💸</span>
-        </div>
-
-        <Transition name="board-fade" mode="out-in">
-          <div :key="items.map(p=>p.id).join()">
-            <!-- Ranking vertical (más visual: foto grande + nombre legible) -->
-            <div class="flex flex-col gap-2 mb-5">
-              <button v-for="(slot, i) in slots" :key="'slot'+i"
-                      @click="clickSlot(i)" @dragover="onDragOverSlot" @drop="onDropOnSlot($event, i)" @mouseenter="hoveredSlot=i" @mouseleave="hoveredSlot=null"
-                      class="w-full rounded-xl border-2 transition-all duration-200 flex items-center gap-3 px-3 py-2"
-                      :class="[
-                        answered ? (correctness[i] ? 'border-emerald-500 bg-emerald-500/10 slot-correct' : 'border-red-500 bg-red-500/10 shake') : (slot != null ? 'border-white/15 bg-white/5' : 'border-dashed border-white/15 bg-white/[0.03] hover:border-white/25'),
-                        (selectedFromSlot===i) ? 'ring-2 ring-sky-400 border-sky-400' : '',
-                        (hoveredSlot===i && (selectedIndex!=null || selectedFromSlot!=null)) ? 'ring-2 ring-amber-400 border-amber-400' : '',
-                        locked ? 'cursor-not-allowed' : 'cursor-pointer'
-                      ]">
-                <div class="shrink-0 w-8 h-8 rounded-full grid place-items-center font-display font-bold text-sm"
-                     :class="slot != null ? 'bg-white/10 text-white' : 'border-2 border-dashed border-white/15 text-slate-500'">{{ i+1 }}</div>
-                <template v-if="slot != null">
-                  <div class="w-12 h-12 rounded-full overflow-hidden ring-2 shrink-0"
-                       :class="answered ? (correctness[i] ? 'ring-emerald-400/60' : 'ring-red-400/60') : 'ring-white/20'">
-                    <img :src="items[slot].image" :alt="items[slot].name" class="w-full h-full object-cover" :draggable="!locked" @dragstart="onDragStartFromSlot($event, i)" />
-                  </div>
-                  <div class="flex-1 min-w-0 font-semibold text-white truncate">{{ items[slot].name }}</div>
-                  <div v-if="answered" class="shrink-0 text-xs font-bold px-2.5 py-1 rounded-full" :class="correctness[i] ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'">
-                    €{{ ((items[slot].transferValue||0)/1e6).toFixed(1) }}M
-                  </div>
-                </template>
-                <template v-else>
-                  <span class="text-slate-500 text-sm">Tocá un jugador para ponerlo en el puesto {{ i+1 }}</span>
-                </template>
-              </button>
-            </div>
-
-            <!-- Pool: chips que envuelven, fotos y nombres más grandes -->
-            <div class="flex flex-wrap justify-center gap-2">
-              <button v-for="(p,i) in items" :key="p.id" :disabled="isPlaced(i) || locked" @click="selectCard(i)" :draggable="!locked" @dragstart="onDragStartFromList($event, i)"
-                      class="w-[92px] rounded-xl border p-2 transition-all duration-150"
-                      :class="[selectedIndex===i ? 'ring-2 ring-sky-400 border-sky-400/50 bg-sky-500/10 scale-[1.03]' : 'border-white/10 bg-white/5', (isPlaced(i) || locked) ? 'opacity-30 cursor-not-allowed scale-95' : 'hover:bg-white/10 hover:scale-[1.03] active:scale-[0.97] cursor-pointer']">
-                <div class="flex flex-col items-center gap-1.5">
-                  <img :src="p.image" :alt="p.name" class="h-12 w-12 object-cover rounded-full ring-1 ring-white/10" />
-                  <div class="text-slate-200 text-[11px] leading-tight text-center line-clamp-2 font-medium">{{ p.name }}</div>
-                </div>
-              </button>
-            </div>
-          </div>
-        </Transition>
+        <OrderLadder
+          v-if="items.length && slots.length === items.length && slots.every(x => x != null)"
+          :key="items.map(p => p.id).join()"
+          v-model:order="slots"
+          :items="items"
+          variant="stairs"
+          :metric="metric"
+          :format="formatValue"
+          start-label="Más caro"
+          end-label="Más barato"
+          :locked="locked"
+          :result="ladderResult"
+          :instant="ladderInstant"
+          @done="onLadderDone"
+        />
 
         <div class="mt-4 flex items-center justify-center">
-          <button @click="check" :disabled="slots.some(x=>x==null) || locked"
+          <button @click="check" :disabled="locked || !items.length"
                   class="rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 border border-white/10 text-slate-900 px-6 py-2.5 text-sm font-bold shadow-lg shadow-amber-500/25 disabled:opacity-40 disabled:shadow-none transition-all active:scale-95">
             Comprobar
           </button>

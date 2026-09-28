@@ -138,7 +138,7 @@ export async function register(email, password, profileData = {}) {
             email,
             password,
             options: {
-                emailRedirectTo: `${window.location.origin}/login`,
+                emailRedirectTo: `${window.location.origin}/login?confirmed=1`,
             }
         });
 

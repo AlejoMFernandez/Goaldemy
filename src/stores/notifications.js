@@ -10,6 +10,7 @@ const state = reactive({
   pendingRewards: [],
   suppressOverlays: false,
   levelUpActive: false,   // hay una escena de nivel/rango en pantalla
+  achievementActive: false, // hay una escena central de logro en pantalla (nivel y logro nunca se pisan)
   cosmeticActive: false,  // hay un carrusel de cosméticos en pantalla → la subida de nivel espera a que termine
   proWelcome: null,       // { plan, planName } → popup de bienvenida PRO (gatea los desbloqueables hasta cerrarlo)
   claimNotifications: [],
@@ -179,7 +180,7 @@ function _rewardNotifMeta(r) {
   return { title, emoji }
 }
 
-export function claimReward(id) {
+export function claimReward(id, { quiet = false } = {}) {
   const r = state.pendingRewards.find(r => r.id === id)
   if (!r || r.claimed) return
   r.claimed = true
@@ -195,10 +196,11 @@ export function claimReward(id) {
   // XP a MOSTRAR en la notificación: bonus o, para logros, sus points.
   const displayXp = xpBonus || r.data?.points || 0
   const { title, emoji } = _rewardNotifMeta(r)
-  pushClaimNotification({ type: r.type, title, xp: displayXp, emoji })
+  // quiet: la recompensa ya viajó a su contador (reward-flight) → sin toast
+  if (!quiet) pushClaimNotification({ type: r.type, title, xp: displayXp, emoji })
 }
 
-export function claimAllRewards() {
+export function claimAllRewards({ quiet = false } = {}) {
   const unclaimed = state.pendingRewards.filter(r => !r.claimed)
   if (!unclaimed.length) return
   let totalXpBonus = 0
@@ -209,7 +211,7 @@ export function claimAllRewards() {
     const displayXp = xpBonus || r.data?.points || 0
     const { title, emoji } = _rewardNotifMeta(r)
     // Apiladas: una tras otra, pero todas visibles (no unificadas)
-    setTimeout(() => pushClaimNotification({ type: r.type, title, xp: displayXp, emoji }), i * 150)
+    if (!quiet) setTimeout(() => pushClaimNotification({ type: r.type, title, xp: displayXp, emoji }), i * 150)
   })
   _saveRewards()
 
@@ -240,6 +242,7 @@ export function pushLevelUpToast({ level, oldLevel }) {
 
 export function setSuppressOverlays(val) { state.suppressOverlays = !!val }
 export function setLevelUpActive(val) { state.levelUpActive = !!val }
+export function setAchievementActive(val) { state.achievementActive = !!val }
 export function setCosmeticActive(val) { state.cosmeticActive = !!val }
 
 // ── Bienvenida PRO ──

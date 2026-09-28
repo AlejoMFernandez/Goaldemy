@@ -21,7 +21,7 @@ import { captureLevelSnapshot } from '@/services/xp';
 import { fetchDailyWinStreak } from '@/services/game-modes';
 import { upcomingPrizes, nextRealPrize } from '@/services/prize-card';
 import { soundManager } from '@/services/sounds';
-import PrizeCard from '@/components/rewards/PrizeCard.vue';
+import PrizePeek from '@/components/rewards/PrizePeek.vue';
 
 const DIFF_COLORS = { easy: '#4ade80', normal: '#fcd34d', hard: '#f87171' };
 
@@ -43,7 +43,7 @@ export function maxXpFor(type, cfg = {}) {
 
 export default {
   name: 'GamePreviewModal',
-  components: { PrizeCard },
+  components: { PrizePeek },
   props: {
     open: { type: Boolean, default: false },
     gameName: { type: String, required: true },
@@ -219,7 +219,7 @@ export default {
                   <div v-if="isTimed" class="lb2">+ bonus ¡Basta! si te sobra tiempo</div>
                 </div>
                 <div v-if="nextPrize" class="card" :class="{ reach: reach && nextPrize.level === snap.level + 1 }">
-                  <PrizeCard :prize="nextPrize.prize" :size="92" />
+                  <PrizePeek :prize="nextPrize.prize" :size="92" />
                   <span class="pl">{{ reach && nextPrize.level === snap.level + 1 ? '¡A tu alcance!' : `Premio NV ${nextPrize.level}` }}</span>
                 </div>
               </div>
@@ -262,7 +262,7 @@ export default {
 
 <style scoped>
 .pv-wrap { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(3, 5, 14, .82); overflow-y: auto; }
-.pv { position: relative; width: min(100%, 520px); border-radius: 18px; overflow: hidden; background: #0b1024; border: 1px solid rgba(255, 255, 255, .12); box-shadow: 0 30px 80px rgba(0, 0, 0, .6); animation: pv-in .5s cubic-bezier(.16, 1, .3, 1) both; }
+.pv { position: relative; width: min(100%, 520px); max-height: calc(100dvh - 32px); overflow: hidden auto; border-radius: 18px; background: #0b1024; border: 1px solid rgba(255, 255, 255, .12); box-shadow: 0 30px 80px rgba(0, 0, 0, .6); animation: pv-in .5s cubic-bezier(.16, 1, .3, 1) both; }
 @keyframes pv-in { from { transform: translateY(24px) scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (max-width: 560px) {
   .pv-wrap { place-items: end center; padding: 0; }
@@ -277,7 +277,7 @@ export default {
 .pv-art :deep(svg) { width: 100%; height: 100%; }
 @keyframes pv-art { from { transform: translateX(30%) rotate(8deg); opacity: 0; } to { transform: none; opacity: 1; } }
 .pv-tt { position: absolute; left: 18px; bottom: 14px; right: 42%; }
-.pv-tt h2 { margin: 0; font-family: var(--font-shout); font-weight: 400; text-transform: uppercase; font-size: clamp(28px, 7vw, 42px); line-height: .92; color: #fff; text-shadow: 0 3px 0 rgba(0, 0, 0, .35); text-wrap: balance; }
+.pv-tt h2 { margin: 0; font-family: var(--font-shout); font-weight: 800; font-style: italic; text-transform: uppercase; font-size: clamp(28px, 7vw, 42px); line-height: .92; color: #fff; text-shadow: 0 3px 0 rgba(0, 0, 0, .35); text-wrap: balance; }
 .pv-rib { display: inline-flex; align-items: center; gap: .35em; margin-bottom: 8px; padding: 4px 9px; border-radius: 6px; background: var(--rc); color: #141005; font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; font-size: 13px; line-height: 1; }
 .pv-rib .ri { display: inline-flex; width: 1.1em; height: 1.1em; }
 .pv-rib .ri :deep(svg) { width: 100%; height: 100%; }
@@ -310,7 +310,7 @@ export default {
 .pv-prize .top { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; }
 .pv-prize .lb { font-size: 13px; color: #c5cbe8; }
 .pv-prize .lb2 { font-size: 12px; color: #8b93b8; }
-.pv-prize .xp { font-family: var(--font-bug); font-weight: 800; font-size: clamp(44px, 12vw, 60px); line-height: .95; color: #fcd34d; font-variant-numeric: tabular-nums; text-shadow: 0 0 24px rgba(252, 211, 77, .35); }
+.pv-prize .xp { font-family: var(--font-bug); font-weight: 800; font-style: italic; letter-spacing: .01em; font-size: clamp(44px, 12vw, 60px); line-height: .95; color: #fcd34d; font-variant-numeric: tabular-nums; text-shadow: 0 0 24px rgba(252, 211, 77, .35); }
 .pv-prize .xp small { font-size: .42em; margin-left: 4px; color: #fde68a; }
 .pv-prize .card { display: grid; justify-items: center; gap: 8px; transition: filter .3s; }
 .pv-prize .card .pl { font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; color: #8b93b8; }

@@ -223,6 +223,123 @@ const gaugeAngle = computed(() => GAUGE_ANGLE[props.rarity] ?? GAUGE_ANGLE.commo
           <path d="M20 64 L15 34 L34 48 L50 24 L66 48 L85 34 L80 64 Z" stroke="none"/>
           <rect x="19" y="64" width="62" height="12" rx="2" stroke="none"/>
         </template>
+
+        <!-- ── achievements-new-1 ─────────────────────────────── -->
+        <!-- Tiempo y ayudas -->
+        <template v-else-if="iconKey === 'ach_last_seconds'">
+          <circle cx="50" cy="50" r="32" fill="none" stroke-width="6"/>
+          <path d="M50 50 L50 24 A26 26 0 0 1 76 50 Z" stroke="none"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_half_clock'">
+          <circle cx="50" cy="50" r="32" fill="none" stroke-width="6"/>
+          <path d="M50 18 A32 32 0 0 0 50 82 Z" stroke="none"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_storm_cloud'">
+          <path d="M32 56 a13 13 0 0 1 -1 -26 a18 18 0 0 1 35 -3 a14 14 0 0 1 3 29 Z" fill="none" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M55 62 L40 78 H50 L43 93 L63 74 H53 Z" stroke="none"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_bubble'">
+          <circle cx="50" cy="50" r="32" fill="none" stroke-width="6"/>
+          <path d="M32 44 a20 20 0 0 1 14 -14" fill="none" stroke-width="5" stroke-linecap="round" opacity="0.75"/>
+          <path d="M42 46 L58 62 M58 46 L42 62" stroke-width="5" stroke-linecap="round" opacity="0.6"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_promotion'">
+          <path d="M14 84 V70 H32 V56 H50 V42 H68 V84 Z" stroke="none"/>
+          <path d="M82 14 L96 30 H88 V52 H76 V30 H68 Z" stroke="none"/>
+        </template>
+
+        <!-- Por juego -->
+        <template v-else-if="iconKey === 'ach_hawk'">
+          <path d="M6 42 C22 28 40 32 50 50 C60 32 78 28 94 42 C80 40 68 47 60 60 L50 80 L40 60 C32 47 20 40 6 42 Z" stroke="none"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_chain_links'">
+          <rect x="18" y="46" width="40" height="24" rx="12" fill="none" stroke-width="7" transform="rotate(-40 38 58)"/>
+          <rect x="42" y="30" width="40" height="24" rx="12" fill="none" stroke-width="7" transform="rotate(-40 62 42)"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_binoculars'">
+          <circle cx="31" cy="62" r="15" fill="none" stroke-width="6"/>
+          <circle cx="69" cy="62" r="15" fill="none" stroke-width="6"/>
+          <path d="M19 52 V30 H43 V50 M57 50 V30 H81 V52" fill="none" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M44 60 H56" stroke-width="6" stroke-linecap="round"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_bow_tie'">
+          <path d="M12 32 L42 50 L12 68 Z" stroke="none"/>
+          <path d="M88 32 L58 50 L88 68 Z" stroke="none"/>
+          <rect x="40" y="40" width="20" height="20" rx="5" stroke="none"/>
+        </template>
+
+        <!-- Colección -->
+        <template v-else-if="iconKey === 'ach_suitcase'">
+          <rect x="16" y="34" width="68" height="46" rx="8" fill="none" stroke-width="6"/>
+          <path d="M38 34 V24 H62 V34" fill="none" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M34 34 V80 M66 34 V80" stroke-width="4" opacity="0.55"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_peaks'">
+          <path d="M8 84 L36 34 L52 60 L62 46 L92 84 Z" stroke="none" stroke-linejoin="round"/>
+          <path d="M36 34 V12" stroke-width="4" stroke-linecap="round"/>
+          <path d="M37 13 L56 19 L37 25 Z" stroke="none"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_envelope'">
+          <rect x="14" y="28" width="72" height="46" rx="6" fill="none" stroke-width="6"/>
+          <path d="M16 32 L50 58 L84 32" fill="none" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+        </template>
+
+        <!-- Varios días -->
+        <template v-else-if="iconKey === 'ach_week_strip'">
+          <rect x="8" y="32" width="84" height="36" rx="6" fill="none" stroke-width="5"/>
+          <path d="M20 32 V68 M32 32 V68 M44 32 V68 M56 32 V68 M68 32 V68 M80 32 V68" stroke-width="3.5"/>
+          <circle v-for="i in 7" :key="i" :cx="8 + 12 * (i - 1) + 6" cy="50" r="3.4" stroke="none"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_wristwatch'">
+          <path d="M40 10 H60 V28 H40 Z M40 72 H60 V90 H40 Z" stroke="none"/>
+          <circle cx="50" cy="50" r="24" fill="none" stroke-width="6"/>
+          <path d="M50 50 V36 M50 50 L60 56" stroke-width="5" stroke-linecap="round"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_pushpin'">
+          <path d="M40 14 H60 L57 40 L70 54 H30 L43 40 Z" stroke="none"/>
+          <path d="M50 54 V88" stroke-width="6" stroke-linecap="round"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_two_days'">
+          <rect x="10" y="26" width="36" height="48" rx="6" fill="none" stroke-width="5"/>
+          <rect x="54" y="26" width="36" height="48" rx="6" fill="none" stroke-width="5"/>
+          <path d="M10 40 H46 M54 40 H90" stroke-width="5"/>
+          <path d="M20 58 l5 5 9 -10 M64 58 l5 5 9 -10" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        </template>
+
+        <!-- Sostener el nivel -->
+        <template v-else-if="iconKey === 'ach_brick_wall'">
+          <rect x="14" y="24" width="72" height="52" rx="4" fill="none" stroke-width="6"/>
+          <path d="M14 41 H86 M14 58 H86 M50 24 V41 M32 41 V58 M68 41 V58 M50 58 V76" stroke-width="4"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_castle'">
+          <path fill-rule="evenodd" stroke="none" d="M18 84 V30 H26 V38 H32 V30 H40 V38 H46 V30 H54 V38 H60 V30 H68 V38 H74 V30 H82 V84 Z M42 84 V64 a8 8 0 0 1 16 0 V84 Z"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_net_crossed'">
+          <circle cx="50" cy="50" r="32" fill="none" stroke-width="6"/>
+          <path d="M34 42 H66 M34 58 H66 M42 34 V66 M58 34 V66" stroke-width="3.5" opacity="0.8"/>
+          <path d="M27 27 L73 73" stroke-width="6" stroke-linecap="round"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_stadium'">
+          <ellipse cx="50" cy="50" rx="42" ry="28" fill="none" stroke-width="6"/>
+          <rect x="30" y="38" width="40" height="24" rx="2" fill="none" stroke-width="4"/>
+          <path d="M50 38 V62" stroke-width="3.5"/>
+        </template>
+
+        <!-- Hazañas repetidas -->
+        <template v-else-if="iconKey === 'ach_burner'">
+          <circle cx="50" cy="50" r="15" fill="none" stroke-width="5"/>
+          <path v-for="i in 8" :key="i" d="M50 10 c6 8 8 13 0 22 c-8 -9 -6 -14 0 -22 z" :transform="`rotate(${(i - 1) * 45} 50 50)`" stroke="none"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_crosshair'">
+          <circle cx="50" cy="50" r="26" fill="none" stroke-width="5"/>
+          <path d="M50 10 V34 M50 66 V90 M10 50 H34 M66 50 H90" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="50" cy="50" r="4" stroke="none"/>
+        </template>
+        <template v-else-if="iconKey === 'ach_book'">
+          <path d="M50 30 C40 22 24 22 14 26 V76 C24 72 40 72 50 80 C60 72 76 72 86 76 V26 C76 22 60 22 50 30 Z" fill="none" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M50 30 V80" stroke-width="4"/>
+          <path d="M24 38 H42 M24 50 H42 M58 38 H76 M58 50 H76" stroke-width="3.5" stroke-linecap="round" opacity="0.65"/>
+        </template>
       </g>
     </svg>
 </template>

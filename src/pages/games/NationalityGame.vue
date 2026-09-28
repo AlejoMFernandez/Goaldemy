@@ -7,17 +7,19 @@ import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
 import { createDailyRng } from '../../services/seeded-random'
 import { gameSummaryBlurb, getGameMetadata } from '../../services/games'
-import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp, GAME_TYPES } from '../../services/game-celebrations'
-import { playTimeUpSound } from '../../services/sounds'
+import { celebrateCorrect, celebrateGameLevelUp, GAME_TYPES } from '../../services/game-celebrations'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
-import CircularTimer from '../../components/game/CircularTimer.vue'
-import StreakBadge from '../../components/game/StreakBadge.vue'
+import ScoreBug from '../../components/game/ScoreBug.vue'
+import KickoffOverlay from '../../components/game/KickoffOverlay.vue'
+import TimedEndOverlay from '../../components/game/TimedEndOverlay.vue'
+import timedChallenge from '../../mixins/timedChallenge'
 import PowerupBar from '../../components/game/PowerupBar.vue'
 
 export default {
   name: 'NationalityGame',
-  components: { GameShell, GamePreviewModal, GameSummaryPopup, CircularTimer, StreakBadge, PowerupBar },
+  components: { GameShell, GamePreviewModal, GameSummaryPopup, PowerupBar, ScoreBug, KickoffOverlay, TimedEndOverlay },
+  mixins: [timedChallenge],
   data() {
   return { 
     ...initState(), 
@@ -107,31 +109,25 @@ export default {
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
     blurb() { return gameSummaryBlurb('nationality') },
   pick(option) {
-    if (this.timeOver) return
+    if (this.timeOver || this.answered) return
     if (this.shieldActive && option.value !== this.current.cname) {
+      // El escudo frena el error: no cuenta y la racha se mantiene
       this.shieldActive = false
       this.answered = true
       this.selected = option.value
-      setTimeout(() => { this.nextRound(); this.eliminatedOptions = []; this.hintVisible = false }, 1000)
+      this.afterShieldSave()
       return
     }
-    const ok = pick(this, option, this.$refs.confettiHost)
-    setTimeout(() => { this.nextRound(); this.eliminatedOptions = []; this.hintVisible = false }, 1000)
+    const prevStreak = this.streak
+    const prevXp = this.xpEarned
+    const ok = pick(this, option, null)
+    this.afterAnswer(ok, { optValue: option.value, xpGained: this.xpEarned - prevXp, prevStreak })
   },
-  handlePowerup(type) {
-    if (type === 'fifty_fifty' && this.options.length > 2) {
-      const wrong = this.options.filter(o => o.value !== this.current.cname)
-      this.eliminatedOptions = wrong.slice(0, 2).map(o => o.value)
-    } else if (type === 'shield') {
-      this.shieldActive = true
-    } else if (type === 'extra_time') {
-      this.timeLeft = Math.min(this.timeLeft + 15, 999)
-    } else if (type === 'reveal_hint') {
-      this.hintVisible = true
-    }
-  },
+  isCorrectOption(opt) { return opt.value === this.current?.cname },
+  handlePowerup(type, btnEl) { this.runPowerup(type, btnEl) },
     optionClass(opt) { return optionClass(this, opt) },
-    flag(opt) { return flag(opt.code, 40) },
+    // Bandera grande: se pide en 160 px para que se vea nítida a ~90 px en pantallas densas
+    flag(opt) { return opt?.code ? `https://flagcdn.com/w160/${String(opt.code).toLowerCase()}.png` : flag(opt?.code, 40) },
     async checkAvailability() {
       this.availability = await isChallengeAvailable('nationality')
       if (this.availability.available && this.mode === 'challenge' && !this.reviewMode) {
@@ -158,28 +154,7 @@ export default {
         this.difficultyConfig = config
         this.sessionId = await startChallengeSession('nationality', timeLimit)
         this.overlayOpen = false
-        this.timeLeft = timeLimit
-        this.timeOver = false
-        clearInterval(this.timer)
-        this.timer = setInterval(() => {
-          if (this.timeLeft > 0) this.timeLeft -= 1
-          if (this.timeLeft <= 0) {
-            this.timeOver = true
-            clearInterval(this.timer)
-            playTimeUpSound()
-
-            const result = (this.corrects || 0) >= 10 ? 'win' : 'loss'
-            
-            if (result === 'win') {
-              celebrateGameWin()
-            } else {
-              announceGameLoss()
-            }
-            
-            // Finish challenge after brief delay
-            setTimeout(() => this.finishChallenge(result), 1000)
-          }
-        }, 1000)
+        this.beginClock(timeLimit)
       } catch (e) {
         console.error('[Nationality challenge start]', e)
       }
@@ -188,7 +163,7 @@ export default {
       if (this.allowXp && this.xpEarned > 0) {
         await awardXpBatch({ gameCode: 'nationality', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
       }
-      await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects, attempts: this.attempts, errors: Math.max(0, (this.attempts || 0) - (this.corrects || 0)), maxWrongStreak: this.maxWrongStreak || 0 }).catch(()=>{})
+      await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects, attempts: this.attempts, errors: Math.max(0, (this.attempts || 0) - (this.corrects || 0)), maxWrongStreak: this.maxWrongStreak || 0, timeBonus: this.timeBonusInfo }).catch(()=>{})
       
       try {
         const snap = await captureLevelSnapshot()
@@ -230,13 +205,6 @@ export default {
 
 <template>
   <GameShell title="Nacionalidad correcta" :backPath="backPath()">
-    <template #stat>
-      <div class="inline-flex items-center gap-2 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
-        <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Puntaje</span>
-        <span class="font-display text-white font-bold text-base leading-none whitespace-nowrap">{{ score }}/{{ attempts * 10 }}</span>
-        <StreakBadge :streak="streak" />
-      </div>
-    </template>
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameType="timed"
@@ -248,60 +216,74 @@ export default {
       @close="overlayOpen = false"
       @start="startChallenge"
     />
-    <div class="space-y-4 w-full max-w-4xl">
+    <div class="w-full max-w-3xl mx-auto">
 
-      <div v-if="loading" class="text-center text-slate-300 py-12">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-300"></div>
-        <p class="mt-3">Cargando...</p>
+      <div v-if="loading" class="tq-skel" aria-busy="true" aria-label="Cargando">
+        <div class="tq-grid">
+          <div class="tq-card"><div class="tq-photo sk-box"></div><div class="tq-who"><i class="sk-line"></i><i class="sk-line sk-short"></i></div></div>
+          <div class="tq-opts"><i v-for="k in 4" :key="k" class="sk-opt"></i></div>
+        </div>
       </div>
-        <div v-else class="relative rounded-2xl border border-white/10 bg-gradient-to-b from-slate-800/70 to-slate-900/85 p-4 sm:p-5 overflow-hidden max-w-md mx-auto">
-          <div ref="confettiHost" class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"></div>
-          <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full opacity-20 blur-3xl" style="background: radial-gradient(circle, rgba(245,158,11,0.4), transparent 70%);"></div>
+        <div v-else class="tq" :class="{ 'tq--frozen': frozen }">
+        <div class="tq-stage">
+          <!-- Marcador tipo TV: reloj, aciertos, escudo, XP, fila de 10 pelotas y racha -->
+          <ScoreBug
+            v-if="mode === 'challenge' && !reviewMode"
+            ref="bug"
+            :seconds="Math.max(0, timeLeft)"
+            :running="clockRunning"
+            :corrects="corrects"
+            :target="10"
+            :xp="xpEarned"
+            :streak="streak"
+            :shield="shieldActive"
+            :finished="endOverlay ? endOverlay.kind : ''"
+          />
           <Transition name="round-fade" mode="out-in">
-            <div :key="roundKey" class="relative">
-              <div class="flex flex-col items-center gap-3 pt-5">
-                <img v-if="current" :src="current.image" :alt="current.name" class="w-36 h-36 sm:w-44 sm:h-44 object-cover rounded-2xl ring-1 ring-white/10 shadow-xl" />
-                <p class="text-slate-200 text-center text-base">¿De qué país es <strong class="text-white">{{ current?.name }}</strong>?</p>
-                <Transition name="hint-fade">
-                  <p v-if="hintVisible && current" class="text-center text-amber-300 text-sm font-medium">
-                    Juega en {{ current.teamName }}
-                  </p>
+            <div :key="roundKey" class="tq-grid">
+              <div ref="card" class="tq-card" :class="{ 'is-shielded': shieldActive }">
+                <span v-if="shieldActive" class="tq-bubble" aria-hidden="true"></span>
+                <Transition name="tq-hint">
+                  <span v-if="hintVisible && current" class="tq-hint">Juega en {{ current.teamName }}</span>
                 </Transition>
+                <div class="tq-photo">
+                  <img v-if="current" :src="current.image" :alt="current.name" />
+                </div>
+                <div class="tq-who"><b>{{ current?.name }}</b><span>¿De qué país es?</span></div>
               </div>
-              <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button v-for="opt in options" :key="opt.label" @click="pick(opt)" :class="optionClass(opt)" :disabled="answered || timeOver || eliminatedOptions.includes(opt.value)" v-show="!eliminatedOptions.includes(opt.value)"
-                  class="transition-transform duration-150 active:scale-[0.98]">
-                  <img v-if="opt.code" :src="flag(opt)" :alt="opt.label" width="40" height="28" class="rounded ring-1 ring-white/10 object-cover" style="aspect-ratio: 20/14;" />
-                  <span class="truncate">{{ opt.label }}</span>
+              <div class="tq-opts tq-opts--flags">
+                <p class="tq-q">Elegí la bandera</p>
+                <button
+                  v-for="opt in options"
+                  :key="opt.label"
+                  :data-opt="String(opt.value)"
+                  :class="['tq-opt', optionClass(opt)]"
+                  :disabled="timeOver || answered || eliminatedOptions.includes(opt.value)"
+                  v-show="!eliminatedOptions.includes(opt.value)"
+                  @click="pick(opt)"
+                >
+                  <span class="tq-flag"><img v-if="opt.code" :src="flag(opt)" alt="" draggable="false" /></span>
+                  <span class="tq-flag-nm">{{ opt.label }}</span>
                 </button>
               </div>
             </div>
           </Transition>
-          <!-- Timer -->
-          <div v-if="mode==='challenge'" class="absolute left-4 top-4 z-20 pointer-events-none">
-            <CircularTimer :seconds="Math.max(0, timeLeft)" :total="chosenSeconds" />
-          </div>
-          <div v-if="shieldActive" class="absolute right-4 top-4 z-20 text-xl animate-pulse" title="Escudo activo">🛡️</div>
+        </div>
 
-          <!-- Powerup Bar -->
-          <PowerupBar
-            v-if="mode === 'challenge' && !timeOver && !showSummary"
-            :hide="overlayOpen"
-            :disabled-types="answered ? ['fifty_fifty','shield','extra_time','reveal_hint'] : []"
-            @use="handlePowerup"
-          />
-          <Transition name="time-over-fade">
-            <div v-if="timeOver && mode==='challenge'" class="mt-4 flex items-center justify-center gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2.5">
-              <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span class="text-sm font-semibold text-amber-300">Tiempo agotado</span>
-            </div>
-          </Transition>
-          
-          <!-- Cinematic summary -->
-          <GameSummaryPopup
-            :show="showSummary"
+        <!-- Ayudas: cada una se ve actuar (ver mixins/timedChallenge.js → runPowerup) -->
+        <PowerupBar
+          v-if="mode === 'challenge' && !timeOver && !showSummary"
+          :hide="overlayOpen || kickoff"
+          :disabled-types="answered ? ['fifty_fifty','shield','extra_time','reveal_hint'] : []"
+          :active-types="shieldActive ? ['shield'] : []"
+          @use="handlePowerup"
+        />
+
+        <!-- Resumen: se abre recién cuando termina el cartel de SIN TIEMPO / ¡BASTA! -->
+        <GameSummaryPopup
+            :show="showSummary && !endOverlay"
+            :errors="summaryErrors"
+            :xp-breakdown="xpBreakdown"
             :corrects="corrects"
             :score="score"
             :maxStreak="maxStreak"
@@ -319,7 +301,11 @@ export default {
             backPath="/play/points"
             @close="showSummary = false"
           />
-        </div>
+      </div>
+
+      <!-- Pitazo inicial (el reloj arranca cuando termina) y final de partida -->
+      <KickoffOverlay v-if="kickoff" @done="onKickoffDone" />
+      <TimedEndOverlay v-if="endOverlay" v-bind="endOverlay" @done="onEndOverlayDone" />
     </div>
   </GameShell>
 </template>

@@ -6,6 +6,7 @@ import { initAchievementsRealtime } from './services/achievements-realtime.js';
 import { initLevelUpRealtime } from './services/levelup-realtime.js';
 import { installGlobalErrorHandler } from './services/errors.js';
 import { pushErrorToast, pushSuccessToast, pushInfoToast } from './stores/notifications.js';
+import { installTapOrigin, vPop } from './services/tap-origin.js';
 
 // Install global error handlers (toasts)
 try { installGlobalErrorHandler() } catch {}
@@ -18,7 +19,11 @@ if (import.meta.env.DEV) {
   window.__toast = { error: pushErrorToast, success: pushSuccessToast, info: pushInfoToast }
 }
 
+// Modales que salen desde el botón que los abrió (v-pop en la tarjeta del modal)
+installTapOrigin();
+
 const app = createApp(App);
+app.directive('pop', vPop);
 app.use(router);
 app.mount('#app');
 

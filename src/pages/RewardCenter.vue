@@ -4,16 +4,18 @@ import DailyStreakCalendar from '../components/rewards/DailyStreakCalendar.vue'
 import RewardCard from '../components/rewards/RewardCard.vue'
 import MonthlyPass from '../components/rewards/MonthlyPass.vue'
 import PowerupIcon from '../components/rewards/PowerupIcon.vue'
+import DailyEnvelope from '../components/rewards/DailyEnvelope.vue'
 import { notificationsState, claimReward, claimAllRewards, clearClaimedRewards, pushClaimNotification } from '../stores/notifications'
 import { soundManager } from '../services/sounds'
 import { supabase } from '../services/supabase'
+import { flyReward, hasRewardAnchor } from '../services/reward-flight'
 import { getDailyChallenges, claimDailyChallenge, getDailyReward, claimDailyReward, getProgressiveChallenges, claimProgressive, powerupLabel } from '../services/rewards'
 
 const POWERUP_ICONS = { fifty_fifty: '✂️', shield: '🛡️', extra_time: '⏱️', reveal_hint: '💡' }
 
 export default {
   name: 'RewardCenter',
-  components: { DailyStreakCalendar, RewardCard, MonthlyPass, PowerupIcon },
+  components: { DailyStreakCalendar, RewardCard, MonthlyPass, PowerupIcon, DailyEnvelope },
   setup() {
     const activeTab = ref('pase')
 
@@ -24,6 +26,8 @@ export default {
     const challenges = ref([])
     const progressive = ref([])
     const dailyReward = ref({ available: false })
+    // Día 7 del calendario (domingo) → sobre dorado
+    const isSunday = new Date().getDay() === 0
     const loadingDaily = ref(true)
     const claiming = ref(null)
 
@@ -51,9 +55,33 @@ export default {
 
     function powerupIcon(t) { return POWERUP_ICONS[t] || '🎁' }
 
-    function handleClaim(id) { claimReward(id); soundManager.play('claim') }
-    function handleClaimAll() { claimAllRewards(); soundManager.play('claim') }
+    // Recompensa que viaja (moodboard 02): del botón a tu avatar. Toast solo si no hay destino.
+    function rewardXp(r) { return r?.data?.xpBonus || r?.data?.points || 0 }
+    function handleClaim(id, el) {
+      const r = notificationsState.pendingRewards.find(x => x.id === id)
+      const fly = !!el && hasRewardAnchor('xp')
+      claimReward(id, { quiet: fly })
+      soundManager.play('claim')
+      if (fly) flyReward(el, { kind: 'xp', amount: rewardXp(r) })
+    }
+    function handleClaimAll(ev) {
+      const pending = notificationsState.pendingRewards.filter(r => !r.claimed)
+      const fly = hasRewardAnchor('xp')
+      // Cascada: cada tarjeta despega con 150 ms de diferencia
+      if (fly) pending.forEach((r, i) => {
+        const el = document.querySelector(`[data-reward-id="${r.id}"]`) || ev?.currentTarget
+        flyReward(el, { kind: 'xp', amount: rewardXp(r), delay: i * 150 })
+      })
+      claimAllRewards({ quiet: fly })
+      soundManager.play('claim')
+    }
+    // Recompensa diaria / desafíos: vuela si hay destino, si no, toast
+    function sendReward(el, { kind, amount, powerup, toast }) {
+      if (el && hasRewardAnchor(kind)) flyReward(el, { kind, amount, powerup })
+      else pushClaimNotification(toast)
+    }
     function handleClearClaimed() { clearClaimedRewards() }
+    function scrollToEnvelope() { document.getElementById('sobre-del-dia')?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
 
     async function loadStreak() {
       try {
@@ -85,7 +113,8 @@ export default {
       }
     }
 
-    async function handleClaimDailyReward() {
+    async function handleClaimDailyReward(ev) {
+      const el = ev?.currentTarget
       if (!dailyReward.value.available || claiming.value === 'daily') return
       claiming.value = 'daily'
       try {
@@ -94,9 +123,9 @@ export default {
           dailyReward.value = { ...dailyReward.value, available: false, claimed: true }
           soundManager.play('claim')
           if (res.reward_kind === 'powerup') {
-            pushClaimNotification({ type: 'powerup', title: `${powerupLabel(res.reward_powerup)} ×${res.amount}`, emoji: powerupIcon(res.reward_powerup) })
+            sendReward(el, { kind: 'powerup', powerup: res.reward_powerup, toast: { type: 'powerup', title: `${powerupLabel(res.reward_powerup)} ×${res.amount}`, emoji: powerupIcon(res.reward_powerup) } })
           } else {
-            pushClaimNotification({ type: 'xp', title: 'Recompensa diaria', xp: res.amount, emoji: '⭐' })
+            sendReward(el, { kind: 'xp', amount: res.amount, toast: { type: 'xp', title: 'Recompensa diaria', xp: res.amount, emoji: '⭐' } })
           }
         }
       } finally {
@@ -104,7 +133,8 @@ export default {
       }
     }
 
-    async function handleClaimChallenge(c) {
+    async function handleClaimChallenge(c, ev) {
+      const el = ev?.currentTarget
       if (c.claimed || c.progress < c.target || claiming.value === c.code) return
       claiming.value = c.code
       try {
@@ -114,9 +144,9 @@ export default {
           if (idx !== -1) challenges.value[idx] = { ...challenges.value[idx], claimed: true }
           soundManager.play('claim')
           if (res.reward_powerup) {
-            pushClaimNotification({ type: 'powerup', title: `${res.title}`, emoji: powerupIcon(res.reward_powerup) })
+            sendReward(el, { kind: 'powerup', powerup: res.reward_powerup, toast: { type: 'powerup', title: `${res.title}`, emoji: powerupIcon(res.reward_powerup) } })
           } else {
-            pushClaimNotification({ type: 'xp', title: res.title, xp: res.reward_xp, emoji: '🎯' })
+            sendReward(el, { kind: 'xp', amount: res.reward_xp, toast: { type: 'xp', title: res.title, xp: res.reward_xp, emoji: '🎯' } })
           }
         }
       } finally {
@@ -124,7 +154,8 @@ export default {
       }
     }
 
-    async function handleClaimProgressive(c) {
+    async function handleClaimProgressive(c, ev) {
+      const el = ev?.currentTarget
       const key = 'prog_' + c.code
       if (!c.claimable || claiming.value === key) return
       claiming.value = key
@@ -132,8 +163,8 @@ export default {
         const res = await claimProgressive(c.code)
         if (res.ok) {
           soundManager.play('claim')
-          if (res.powerup) pushClaimNotification({ type: 'powerup', title: res.title, emoji: powerupIcon(res.powerup) })
-          else pushClaimNotification({ type: 'xp', title: res.title, xp: res.xp, emoji: '🏆' })
+          if (res.powerup) sendReward(el, { kind: 'powerup', powerup: res.powerup, toast: { type: 'powerup', title: res.title, emoji: powerupIcon(res.powerup) } })
+          else sendReward(el, { kind: 'xp', amount: res.xp, toast: { type: 'xp', title: res.title, xp: res.xp, emoji: '🏆' } })
           await loadDaily()
         }
       } finally {
@@ -143,7 +174,7 @@ export default {
 
     onMounted(() => { loadStreak(); loadDaily() })
 
-    return {
+    return { isSunday, scrollToEnvelope,
       activeTab, TABS,
       rewards, unclaimed, claimed, unclaimedCount,
       currentStreak, bestStreak, playedToday,
@@ -202,47 +233,15 @@ export default {
         :currentStreak="currentStreak"
         :bestStreak="bestStreak"
         :playedToday="playedToday"
+        :todayOpened="!dailyReward.available && !loadingDaily"
+        @open-today="scrollToEnvelope"
       />
 
-      <!-- Recompensa diaria -->
-      <div
-        class="relative overflow-hidden rounded-2xl border p-5 transition-all"
-        :class="dailyReward.available
-          ? 'border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-slate-900/40 to-amber-600/5'
-          : 'border-white/10 bg-white/[0.03]'"
-      >
-        <div class="flex items-center gap-4">
-          <div
-            class="w-14 h-14 rounded-2xl grid place-items-center text-2xl border shrink-0"
-            :class="dailyReward.available ? 'bg-amber-500/15 border-amber-300/30' : 'bg-white/5 border-white/10 opacity-60'"
-          >
-            <PowerupIcon v-if="dailyReward.reward_kind === 'powerup'" :type="dailyReward.reward_powerup" :size="46" />
-            <span v-else>⭐</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="text-[10px] uppercase tracking-wider text-amber-300/80 font-semibold">Recompensa diaria</div>
-            <div class="font-display font-bold text-white text-lg leading-tight">
-              <template v-if="dailyReward.reward_kind === 'powerup'">{{ powerupLabel(dailyReward.reward_powerup) }} ×{{ dailyReward.amount }}</template>
-              <template v-else>+{{ dailyReward.amount || 100 }} XP</template>
-            </div>
-            <div class="text-xs text-slate-400 mt-0.5">
-              {{ dailyReward.reward_kind === 'powerup' ? '¡Fin de semana! Llevate una ayuda' : 'Reclamala todos los días' }}
-            </div>
-          </div>
-          <button
-            v-if="dailyReward.available"
-            @click="handleClaimDailyReward"
-            :disabled="claiming === 'daily'"
-            class="shrink-0 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 text-slate-900 px-5 py-2.5 text-sm font-bold transition-all shadow-lg shadow-amber-500/25 disabled:opacity-60"
-            style="animation: claim-pulse 2s ease-in-out infinite"
-          >
-            Reclamar
-          </button>
-          <div v-else class="shrink-0 flex items-center gap-1.5 text-emerald-400 text-sm font-semibold">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-            Reclamada
-          </div>
-        </div>
+      <!-- Sobre del día (Moodboard 02): se abre arrastrando; al abrirse se reclama y la recompensa vuela -->
+      <div class="relative overflow-hidden rounded-2xl border p-5 transition-all"
+           :class="dailyReward.available ? 'border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-slate-900/40 to-amber-600/5' : 'border-white/10 bg-white/[0.03]'">
+        <div class="text-center text-[10px] uppercase tracking-wider text-amber-300/80 font-semibold mb-2">Recompensa diaria</div>
+        <DailyEnvelope id="sobre-del-dia" :streak-day="currentStreak" :reward="dailyReward" :busy="claiming === 'daily'" :gold="isSunday" @open="handleClaimDailyReward" />
       </div>
 
       <!-- Retos diarios -->
@@ -296,7 +295,7 @@ export default {
             <!-- Claim (los reclamados desaparecen de la lista) -->
             <button
               v-if="c.progress >= c.target"
-              @click="handleClaimChallenge(c)"
+              @click="handleClaimChallenge(c, $event)"
               :disabled="claiming === c.code"
               class="mt-3 w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-[0.98] text-slate-900 py-2 text-sm font-bold transition-all shadow-lg shadow-amber-500/25 disabled:opacity-60"
             >
@@ -377,7 +376,7 @@ export default {
 
           <button
             v-if="c.claimable"
-            @click="handleClaimProgressive(c)"
+            @click="handleClaimProgressive(c, $event)"
             :disabled="claiming === 'prog_' + c.code"
             class="mt-3 w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 active:scale-[0.98] text-black py-2 text-sm font-bold transition-all shadow-lg shadow-amber-500/20 disabled:opacity-60"
           >
@@ -406,7 +405,7 @@ export default {
           </h2>
           <button
             v-if="unclaimedCount > 1"
-            @click="handleClaimAll"
+            @click="handleClaimAll($event)"
             class="rounded-lg px-4 py-2 text-sm font-bold text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-amber-500/25"
             style="animation: claim-pulse 2s ease-in-out infinite"
           >

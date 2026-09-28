@@ -1,4 +1,6 @@
 <script>
+import { normalizeSearch } from '../../services/text'
+
 export default {
   name: 'SearchSelect',
   props: {
@@ -18,9 +20,9 @@ export default {
   },
   computed: {
     items() {
-      const q = this.q.trim().toLowerCase()
+      const q = normalizeSearch(this.q)
       if (q.length < this.minChars) return this.options.slice(0, 30)
-      return this.options.filter(o => o.label.toLowerCase().includes(q)).slice(0, 50)
+      return this.options.filter(o => normalizeSearch(o.label).includes(q)).slice(0, 50)
     },
     displayText: {
       get() {

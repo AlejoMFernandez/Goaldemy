@@ -11,8 +11,14 @@
           <div>
             <h1 class="text-3xl font-bold text-white mb-0">{{ comp?.name || 'Competición' }}</h1>
             <div class="flex items-center gap-2 mt-0.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <p class="text-blue-400 text-sm font-medium mb-0">{{ comp?.tagline || comp?.country || '' }}</p>
+              <span v-if="!loading" class="w-2 h-2 rounded-full"
+                :class="seasonStatus.live ? 'bg-emerald-400 animate-pulse' : seasonStatus.inSeason ? 'bg-emerald-400' : 'bg-slate-600'"></span>
+              <p class="text-blue-400 text-sm font-medium mb-0">
+                {{ comp?.tagline || comp?.country || '' }}
+                <span v-if="!loading" class="text-slate-500 font-normal">
+                  · {{ seasonStatus.live ? 'En vivo' : seasonStatus.inSeason ? 'Temporada en curso' : 'Fuera de temporada' }}
+                </span>
+              </p>
             </div>
           </div>
         </div>
@@ -289,7 +295,7 @@
 <script>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { getLeagueOverview } from '@/services/fotmob.js';
+import { getLeagueOverview, deriveSeasonStatus } from '@/services/fotmob.js';
 import { competitionBySlug, LEAGUE_LOGO } from '@/services/competitions.js';
 import TournamentBracket from '@/components/league/TournamentBracket.vue';
 import KnockoutBracket from '@/components/league/KnockoutBracket.vue';
@@ -320,6 +326,7 @@ export default {
     const currentRoundIndex = ref(0);
     const view = ref('bracket');
 
+    const seasonStatus = computed(() => deriveSeasonStatus(leagueData.value?.allMatches));
     const hasPlayoff = computed(() => !!(leagueData.value?.playoff?.rounds?.some(r => r.matchups?.length)));
     const hasKnockout = computed(() => {
       if (hasPlayoff.value) return true;
@@ -425,7 +432,7 @@ export default {
     return {
       comp, compLogo, leagueData, loading, error, currentRoundIndex, availableRounds, currentRoundName,
       groupedMatchesByDate, previousRound, nextRound, formatMatchTime, handleImageError, onLogoError,
-      view, hasKnockout,
+      view, hasKnockout, seasonStatus,
     };
   },
 };

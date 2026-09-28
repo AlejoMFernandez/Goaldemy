@@ -12,8 +12,26 @@ export default {
       loading: false,
       email: user?.email || '',
       sent: false,
-      error: ''
+      error: '',
+      confirmedElsewhere: false,
+      _authChannel: null,
     }
+  },
+  mounted() {
+    // Si esta pestaña se quedó esperando y la confirmación pasó en otra
+    // (el usuario tocó el link del email ahí), avisar acá también en vez de
+    // dejarla colgada.
+    try {
+      if ('BroadcastChannel' in window) {
+        this._authChannel = new BroadcastChannel('fulvo-auth')
+        this._authChannel.onmessage = (e) => {
+          if (e.data?.type === 'email-confirmed') this.confirmedElsewhere = true
+        }
+      }
+    } catch {}
+  },
+  beforeUnmount() {
+    try { this._authChannel?.close() } catch {}
   },
   methods: {
     async resend() {
@@ -49,6 +67,9 @@ export default {
     </div>
 
     <div class="card card-hover p-6 space-y-4">
+      <p v-if="confirmedElsewhere" class="text-emerald-300 text-sm">
+        ¡Cuenta confirmada! Ya podés <RouterLink to="/login" class="underline">iniciar sesión</RouterLink>.
+      </p>
       <p class="text-slate-300 text-sm">
         Si no lo recibiste, revisá la carpeta de spam o reenviá el correo a continuación.
       </p>

@@ -1,5 +1,4 @@
 import { countryCodeFromName, flagUrl, countryNameEs } from './countries'
-import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
 import { celebrateCorrect, celebrateIncorrect } from './game-celebrations'
 import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, shuffleArray, getOptionClasses, selectRandomPlayerFromBucket } from './game-common'
@@ -105,7 +104,6 @@ export function pick(state, option, confettiHost) {
     const nextStreak = state.streak + 1
     if (state.allowXp) {
       state.xpEarned += xpAmount
-      spawnXpBadge(confettiHost, `+${xpAmount} XP`, { position: 'top-right' })
     }
     onCorrect(state)
     state.streak = nextStreak

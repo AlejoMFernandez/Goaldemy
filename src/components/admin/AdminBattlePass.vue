@@ -17,6 +17,7 @@ import {
 import { pushSuccessToast, pushErrorToast } from '../../stores/notifications'
 import { FRAME_STYLES, BANNER_STYLES } from '../../services/cosmetics'
 import PassCosmetic from '../rewards/PassCosmetic.vue'
+import { normalizeSearch } from '../../services/text'
 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 const ACCENTS = [
@@ -134,10 +135,10 @@ const pickerSearch = ref('')
 const pickerType = ref('all')
 
 const pickerList = computed(() => {
-  const q = pickerSearch.value.trim().toLowerCase()
+  const q = normalizeSearch(pickerSearch.value)
   return cosmetics.value.filter(c =>
     (pickerType.value === 'all' || c.type === pickerType.value) &&
-    (!q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
+    (!q || normalizeSearch(c.name).includes(q) || normalizeSearch(c.code).includes(q))
   )
 })
 

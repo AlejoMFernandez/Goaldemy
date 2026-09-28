@@ -5,54 +5,36 @@
  * Este archivo es el "cerebro" que analiza las acciones del usuario y decide qué logros otorgar.
  * 
  * TIPOS DE LOGROS:
- * 
- * 1. BASADOS EN TIEMPO:
- *    - night_owl: Jugar entre 00:00-08:00 (madrugada + madrugador, fusionados)
- * 
- * 2. BASADOS EN RENDIMIENTO:
+ *
+ * 1. BASADOS EN RENDIMIENTO:
  *    - perfect_10: 10/10 respuestas correctas
  *    - speed_demon: Completar en menos de X segundos
  *    - lucky_first: 10+ veces acertar al primer intento
- * 
- * 3. BASADOS EN RACHAS:
- *    - streak_3, streak_5, streak_10, streak_15: Días consecutivos ganando
+ *
+ * 2. BASADOS EN RACHAS:
+ *    - streak_5, streak_10, streak_15: Días consecutivos ganando
  *    - daily_super_5x3: 5+ días en 3 juegos simultáneamente
- * 
- * 4. BASADOS EN CANTIDAD:
+ *
+ * 3. BASADOS EN CANTIDAD:
  *    - games_played_10, games_played_50, games_played_100: Juegos jugados
  *    - total_wins_10, total_wins_50, total_wins_100: Victorias totales
- * 
- * 5. ESPECIALES:
- *    - comeback_king: Ganar después de perder 3 veces seguidas
+ *
+ * 4. ESPECIALES:
+ *    - comeback_king ("Revancha"): ganar hoy un juego que se había perdido ayer
  *    - perfectionist: Ganar todos los juegos de ordenamiento con 5/5
- * 
+ *
  * LLAMADAS:
- * - checkTimeBasedAchievements(): Al iniciar un juego
  * - checkAllAchievementsAfterChallenge(): Al finalizar un desafío diario
  * - checkLuckyFirstAchievement(): Cuando se acierta al primer intento
+ *
+ * NOTA: first_correct, streak_3, ten_correct y night_owl quedaron `active = false`
+ * (supabase/achievements-curation-2.sql) por saturar la primera partida de las
+ * cuentas nuevas. No se evalúan más desde acá; ver getAchievementsCatalog().
  */
 import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { unlockAchievementWithToast } from './xp'
 import { DAILY_GAMES } from './game-modes'
-
-/**
- * Verifica y desbloquea logros basados en la hora del día
- * Se debe llamar al iniciar una sesión de juego
- */
-export async function checkTimeBasedAchievements() {
-  try {
-    const now = new Date()
-    const hour = now.getHours()
-
-    // Night owl: 00:00 - 07:59 (madrugada + madrugador, fusionados en un solo logro)
-    if (hour >= 0 && hour < 8) {
-      await unlockAchievementWithToast('night_owl')
-    }
-  } catch (e) {
-    console.error('[time-achievements] Error:', e)
-  }
-}
 
 /**
  * Check first-attempt achievements
@@ -88,16 +70,47 @@ export async function checkLuckyFirstAchievement() {
 }
 
 /**
- * Check comeback king achievement
- * Call when user wins after 3+ consecutive errors
- * @param {boolean} won - whether user won the game
- * @param {number} errors - number of consecutive errors before winning
+ * Check comeback king ("Revancha") achievement.
+ * Call after a WIN today: unlocks if the last finished challenge session for
+ * this same game yesterday ended in a loss.
+ * @param {string} slug - game slug just won
+ * @param {boolean} won - whether user won today's game
  */
-export async function checkComebackKingAchievement(won, errors) {
-  if (!won || errors < 3) return
-  
+export async function checkComebackKingAchievement(slug, won) {
+  if (!won || !slug) return
+
+  const { id: userId } = getAuthUser() || {}
+  if (!userId) return
+
   try {
-    await unlockAchievementWithToast('comeback_king')
+    const { data: game } = await supabase
+      .from('games')
+      .select('id')
+      .eq('slug', slug)
+      .single()
+    if (!game) return
+
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const yesterdayStart = new Date(todayStart)
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1)
+
+    const { data, error } = await supabase
+      .from('game_sessions')
+      .select('ended_at, metadata')
+      .eq('user_id', userId)
+      .eq('game_id', game.id)
+      .gte('started_at', yesterdayStart.toISOString())
+      .lt('started_at', todayStart.toISOString())
+      .order('started_at', { ascending: false })
+      .limit(5)
+
+    if (error) return
+
+    const lastYesterday = (data || []).find(r => !!r.ended_at && (r?.metadata || {}).mode === 'challenge')
+    if (lastYesterday && (lastYesterday.metadata || {}).result === 'loss') {
+      await unlockAchievementWithToast('comeback_king')
+    }
   } catch {}
 }
 
@@ -378,11 +391,8 @@ export async function checkAllAchievementsAfterChallenge(slug, won, metadata = {
       await checkPerfectionistAchievement(won, 0)
     }
 
-    // Check comeback if had 3+ consecutive errors (maxWrongStreak; alias consecutiveErrors)
-    const wrongStreak = Number(metadata.maxWrongStreak ?? metadata.consecutiveErrors ?? 0)
-    if (wrongStreak >= 3) {
-      await checkComebackKingAchievement(won, wrongStreak)
-    }
+    // Comeback ("Revancha"): ganaste hoy un juego que habías perdido ayer
+    await checkComebackKingAchievement(slug, won)
 
     // Check lucky first if first attempt correct
     if (metadata.firstTryCorrect) {

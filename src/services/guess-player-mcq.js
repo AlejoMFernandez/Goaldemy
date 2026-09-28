@@ -1,5 +1,4 @@
 // Servicio para el juego "Adivina el jugador" (opción múltiple)
-import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
 import { celebrateIncorrect } from './game-celebrations'
 import {
@@ -80,9 +79,10 @@ export function pickAnswer(state, option, confettiHost) {
     const nextStreak = state.streak + 1
     const nextCorrects = (state.corrects || 0) + 1
     if (state.allowXp) {
-      const xpAmount = state.difficultyConfig?.xpPerCorrect || 10
+      // xpMultiplier: bonus por velocidad de "foto que se aclara" (1× a 2×),
+      // lo calcula GuessPlayer.vue según cuánto tardaste en responder.
+      const xpAmount = Math.round((state.difficultyConfig?.xpPerCorrect || 10) * (state.xpMultiplier || 1))
       state.xpEarned += xpAmount
-      spawnXpBadge(confettiHost, `+${xpAmount} XP`, { position: 'top-right' })
     }
     onCorrect(state)
     state.streak = nextStreak

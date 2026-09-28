@@ -23,15 +23,15 @@ import { buildShareText, shareOrCopy } from '@/services/share'
 import { getAuthUser } from '@/services/auth'
 import { computeGuestRewards, getPendingGuestSummary } from '@/services/guest-play'
 import { fetchDailyWinStreak } from '@/services/game-modes'
-import { upcomingPrizes, nextRealPrize } from '@/services/prize-card'
+import { upcomingPrizes, nextRealPrize, PRIZE_TYPE_LABEL } from '@/services/prize-card'
 import { sparks, center, smoke, reducedMotion } from '@/services/game-fx'
-import PrizeCard from '@/components/rewards/PrizeCard.vue'
+import PrizePeek from '@/components/rewards/PrizePeek.vue'
 
 const FLAME_PATH = 'M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67z'
 
 export default {
   name: 'GameSummaryPopup',
-  components: { PrizeCard },
+  components: { PrizePeek },
   props: {
     show: { type: Boolean, default: false },
     corrects: { type: Number, default: 0 },
@@ -134,6 +134,7 @@ export default {
       const lvl = props.levelAfter || props.levelBefore
       return lvl ? nextRealPrize(lvl) : null
     })
+    const nextPrizeTypeLabel = computed(() => (PRIZE_TYPE_LABEL[nextPrize.value?.prize?.kind] || '').toLowerCase())
     const perCorrect = computed(() => props.corrects > 0 ? Math.max(1, Math.round(baseXp.value / Math.max(1, props.corrects))) : 0)
 
     // ── Racha del juego ──
@@ -203,7 +204,7 @@ export default {
       if (props.guest) guestSummary.value = getPendingGuestSummary()
       else loadStreak()
 
-      T(() => { phase.value = 1; soundManager.play(won.value ? 'whistle' : 'lose'); if (won.value) soundManager.play('stamp') }, 150)
+      T(() => { phase.value = 1; soundManager.playBig(won.value ? 'whistle' : 'lose'); if (won.value) soundManager.play('stamp') }, 150)
       let t = 750
       if (won.value) {
         for (let i = 0; i < 3; i++) {
@@ -239,7 +240,6 @@ export default {
               levelPop.value = false
               requestAnimationFrame(() => { levelPop.value = true })
               if (total > 1) barCombo.value = i
-              soundManager.play(i === total ? 'levelUp' : 'pumSmall')
               const el = barEl.value
               if (el) { const rc = el.getBoundingClientRect(); sparks(rc.right - 4, rc.top + rc.height / 2, 14, ['#fcd34d', '#fff'], 50) }
               xpBarWidth.value = 0
@@ -264,7 +264,6 @@ export default {
             const el = flameNewEl.value
             if (el) { const c = center(el); sparks(c.x, c.y, 16, ['#fcd34d', '#fb923c', '#fff'], 44) }
           } else {
-            soundManager.play('lose')
             if (flamesEl.value) { smoke(flamesEl.value); setTimeout(() => flamesEl.value && smoke(flamesEl.value), 350) }
           }
         }, 450)
@@ -292,7 +291,7 @@ export default {
     return { barCombo, barEl,
       phase, won, animatedXp, starsRevealed, starCount, accuracy, precisionLine, missing, ballsTotal, xpBarWidth,
       levelShown, levelPop, claimGate, guestPreview, guestSummary, guestTotalXp, guestShowsAccumulated,
-      subLine, totalXp, chips, didLevelUp, nextPrize, perCorrect,
+      subLine, totalXp, chips, didLevelUp, nextPrize, nextPrizeTypeLabel, perCorrect,
       streakBefore, streakAfter, rkPhase, showStreak, flamesShown, FLAME_PATH,
       shared, onShare, onContinue, cardEl, starEls, flameNewEl, flamesEl,
     }
@@ -353,10 +352,10 @@ export default {
                 <span class="nv nx">NV {{ (levelShown || 0) + 1 }}</span>
               </div>
               <div v-if="nextPrize && xpToNextAfter != null" class="next" :class="{ in: phase >= 4 }">
-                <PrizeCard :prize="nextPrize.prize" :size="46" />
+                <PrizePeek :prize="nextPrize.prize" :size="46" />
                 <span>
-                  <template v-if="nextPrize.level === (levelAfter || levelBefore) + 1">Te faltan <b>{{ xpToNextAfter }} XP</b> para <b>{{ nextPrize.prize.name }}</b><template v-if="perCorrect"> · ≈ {{ Math.ceil(xpToNextAfter / perCorrect) }} aciertos</template></template>
-                  <template v-else>En el nivel <b>{{ nextPrize.level }}</b> te espera <b>{{ nextPrize.prize.name }}</b></template>
+                  <template v-if="nextPrize.level === (levelAfter || levelBefore) + 1">Te faltan <b>{{ xpToNextAfter }} XP</b> para el {{ nextPrizeTypeLabel }} "<b>{{ nextPrize.prize.name }}</b>"<template v-if="perCorrect"> · ≈ {{ Math.ceil(xpToNextAfter / perCorrect) }} aciertos</template></template>
+                  <template v-else>En el nivel <b>{{ nextPrize.level }}</b> te espera el {{ nextPrizeTypeLabel }} "<b>{{ nextPrize.prize.name }}</b>"</template>
                 </span>
               </div>
             </template>
@@ -407,13 +406,13 @@ export default {
 
 <style scoped>
 .sm-wrap { position: fixed; inset: 0; z-index: 55; overflow-y: auto; display: grid; place-items: center; padding: 16px; background: rgba(3, 5, 14, .88); }
-.sm { position: relative; width: min(100%, 460px); border-radius: 18px; overflow: hidden; background: #0b1024; border: 1px solid rgba(255, 255, 255, .12); box-shadow: 0 30px 80px rgba(0, 0, 0, .6); animation: sm-pop .45s cubic-bezier(.34, 1.3, .64, 1) both; }
+.sm { position: relative; width: min(100%, 460px); max-height: calc(100dvh - 32px); overflow: hidden auto; border-radius: 18px; background: #0b1024; border: 1px solid rgba(255, 255, 255, .12); box-shadow: 0 30px 80px rgba(0, 0, 0, .6); animation: sm-pop .45s cubic-bezier(.34, 1.3, .64, 1) both; }
 @keyframes sm-pop { from { opacity: 0; transform: scale(.92) translateY(14px); } to { opacity: 1; transform: none; } }
 .sm-top { position: relative; padding: 28px 16px 12px; display: grid; gap: 8px; justify-items: center; text-align: center; }
 .sm-top::before { content: ""; position: absolute; inset: 0; background: radial-gradient(70% 100% at 50% 0%, rgba(252, 211, 77, .22), transparent 70%); pointer-events: none; }
 .is-loss .sm-top::before { background: radial-gradient(70% 100% at 50% 0%, rgba(239, 68, 68, .16), transparent 70%); }
 .sm-top > * { position: relative; }
-.big { margin: 0; font-family: var(--font-shout); font-weight: 400; text-transform: uppercase; font-size: clamp(50px, 14vw, 76px); line-height: .9; opacity: 0; }
+.big { margin: 0; font-family: var(--font-shout); font-weight: 800; font-style: italic; text-transform: uppercase; font-size: clamp(50px, 14vw, 76px); line-height: .9; opacity: 0; }
 .big.in { animation: sm-slam .55s cubic-bezier(.16, 1, .3, 1) forwards; }
 @keyframes sm-slam { 0% { opacity: 0; transform: scale(3); filter: blur(10px); } 100% { opacity: 1; transform: none; filter: none; } }
 .is-win .big { color: #fff; text-shadow: 0 0 34px rgba(252, 211, 77, .5); }
@@ -429,7 +428,7 @@ export default {
 @keyframes sm-staroff { to { opacity: .2; transform: none; filter: grayscale(1); } }
 .short { display: flex; gap: 3px; justify-content: center; opacity: 0; transition: opacity .3s; margin-top: 4px; }
 .short.in { opacity: 1; }
-.short i { width: 16px; height: 16px; border-radius: 50%; display: block; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-50 -50 100 100' aria-hidden='true'%3E%3Cdefs%3E%3CclipPath id='fulvo-ball-clip'%3E%3Ccircle r='47'/%3E%3C/clipPath%3E%3CradialGradient id='fulvo-ball-sh' cx='35%25' cy='30%25' r='75%25'%3E%3Cstop offset='0' stop-color='#fff'/%3E%3Cstop offset='.7' stop-color='#e2e8f0'/%3E%3Cstop offset='1' stop-color='#94a3b8'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle r='47' fill='url(#fulvo-ball-sh)'/%3E%3Cg clip-path='url(#fulvo-ball-clip)'%3E%3Cg fill='#111827'%3E%3Cpolygon points='0.0,-16.0 15.2,-4.9 9.4,12.9 -9.4,12.9 -15.2,-4.9'/%3E%3Cpolygon points='0.0,-29.0 -16.2,-40.7 -10.0,-59.8 10.0,-59.8 16.2,-40.7'/%3E%3Cpolygon points='27.6,-9.0 33.8,-28.0 53.7,-28.0 59.9,-9.0 43.7,2.8'/%3E%3Cpolygon points='17.0,23.5 37.0,23.5 43.2,42.5 27.0,54.2 10.9,42.5'/%3E%3Cpolygon points='-17.0,23.5 -10.9,42.5 -27.0,54.2 -43.2,42.5 -37.0,23.5'/%3E%3Cpolygon points='-27.6,-9.0 -43.7,2.8 -59.9,-9.0 -53.7,-28.0 -33.8,-28.0'/%3E%3C/g%3E%3Cpath d='M0.0 -16.0L0.0 -29.0M15.2 -4.9L27.6 -9.0M9.4 12.9L17.0 23.5M-9.4 12.9L-17.0 23.5M-15.2 -4.9L-27.6 -9.0M-16.2 -40.7L23.5 -32.4M16.2 -40.7L-23.5 -32.4M33.8 -28.0L38.0 12.4M43.7 2.8L23.5 -32.4M37.0 23.5L0.0 40.0M10.9 42.5L38.0 12.4M-10.9 42.5L-38.0 12.4M-37.0 23.5L0.0 40.0M-43.7 2.8L-23.5 -32.4M-33.8 -28.0L-38.0 12.4' stroke='#111827' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3C/g%3E%3Ccircle r='47' fill='none' stroke='#111827' stroke-width='2.5'/%3E%3C/svg%3E") center / 100% no-repeat; }
+.short i { width: 16px; height: 16px; border-radius: 50%; display: block; background: radial-gradient(circle at 35% 30%, #fff, #e2e8f0 60%, #94a3b8); box-shadow: inset -2px -2px 2px rgba(15, 23, 42, .35); }
 .short i.no { background: none; border: 1.5px dashed #f87171; }
 .prec { margin: 0; min-height: 18px; font-size: 12.5px; color: #8b93b8; opacity: 0; transition: opacity .4s; }
 .prec.in { opacity: 1; }
@@ -513,6 +512,6 @@ export default {
 @media (prefers-reduced-motion: reduce) {
   .sm, .big.in, .stars svg, .rk .fl svg, .lvl .bar .up, .cta .main.claim { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
-.lvl .bar .combo { position: absolute; right: -6px; top: -26px; font-family: var(--font-shout); font-size: 24px; line-height: 1; color: #fde68a; text-shadow: 0 2px 0 #b45309, 0 0 12px rgba(252, 211, 77, .7); transform: rotate(-8deg); animation: sm-combo .4s cubic-bezier(.34, 1.56, .64, 1) both; pointer-events: none; }
+.lvl .bar .combo { position: absolute; right: -6px; top: -26px; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 24px; line-height: 1; color: #fde68a; text-shadow: 0 2px 0 #b45309, 0 0 12px rgba(252, 211, 77, .7); transform: rotate(-8deg); animation: sm-combo .4s cubic-bezier(.34, 1.56, .64, 1) both; pointer-events: none; }
 @keyframes sm-combo { from { transform: rotate(-8deg) scale(2.2); opacity: 0; } to { transform: rotate(-8deg); opacity: 1; } }
 </style>
