@@ -57,3 +57,6 @@ src/dataGAMES.backup-before-refresh.json
 raw-video-sources/
 .vercel
 .env*
+
+# Salidas de Claude (Cowork)
+Claude outputs/
