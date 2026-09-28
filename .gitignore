@@ -15,6 +15,9 @@ dist-ssr
 # Capturas de scripts/screenshot-games.mjs
 .shots
 
+# Capturas sueltas de verificación manual en la raíz (no son assets del sitio)
+/*.png
+
 # Environment variables
 .env
 .env.*
