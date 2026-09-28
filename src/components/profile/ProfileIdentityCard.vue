@@ -3,9 +3,10 @@ import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getTierForLevel, getNextTier, tierAccentText } from '../../services/tiers'
 import { computeLevelProgress } from '../../services/xp'
-import { frameStyle, iconBgStyle, iconThemeBg, rarity } from '../../services/cosmetics'
+import { iconBgStyle, iconThemeBg, titleClass } from '../../services/cosmetics'
 import { planStyle } from '../../services/plans-ui'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
+import AvatarFrame from '../common/AvatarFrame.vue'
 import LevelProgressionModal from './LevelProgressionModal.vue'
 import countryNames from '../../codeCOUNTRYS.json'
 
@@ -21,6 +22,7 @@ const props = defineProps({
   iconGlyph: { type: String, default: '' },
   iconBgKey: { type: String, default: 'emerald' },
   framePremium: { type: Boolean, default: false },
+  frameStreak: { type: Number, default: 0 }, // racha diaria actual (borde "Racha encendida")
   planSlug: { type: String, default: 'free' },
   levelInfo: { type: Object, default: null },
   progressPercent: { type: Number, default: 0 },
@@ -75,9 +77,9 @@ const showProgression = ref(false)
     <div class="flex flex-col items-center -mt-8">
       <component :is="canEdit ? RouterLink : 'div'" :to="canEdit ? '/profile-edit' : undefined"
         class="group relative inline-block" :class="canEdit ? 'cursor-pointer' : ''" :title="canEdit ? 'Editar perfil' : undefined">
-        <div class="size-24 rounded-2xl" :class="[frameStyle(frameStyleKey).wrap, frameStyle(frameStyleKey).pad, framePremium ? 'anim-pan' : '']">
+        <AvatarFrame :frame-key="frameStyleKey" :size="96" rounded="rounded-2xl" :premium="framePremium" :level="level" :streak="frameStreak">
           <div class="relative w-full h-full overflow-hidden grid place-items-center text-white font-extrabold text-3xl"
-               :class="[iconGlyph ? iconThemeBg(iconGlyph) : iconBgStyle(iconBgKey), frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl ring-4 ring-slate-900']">
+               :class="[iconGlyph ? iconThemeBg(iconGlyph) : iconBgStyle(iconBgKey), frameStyleKey && frameStyleKey !== 'none' ? 'rounded-[14px]' : 'rounded-2xl border-4 border-slate-900']">
             <CosmeticIcon v-if="iconGlyph" :iconKey="iconGlyph" :size="64" />
             <img v-else-if="avatarUrl" :src="avatarUrl" alt="" class="w-full h-full object-cover" />
             <span v-else>{{ avatarInitial }}</span>
@@ -86,7 +88,7 @@ const showProgression = ref(false)
               <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" /></svg>
             </div>
           </div>
-        </div>
+        </AvatarFrame>
       </component>
       <h2 class="mt-3 text-xl font-bold text-white text-center leading-tight flex items-center gap-2">
         {{ displayName }}
@@ -100,7 +102,7 @@ const showProgression = ref(false)
           {{ planLabel }}
         </span>
       </div>
-      <p v-if="titleText" class="text-sm font-bold mt-0.5" :class="titlePremium ? 'title-premium-anim' : rarity(titleRarity).text">{{ titleText }}</p>
+      <p v-if="titleText" class="text-sm mt-1"><span :class="titleClass(titleRarity, titlePremium)">{{ titleText }}</span></p>
     </div>
 
     <!-- NIVEL grande + mini-dashboard (XP / Logros / Ranking) -->

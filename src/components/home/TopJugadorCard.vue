@@ -1,4 +1,5 @@
 <script setup>
+import { avatarRadiusClass } from '../../services/cosmetics'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import UserAvatar from '../common/UserAvatar.vue'
@@ -59,7 +60,7 @@ const nf = new Intl.NumberFormat('es-AR')
         <div v-for="c in podiumCells" :key="c.rank" class="flex flex-col items-center"
              :class="c.rank === 1 ? 'order-2' : (c.rank === 2 ? 'order-1' : 'order-3')">
           <RouterLink :to="'/u/' + c.p.userId" class="relative block group">
-            <div class="rounded-2xl ring-2 transition-transform group-hover:scale-105" :class="[MEDAL[c.rank].ring, MEDAL[c.rank].glow]">
+            <div class="ring-2 transition-transform group-hover:scale-105" :class="[MEDAL[c.rank].ring, MEDAL[c.rank].glow, avatarRadiusClass('rounded-2xl')]">
               <UserAvatar
                 :size="c.rank === 1 ? 88 : 68"
                 :avatar-url="c.p.avatarUrl"
@@ -68,6 +69,8 @@ const nf = new Intl.NumberFormat('es-AR')
                 :icon-glyph="c.p.iconGlyph"
                 :icon-bg="c.p.iconBg"
                 :frame-premium="c.p.framePremium"
+                :level="c.p.level ?? null"
+                :streak="c.p.dailyStreak || 0"
               />
             </div>
             <div class="absolute -top-2.5 -right-2.5 size-7 rounded-full grid place-items-center font-display font-bold text-sm bg-slate-950 border-2 border-slate-900 shadow-lg" :class="MEDAL[c.rank].text">{{ c.rank }}</div>

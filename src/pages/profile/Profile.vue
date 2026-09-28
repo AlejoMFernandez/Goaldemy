@@ -17,7 +17,8 @@ import LoadoutShowcase from '../../components/profile/LoadoutShowcase.vue';
 import ProfileIdentityCard from '../../components/profile/ProfileIdentityCard.vue';
 import ReferralCard from '../../components/profile/ReferralCard.vue';
 import { findTeamByName, findPlayerByName } from '../../services/players';
-import { getEquippedCosmetics, bannerStyle } from '../../services/cosmetics';
+import { getEquippedCosmetics, isSceneBanner } from '../../services/cosmetics';
+import BannerScene from '../../components/common/BannerScene.vue';
 import { getPlanBadge } from '../../services/premium';
 import { listConnections } from '../../services/connections';
 import { getPublicProfilesByIds } from '../../services/user-profiles';
@@ -26,7 +27,7 @@ let unsubscribeAuth = () => {};
 
 export default {
   name: 'Profile',
-  components: { AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard, LoadoutShowcase, ProfileIdentityCard, ReferralCard },
+  components: { BannerScene, AchievementsCard, FeaturedAchievementsModal, XpDonutChart, ConnectionsCard, CommunityCard, LoadoutShowcase, ProfileIdentityCard, ReferralCard },
   data() {
     return {
       user: {
@@ -47,6 +48,7 @@ export default {
       equippedFramePremium: false,
       equippedTitlePremium: false,
       equippedBannerPremium: false,
+      equippedDailyStreak: 0,
       viewedPlanSlug: 'free',
       levelLoading: false,
       achievements: [],
@@ -82,8 +84,9 @@ export default {
     };
   },
   computed: {
-    bannerClass() {
-      return bannerStyle(this.equippedBannerKey)
+    // Los banners del vestuario nuevo traen su propio dibujo: sin los círculos decorativos de siempre.
+    bannerHasScene() {
+      return isSceneBanner(this.equippedBannerKey)
     },
     avatarInitial() {
       const name = this.user?.display_name?.trim()
@@ -215,6 +218,7 @@ export default {
           this.equippedFramePremium = eq.framePremium
           this.equippedTitlePremium = eq.titlePremium
           this.equippedBannerPremium = eq.bannerPremium
+          this.equippedDailyStreak = eq.dailyStreak || 0
         } catch {}
         try { this.viewedPlanSlug = (await getPlanBadge(userId)).plan || 'free' } catch { this.viewedPlanSlug = 'free' }
       }
@@ -400,13 +404,13 @@ export default {
 <template>
   <div class="mx-auto max-w-6xl pb-12 px-4">
     <!-- Banner del usuario full-bleed (100% del ancho de <main>, estilo Salesforce) -->
-    <div class="relative h-36 sm:h-52 overflow-hidden banner-full-bleed -mt-10 lg:-mt-12" :class="[bannerClass, equippedBannerPremium ? 'anim-pan' : '']">
-      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <BannerScene class="h-36 sm:h-52 banner-full-bleed -mt-10 lg:-mt-12" :style-key="equippedBannerKey" :premium="equippedBannerPremium">
+      <div v-if="!bannerHasScene" class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute top-5 right-12 w-28 h-28 rounded-full border-2 border-white/10 opacity-40"></div>
         <div class="absolute -bottom-6 right-32 w-20 h-20 rounded-full border border-white/10 opacity-30"></div>
         <div class="absolute top-8 left-[38%] w-12 h-12 rounded-full border border-white/5 opacity-20"></div>
       </div>
-    </div>
+    </BannerScene>
 
     <!-- Dashboard 2 columnas (solapan el banner) -->
     <div class="-mt-16 relative z-10 grid grid-cols-1 lg:grid-cols-[360px_minmax(0,1fr)] gap-5 items-start">
@@ -425,6 +429,7 @@ export default {
           :icon-glyph="equippedIconGlyph"
           :icon-bg-key="equippedIconBg"
           :frame-premium="equippedFramePremium"
+          :frame-streak="equippedDailyStreak"
           :plan-slug="viewedPlanSlug"
           :level-info="levelInfo"
           :progress-percent="progressPercent"
@@ -536,6 +541,8 @@ export default {
           :title-rarity="equippedTitleRarity"
           :banner-key="equippedBannerKey"
           :frame-premium="equippedFramePremium"
+          :frame-streak="equippedDailyStreak"
+          :level="Number(levelInfo?.level) || null"
           :title-premium="equippedTitlePremium"
           :banner-premium="equippedBannerPremium"
           :is-self="isSelf"

@@ -1,8 +1,9 @@
 <script setup>
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { frameStyle, iconBgStyle, iconThemeBg } from '../../services/cosmetics'
+import { avatarRadiusClass, iconBgStyle, iconThemeBg } from '../../services/cosmetics'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
+import AvatarFrame from '../common/AvatarFrame.vue'
 
 const props = defineProps({
   rows: { type: Array, default: () => [] }, // [{rank, user_id, display_name, total_xp, level?, frameKey?, iconGlyph?, iconBg?, avatar_url?}]
@@ -51,14 +52,14 @@ function levelClass(lvl) {
         <div v-for="c in podiumCells" :key="c.rank" class="flex flex-col items-center"
              :class="c.rank === 1 ? 'order-2' : (c.rank === 2 ? 'order-1' : 'order-3')">
           <RouterLink :to="'/u/' + c.r.user_id" class="relative block group">
-            <div class="rounded-2xl ring-2 transition-transform group-hover:scale-105" :class="[MEDAL[c.rank].ring, MEDAL[c.rank].glow]">
-              <div :class="[frameStyle(c.r.frameKey).wrap, frameStyle(c.r.frameKey).pad, 'rounded-2xl']">
-                <div :class="['rounded-xl overflow-hidden grid place-items-center text-white font-extrabold', c.rank === 1 ? 'size-20 sm:size-24 text-3xl' : 'size-16 sm:size-20 text-2xl', c.r.iconGlyph ? iconThemeBg(c.r.iconGlyph) : iconBgStyle(c.r.iconBg)]">
+            <div class="ring-2 transition-transform group-hover:scale-105" :class="[MEDAL[c.rank].ring, MEDAL[c.rank].glow, avatarRadiusClass('rounded-2xl')]">
+              <AvatarFrame :frame-key="c.r.frameKey || 'none'" :size="c.rank === 1 ? 102 : 86" rounded="rounded-2xl" :level="c.r.level ?? null" :streak="c.r.dailyStreak || 0">
+                <div :class="['rounded-xl overflow-hidden grid place-items-center w-full h-full text-white font-extrabold', c.rank === 1 ? 'text-3xl' : 'text-2xl', c.r.iconGlyph ? iconThemeBg(c.r.iconGlyph) : iconBgStyle(c.r.iconBg)]">
                   <img v-if="c.r.avatar_url" :src="c.r.avatar_url" alt="" class="w-full h-full object-cover" />
                   <CosmeticIcon v-else-if="c.r.iconGlyph" :iconKey="c.r.iconGlyph" :size="c.rank === 1 ? 72 : 56" />
                   <span v-else>{{ initial(c.r) }}</span>
                 </div>
-              </div>
+              </AvatarFrame>
             </div>
             <div class="absolute -top-2.5 -right-2.5 size-7 rounded-full grid place-items-center font-display font-bold text-sm bg-slate-950 border-2 border-slate-900 shadow-lg" :class="MEDAL[c.rank].text">{{ c.rank }}</div>
           </RouterLink>
@@ -77,13 +78,13 @@ function levelClass(lvl) {
           class="flex items-center gap-2.5 sm:gap-3 rounded-xl border px-2.5 sm:px-3 py-2 transition"
           :class="r.user_id === meId ? 'border-blue-400/50 bg-blue-500/[0.12]' : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.05]'">
           <span class="w-6 sm:w-7 text-center font-display font-bold text-slate-400 tabular-nums shrink-0">{{ r.rank }}</span>
-          <div :class="[frameStyle(r.frameKey).wrap, frameStyle(r.frameKey).pad, 'rounded-lg shrink-0']">
-            <div :class="['size-8 sm:size-9 rounded-md overflow-hidden grid place-items-center text-xs font-bold text-white', r.iconGlyph ? iconThemeBg(r.iconGlyph) : iconBgStyle(r.iconBg)]">
+          <AvatarFrame :frame-key="r.frameKey || 'none'" :size="40" rounded="rounded-lg" :level="r.level ?? null" :streak="r.dailyStreak || 0">
+            <div :class="['w-full h-full rounded-md overflow-hidden grid place-items-center text-xs font-bold text-white', r.iconGlyph ? iconThemeBg(r.iconGlyph) : iconBgStyle(r.iconBg)]">
               <img v-if="r.avatar_url" :src="r.avatar_url" alt="" class="w-full h-full object-cover" />
               <CosmeticIcon v-else-if="r.iconGlyph" :iconKey="r.iconGlyph" :size="24" />
               <span v-else>{{ initial(r) }}</span>
             </div>
-          </div>
+          </AvatarFrame>
           <span class="flex-1 min-w-0 truncate text-sm text-white font-medium">
             {{ name(r) }}<span v-if="r.user_id === meId" class="text-[10px] text-blue-300 ml-1 font-bold">(vos)</span>
           </span>

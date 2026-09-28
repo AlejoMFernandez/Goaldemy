@@ -15,7 +15,7 @@
 import { subscribeToAuthStateChanges, logout } from '../services/auth'
 import { listConnections } from '../services/connections'
 import { getPublicProfilesByIds, getPublicProfile } from '../services/user-profiles'
-import { getEquippedCosmeticsBatch, getEquippedCosmetics, rarity } from '../services/cosmetics'
+import { getEquippedCosmeticsBatch, getEquippedCosmetics, rarity, titleClass } from '../services/cosmetics'
 import { presenceState } from '../services/presence'
 import { friendlyNameForSlug } from '../services/games'
 import { getUserLevel, computeProgressPercentSync, fetchLevelThresholds } from '../services/xp'
@@ -97,7 +97,7 @@ export default {
     presence() { return presenceState.value },
     selfName() { return this.user?.display_name || this.user?.email || 'Jugador' },
     selfInitial() { return (this.selfName.trim()[0] || '?').toUpperCase() },
-    selfTitleClass() { return this.selfCos?.titlePremium ? 'title-premium-anim' : rarity(this.selfCos?.titleRarity).text },
+    selfTitleClass() { return titleClass(this.selfCos?.titleRarity, this.selfCos?.titlePremium) },
     level() { return this.levelInfo?.level ?? 1 },
     xpNow() { return this.levelInfo?.xp_total ?? 0 },
     levelPct() { return computeProgressPercentSync(this.levelInfo) || 0 },
@@ -173,6 +173,8 @@ export default {
         frameKey: c.frameKey || 'none',
         iconGlyph: c.iconGlyph || '',
         iconBg: c.iconBg || 'emerald',
+        streak: c.dailyStreak || 0,
+        level: c.frameLevel ?? null,
       }
     },
     statusDot(status) {
@@ -410,6 +412,8 @@ export default {
         frameKey: c.frameKey || 'none',
         iconGlyph: c.iconGlyph || '',
         iconBg: c.iconBg || 'emerald',
+        level: c.frameLevel ?? null,
+        streak: c.dailyStreak || 0,
         initial: this.initial({ name: friend?.display_name || friend?.email }),
       })
     },
@@ -457,7 +461,7 @@ export default {
           @mouseenter="onRailHover(r, $event)" @mouseleave="clearRailHover"
           class="relative shrink-0 hover:scale-110 transition" :class="r.status==='offline' ? 'opacity-60 hover:opacity-100' : ''">
           <UserAvatar :size="42" :glow="false" v-bind="avatarPropsFor(r)" />
-          <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-900" :class="statusDot(r.status)"></span>
+          <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-900" :class="statusDot(r.status)"></span>
           <span v-if="r.unread > 0" class="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold grid place-items-center">{{ r.unread > 9 ? '9+' : r.unread }}</span>
         </button>
       </div>
@@ -531,7 +535,7 @@ export default {
               <button @click="openChat(r.id)" class="flex items-center gap-3 flex-1 min-w-0 text-left">
                 <div class="relative shrink-0">
                   <UserAvatar :size="40" v-bind="avatarPropsFor(r)" />
-                  <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-slate-900" :class="statusDot(r.status)"></span>
+                  <span class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-slate-900" :class="statusDot(r.status)"></span>
                 </div>
                 <div class="min-w-0 flex-1">
                   <div class="text-sm font-semibold text-white truncate">{{ r.name }}</div>
@@ -547,7 +551,7 @@ export default {
               <button @click="openChat(r.id)" class="flex items-center gap-3 flex-1 min-w-0 text-left">
                 <div class="relative shrink-0">
                   <UserAvatar :size="40" v-bind="avatarPropsFor(r)" />
-                  <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-slate-900 bg-slate-500"></span>
+                  <span class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-slate-900 bg-slate-500"></span>
                 </div>
                 <div class="min-w-0 flex-1">
                   <div class="text-sm font-medium text-slate-300 truncate">{{ r.name }}</div>
@@ -570,8 +574,8 @@ export default {
           <!-- Sin activePeer.id todavía (justo al abrir, mientras carga el perfil)
                no debe ser navegable: evita un link roto a /u/null por un instante. -->
           <component :is="activePeer.id ? 'router-link' : 'div'" :to="activePeer.id ? `/u/${activePeer.id}` : undefined" @click="activePeer.id && closeMobile()" class="relative shrink-0">
-            <UserAvatar :size="46" :avatar-url="activePeer.avatar_url" :initial="initial({ name: activePeer.display_name || activePeer.email })" :frame-key="cos[activePeerId]?.frameKey || 'none'" :icon-glyph="cos[activePeerId]?.iconGlyph || ''" :icon-bg="cos[activePeerId]?.iconBg || 'emerald'" />
-            <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-slate-900" :class="activePresence.dot"></span>
+            <UserAvatar :size="46" :avatar-url="activePeer.avatar_url" :initial="initial({ name: activePeer.display_name || activePeer.email })" :frame-key="cos[activePeerId]?.frameKey || 'none'" :icon-glyph="cos[activePeerId]?.iconGlyph || ''" :icon-bg="cos[activePeerId]?.iconBg || 'emerald'" :level="cos[activePeerId]?.frameLevel ?? null" :streak="cos[activePeerId]?.dailyStreak || 0" />
+            <span class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-slate-900" :class="activePresence.dot"></span>
           </component>
           <div class="min-w-0 flex-1">
             <div class="font-bold text-white truncate leading-tight text-base">{{ activePeer.display_name || activePeer.email || 'Usuario' }}</div>
