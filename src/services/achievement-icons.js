@@ -95,7 +95,7 @@ export const ACHIEVEMENT_ICONS = {
   sin_red:            { icon: 'ach_net_crossed',       rarity: 'epic' },
   jornada_primera:    { icon: 'ach_stadium',           rarity: 'legendary' },
   // Hazañas repetidas
-  fuego_azul:         { icon: 'ach_burner',            rarity: 'epic' },
+  fuego_azul:         { icon: 'ach_ten_row',            rarity: 'epic' },
   cazador_cracks:     { icon: 'ach_crosshair',         rarity: 'epic' },
   enciclopedia:       { icon: 'ach_book',              rarity: 'legendary' },
 }

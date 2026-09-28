@@ -203,7 +203,7 @@ export default {
         } catch {}
         this.rng = createDailyRng('guess-player')
         this.difficultyConfig = config
-        this.sessionId = await startChallengeSession('guess-player', timeLimit)
+        this.sessionId = await startChallengeSession('guess-player', timeLimit, { difficulty: this.selectedDifficulty })
         this.overlayOpen = false
         this.beginClock(timeLimit)
       } catch (e) {
@@ -220,7 +220,7 @@ export default {
       } else if (this.allowXp && this.xpEarned > 0) {
         await awardXpBatch({ gameCode: 'guess-player', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
       }
-      await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects, attempts: this.attempts, errors: Math.max(0, (this.attempts || 0) - (this.corrects || 0)), maxWrongStreak: this.maxWrongStreak || 0, timeBonus: this.timeBonusInfo }).catch(()=>{})
+      await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects, attempts: this.attempts, errors: Math.max(0, (this.attempts || 0) - (this.corrects || 0)), maxWrongStreak: this.maxWrongStreak || 0, timeBonus: this.timeBonusInfo, ...this.timedStats() }).catch(()=>{})
 
       try {
         const snap = await captureLevelSnapshot()

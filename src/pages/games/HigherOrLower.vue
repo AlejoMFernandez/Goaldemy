@@ -341,7 +341,7 @@ export default {
         } catch {}
 
         this.rng = createDailyRng('higher-or-lower')
-        this.sessionId = await startChallengeSession('higher-or-lower', 0)
+        this.sessionId = await startChallengeSession('higher-or-lower', 0, { difficulty: this.selectedDifficulty })
         this.overlayOpen = false
         this.round = 0
         this.chain = 0

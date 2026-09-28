@@ -188,7 +188,7 @@ export default {
           this.beforePercent = snap.percent
         } catch {}
         this.rng = createDailyRng('who-is')
-        this.sessionId = await startChallengeSession('who-is', null)
+        this.sessionId = await startChallengeSession('who-is', null, { difficulty: this.selectedDifficulty })
         this.overlayOpen = false
         this.nextRound()
       } catch (e) {

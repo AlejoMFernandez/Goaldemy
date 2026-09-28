@@ -42,6 +42,10 @@ export default {
       endOverlay: null, // props de TimedEndOverlay mientras se muestra
       frozen: false,
       timeBonusInfo: null,
+      // Datos para los logros (achievement-rules.js): se guardan en la sesión
+      powerupsUsed: 0,
+      shieldSaves: 0,
+      timedResult: null,
     }
   },
   computed: {
@@ -73,6 +77,9 @@ export default {
       this.frozen = false
       this.endOverlay = null
       this.timeBonusInfo = null
+      this.powerupsUsed = 0
+      this.shieldSaves = 0
+      this.timedResult = null
       this.clockRunning = false
       this.kickoff = true
     },
@@ -101,9 +108,29 @@ export default {
       clearTimeout(this._advanceT)
       this.frozen = true
     },
+    /**
+     * Congela lo que los logros necesitan saber del reloj, EN EL INSTANTE del final
+     * (finishChallenge es async y arma su patch recién después de varios await; para
+     * entonces endOverlay/timeLeft ya pueden haber cambiado).
+     */
+    recordTimedResult(basta) {
+      const left = Math.max(0, Math.floor(this.timeLeft) || 0)
+      this.timedResult = {
+        basta,
+        secondsLeft: left,
+        secondsUsed: Math.max(0, (this.clockTotal || 0) - left),
+        powerups: this.powerupsUsed || 0,
+        shieldSaves: this.shieldSaves || 0,
+      }
+    },
+    /** Metadata de sesión para logros: `...this.timedStats()` en el patch de completeChallengeSession. */
+    timedStats() {
+      return this.timedResult ? { ...this.timedResult, difficulty: this.selectedDifficulty || null } : {}
+    },
     endByTime() {
       if (this.timeOver) return
       this.stopClock()
+      this.recordTimedResult(false)
       const win = (this.corrects || 0) >= TIMED_TARGET
       this.endOverlay = { kind: 'sin', corrects: this.corrects || 0, target: TIMED_TARGET }
       this.finishChallenge(win ? 'win' : 'loss')
@@ -111,6 +138,7 @@ export default {
     endByBasta() {
       if (this.timeOver) return
       this.stopClock()
+      this.recordTimedResult(true)
       const bonus = computeTimeBonus({
         secondsUsed: this.clockTotal - this.timeLeft,
         secondsLeft: this.timeLeft,
@@ -185,6 +213,7 @@ export default {
     },
     /** El escudo frenó un error: la respuesta no cuenta y la racha se mantiene. */
     afterShieldSave() {
+      this.shieldSaves += 1
       const card = this.$refs.card
       fx.shatter(card)
       fx.burstText(card, '¡Salvado!', '#7dd3fc')
@@ -199,14 +228,18 @@ export default {
       if (type === 'fifty_fifty') {
         if (this.options.length <= 2) return
         const wrong = this.options.filter(o => !this.isCorrectOption(o)).slice(0, 2).map(o => o.value)
+        this.powerupsUsed += 1
         soundManager.play('slash')
         await Promise.all(wrong.map((v, i) => fx.slashOut(this.optEl(v), i * 170)))
         this.eliminatedOptions = wrong
       } else if (type === 'shield') {
+        this.powerupsUsed += 1
         this.shieldActive = true
         soundManager.play('shieldUp')
         if (btnEl && card) fx.flyTo({ from: btnEl, to: card, html: '🛡', className: 'gfx-emoji', duration: 420 })
       } else if (type === 'extra_time') {
+        if (this.timeOver) return
+        this.powerupsUsed += 1
         const clock = bug?.clockEl?.()
         if (btnEl && clock) await fx.flyTo({ from: btnEl, to: clock, html: '+15', className: 'gfx-time', duration: 520 })
         if (this.timeOver) return
@@ -214,6 +247,7 @@ export default {
         bug?.flashPlus?.()
         soundManager.play('timeAdd')
       } else if (type === 'reveal_hint') {
+        this.powerupsUsed += 1
         this.hintVisible = true
         soundManager.play('hint')
         if (card) { const c = fx.center(card); fx.sparks(c.x + c.w * 0.35, c.y - c.h * 0.42, 12, ['#fcd34d', '#fff'], 40) }

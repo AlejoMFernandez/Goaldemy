@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "refresh:data": "node scripts/refresh-fotmob-squads.cjs",
     "refresh:players": "node scripts/refresh-fotmob-squads.cjs",
-    "smoke": "node scripts/smoke-test.mjs"
+    "smoke": "node scripts/smoke-test.mjs",
+    "test:achievements": "node scripts/test-achievement-rules.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",

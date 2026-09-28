@@ -58,7 +58,11 @@ export async function claimDailyReward() {
   const { data, error } = await supabase.rpc('claim_daily_reward')
   if (error) return { ok: false, error: error.message }
   if (data?.reward_kind === 'powerup') invalidatePlanCache()
-  if (data?.ok) detectAndToastLevelUp()
+  if (data?.ok) {
+    detectAndToastLevelUp()
+    // Coleccionista: 7 sobres del día abiertos (achievements-new-1)
+    import('./achievement-triggers').then(m => m.checkCollectorAchievement()).catch(() => {})
+  }
   return data || { ok: false }
 }
 

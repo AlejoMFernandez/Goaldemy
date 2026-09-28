@@ -316,7 +316,7 @@ export default {
       this.score = 0
       this.generateConstraint()
       try {
-        this.sessionId = await startChallengeSession('once-ideal', TOTAL_TIME)
+        this.sessionId = await startChallengeSession('once-ideal', TOTAL_TIME, { difficulty: this.selectedDifficulty })
       } catch (e) { console.error('[OnceIdeal start]', e) }
       this.overlayOpen = false
       this.beginClock()
@@ -346,6 +346,8 @@ export default {
       try {
         await completeChallengeSession(this.sessionId, this.score, this.xpEarned, {
           result, won: this.won, corrects: this.filledCount,
+          // Segundos que sobraron (logro "Once de gala"): el reloj ya está frenado acá.
+          secondsLeft: Math.max(0, this.timeLeft),
         })
         const snap = await captureLevelSnapshot()
         this.levelAfter = snap.level

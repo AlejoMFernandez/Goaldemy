@@ -270,7 +270,7 @@ export default {
           this.beforePercent = snap.percent
         } catch {}
         this.rng = createDailyRng('value-order')
-        this.sessionId = await startChallengeSession('value-order', null)
+        this.sessionId = await startChallengeSession('value-order', null, { difficulty: this.selectedDifficulty })
         this.overlayOpen = false
         // Ajustar el número de slots según la dificultad
         this.slots = new Array(itemCount).fill(null)

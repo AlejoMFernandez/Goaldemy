@@ -27,6 +27,11 @@
  * - checkAllAchievementsAfterChallenge(): Al finalizar un desafío diario
  * - checkLuckyFirstAchievement(): Cuando se acierta al primer intento
  *
+ * 5. LOGROS NUEVOS (achievements-new-1): 23 logros de tiempo/ayudas, por juego, colección,
+ *    varios días, sostener el nivel y hazañas repetidas. Las reglas viven en
+ *    achievement-rules.js (puro); checkNewAchievements() lee las sesiones de Supabase
+ *    y desbloquea. checkCollectorAchievement() (Coleccionista) sale del sobre del día.
+ *
  * NOTA: first_correct, streak_3, ten_correct y night_owl quedaron `active = false`
  * (supabase/achievements-curation-2.sql) por saturar la primera partida de las
  * cuentas nuevas. No se evalúan más desde acá; ver getAchievementsCatalog().
@@ -35,6 +40,10 @@ import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { unlockAchievementWithToast } from './xp'
 import { DAILY_GAMES } from './game-modes'
+import { fetchGames, gameRouteForSlug } from './games'
+import { getAchievementsCatalog } from './achievements'
+import { achievementIcon } from './achievement-icons'
+import { evaluateNewAchievements, normalizeSessionRow, NEW_ACHIEVEMENT_CODES } from './achievement-rules'
 
 /**
  * Check first-attempt achievements
@@ -401,4 +410,129 @@ export async function checkAllAchievementsAfterChallenge(slug, won, metadata = {
   } catch (e) {
     console.error('[check-all-achievements] Error:', e)
   }
+}
+
+
+// ─── Logros nuevos (achievements-new-1) ──────────────────────────────────
+
+// Solo las columnas que las reglas necesitan (la metadata completa trae xpView,
+// finalOrder, items… y para un veterano son miles de filas).
+const SESSION_SELECT = [
+  'id', 'game_id', 'started_at', 'ended_at',
+  'result:metadata->result',
+  'difficulty:metadata->difficulty',
+  'corrects:metadata->corrects',
+  'max_streak:metadata->maxStreak',
+  'guess_count:metadata->guessCount',
+  'base_seconds:metadata->seconds',
+  'seconds_used:metadata->secondsUsed',
+  'seconds_left:metadata->secondsLeft',
+  'basta:metadata->basta',
+  'powerups:metadata->powerups',
+  'shield_saves:metadata->shieldSaves',
+  'tb_left:metadata->timeBonus->secondsLeft',
+].join(',')
+const SESSION_PAGE = 1000
+const SESSION_MAX_PAGES = 5 // 5000 partidas: de sobra para Enciclopedia (1000 correctas)
+
+async function fetchFinishedChallengeSessions(userId) {
+  const rows = []
+  for (let page = 0; page < SESSION_MAX_PAGES; page++) {
+    const { data, error } = await supabase
+      .from('game_sessions')
+      .select(SESSION_SELECT)
+      .eq('user_id', userId)
+      .eq('metadata->>mode', 'challenge')
+      .not('ended_at', 'is', null)
+      .order('started_at', { ascending: false })
+      .range(page * SESSION_PAGE, (page + 1) * SESSION_PAGE - 1)
+    if (error) throw error
+    rows.push(...(data || []))
+    if (!data || data.length < SESSION_PAGE) break
+  }
+  return rows
+}
+
+let _gamesCache = null
+let _gamesCacheAt = 0
+async function getGamesForAchievements() {
+  if (_gamesCache && Date.now() - _gamesCacheAt < 5 * 60 * 1000) return _gamesCache
+  const games = await fetchGames()
+  const slugById = {}
+  const active = new Set()
+  for (const g of games || []) {
+    if (g?.id && g?.slug) slugById[g.id] = g.slug
+    // Solo juegos reales (con ruta propia): descarta filas viejas de la tabla games.
+    if (g?.slug && gameRouteForSlug(g.slug) !== '/games') active.add(g.slug)
+  }
+  _gamesCache = { slugById, activeSlugs: [...active] }
+  _gamesCacheAt = Date.now()
+  return _gamesCache
+}
+
+/**
+ * Evalúa los 23 logros nuevos y desbloquea los que se cumplen.
+ * Todo se calcula desde game_sessions / user_daily_claims en Supabase (no desde el navegador).
+ * Las escenas grandes las limita la cola de AchievementUnlockOverlay (máx. 2 por tanda;
+ * el resto se agrupa) — acá desbloqueamos todos juntos, de mayor a menor rareza, para
+ * que lleguen en la misma tanda.
+ * @param {string|null} slug  juego que se acaba de terminar (null = sin partida, ej. sobre del día)
+ * @param {{packsOpened?: number}} [opts]
+ */
+export async function checkNewAchievements(slug = null, { packsOpened = null } = {}) {
+  const { id: userId } = getAuthUser() || {}
+  if (!userId) return []
+
+  try {
+    const catalog = await getAchievementsCatalog()
+    // Si el SQL todavía no se corrió, los códigos no están en el catálogo: no hacer nada.
+    if (!NEW_ACHIEVEMENT_CODES.some(c => catalog[c])) return []
+
+    let sessions = []
+    let activeSlugs = []
+    let currentId = null
+    if (slug) {
+      const { slugById, activeSlugs: act } = await getGamesForAchievements()
+      activeSlugs = act
+      const rows = await fetchFinishedChallengeSessions(userId)
+      sessions = rows.map(r => normalizeSessionRow(r, slugById))
+      // La sesión que acaba de terminar = la última de ese juego.
+      const last = sessions.filter(s => s.slug === slug).sort((a, b) => b.endedAt - a.endedAt)[0]
+      currentId = last?.id || null
+    }
+
+    const hits = evaluateNewAchievements({ sessions, activeSlugs, currentId, packsOpened })
+    if (!hits.length) return []
+
+    const { data: ownedRows } = await supabase
+      .from('user_achievements')
+      .select('achievements!inner(code)')
+      .eq('user_id', userId)
+    const owned = new Set((ownedRows || []).map(r => r?.achievements?.code).filter(Boolean))
+
+    const RANK = { common: 0, rare: 1, epic: 2, legendary: 3 }
+    const fresh = hits
+      .filter(h => catalog[h.code] && !owned.has(h.code))
+      .sort((a, b) => RANK[achievementIcon(b.code).rarity] - RANK[achievementIcon(a.code).rarity])
+    await Promise.all(fresh.map(h => unlockAchievementWithToast(h.code, h.meta)))
+    return fresh.map(h => h.code)
+  } catch (e) {
+    console.warn('[check-new-achievements]', e?.message || e)
+    return []
+  }
+}
+
+/** Coleccionista: 7 sobres del día abiertos (user_daily_claims kind='daily', 1 por día). */
+export async function checkCollectorAchievement() {
+  const { id: userId } = getAuthUser() || {}
+  if (!userId) return
+  try {
+    const { count, error } = await supabase
+      .from('user_daily_claims')
+      .select('day', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('kind', 'daily')
+    if (error) return
+    await checkNewAchievements(null, { packsOpened: count ?? 0 })
+  } catch {}
 }
