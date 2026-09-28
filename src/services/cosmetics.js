@@ -6,6 +6,7 @@
 import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { pushClaimNotification, queueCosmeticOverlay } from '../stores/notifications'
+import { achievementSync, preloadAchievementsSync } from './achievements'
 
 /** Catálogo de cosméticos con estado owned/equipped del usuario. */
 export async function getCosmetics() {
@@ -391,29 +392,32 @@ export function rarity(r) {
   return RARITY[r] || RARITY.common
 }
 
-// ── Pistas de cómo conseguir cosméticos por LOGRO (secretos) ──
-// Clave = código del logro. Se usa para el hover del editor y el "por qué" de la escena de reclamo.
-export const ACHIEVEMENT_HINTS = {
-  streak_15: 'Conseguí 15 aciertos seguidos en un juego',
-  daily_streak_7: 'Jugá 7 días seguidos',
-  daily_streak_30: 'Jugá 30 días seguidos',
-  perfectionist: 'Completá un juego sin ningún error',
-  daily_wins_all: 'Ganá todos los juegos del día',
-  centurion: 'Acumulá 100 victorias totales',
-  guess_master: 'Ganá 20 partidas de "Adiviná el jugador"',
-  comeback_king: 'Ganá un juego que perdiste el día anterior',
-  lucky_first: 'Acertá al primer intento 10 veces',
-  hat_trick: 'Ganá 3 juegos distintos el mismo día',
-  chat_master: 'Enviá 100 mensajes en el chat',
-  social_butterfly: 'Conectá con 10 usuarios',
-  nationality_expert: 'Acertá 50 nacionalidades correctas',
-  grand_slam: 'Ganá todos los juegos en una semana',
+// ── Cómo conseguir un cosmético bloqueado por LOGRO ──
+// El nombre y la descripción salen de la tabla achievements (services/achievements.js),
+// nunca hardcodeados acá: así cubre cualquier logro nuevo sin tener que acordarse de
+// sumarlo a una lista aparte. Requiere haber llamado antes a preloadAchievementsSync()
+// (CosmeticsCollection lo hace al montar); si el catálogo todavía no cargó, o el logro
+// quedó inactivo, cae al texto genérico de siempre.
+export { preloadAchievementsSync }
+/**
+ * @param {object} c  cosmético (con unlock_achievement)
+ * @param {Object<string,{current:number,target:number}>} [progressByCode]  de getLockedAchievementProgress()
+ */
+export function hintFor(c, progressByCode) {
+  const code = c?.unlock_achievement
+  const a = achievementSync(code)
+  if (!a) return 'Conseguí un logro secreto'
+  const base = a.description || a.name
+  const p = progressByCode?.[code]
+  return p && p.target > 0 ? `${base} (${p.current}/${p.target})` : base
 }
-export function hintFor(c) { return ACHIEVEMENT_HINTS[c?.unlock_achievement] || 'Conseguí un logro secreto' }
-// Por qué se desbloqueó un cosmético (para la escena de reclamo).
+// Por qué se desbloqueó un cosmético (para la escena de reclamo: ya lo tiene, sin progreso).
 export function unlockReason(c) {
   if (!c) return ''
-  if (c.unlock_achievement) return ACHIEVEMENT_HINTS[c.unlock_achievement] || 'Conseguiste un logro secreto'
+  if (c.unlock_achievement) {
+    const a = achievementSync(c.unlock_achievement)
+    return a ? (a.description || a.name) : 'Conseguiste un logro secreto'
+  }
   if (c.premium_only) return 'Recompensa Premium'
   if (c.unlock_level > 100) return 'Completar el Pase mensual'
   if (c.unlock_level > 1) return 'Alcanzaste el nivel ' + c.unlock_level
@@ -481,6 +485,9 @@ export async function checkCosmeticUnlocks() {
   if (hadCache) {
     const seenSet = new Set(seen)
     const fresh = items.filter(c => c.owned && !seenSet.has(c.code) && c.code !== 'frame_none' && c.code !== 'icon_none')
+    // unlockReason() lee el catálogo de logros de una caché sincrónica: precargarla acá
+    // (si ya está tibia por los 5 min de TTL, esto no pega a la red).
+    if (fresh.some(c => c.unlock_achievement)) { try { await preloadAchievementsSync() } catch { /* cae al texto genérico */ } }
     for (const c of fresh) {
       // Los cosméticos por NIVEL ya se muestran como cartas en la escena de nivel
       // ("Desbloqueaste", moodboard 03/08): no se repiten en la escena grande.

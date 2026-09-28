@@ -2,8 +2,9 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import {
   getCosmetics, equipCosmetic,
-  iconBgStyle, iconThemeBg, rarity, hintFor, titleClass, getDailyStreak,
+  iconBgStyle, iconThemeBg, rarity, hintFor, titleClass, getDailyStreak, preloadAchievementsSync,
 } from '../../services/cosmetics'
+import { getLockedAchievementProgress } from '../../services/achievement-progress'
 import { getUserLevel } from '../../services/xp'
 import { getAuthUser } from '../../services/auth'
 import { pushSuccessToast, pushErrorToast } from '../../stores/notifications'
@@ -34,6 +35,10 @@ const busy = ref(null)
 // Datos reales del usuario para los bordes vivos (Placa de nivel / Racha encendida) en la vista previa
 const myLevel = ref(null)
 const myStreak = ref(0)
+// Nombre/descripción real de los logros (achievements) + avance ("4/10") de los que tienen
+// un contador — para el "Cómo conseguir" de los cosméticos bloqueados. Ver hintFor() y
+// requirement() más abajo.
+const achievementProgress = ref({})
 // Las grillas se ven quietas; el borde/banner bajo el mouse se anima
 const hoverCode = ref(null)
 const activeTab = ref('icon')
@@ -147,6 +152,17 @@ async function load() {
   loading.value = true
   items.value = await getCosmetics()
   loading.value = false
+  // Logro real (nombre/descripción) de los bloqueados: catálogo + avance, en paralelo,
+  // no bloquea el render (requirement()/hintFor() ya caen a un texto genérico mientras llega).
+  const lockedCodes = [...new Set(items.value.filter(c => !c.owned && c.unlock_achievement).map(c => c.unlock_achievement))]
+  if (lockedCodes.length) {
+    // Un solo redibujado reactivo (achievementProgress es el ref), DESPUÉS de que el
+    // catálogo de logros y el avance ya están los dos listos — si no, según cuál de
+    // las dos promesas termina primero, hintFor() podía quedar mostrando el texto
+    // genérico aunque el nombre real ya hubiera llegado (el catálogo no es un ref).
+    Promise.all([preloadAchievementsSync().catch(() => {}), getLockedAchievementProgress(lockedCodes).catch(() => ({}))])
+      .then(([, progress]) => { achievementProgress.value = progress || {} })
+  }
   const uid = getAuthUser()?.id
   if (uid) {
     getDailyStreak(uid).then(n => { myStreak.value = n }).catch(() => {})
@@ -175,7 +191,7 @@ async function unequipTitle() {
 
 // Cómo se consigue / cómo lo conseguiste.
 function requirement(c) {
-  if (c.unlock_achievement) return hintFor(c)
+  if (c.unlock_achievement) return hintFor(c, achievementProgress.value)
   if (c.premium_only) return 'Suscripción Premium'
   if (c.unlock_level > 100) return 'Pase mensual'
   if (c.unlock_level > 1) return 'Nivel ' + c.unlock_level
