@@ -32,7 +32,7 @@ import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { fetchGameBySlug, friendlyNameForSlug } from './games'
 import { unlockAchievementWithToast } from './xp'
-import { checkAllAchievementsAfterChallenge } from './achievement-triggers'
+import { checkAllAchievementsAfterChallenge, checkNewAchievements } from './achievement-triggers'
 import { getDailyChallengeLimit } from './premium'
 
 // Cache de game_id por slug para evitar consultas repetitivas
@@ -126,8 +126,9 @@ export async function checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
     } catch {}
     if (won == null) won = true
 
-    // Solo verificar logros de victoria si el usuario ganó
-    if (!won) return
+    // Solo verificar logros de victoria si el usuario ganó. Los logros nuevos
+    // (achievements-new-1) también miran derrotas (Fuego azul, Enciclopedia).
+    if (!won) { await checkNewAchievements(slugJustPlayed); return }
 
     const wins = await countTodayDailyWins()           // juegos distintos ganados hoy
     const totalGames = await getPlayableGameCount()    // todos los juegos jugables (dinámico)
@@ -157,6 +158,9 @@ export async function checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
 
     // Verificar todos los demás logros (puntaje, tiempo, etc.)
     await checkAllAchievementsAfterChallenge(slugJustPlayed, won, metadata)
+
+    // Logros nuevos (achievements-new-1): calculados desde las sesiones guardadas en Supabase
+    await checkNewAchievements(slugJustPlayed)
 
     // ESCENA DE COSMÉTICO: los logros recién desbloqueados pueden otorgar cosméticos
     // (get_cosmetics los marca owned al tener el logro). Detectarlos AHORA y encolarlos.
@@ -244,15 +248,17 @@ export function matchFicha(slug, m = {}, scoreFinal = 0, result = null) {
   return { score: '', stars: win ? 3 : 0 }
 }
 
-// Start a challenge session and return session id
-export async function startChallengeSession(slug, seconds) {
+// Start a challenge session and return session id.
+// `extra` se mezcla en la metadata inicial: los juegos pasan { difficulty } para que
+// los logros que dependen de "en Difícil" (achievement-rules.js) lo lean de la sesión.
+export async function startChallengeSession(slug, seconds, extra = {}) {
   import('../stores/notifications').then(m => m.setSuppressOverlays(true)).catch(() => {})
   const { id: userId } = getAuthUser() || {}
   const gameId = await getGameId(slug)
   // Invitado o juego sin registrar en DB: sesión no persistida (sessionId null,
   // completeChallengeSession ya sabe no-opear con eso).
   if (!userId || !gameId) return null
-  const metadata = { mode: 'challenge', seconds: seconds }
+  const metadata = { mode: 'challenge', seconds: seconds, ...(extra || {}) }
   const { data, error } = await supabase
     .from('game_sessions')
     .insert([{ user_id: userId, game_id: gameId, metadata }])

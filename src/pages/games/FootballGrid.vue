@@ -321,7 +321,7 @@ export default {
         this.beforePercent = snap.percent
       } catch {}
       try {
-        this.sessionId = await startChallengeSession('football-grid', null)
+        this.sessionId = await startChallengeSession('football-grid', null, { difficulty: this.selectedDifficulty })
         this.overlayOpen = false
         this.initGrid()
       } catch (e) { console.error('[FootballGrid start]', e) }

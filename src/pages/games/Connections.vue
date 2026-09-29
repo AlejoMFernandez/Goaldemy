@@ -290,7 +290,7 @@ export default {
           this.xpBeforeTotal = snap.xpTotal
           this.beforePercent = snap.percent
         } catch {}
-        this.sessionId = await startChallengeSession('connections', null)
+        this.sessionId = await startChallengeSession('connections', null, { difficulty: this.selectedDifficulty })
         this.overlayOpen = false
         this.setupBoard(true)
       } catch (e) { console.error('[Connections start]', e) }

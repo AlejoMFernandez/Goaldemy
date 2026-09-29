@@ -326,9 +326,10 @@ const gaugeAngle = computed(() => GAUGE_ANGLE[props.rarity] ?? GAUGE_ANGLE.commo
         </template>
 
         <!-- Hazañas repetidas -->
-        <template v-else-if="iconKey === 'ach_burner'">
-          <circle cx="50" cy="50" r="15" fill="none" stroke-width="5"/>
-          <path v-for="i in 8" :key="i" d="M50 10 c6 8 8 13 0 22 c-8 -9 -6 -14 0 -22 z" :transform="`rotate(${(i - 1) * 45} 50 50)`" stroke="none"/>
+        <template v-else-if="iconKey === 'ach_ten_row'">
+          <path d="M24 40 L38 28 V74" fill="none" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+          <ellipse cx="66" cy="51" rx="15" ry="23" fill="none" stroke-width="9"/>
+          <path d="M18 88 H84" stroke-width="5" stroke-linecap="round" opacity="0.6"/>
         </template>
         <template v-else-if="iconKey === 'ach_crosshair'">
           <circle cx="50" cy="50" r="26" fill="none" stroke-width="5"/>

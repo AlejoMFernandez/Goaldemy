@@ -216,7 +216,7 @@ export default {
       this.rng = createDailyRng('football-wordle')
       this.pickTarget()
       try {
-        this.sessionId = await startChallengeSession('football-wordle', null)
+        this.sessionId = await startChallengeSession('football-wordle', null, { difficulty: this.selectedDifficulty })
       } catch (e) { console.error('[FootballWordle start]', e) }
       this.overlayOpen = false
     },

@@ -152,7 +152,7 @@ export default {
         } catch {}
         this.rng = createDailyRng('player-position')
         this.difficultyConfig = config
-        this.sessionId = await startChallengeSession('player-position', timeLimit)
+        this.sessionId = await startChallengeSession('player-position', timeLimit, { difficulty: this.selectedDifficulty })
         this.overlayOpen = false
         this.beginClock(timeLimit)
       } catch (e) {
@@ -164,7 +164,7 @@ export default {
         await awardXpBatch({ gameCode: 'player-position', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
       }
       try {
-        await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects, attempts: this.attempts, errors: Math.max(0, (this.attempts || 0) - (this.corrects || 0)), maxWrongStreak: this.maxWrongStreak || 0, timeBonus: this.timeBonusInfo })
+        await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects, attempts: this.attempts, errors: Math.max(0, (this.attempts || 0) - (this.corrects || 0)), maxWrongStreak: this.maxWrongStreak || 0, timeBonus: this.timeBonusInfo, ...this.timedStats() })
 
         const snap = await captureLevelSnapshot()
         this.levelAfter = snap.level

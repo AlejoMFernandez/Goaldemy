@@ -254,7 +254,7 @@ export default {
           this.beforePercent = snap.percent
         } catch {}
         this.rng = createDailyRng('stat-challenge')
-        this.sessionId = await startChallengeSession('stat-challenge', config.time)
+        this.sessionId = await startChallengeSession('stat-challenge', config.time, { difficulty: this.selectedDifficulty })
         this.overlayOpen = false
         this.beginClock(config.time)
       } catch (e) {
@@ -270,7 +270,7 @@ export default {
         await awardXpBatch({ gameCode: 'stat-challenge', totalXp: this.xpEarned, corrects: this.corrects }).catch(() => {})
       }
       try {
-        await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects, timeBonus: this.timeBonusInfo }).catch(() => {})
+        await completeChallengeSession(this.sessionId, this.score, this.xpEarned, { maxStreak: this.maxStreak, result, corrects: this.corrects, timeBonus: this.timeBonusInfo, ...this.timedStats() }).catch(() => {})
 
         const snap = await captureLevelSnapshot()
         this.levelAfter = snap.level
