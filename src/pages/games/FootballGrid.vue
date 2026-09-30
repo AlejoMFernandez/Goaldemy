@@ -2,6 +2,8 @@
 import GameShell from '../../components/game/GameShell.vue'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
+import ScoreBug from '../../components/game/ScoreBug.vue'
+import PlayerSearch from '../../components/game/PlayerSearch.vue'
 import { getAllPlayersAsync } from '../../services/players'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession } from '../../services/game-modes'
 import { captureLevelSnapshot } from '../../services/xp'
@@ -12,9 +14,15 @@ import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLeve
 import { playCorrectSound, playIncorrectSound } from '../../services/sounds'
 import { createDailyRng } from '../../services/seeded-random'
 import { getGameMetadata } from '../../services/games'
-import { countryCodeFromName } from '../../services/countries'
+import { countryCodeFromName, countryNameEs } from '../../services/countries'
+import * as fx from '../../services/game-fx'
 
-const POS_LABELS = { 0: 'Arquero', 1: 'Defensor', 2: 'Mediocampista', 3: 'Delantero' }
+function surname(name) {
+  const w = (name || '').trim().split(' ')
+  if (w.length < 2) return name || ''
+  if (/^(júnior|junior|jr\.?)$/i.test(w[w.length - 1])) return w[0]
+  return w.slice(1).join(' ')
+}
 
 function generateGrid(allPlayers, rng) {
   const teamCounts = {}
@@ -52,7 +60,7 @@ function generateGrid(allPlayers, rng) {
   const rows = rowTeams.map(team => ({ type: 'team', value: team, label: team }))
   const cols = colCountries.map(country => {
     const sample = allPlayers.find(p => p.cname === country)
-    return { type: 'country', value: country, label: country, ccode: sample?.ccode || '' }
+    return { type: 'country', value: country, label: countryNameEs(country), ccode: sample?.ccode || '' }
   })
 
   for (let r = 0; r < 3; r++) {
@@ -67,28 +75,27 @@ function generateGrid(allPlayers, rng) {
 function validatePlayer(player, rowConstraint, colConstraint) {
   const matchRow = rowConstraint.type === 'team' ? player.teamName === rowConstraint.value
     : rowConstraint.type === 'country' ? player.cname === rowConstraint.value
-    : rowConstraint.type === 'position' ? player.positionId === rowConstraint.value
     : false
   const matchCol = colConstraint.type === 'team' ? player.teamName === colConstraint.value
     : colConstraint.type === 'country' ? player.cname === colConstraint.value
-    : colConstraint.type === 'position' ? player.positionId === colConstraint.value
     : false
   return matchRow && matchCol
 }
 
 export default {
   name: 'FootballGrid',
-  components: { GameShell, GamePreviewModal, GameSummaryPopup },
+  components: { GameShell, GamePreviewModal, GameSummaryPopup, ScoreBug, PlayerSearch },
   data() {
     return {
       loading: true,
       allPlayers: [],
       gridConfig: null,
-      cells: Array.from({ length: 3 }, () => Array.from({ length: 3 }, () => ({ player: null, guessesLeft: 3, failed: false }))),
+      cells: Array.from({ length: 3 }, () => Array.from({ length: 3 }, () => ({ player: null, guessesLeft: 3, failed: false, inLine: false }))),
       usedPlayerIds: new Set(),
       activeCell: null,
-      searchQuery: '',
-      flashCell: null,
+      stampKey: null, // "r-c" de la celda recién llenada (para que sólo ella gire)
+      toastMsg: '',
+      cellRefs: {},
       // mode
       mode: 'normal',
       reviewMode: false,
@@ -113,8 +120,6 @@ export default {
       // difficulty
       selectedDifficulty: 'normal',
       difficultyConfig: null,
-      // autocomplete
-      selectedIndex: -1,
     }
   },
   computed: {
@@ -124,33 +129,7 @@ export default {
       if (!this.gridConfig) return false
       return this.cells.every(row => row.every(c => c.player || c.failed))
     },
-    totalCells() { return 9 },
-    suggestions() {
-      const q = (this.searchQuery || '').trim()
-      if (q.length < 3) return []
-      const nq = q.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
-      const out = []
-      const seen = new Set()
-      for (const p of this.allPlayers) {
-        if (this.usedPlayerIds.has(p.id)) continue
-        const n = (p.name || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
-        if (n.includes(nq) && !seen.has(p.id)) {
-          seen.add(p.id)
-          out.push(p)
-        }
-        if (out.length >= 12) break
-      }
-      return out
-    },
-    teamLogoForRow() {
-      if (!this.gridConfig) return () => ''
-      return (row) => {
-        const team = this.gridConfig.rows[row]
-        if (team.type !== 'team') return ''
-        const p = this.allPlayers.find(pl => pl.teamName === team.value && pl.teamLogo)
-        return p?.teamLogo || ''
-      }
-    },
+    guessesPerCell() { return this.difficultyConfig?.guessesPerCell || 3 },
   },
   watch: {
     gameFinished(fin) {
@@ -184,11 +163,18 @@ export default {
       this.checkAvailability()
       this.loading = false
     } else {
-      this.initGrid(3)
+      this.initGrid()
     }
   },
   methods: {
-    initGrid(guessesPerCell) {
+    surname,
+    setCellRef(r, c, el) { if (el) this.cellRefs[`${r}-${c}`] = el },
+    showToast(msg) {
+      this.toastMsg = msg
+      clearTimeout(this._toastT)
+      this._toastT = setTimeout(() => { this.toastMsg = '' }, 1700)
+    },
+    initGrid() {
       const rng = createDailyRng('football-grid')
       let grid = null
       for (let i = 0; i < 80; i++) {
@@ -201,7 +187,7 @@ export default {
       }
       this.gridConfig = grid
       this.cells = Array.from({ length: 3 }, () =>
-        Array.from({ length: 3 }, () => ({ player: null, guessesLeft: guessesPerCell, failed: false }))
+        Array.from({ length: 3 }, () => ({ player: null, guessesLeft: this.guessesPerCell, failed: false, inLine: false }))
       )
       this.usedPlayerIds = new Set()
       this.corrects = 0
@@ -214,36 +200,20 @@ export default {
       const cell = this.cells[r][c]
       if (cell.player || cell.failed || this.gameFinished) return
       this.activeCell = { row: r, col: c }
-      this.searchQuery = ''
-      this.selectedIndex = -1
-      this.$nextTick(() => {
-        const input = this.$refs.searchInput
-        if (input) input.focus()
-      })
+      this.$nextTick(() => this.$refs.search?.focus?.())
     },
-    closeAutocomplete() {
-      this.activeCell = null
-      this.searchQuery = ''
-      this.selectedIndex = -1
-    },
-    moveSelection(dir) {
-      const n = this.suggestions.length
-      if (!n) return
-      if (this.selectedIndex < 0) this.selectedIndex = 0
-      else this.selectedIndex = (this.selectedIndex + dir + n) % n
-    },
-    onEnterKey() {
-      if (this.selectedIndex >= 0 && this.suggestions[this.selectedIndex]) {
-        this.submitPlayer(this.suggestions[this.selectedIndex])
-      }
-    },
+    closeSheet() { this.activeCell = null },
     submitPlayer(player) {
       if (!this.activeCell || !player) return
       const { row, col } = this.activeCell
       const cell = this.cells[row][col]
       if (cell.player || cell.failed) return
 
-      if (this.usedPlayerIds.has(player.id)) return
+      if (this.usedPlayerIds.has(player.id)) {
+        this.showToast('Ya lo usaste en otra celda')
+        this.$refs.search?.shake()
+        return
+      }
 
       const rowConstraint = this.gridConfig.rows[row]
       const colConstraint = this.gridConfig.cols[col]
@@ -253,31 +223,54 @@ export default {
         cell.player = player
         this.usedPlayerIds.add(player.id)
         this.corrects++
+        const key = `${row}-${col}`
+        this.stampKey = key
+        setTimeout(() => { if (this.stampKey === key) this.stampKey = null }, 520)
         const cfg = this.difficultyConfig || { xpPerCell: 20 }
-        this.xpEarned += cfg.xpPerCell || 20
+        const gained = cfg.xpPerCell || 20
+        if (this.allowXp) this.xpEarned += gained
         this.score += 30
         playCorrectSound()
         celebrateCorrect()
-        this.closeAutocomplete()
+        this.closeSheet()
+        this.$nextTick(() => {
+          const el = this.cellRefs[key]
+          const bug = this.$refs.bug
+          if (el) {
+            const c = fx.center(el)
+            fx.sparks(c.x, c.y, 14, ['#4ade80', '#fff'], 50)
+            if (this.allowXp && gained > 0 && bug) {
+              fx.flyTo({ from: el, to: bug.xpEl(), html: `+${gained} XP`, className: 'gfx-xp', duration: 500 })
+                .then(() => bug.bumpXp())
+            }
+          }
+          this.markLines()
+        })
       } else {
-        cell.guessesLeft--
+        this.$refs.search?.shake()
         playIncorrectSound()
-        this.flashCell = `${row}-${col}`
-        setTimeout(() => { this.flashCell = null }, 500)
+        cell.guessesLeft--
+        this.showToast(`${surname(player.name)}: ${player.teamName} · ${countryNameEs(player.cname)}`)
         if (cell.guessesLeft <= 0) {
           cell.failed = true
-          this.closeAutocomplete()
-        } else {
-          this.searchQuery = ''
-          this.selectedIndex = -1
+          this.closeSheet()
         }
+      }
+    },
+    // Tateti: fila o columna completa (las 3 celdas con jugador) se ilumina dorado.
+    markLines() {
+      for (let r = 0; r < 3; r++) {
+        if (this.cells[r].every(c => c.player)) this.cells[r].forEach(c => { c.inLine = true })
+      }
+      for (let c = 0; c < 3; c++) {
+        if (this.cells.every(row => row[c].player)) this.cells.forEach(row => { row[c].inLine = true })
       }
     },
     async endChallenge() {
       const allCorrect = this.corrects === 9
       if (allCorrect) {
         const cfg = this.difficultyConfig || { xpCompletion: 75 }
-        this.xpEarned += cfg.xpCompletion || 75
+        if (this.allowXp) this.xpEarned += cfg.xpCompletion || 75
         setTimeout(() => celebrateGameWin(), 100)
       } else {
         setTimeout(() => announceGameLoss(), 100)
@@ -328,23 +321,21 @@ export default {
         this.beforePercent = snap.percent
       } catch {}
       try {
-        this.sessionId = await startChallengeSession('football-grid', null)
+        this.sessionId = await startChallengeSession('football-grid', null, { difficulty: this.selectedDifficulty })
         this.overlayOpen = false
-        this.initGrid(config.guessesPerCell || 3)
+        this.initGrid()
       } catch (e) { console.error('[FootballGrid start]', e) }
     },
     flagSrc(constraint) {
       if (constraint.type !== 'country') return ''
       const iso = countryCodeFromName(constraint.value)
-      return iso ? `https://flagcdn.com/w40/${iso}.png` : ''
+      return iso ? `https://flagcdn.com/w80/${iso}.png` : ''
     },
-    cellClass(r, c) {
-      const cell = this.cells[r][c]
-      const flash = this.flashCell === `${r}-${c}`
-      if (cell.player) return 'bg-emerald-500/15 border-emerald-400/30'
-      if (cell.failed) return 'bg-red-500/10 border-red-400/20 opacity-60'
-      if (flash) return 'bg-red-500/20 border-red-400/40 shake'
-      return 'border-white/10 hover:border-white/25 hover:bg-white/5 hover:shadow-[inset_0_0_20px_rgba(255,255,255,0.05)] cursor-pointer'
+    teamLogoForRow(ri) {
+      const team = this.gridConfig?.rows[ri]
+      if (!team || team.type !== 'team') return ''
+      const p = this.allPlayers.find(pl => pl.teamName === team.value && pl.teamLogo)
+      return p?.teamLogo || ''
     },
   }
 }
@@ -352,13 +343,6 @@ export default {
 
 <template>
   <GameShell title="La Grilla" :backPath="backPath()">
-    <template #stat>
-      <div class="inline-flex items-center gap-1.5 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
-        <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Celdas</span>
-        <span class="font-display text-white font-bold text-base leading-none whitespace-nowrap">{{ corrects }}/9</span>
-      </div>
-    </template>
-
     <div v-if="loading" class="text-center text-slate-300 py-12">
       <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-300"></div>
       <p class="mt-3">Cargando grilla...</p>
@@ -366,53 +350,73 @@ export default {
 
     <div v-else-if="!gridConfig" class="text-center text-slate-400 py-12">
       <p>No se pudo generar la grilla hoy. Intentalo de nuevo.</p>
-      <button @click="initGrid(difficultyConfig?.guessesPerCell || 3)" class="mt-3 rounded-full bg-white/10 border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/15 transition">Reintentar</button>
+      <button @click="initGrid" class="mt-3 rounded-full bg-white/10 border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/15 transition">Reintentar</button>
     </div>
 
-    <div v-else class="relative w-full max-w-xl mx-auto">
+    <div v-else class="relative w-full max-w-xl mx-auto self-start mt-3 space-y-3">
+      <ScoreBug ref="bug" :timed="false" :corrects="corrects" :target="9" :xp="xpEarned" />
+
       <!-- GRID TABLE -->
       <div class="grid-table select-none">
-        <!-- Header row: empty corner + 3 column headers -->
         <div class="grid-corner"></div>
         <div v-for="(col, ci) in gridConfig.cols" :key="'ch-'+ci" class="grid-col-header">
           <img v-if="flagSrc(col)" :src="flagSrc(col)" alt="" class="grid-flag" />
-          <span class="text-[10px] sm:text-xs text-slate-300 leading-tight text-center block mt-1 truncate max-w-full">{{ col.label }}</span>
+          <span class="grid-label">{{ col.label }}</span>
         </div>
 
-        <!-- 3 data rows -->
         <template v-for="(row, ri) in gridConfig.rows" :key="'r-'+ri">
-          <!-- Row header -->
           <div class="grid-row-header">
             <img v-if="teamLogoForRow(ri)" :src="teamLogoForRow(ri)" alt="" class="grid-logo" />
-            <span class="text-[10px] sm:text-xs text-slate-300 leading-tight text-center block mt-1 truncate max-w-full">{{ row.label }}</span>
+            <span class="grid-label">{{ row.label }}</span>
           </div>
-          <!-- 3 cells -->
-          <div v-for="(col, ci) in gridConfig.cols" :key="'c-'+ri+'-'+ci"
-               :class="['grid-cell border rounded-lg transition-all duration-200', cellClass(ri, ci)]"
+          <div v-for="(col, ci) in gridConfig.cols" :key="'c-'+ri+'-'+ci" :ref="el => setCellRef(ri, ci, el)"
+               :class="[
+                 'grid-cell border rounded-lg transition-all duration-200',
+                 cells[ri][ci].player ? 'bg-emerald-500/15 border-emerald-400/30' : cells[ri][ci].failed ? 'bg-red-500/10 border-red-400/20 opacity-60' : 'border-white/10 hover:border-white/25 hover:bg-white/5 cursor-pointer',
+                 cells[ri][ci].inLine ? 'grid-cell-line' : '',
+                 stampKey === `${ri}-${ci}` ? 'grid-cell-stamp' : '',
+               ]"
                @click="openCell(ri, ci)">
-            <!-- Filled: solo la foto del jugador (sin nombre) -->
             <template v-if="cells[ri][ci].player">
               <img :src="cells[ri][ci].player.image" :alt="cells[ri][ci].player.name"
                    class="grid-player-img" @error="e => e.target.style.display='none'" />
+              <span class="grid-player-name">{{ surname(cells[ri][ci].player.name) }}</span>
             </template>
-            <!-- Failed -->
             <template v-else-if="cells[ri][ci].failed">
               <span class="text-2xl text-red-400/40">✕</span>
             </template>
-            <!-- Empty -->
             <template v-else>
-              <div class="flex flex-col items-center gap-1">
+              <div class="flex flex-col items-center gap-1.5">
                 <div class="w-9 h-9 rounded-full border-2 border-dashed border-white/15 flex items-center justify-center">
                   <span class="text-lg text-slate-500">+</span>
                 </div>
-                <span v-if="cells[ri][ci].guessesLeft < (difficultyConfig?.guessesPerCell || 3)" class="text-[10px] text-slate-500">
-                  {{ cells[ri][ci].guessesLeft }} restantes
-                </span>
+                <div class="flex items-center gap-1">
+                  <i v-for="d in guessesPerCell" :key="d" class="grid-dot" :class="{ off: d > cells[ri][ci].guessesLeft }"></i>
+                </div>
               </div>
             </template>
           </div>
         </template>
       </div>
+
+      <!-- Sheet (consigna + buscador), sube desde abajo sin tapar la grilla entera -->
+      <div class="grid-sheet" :class="{ on: activeCell }">
+        <button class="grid-sheet-close" aria-label="Cerrar" @click="closeSheet">✕</button>
+        <div v-if="activeCell" class="grid-sheet-q">
+          <img v-if="teamLogoForRow(activeCell.row)" :src="teamLogoForRow(activeCell.row)" alt="" class="w-7 h-7 object-contain" />
+          <span>{{ gridConfig.rows[activeCell.row].label }}</span>
+          <span class="text-slate-500">+</span>
+          <img v-if="flagSrc(gridConfig.cols[activeCell.col])" :src="flagSrc(gridConfig.cols[activeCell.col])" alt="" class="w-7 h-5 object-cover rounded-sm" />
+          <span>{{ gridConfig.cols[activeCell.col].label }}</span>
+        </div>
+        <PlayerSearch v-if="activeCell" ref="search" :show-team="false" placeholder="¿Quién va acá? Escribí un jugador…" @pick="submitPlayer" />
+      </div>
+      <Transition name="fade"><div v-if="activeCell" class="grid-scrim" @click="closeSheet"></div></Transition>
+
+      <!-- Toast -->
+      <Transition name="fade">
+        <div v-if="toastMsg" class="grid-toast">{{ toastMsg }}</div>
+      </Transition>
 
       <!-- FINISHED BANNER (free/normal mode) -->
       <div v-if="gameFinished && mode !== 'challenge'" class="mt-4 text-center space-y-2">
@@ -423,7 +427,6 @@ export default {
       </div>
     </div>
 
-    <!-- OVERLAYS (fixed / teleport): fuera del flujo del cuerpo -->
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="La Grilla"
@@ -436,42 +439,6 @@ export default {
       @start="startChallenge"
     />
 
-    <!-- AUTOCOMPLETE OVERLAY -->
-    <Transition name="fade">
-      <div v-if="activeCell" class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm" @click.self="closeAutocomplete">
-        <div class="w-full max-w-sm mx-4 rounded-2xl border border-white/15 bg-slate-900/95 shadow-2xl p-4 space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-slate-300 flex items-center gap-2">
-              <img v-if="teamLogoForRow(activeCell.row)" :src="teamLogoForRow(activeCell.row)" alt="" class="w-6 h-6 object-contain" />
-              <span class="text-white font-medium">{{ gridConfig.rows[activeCell.row].label }}</span>
-              <span class="text-slate-500">+</span>
-              <img v-if="flagSrc(gridConfig.cols[activeCell.col])" :src="flagSrc(gridConfig.cols[activeCell.col])" alt="" class="w-6 h-4 object-cover rounded-sm" />
-              <span class="text-white font-medium">{{ gridConfig.cols[activeCell.col].label }}</span>
-            </span>
-            <button @click="closeAutocomplete" class="text-slate-400 hover:text-white text-lg leading-none">&times;</button>
-          </div>
-          <input ref="searchInput" v-model="searchQuery" type="text" placeholder="Escribi al menos 3 letras..."
-                 @keydown.down.prevent="moveSelection(1)" @keydown.up.prevent="moveSelection(-1)"
-                 @keydown.enter.prevent="onEnterKey" @keydown.escape="closeAutocomplete"
-                 class="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2.5 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-white/20 text-sm" />
-          <div v-if="suggestions.length" class="rounded-xl border border-white/10 bg-slate-800/80 max-h-56 overflow-auto">
-            <ul>
-              <li v-for="(p, idx) in suggestions" :key="p.id" @click="submitPlayer(p)"
-                  :class="['px-3 py-2 cursor-pointer text-slate-200 flex items-center gap-2.5 text-sm', idx === selectedIndex ? 'bg-white/10' : 'hover:bg-white/5']">
-                <img :src="p.image" :alt="p.name" class="h-7 w-7 object-cover rounded-full flex-none" @error="e => e.target.style.display='none'" />
-                <div class="min-w-0 flex-1">
-                  <span class="block truncate">{{ p.name }}</span>
-                  <span class="text-[11px] text-slate-500">{{ p.teamName }}</span>
-                </div>
-              </li>
-            </ul>
-          </div>
-          <p v-else-if="searchQuery.length >= 3" class="text-sm text-slate-500 text-center py-2">Sin resultados</p>
-        </div>
-      </div>
-    </Transition>
-
-    <!-- Summary Popup -->
     <GameSummaryPopup
       :show="showSummary"
       :corrects="corrects"
@@ -507,7 +474,6 @@ export default {
 @media (min-width: 640px) {
   .grid-table { grid-template-columns: 92px repeat(3, minmax(0, 1fr)); gap: 8px; }
 }
-.grid-corner { /* empty top-left cell */ }
 .grid-col-header, .grid-row-header {
   display: flex;
   flex-direction: column;
@@ -516,26 +482,19 @@ export default {
   padding: 4px 2px;
   min-width: 0;
 }
-/* Bandera y logo del equipo: la materia prima del juego, bien grandes */
+.grid-label { font-size: 10px; line-height: 1.15; color: rgb(203, 213, 225); text-align: center; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+@media (min-width: 640px) { .grid-label { font-size: 12px; } }
 .grid-flag {
-  width: 52px;
-  height: 34px;
-  object-fit: cover;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  outline: 1px solid rgba(255, 255, 255, 0.12);
+  width: 52px; height: 34px; object-fit: cover; border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); outline: 1px solid rgba(255, 255, 255, 0.12);
 }
-.grid-logo {
-  width: 46px;
-  height: 46px;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
-}
+.grid-logo { width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4)); }
 @media (min-width: 640px) {
   .grid-flag { width: 64px; height: 42px; }
   .grid-logo { width: 58px; height: 58px; }
 }
 .grid-cell {
+  position: relative;
   aspect-ratio: 1;
   display: flex;
   flex-direction: column;
@@ -543,27 +502,50 @@ export default {
   justify-content: center;
   min-height: 0;
   padding: 3px;
+  perspective: 500px;
 }
-.grid-player-img {
-  width: 84%;
-  height: 84%;
-  max-width: 92px;
-  max-height: 92px;
-  border-radius: 12px;
-  object-fit: cover;
+.grid-cell-line { box-shadow: 0 0 0 3px var(--play-400, #fcd34d), 0 0 18px rgba(252, 211, 77, 0.5); }
+.grid-cell-stamp { animation: grid-stampin 0.5s cubic-bezier(.34,1.56,.64,1); }
+@keyframes grid-stampin { from { transform: rotateY(90deg) scale(.8); } to { transform: none; } }
+.grid-player-img { width: 78%; height: 78%; max-width: 88px; max-height: 88px; border-radius: 10px; object-fit: cover; }
+.grid-player-name { position: absolute; left: 2px; right: 2px; bottom: 2px; font-size: 9px; font-weight: 700; text-transform: uppercase; color: #fff; text-align: center; background: linear-gradient(transparent, rgba(0,0,0,.85)); padding: 10px 2px 3px; border-radius: 0 0 8px 8px; }
+.grid-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--play-400, #fcd34d); display: block; }
+.grid-dot.off { background: rgba(255, 255, 255, 0.2); }
+
+.grid-scrim { position: fixed; inset: 0; z-index: 39; background: rgba(0,0,0,.35); }
+.grid-sheet {
+  position: relative;
+  z-index: 40;
+  background: #141a38;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  padding: 0;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: transform 0.35s cubic-bezier(.16,1,.3,1), opacity 0.25s, max-height 0.35s cubic-bezier(.16,1,.3,1), padding 0.35s;
+}
+.grid-sheet.on { max-height: 220px; opacity: 1; transform: none; padding: 12px; }
+.grid-sheet-close { position: absolute; right: 10px; top: 8px; background: none; border: 0; color: rgb(148,163,184); font-size: 16px; cursor: pointer; line-height: 1; }
+.grid-sheet-q { display: flex; gap: 8px; align-items: center; font-weight: 800; text-transform: uppercase; font-size: 14px; color: #eef1ff; margin-bottom: 8px; padding-right: 20px; }
+
+.grid-toast {
+  position: sticky;
+  bottom: 8px;
+  z-index: 5;
+  margin: 0 auto;
+  width: fit-content;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #7f1d1d;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(0,0,0,.5);
+  text-align: center;
 }
 
-/* Transitions */
 .fade-enter-active, .fade-leave-active { transition: opacity 150ms ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
-
-/* Shake animation for wrong guesses */
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-4px); }
-  40% { transform: translateX(4px); }
-  60% { transform: translateX(-3px); }
-  80% { transform: translateX(3px); }
-}
-.shake { animation: shake 0.35s ease; }
 </style>

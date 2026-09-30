@@ -2,137 +2,35 @@
 import GameShell from '../../components/game/GameShell.vue'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
-import { getAllPlayersAsync } from '../../services/players'
+import ScoreBug from '../../components/game/ScoreBug.vue'
+import { getAllPlayers } from '../../services/players'
+import { generateDailyBoard, generateRandomBoard } from '../../services/connections-sections'
 import { getGameMetadata, gameSummaryBlurb } from '../../services/games'
 import { isChallengeAvailable, startChallengeSession, completeChallengeSession, fetchLifetimeMaxStreak } from '../../services/game-modes'
 import { captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
-import { createDailyRng } from '../../services/seeded-random'
 import { celebrateCorrect, celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { playCorrectSound, playIncorrectSound } from '../../services/sounds'
+import * as fx from '../../services/game-fx'
 
-const GROUP_COLORS = [
-  { bg: 'bg-yellow-500/90', text: 'text-yellow-950', border: 'border-yellow-400' },
-  { bg: 'bg-emerald-500/90', text: 'text-emerald-950', border: 'border-emerald-400' },
-  { bg: 'bg-sky-500/90', text: 'text-sky-950', border: 'border-sky-400' },
-  { bg: 'bg-violet-500/90', text: 'text-violet-950', border: 'border-violet-400' },
-]
+// Mismos 4 colores del moodboard 09 (sección 03): dorado, verde, celeste, lila.
+const GROUP_COLORS = ['#fcd34d', '#4ade80', '#38bdf8', '#c4b5fd']
+const GROUP_TEXT = ['#422006', '#052e16', '#03324a', '#2e1065']
 
-const LEAGUE_NAMES = {
-  47: 'Premier League', 87: 'La Liga', 55: 'Serie A',
-  54: 'Bundesliga', 53: 'Ligue 1', 77: 'World Cup',
-}
-
-const GROUP_GENERATORS = [
-  { type: 'league', generate(players, rng) {
-    const map = {}
-    players.forEach(p => {
-      const lid = p.leagueId
-      if (lid && LEAGUE_NAMES[lid]) (map[lid] = map[lid] || []).push(p)
-    })
-    const valid = Object.entries(map).filter(([, a]) => a.length >= 4)
-    if (!valid.length) return null
-    const [lid, arr] = valid[Math.floor(rng() * valid.length)]
-    return { label: `Juegan en la ${LEAGUE_NAMES[lid]}`, players: [...arr].sort(() => rng() - 0.5).slice(0, 4), type: 'league', key: Number(lid) }
-  }},
-  { type: 'country', generate(players, rng) {
-    const map = {}
-    players.forEach(p => { if (p.cname) (map[p.cname] = map[p.cname] || []).push(p) })
-    const valid = Object.entries(map).filter(([, a]) => a.length >= 4)
-    if (!valid.length) return null
-    const [country, arr] = valid[Math.floor(rng() * valid.length)]
-    return { label: `Selección de ${country}`, players: [...arr].sort(() => rng() - 0.5).slice(0, 4), type: 'country', key: country }
-  }},
-  { type: 'team', generate(players, rng) {
-    const map = {}
-    players.forEach(p => { if (p.teamName) (map[p.teamName] = map[p.teamName] || []).push(p) })
-    const valid = Object.entries(map).filter(([, a]) => a.length >= 4)
-    if (!valid.length) return null
-    const [team, arr] = valid[Math.floor(rng() * valid.length)]
-    return { label: `Juegan en ${team}`, players: [...arr].sort(() => rng() - 0.5).slice(0, 4), type: 'team', key: team }
-  }},
-  { type: 'position', generate(players, rng) {
-    const posLabels = { 0: 'Arqueros', 1: 'Defensores', 2: 'Mediocampistas', 3: 'Delanteros' }
-    const byPos = { 0: [], 1: [], 2: [], 3: [] }
-    players.forEach(p => { if (p.positionId != null) byPos[p.positionId].push(p) })
-    const valid = Object.entries(byPos).filter(([, a]) => a.length >= 4)
-    if (!valid.length) return null
-    const [posId, arr] = valid[Math.floor(rng() * valid.length)]
-    return { label: posLabels[posId], players: [...arr].sort(() => rng() - 0.5).slice(0, 4), type: 'position', key: Number(posId) }
-  }},
-  { type: 'shirtSingleDigit', generate(players, rng) {
-    const single = players.filter(p => p.shirtNumber && p.shirtNumber >= 1 && p.shirtNumber <= 9)
-    if (single.length < 4) return null
-    return { label: 'Dorsal de un solo dígito', players: [...single].sort(() => rng() - 0.5).slice(0, 4), type: 'shirtSingleDigit', key: null }
-  }},
-  { type: 'shirtHighNumber', generate(players, rng) {
-    const high = players.filter(p => p.shirtNumber && p.shirtNumber >= 20)
-    if (high.length < 4) return null
-    return { label: 'Dorsal 20+', players: [...high].sort(() => rng() - 0.5).slice(0, 4), type: 'shirtHighNumber', key: null }
-  }},
-  { type: 'goalScorers', generate(players, rng) {
-    const scorers = players.filter(p => p.stats?.goals != null && p.stats.goals >= 10)
-    if (scorers.length < 4) return null
-    return { label: 'Goleadores (10+ goles)', players: [...scorers].sort(() => rng() - 0.5).slice(0, 4), type: 'goalScorers', key: null }
-  }},
-  { type: 'assistProviders', generate(players, rng) {
-    const assisters = players.filter(p => p.stats?.assists != null && p.stats.assists >= 5)
-    if (assisters.length < 4) return null
-    return { label: 'Asistidores (5+ asistencias)', players: [...assisters].sort(() => rng() - 0.5).slice(0, 4), type: 'assistProviders', key: null }
-  }},
-]
-
-// ¿El jugador p satisface la categoría del grupo g? (para detectar ambigüedad)
-function groupMatches(p, g) {
-  switch (g.type) {
-    case 'league': return p.leagueId === g.key
-    case 'country': return p.cname === g.key
-    case 'team': return p.teamName === g.key
-    case 'position': return p.positionId === g.key
-    case 'shirtSingleDigit': return p.shirtNumber >= 1 && p.shirtNumber <= 9
-    case 'shirtHighNumber': return p.shirtNumber >= 20
-    case 'goalScorers': return (p.stats?.goals ?? 0) >= 10
-    case 'assistProviders': return (p.stats?.assists ?? 0) >= 5
-    default: return false
-  }
-}
-
-function generateGroups(allPlayers, rng) {
-  const groups = []
-  const usedIds = new Set()
-  const usedTypes = new Set()
-  const shuffledGens = [...GROUP_GENERATORS].sort(() => rng() - 0.5)
-  for (const gen of shuffledGens) {
-    if (groups.length >= 4) break
-    if (usedTypes.has(gen.type)) continue
-    const available = allPlayers.filter(p => !usedIds.has(p.id))
-    const result = gen.generate(available, rng)
-    if (!result) continue
-    const ids = result.players.map(p => p.id)
-    if (ids.some(id => usedIds.has(id))) continue
-    ids.forEach(id => usedIds.add(id))
-    usedTypes.add(gen.type)
-    groups.push(result)
-  }
-  if (groups.length !== 4) return null
-  // Rechazar puzzles ambiguos: ningún jugador puede satisfacer la categoría de OTRO grupo
-  for (const g of groups) {
-    for (const other of groups) {
-      if (other === g) continue
-      if (other.players.some(p => groupMatches(p, g))) return null
-    }
-  }
-  return groups
+function surname(name) {
+  const w = (name || '').trim().split(' ')
+  if (w.length < 2) return name || ''
+  if (/^(júnior|junior|jr\.?)$/i.test(w[w.length - 1])) return w[0]
+  return w.slice(1).join(' ')
 }
 
 export default {
   name: 'Connections',
-  components: { GameShell, GamePreviewModal, GameSummaryPopup },
+  components: { GameShell, GamePreviewModal, GameSummaryPopup, ScoreBug },
   computed: {
     gameMetadata() { return getGameMetadata('connections') },
     selectedCount() { return this.selected.size },
-    canVerify() { return this.selected.size === 4 && !this.gameOver },
-    mistakesRemaining() { return this.maxMistakes - this.mistakes },
+    canVerify() { return this.selected.size === 4 && !this.gameOver && !this.busy },
   },
   data() {
     return {
@@ -146,9 +44,11 @@ export default {
       maxMistakes: 3,
       gameOver: false,
       won: false,
-      shaking: false,
+      busy: false, // true mientras corre la animación de vuelo (bloquea clicks)
       almostGroup: null,
       almostTimer: null,
+      tileRefs: {},
+      solvedRows: {},
       // mode / challenge
       mode: 'normal',
       reviewMode: false,
@@ -215,20 +115,18 @@ export default {
     }
   },
   methods: {
+    surname,
     blurb() { return gameSummaryBlurb('connections') },
     backPath() { return this.mode === 'free' ? '/play/free' : '/play/points' },
-    async load() {
-      this.allPlayers = await getAllPlayersAsync()
+    load() {
+      // getAllPlayers() (roster completo): connections-sections.js aplica su
+      // propia regla fija de fame 1-2, sin depender de la dificultad global.
+      this.allPlayers = getAllPlayers()
       this.loading = false
-      if (this.mode !== 'challenge') this.setupBoard(Math.random)
+      if (this.mode !== 'challenge') this.setupBoard(false)
     },
-    setupBoard(rng) {
-      let attempts = 0
-      let result = null
-      while (!result && attempts < 40) {
-        result = generateGroups(this.allPlayers, rng)
-        attempts++
-      }
+    setupBoard(daily) {
+      const result = daily ? generateDailyBoard(this.allPlayers) : generateRandomBoard(this.allPlayers)
       if (!result) { this.gameOver = true; return }
       this.groups = result
       this.solvedGroups = []
@@ -236,14 +134,18 @@ export default {
       this.mistakes = 0
       this.gameOver = false
       this.won = false
+      this.busy = false
       this.xpEarned = 0
       this.score = 0
       this.corrects = 0
+      this.tileRefs = {}
+      this.solvedRows = {}
       const all = result.flatMap(g => g.players)
-      this.remainingPlayers = [...all].sort(() => rng() - 0.5)
+      this.remainingPlayers = [...all].sort(() => Math.random() - 0.5)
     },
+    setTileRef(id, el) { if (el) this.tileRefs[id] = el },
     toggleSelect(player) {
-      if (this.gameOver) return
+      if (this.gameOver || this.busy) return
       const next = new Set(this.selected)
       if (next.has(player.id)) next.delete(player.id)
       else if (next.size < 4) next.add(player.id)
@@ -251,36 +153,25 @@ export default {
     },
     isSelected(player) { return this.selected.has(player.id) },
     clearSelection() { this.selected = new Set() },
-    verify() {
-      if (this.selected.size !== 4 || this.gameOver) return
+
+    async verify() {
+      if (this.selected.size !== 4 || this.gameOver || this.busy) return
       const selIds = [...this.selected]
       const match = this.groups.find(g => {
         const gIds = new Set(g.players.map(p => p.id))
         return selIds.every(id => gIds.has(id)) && gIds.size === 4
       })
+
       if (match) {
-        playCorrectSound()
-        celebrateCorrect()
-        const color = GROUP_COLORS[this.solvedGroups.length] || GROUP_COLORS[0]
-        this.solvedGroups.push({ ...match, color })
-        this.remainingPlayers = this.remainingPlayers.filter(p => !this.selected.has(p.id))
-        this.selected = new Set()
-        this.corrects++
-        if (this.allowXp) this.xpEarned += (this.difficultyConfig?.xpPerGroup || 50)
-        this.score += 50
-        if (this.solvedGroups.length === 4) {
-          this.won = true
-          this.gameOver = true
-          if (this.allowXp) this.xpEarned += (this.difficultyConfig?.xpCompletion || 150)
-          setTimeout(() => celebrateGameWin(), 200)
-          if (this.mode === 'challenge') this.finishChallenge('win')
-        }
+        this.busy = true
+        await this.solveGroup(match)
+        this.busy = false
       } else {
         playIncorrectSound()
         this.mistakes++
-        this.shaking = true
-        setTimeout(() => { this.shaking = false }, 500)
-        // Check for "almost" — 3 of 4 correct in any group
+        const tiles = selIds.map(id => this.tileRefs[id]).filter(Boolean)
+        tiles.forEach(t => { t.classList.remove('shake'); void t.offsetWidth; t.classList.add('shake') })
+
         if (this.almostTimer) clearTimeout(this.almostTimer)
         this.almostGroup = null
         const selSet = new Set(selIds)
@@ -290,8 +181,9 @@ export default {
           if (overlap === 3) { this.almostGroup = g.label; break }
         }
         if (this.almostGroup) {
-          this.almostTimer = setTimeout(() => { this.almostGroup = null; this.almostTimer = null }, 2000)
+          this.almostTimer = setTimeout(() => { this.almostGroup = null; this.almostTimer = null }, 1800)
         }
+
         if (this.mistakes >= this.maxMistakes) {
           this.gameOver = true
           this.won = false
@@ -299,16 +191,89 @@ export default {
           setTimeout(() => announceGameLoss(), 200)
           if (this.mode === 'challenge') this.finishChallenge('loss')
         } else {
-          this.selected = new Set()
+          setTimeout(() => { this.selected = new Set() }, 350)
         }
       }
     },
+
+    // Vuela las 4 figuritas (60ms de diferencia) a su fila, después escribe el
+    // nombre del grupo letra por letra y tira chispas (moodboard 09, sec. 03).
+    async solveGroup(match) {
+      const selIds = [...this.selected]
+      const idx = this.solvedGroups.length
+      const color = GROUP_COLORS[idx] || GROUP_COLORS[0]
+      const textColor = GROUP_TEXT[idx] || GROUP_TEXT[0]
+      const tiles = selIds.map(id => this.tileRefs[id]).filter(Boolean)
+      const stage = this.$refs.stage
+
+      this.solvedGroups.push({ ...match, color, textColor, revealedLabel: '', pending: true })
+      this.selected = new Set()
+      await this.$nextTick()
+
+      const rowEl = this.$refs.solvedRows?.[this.solvedGroups.length - 1]
+      if (stage && rowEl && tiles.length === 4) {
+        const stageRect = stage.getBoundingClientRect()
+        const targetRect = rowEl.getBoundingClientRect()
+        await Promise.all(tiles.map((el, j) => new Promise((resolve) => {
+          const r = el.getBoundingClientRect()
+          const clone = el.cloneNode(true)
+          clone.style.cssText = `position:absolute;left:${r.left - stageRect.left}px;top:${r.top - stageRect.top}px;width:${r.width}px;height:${r.height}px;z-index:30;margin:0;pointer-events:none;`
+          stage.appendChild(clone)
+          el.style.visibility = 'hidden'
+          const dx = (targetRect.left - r.left) + (j - 1.5) * 24
+          const dy = targetRect.top - r.top
+          if (fx.reducedMotion) { clone.remove(); resolve(); return }
+          const anim = clone.animate([
+            { transform: 'translate(0,0) scale(1)', opacity: 1 },
+            { transform: `translate(${dx}px, ${dy}px) scale(.35)`, opacity: 0.9 },
+          ], { duration: 520, delay: j * 60, easing: 'cubic-bezier(.5,0,.3,1)', fill: 'forwards' })
+          anim.onfinish = () => { clone.remove(); resolve() }
+        })))
+      }
+
+      playCorrectSound()
+      celebrateCorrect()
+      this.remainingPlayers = this.remainingPlayers.filter(p => !selIds.includes(p.id))
+      const solved = this.solvedGroups[this.solvedGroups.length - 1]
+      solved.pending = false
+      this.corrects++
+      let gained = 0
+      if (this.allowXp) { gained = this.difficultyConfig?.xpPerGroup || 50; this.xpEarned += gained }
+      this.score += 50
+
+      await this.$nextTick()
+      const finalRowEl = this.$refs.solvedRows?.[this.solvedGroups.length - 1]
+      if (finalRowEl) {
+        const c = fx.center(finalRowEl)
+        fx.sparks(c.x, c.y, 16, [color, '#fff'], 80)
+        if (gained > 0 && this.$refs.bug) {
+          fx.flyTo({ from: finalRowEl, to: this.$refs.bug.xpEl(), html: `+${gained} XP`, className: 'gfx-xp', duration: 520 })
+            .then(() => this.$refs.bug.bumpXp())
+        }
+      }
+      // Nombre del grupo, letra por letra.
+      const label = match.label
+      for (let i = 0; i < label.length; i++) {
+        solved.revealedLabel = label.slice(0, i + 1)
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((r) => setTimeout(r, fx.reducedMotion ? 0 : 30))
+      }
+
+      if (this.solvedGroups.length === 4) {
+        this.won = true
+        this.gameOver = true
+        if (this.allowXp) this.xpEarned += (this.difficultyConfig?.xpCompletion || 150)
+        setTimeout(() => celebrateGameWin(), 200)
+        if (this.mode === 'challenge') this.finishChallenge('win')
+      }
+    },
+
     revealRemaining() {
       const solved = new Set(this.solvedGroups.flatMap(g => g.players.map(p => p.id)))
       for (const g of this.groups) {
         if (g.players.every(p => solved.has(p.id))) continue
-        const color = GROUP_COLORS[this.solvedGroups.length] || GROUP_COLORS[0]
-        this.solvedGroups.push({ ...g, color })
+        const idx = this.solvedGroups.length
+        this.solvedGroups.push({ ...g, color: GROUP_COLORS[idx] || GROUP_COLORS[0], textColor: GROUP_TEXT[idx] || GROUP_TEXT[0], revealedLabel: g.label, pending: false })
       }
       this.remainingPlayers = []
     },
@@ -325,10 +290,9 @@ export default {
           this.xpBeforeTotal = snap.xpTotal
           this.beforePercent = snap.percent
         } catch {}
-        const rng = createDailyRng('connections')
-        this.sessionId = await startChallengeSession('connections', null)
+        this.sessionId = await startChallengeSession('connections', null, { difficulty: this.selectedDifficulty })
         this.overlayOpen = false
-        this.setupBoard(rng)
+        this.setupBoard(true)
       } catch (e) { console.error('[Connections start]', e) }
     },
     async finishChallenge(result) {
@@ -359,18 +323,6 @@ export default {
 
 <template>
   <GameShell title="Conexiones" :backPath="backPath()">
-    <template #stat>
-      <div class="inline-flex items-center gap-2.5 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
-        <span class="inline-flex items-center gap-1.5">
-          <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Grupos</span>
-          <span class="font-display text-white font-bold text-base leading-none">{{ solvedGroups.length }}/4</span>
-        </span>
-        <span class="w-px h-4 bg-white/12"></span>
-        <span class="inline-flex items-center gap-1" title="Errores restantes">
-          <span v-for="i in maxMistakes" :key="'hm-'+i" class="h-2 w-2 rounded-full transition-colors" :class="i <= mistakesRemaining ? 'bg-rose-500' : 'bg-white/15'"></span>
-        </span>
-      </div>
-    </template>
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="Conexiones"
@@ -382,25 +334,28 @@ export default {
       @close="overlayOpen = false"
       @start="startChallenge"
     />
-    <div class="space-y-3 w-full max-w-xl mx-auto">
+    <div class="w-full max-w-xl mx-auto self-start mt-3">
 
       <div v-if="loading" class="text-center text-slate-300 py-12">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-300"></div>
         <p class="mt-3">Cargando jugadores...</p>
       </div>
 
-      <div v-else class="space-y-3">
+      <div v-else ref="stage" class="relative space-y-3">
+        <ScoreBug ref="bug" :timed="false" cardsMode :corrects="solvedGroups.length" :target="4" :mistakes="mistakes" :maxMistakes="maxMistakes" :xp="xpEarned" />
+
         <!-- Solved groups -->
         <TransitionGroup name="solved" tag="div" class="space-y-2">
-          <div v-for="(sg, i) in solvedGroups" :key="'sg-' + i"
-               :class="[sg.color.bg, sg.color.border, 'rounded-xl border px-4 py-3 solved-row']">
-            <div :class="[sg.color.text, 'text-sm font-bold uppercase tracking-wide mb-1']">{{ sg.label }}</div>
+          <div v-for="(sg, i) in solvedGroups" :key="'sg-' + i" :ref="el => { if (el) solvedRows[i] = el }"
+               class="rounded-xl border px-4 py-3 solved-row" :class="{ 'opacity-0': sg.pending }"
+               :style="{ background: sg.color, borderColor: sg.color, color: sg.textColor }">
+            <div class="text-sm font-bold uppercase tracking-wide mb-1 min-h-[1.25em]" :style="{ color: sg.textColor }">{{ sg.revealedLabel }}</div>
             <div class="flex items-center gap-3">
               <div v-for="p in sg.players" :key="p.id" class="flex items-center gap-1.5">
                 <img :src="p.image" :alt="p.name"
                      class="w-8 h-8 rounded-full object-cover ring-1 ring-black/20 bg-slate-700 flex-shrink-0"
                      @error="e => e.target.style.display = 'none'" />
-                <span :class="[sg.color.text, 'text-xs font-medium hidden sm:inline truncate max-w-[80px]']">{{ p.name }}</span>
+                <span class="text-xs font-medium hidden sm:inline truncate max-w-[80px]" :style="{ color: sg.textColor }">{{ surname(p.name) }}</span>
               </div>
             </div>
           </div>
@@ -408,21 +363,18 @@ export default {
 
         <!-- 4x4 grid -->
         <div v-if="remainingPlayers.length" class="grid grid-cols-4 gap-1.5">
-          <button v-for="p in remainingPlayers" :key="p.id"
+          <button v-for="p in remainingPlayers" :key="p.id" :ref="el => setTileRef(p.id, el)"
                   :class="[
-                    'group relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-150',
-                    isSelected(p)
-                      ? 'border-amber-300 ring-2 ring-amber-300/50 scale-[1.04] z-10'
-                      : 'border-white/10 hover:border-white/25',
-                    shaking && isSelected(p) ? 'shake' : '',
-                    gameOver ? 'pointer-events-none opacity-60' : 'cursor-pointer active:scale-95'
+                    'cx-tile group relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-150',
+                    isSelected(p) ? 'cx-tile-sel' : 'border-white/10 hover:border-white/25',
+                    (gameOver || busy) ? 'pointer-events-none opacity-60' : 'cursor-pointer active:scale-95'
                   ]"
                   @click="toggleSelect(p)">
             <img :src="p.image" :alt="p.name"
                  class="w-full h-full object-cover bg-slate-700"
                  @error="e => e.target.src = ''" />
             <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-1.5 pt-5 pb-1 pointer-events-none">
-              <span class="text-white text-[10px] font-semibold leading-tight truncate block text-center">{{ p.name }}</span>
+              <span class="text-white text-[10px] font-semibold leading-tight truncate block text-center">{{ surname(p.name) }}</span>
             </div>
             <div v-if="isSelected(p)"
                  class="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-amber-300 flex items-center justify-center">
@@ -433,7 +385,7 @@ export default {
           </button>
         </div>
 
-        <!-- Almost feedback toast -->
+        <!-- Almost feedback toast: no tapa la grilla, va debajo -->
         <Transition name="almost-toast">
           <div v-if="almostGroup"
                class="text-center rounded-lg bg-amber-500/20 border border-amber-400/30 px-4 py-2">
@@ -445,7 +397,7 @@ export default {
         <div v-if="!gameOver" class="flex flex-col items-center gap-3">
           <div class="text-sm text-slate-400">{{ selectedCount }}/4 seleccionados</div>
           <div class="flex items-center gap-2">
-            <button @click="clearSelection" :disabled="!selectedCount"
+            <button @click="clearSelection" :disabled="!selectedCount || busy"
                     class="rounded-full border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/5 transition disabled:opacity-40">
               Deseleccionar
             </button>
@@ -461,7 +413,7 @@ export default {
           <div v-if="won" class="text-emerald-300 text-lg font-bold">Encontraste los 4 grupos</div>
           <div v-else class="text-red-300 text-lg font-bold">Se acabaron los intentos</div>
           <div class="text-slate-400 text-sm mt-1">{{ corrects }}/4 grupos encontrados &middot; Puntaje: {{ score }}</div>
-          <button v-if="mode !== 'challenge'" @click="setupBoard(Math.random)"
+          <button v-if="mode !== 'challenge'" @click="setupBoard(false)"
                   class="mt-3 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 px-5 py-2 text-sm text-slate-200 transition">
             Jugar de nuevo
           </button>
@@ -505,6 +457,9 @@ export default {
   80% { transform: translateX(4px); }
 }
 
+.cx-tile { transition: transform 200ms cubic-bezier(.34,1.56,.64,1), box-shadow 200ms, border-color 150ms; }
+.cx-tile-sel { border-color: var(--play-400, #fcd34d); transform: translateY(-4px) scale(1.04); box-shadow: 0 0 0 3px var(--play-400, #fcd34d), 0 10px 20px rgba(0,0,0,.5); z-index: 10; }
+
 .solved-enter-active {
   transition: all 350ms ease;
 }
@@ -521,12 +476,7 @@ export default {
 }
 
 .solved-row {
-  animation: solvedPop 350ms ease;
-}
-@keyframes solvedPop {
-  0% { opacity: 0; transform: translateY(12px) scale(0.96); }
-  60% { transform: translateY(-2px) scale(1.01); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  transition: opacity 200ms ease;
 }
 
 .almost-toast-enter-active { transition: all 250ms ease-out; }

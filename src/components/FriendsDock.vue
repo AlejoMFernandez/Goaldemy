@@ -28,6 +28,7 @@ import {
 import { formatTimeOnly, formatDayLabel } from '../services/formatters'
 import { supabase } from '../services/supabase'
 import { pushErrorToast, pushSuccessToast, pushDmToast } from '../stores/notifications'
+import { normalizeSearch } from '../services/text'
 import { playNotifySound } from '../services/sounds'
 import { setSidebarUser, sidebarState } from '../stores/sidebar'
 import UserAvatar from './common/UserAvatar.vue'
@@ -86,6 +87,10 @@ export default {
     }
   },
   computed: {
+    // Rutas inmersivas (juegos): ocupan 100dvh a propósito, sin overlays — el
+    // cluster flotante (desafíos/bug/amigos) tapa las opciones en pantallas
+    // chicas, así que no se muestra ahí.
+    hideMobileDock() { return !!this.$route?.meta?.immersive },
     openChatRequest() { return sidebarState.openChatRequest },
     sidebarTopPx() { return (this.headerH + this.sidebarGapPx) + 'px' },
     sidebarBottomPx() { return this.sidebarGapPx + 'px' },
@@ -115,9 +120,9 @@ export default {
       })
     },
     filteredRows() {
-      const q = (this.query || '').trim().toLowerCase()
+      const q = normalizeSearch(this.query)
       const rows = this.baseRows
-      return q ? rows.filter(r => r.name.toLowerCase().includes(q)) : rows
+      return q ? rows.filter(r => normalizeSearch(r.name).includes(q)) : rows
     },
     sortedRows() {
       const rank = { playing: 0, online: 1, offline: 2 }
@@ -473,7 +478,7 @@ export default {
          a ocupar TODA la pantalla (ver más abajo), así que este cluster flotando
          arriba tapa el compose bar del chat. El panel ya trae su propio cierre
          (X en la lista, Volver en el chat) — igual que cualquier chat full-screen. -->
-    <div v-if="!mobileOpen" class="lg:hidden fixed bottom-5 right-4 z-40 flex flex-col items-center gap-2.5">
+    <div v-if="!mobileOpen && !hideMobileDock" class="lg:hidden fixed bottom-5 right-4 z-40 flex flex-col items-center gap-2.5">
       <button @click="challengesOpen = true" title="Desafíos" class="h-11 w-11 grid place-items-center rounded-full border border-white/15 bg-slate-800/90 text-amber-300 shadow-xl hover:brightness-110 transition active:scale-95">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
       </button>

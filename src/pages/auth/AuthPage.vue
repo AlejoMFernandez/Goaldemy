@@ -8,7 +8,7 @@ import { login, register, continueWithGoogle } from '../../services/auth';
 import { flagUrl } from '../../services/countries';
 import countriesMap from '../../codeCOUNTRYS.json';
 import { getAllPlayers, getAllTeams } from '../../services/players';
-import { pushErrorToast } from '../../stores/notifications';
+import { pushErrorToast, pushSuccessToast } from '../../stores/notifications';
 
 export default {
   name: 'AuthPage',
@@ -56,6 +56,26 @@ export default {
   },
   created() {
     this.mode = this.$route.path === '/register' ? 'register' : 'login'
+  },
+  mounted() {
+    window.addEventListener('pageshow', this.onPageShow)
+    // Volviste del link de confirmación de email (?confirmed=1): avisar acá
+    // y a cualquier otra pestaña que haya quedado esperando en /verify-email.
+    if (this.$route.query.confirmed === '1') {
+      pushSuccessToast('¡Cuenta confirmada! Ya podés entrar')
+      try {
+        if ('BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('fulvo-auth')
+          bc.postMessage({ type: 'email-confirmed' })
+          bc.close()
+        }
+      } catch {}
+      const { confirmed, ...rest } = this.$route.query
+      this.$router.replace({ path: this.$route.path, query: rest })
+    }
+  },
+  beforeUnmount() {
+    window.removeEventListener('pageshow', this.onPageShow)
   },
   computed: {
     // Feedback visual en tiempo real del campo "Confirmar contraseña":
@@ -200,6 +220,17 @@ export default {
     openLegal(type) {
       this.legalModalType = type
       this.legalModalOpen = true
+    },
+    // Si volvés con el botón Atrás del navegador después de tocar "Google",
+    // Chrome restaura esta página desde la bfcache con `loading` todavía en
+    // true (no vuelve a montar el componente) → el form queda inutilizable
+    // hasta refrescar con F5. `pageshow` con `persisted:true` detecta ese
+    // caso y libera el estado trabado.
+    onPageShow(e) {
+      if (e.persisted) {
+        this.loading = false
+        this.error = ''
+      }
     }
   }
 }

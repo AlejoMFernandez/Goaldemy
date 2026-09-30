@@ -1,7 +1,7 @@
 // Generic scoring helpers to standardize across games
 export function initScoring(pointsPerCorrect = 10) {
   // wrongStreak/maxWrongStreak habilitan logros que dependen de errores
-  // (perfectionist = 0 errores, comeback_king = 3 errores seguidos y ganar).
+  // (perfectionist = 0 errores).
   return { score: 0, attempts: 0, corrects: 0, pointsPerCorrect, wrongStreak: 0, maxWrongStreak: 0 }
 }
 

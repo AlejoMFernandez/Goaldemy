@@ -218,16 +218,50 @@ export function computeProgressPercentSync(levelInfo) {
   return Math.max(0, Math.min(100, Math.round((earned / range) * 100)))
 }
 
+/**
+ * Progreso dentro del nivel, a prueba de las distintas formas en que el RPC
+ * puede devolver el XP (total acumulado, XP dentro del nivel, o lo que falta).
+ * Siempre usa los mismos umbrales que definen el nivel → el % y "lo que falta"
+ * nunca se contradicen (antes la previa decía que faltaban 4500 XP y con 360 subía).
+ */
+export function resolveLevelProgress(info) {
+  if (!info) return { percent: 0, xpToNext: null, range: 0 }
+  const T = getThresholds()
+  const lvl = Number(info.level) || 1
+  const cur = T.find(t => Number(t.level) === lvl)
+  const nxt = T.find(t => Number(t.level) === lvl + 1)
+  if (!cur || !nxt) return { percent: 100, xpToNext: null, range: 0 }
+  const curXp = Number(cur.xp_required) || 0
+  const range = Math.max(1, (Number(nxt.xp_required) || 0) - curXp)
+  const pack = (left) => {
+    const l = Math.max(0, Math.min(range, Math.round(left)))
+    return { percent: Math.max(0, Math.min(100, Math.round((1 - l / range) * 100))), xpToNext: l, range }
+  }
+  // 1) Lo que falta, si vino y es coherente con el rango del nivel
+  const rem = Number(info.xp_to_next ?? NaN)
+  if (Number.isFinite(rem) && rem >= 0 && rem <= range) return pack(rem)
+  // 2) XP total acumulado dentro del rango del nivel
+  const total = Number(info.xp_total ?? info.xp ?? NaN)
+  if (Number.isFinite(total) && total >= curXp && total <= curXp + range) return pack(curXp + range - total)
+  // 3) XP dentro del nivel (algunas versiones del RPC devuelven eso)
+  if (Number.isFinite(total) && total >= 0 && total < range) return pack(range - total)
+  // 4) Umbral acumulado del próximo nivel
+  const nextAbs = Number(info.xp_to_next_level ?? info.next_level_xp ?? NaN)
+  if (Number.isFinite(nextAbs) && Number.isFinite(total) && nextAbs >= total && nextAbs - total <= range) return pack(nextAbs - total)
+  return { percent: computeProgressPercentSync(info), xpToNext: null, range }
+}
+
 export async function captureLevelSnapshot() {
-  const { data, error } = await getUserLevel(null)
+  const { data } = await getUserLevel(null)
   const info = Array.isArray(data) ? data[0] : data
   await fetchLevelThresholds()
-  const pct = computeProgressPercentSync(info)
+  const pr = resolveLevelProgress(info)
   return {
     level: info?.level ?? null,
     xpTotal: info?.xp_total ?? 0,
-    percent: pct,
-    xpToNext: info?.xp_to_next ?? null,
+    percent: pr.percent,
+    xpToNext: pr.xpToNext,
+    range: pr.range,   // XP que tiene el nivel entero (para estimar la barra)
   }
 }
 

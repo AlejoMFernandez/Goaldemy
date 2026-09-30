@@ -9,18 +9,16 @@
  * 2. El juego llama a awardXpForCorrect()
  * 3. Se otorga XP usando el RPC award_xp (seguro, server-side)
  * 4. Se actualiza la racha de inicio de sesión diario
- * 5. Se verifica si desbloquear logros automáticos (first_correct, ten_correct)
- * 
+ *
  * CACHE DE GAME IDs:
  * - Los slugs de juegos (ej: 'guess-player') se convierten a UUIDs
  * - Se cachean en memoria para evitar consultas repetitivas a la BD
  * - Map<slug, uuid> persiste durante la sesión del navegador
- * 
- * LOGROS AUTOMÁTICOS:
- * - first_correct: Se desbloquea en la primera respuesta correcta de la sesión (attemptIndex === 0)
- * - ten_correct: Se desbloquea al llegar a 10 respuestas correctas en una sesión
+ *
+ * NOTA: first_correct y ten_correct quedaron `active = false`
+ * (supabase/achievements-curation-2.sql) y ya no se evalúan acá.
  */
-import { awardXp, unlockAchievementWithToast } from './xp'
+import { awardXp } from './xp'
 import { supabase } from './supabase'
 import { updateDailyLoginStreak } from './daily-streak'
 
@@ -44,8 +42,8 @@ async function getGameIdBySlug(slug) {
  * @param {Object} opts
  * @param {string} opts.gameCode - Código corto del juego (ej: 'guess-player', 'nationality')
  * @param {number} [opts.amount=10] - XP base por respuesta correcta (puede variar según juego)
- * @param {number} [opts.attemptIndex=0] - Índice del intento (base 0) para desbloquear 'first_correct'
- * @param {number} [opts.corrects=1] - Total de respuestas correctas en esta sesión para 'ten_correct'
+ * @param {number} [opts.attemptIndex=0] - Índice del intento (base 0, no usado actualmente)
+ * @param {number} [opts.corrects=1] - Total de respuestas correctas en esta sesión
  * @param {number} [opts.streak=0] - Racha actual (opcional, para metadata)
  * @param {string} [opts.difficulty='normal'] - Dificultad seleccionada (easy, normal, hard)
  */
@@ -59,16 +57,8 @@ export async function awardXpForCorrect({ gameCode, amount = 10, attemptIndex = 
   try {
     // Actualizar racha de inicio de sesión diario (solo la primera vez del día)
     await updateDailyLoginStreak()
-    
-    // LOGRO: Primera respuesta correcta de la sesión
-    if (attemptIndex === 0) {
-      await unlockAchievementWithToast('first_correct', { game: gameCode })
-    }
-    
-    // LOGRO: 10 respuestas correctas en una sesión
-    if (corrects === 10) {
-      await unlockAchievementWithToast('ten_correct', { game: gameCode })
-    }
+    // first_correct y ten_correct quedaron `active = false` (saturaban la
+    // primera partida de cuentas nuevas): ya no se evalúan acá.
   } catch {}
 }
 
@@ -79,8 +69,5 @@ export async function awardXpBatch({ gameCode, totalXp, corrects = 0 }) {
     await awardXp({ amount: totalXp, reason: 'correct_answer', gameId, sessionId: null, meta: { game: gameCode, corrects, batch: true } })
   } catch {}
   try { await updateDailyLoginStreak() } catch {}
-  try {
-    if (corrects >= 1) await unlockAchievementWithToast('first_correct', { game: gameCode })
-    if (corrects >= 10) await unlockAchievementWithToast('ten_correct', { game: gameCode })
-  } catch {}
+  // first_correct y ten_correct quedaron `active = false`: ya no se evalúan acá.
 }

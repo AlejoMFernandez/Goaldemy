@@ -5,54 +5,45 @@
  * Este archivo es el "cerebro" que analiza las acciones del usuario y decide qué logros otorgar.
  * 
  * TIPOS DE LOGROS:
- * 
- * 1. BASADOS EN TIEMPO:
- *    - night_owl: Jugar entre 00:00-08:00 (madrugada + madrugador, fusionados)
- * 
- * 2. BASADOS EN RENDIMIENTO:
+ *
+ * 1. BASADOS EN RENDIMIENTO:
  *    - perfect_10: 10/10 respuestas correctas
  *    - speed_demon: Completar en menos de X segundos
  *    - lucky_first: 10+ veces acertar al primer intento
- * 
- * 3. BASADOS EN RACHAS:
- *    - streak_3, streak_5, streak_10, streak_15: Días consecutivos ganando
+ *
+ * 2. BASADOS EN RACHAS:
+ *    - streak_5, streak_10, streak_15: Días consecutivos ganando
  *    - daily_super_5x3: 5+ días en 3 juegos simultáneamente
- * 
- * 4. BASADOS EN CANTIDAD:
+ *
+ * 3. BASADOS EN CANTIDAD:
  *    - games_played_10, games_played_50, games_played_100: Juegos jugados
  *    - total_wins_10, total_wins_50, total_wins_100: Victorias totales
- * 
- * 5. ESPECIALES:
- *    - comeback_king: Ganar después de perder 3 veces seguidas
+ *
+ * 4. ESPECIALES:
+ *    - comeback_king ("Revancha"): ganar hoy un juego que se había perdido ayer
  *    - perfectionist: Ganar todos los juegos de ordenamiento con 5/5
- * 
+ *
  * LLAMADAS:
- * - checkTimeBasedAchievements(): Al iniciar un juego
  * - checkAllAchievementsAfterChallenge(): Al finalizar un desafío diario
  * - checkLuckyFirstAchievement(): Cuando se acierta al primer intento
+ *
+ * 5. LOGROS NUEVOS (achievements-new-1): 23 logros de tiempo/ayudas, por juego, colección,
+ *    varios días, sostener el nivel y hazañas repetidas. Las reglas viven en
+ *    achievement-rules.js (puro); checkNewAchievements() lee las sesiones de Supabase
+ *    y desbloquea. checkCollectorAchievement() (Coleccionista) sale del sobre del día.
+ *
+ * NOTA: first_correct, streak_3, ten_correct y night_owl quedaron `active = false`
+ * (supabase/achievements-curation-2.sql) por saturar la primera partida de las
+ * cuentas nuevas. No se evalúan más desde acá; ver getAchievementsCatalog().
  */
 import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { unlockAchievementWithToast } from './xp'
 import { DAILY_GAMES } from './game-modes'
-
-/**
- * Verifica y desbloquea logros basados en la hora del día
- * Se debe llamar al iniciar una sesión de juego
- */
-export async function checkTimeBasedAchievements() {
-  try {
-    const now = new Date()
-    const hour = now.getHours()
-
-    // Night owl: 00:00 - 07:59 (madrugada + madrugador, fusionados en un solo logro)
-    if (hour >= 0 && hour < 8) {
-      await unlockAchievementWithToast('night_owl')
-    }
-  } catch (e) {
-    console.error('[time-achievements] Error:', e)
-  }
-}
+import { fetchGames, gameRouteForSlug } from './games'
+import { getAchievementsCatalog } from './achievements'
+import { achievementIcon } from './achievement-icons'
+import { evaluateNewAchievements, normalizeSessionRow, NEW_ACHIEVEMENT_CODES } from './achievement-rules'
 
 /**
  * Check first-attempt achievements
@@ -88,16 +79,47 @@ export async function checkLuckyFirstAchievement() {
 }
 
 /**
- * Check comeback king achievement
- * Call when user wins after 3+ consecutive errors
- * @param {boolean} won - whether user won the game
- * @param {number} errors - number of consecutive errors before winning
+ * Check comeback king ("Revancha") achievement.
+ * Call after a WIN today: unlocks if the last finished challenge session for
+ * this same game yesterday ended in a loss.
+ * @param {string} slug - game slug just won
+ * @param {boolean} won - whether user won today's game
  */
-export async function checkComebackKingAchievement(won, errors) {
-  if (!won || errors < 3) return
-  
+export async function checkComebackKingAchievement(slug, won) {
+  if (!won || !slug) return
+
+  const { id: userId } = getAuthUser() || {}
+  if (!userId) return
+
   try {
-    await unlockAchievementWithToast('comeback_king')
+    const { data: game } = await supabase
+      .from('games')
+      .select('id')
+      .eq('slug', slug)
+      .single()
+    if (!game) return
+
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const yesterdayStart = new Date(todayStart)
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1)
+
+    const { data, error } = await supabase
+      .from('game_sessions')
+      .select('ended_at, metadata')
+      .eq('user_id', userId)
+      .eq('game_id', game.id)
+      .gte('started_at', yesterdayStart.toISOString())
+      .lt('started_at', todayStart.toISOString())
+      .order('started_at', { ascending: false })
+      .limit(5)
+
+    if (error) return
+
+    const lastYesterday = (data || []).find(r => !!r.ended_at && (r?.metadata || {}).mode === 'challenge')
+    if (lastYesterday && (lastYesterday.metadata || {}).result === 'loss') {
+      await unlockAchievementWithToast('comeback_king')
+    }
   } catch {}
 }
 
@@ -378,11 +400,8 @@ export async function checkAllAchievementsAfterChallenge(slug, won, metadata = {
       await checkPerfectionistAchievement(won, 0)
     }
 
-    // Check comeback if had 3+ consecutive errors (maxWrongStreak; alias consecutiveErrors)
-    const wrongStreak = Number(metadata.maxWrongStreak ?? metadata.consecutiveErrors ?? 0)
-    if (wrongStreak >= 3) {
-      await checkComebackKingAchievement(won, wrongStreak)
-    }
+    // Comeback ("Revancha"): ganaste hoy un juego que habías perdido ayer
+    await checkComebackKingAchievement(slug, won)
 
     // Check lucky first if first attempt correct
     if (metadata.firstTryCorrect) {
@@ -391,4 +410,129 @@ export async function checkAllAchievementsAfterChallenge(slug, won, metadata = {
   } catch (e) {
     console.error('[check-all-achievements] Error:', e)
   }
+}
+
+
+// ─── Logros nuevos (achievements-new-1) ──────────────────────────────────
+
+// Solo las columnas que las reglas necesitan (la metadata completa trae xpView,
+// finalOrder, items… y para un veterano son miles de filas).
+const SESSION_SELECT = [
+  'id', 'game_id', 'started_at', 'ended_at',
+  'result:metadata->result',
+  'difficulty:metadata->difficulty',
+  'corrects:metadata->corrects',
+  'max_streak:metadata->maxStreak',
+  'guess_count:metadata->guessCount',
+  'base_seconds:metadata->seconds',
+  'seconds_used:metadata->secondsUsed',
+  'seconds_left:metadata->secondsLeft',
+  'basta:metadata->basta',
+  'powerups:metadata->powerups',
+  'shield_saves:metadata->shieldSaves',
+  'tb_left:metadata->timeBonus->secondsLeft',
+].join(',')
+const SESSION_PAGE = 1000
+const SESSION_MAX_PAGES = 5 // 5000 partidas: de sobra para Enciclopedia (1000 correctas)
+
+async function fetchFinishedChallengeSessions(userId) {
+  const rows = []
+  for (let page = 0; page < SESSION_MAX_PAGES; page++) {
+    const { data, error } = await supabase
+      .from('game_sessions')
+      .select(SESSION_SELECT)
+      .eq('user_id', userId)
+      .eq('metadata->>mode', 'challenge')
+      .not('ended_at', 'is', null)
+      .order('started_at', { ascending: false })
+      .range(page * SESSION_PAGE, (page + 1) * SESSION_PAGE - 1)
+    if (error) throw error
+    rows.push(...(data || []))
+    if (!data || data.length < SESSION_PAGE) break
+  }
+  return rows
+}
+
+let _gamesCache = null
+let _gamesCacheAt = 0
+async function getGamesForAchievements() {
+  if (_gamesCache && Date.now() - _gamesCacheAt < 5 * 60 * 1000) return _gamesCache
+  const games = await fetchGames()
+  const slugById = {}
+  const active = new Set()
+  for (const g of games || []) {
+    if (g?.id && g?.slug) slugById[g.id] = g.slug
+    // Solo juegos reales (con ruta propia): descarta filas viejas de la tabla games.
+    if (g?.slug && gameRouteForSlug(g.slug) !== '/games') active.add(g.slug)
+  }
+  _gamesCache = { slugById, activeSlugs: [...active] }
+  _gamesCacheAt = Date.now()
+  return _gamesCache
+}
+
+/**
+ * Evalúa los 23 logros nuevos y desbloquea los que se cumplen.
+ * Todo se calcula desde game_sessions / user_daily_claims en Supabase (no desde el navegador).
+ * Las escenas grandes las limita la cola de AchievementUnlockOverlay (máx. 2 por tanda;
+ * el resto se agrupa) — acá desbloqueamos todos juntos, de mayor a menor rareza, para
+ * que lleguen en la misma tanda.
+ * @param {string|null} slug  juego que se acaba de terminar (null = sin partida, ej. sobre del día)
+ * @param {{packsOpened?: number}} [opts]
+ */
+export async function checkNewAchievements(slug = null, { packsOpened = null } = {}) {
+  const { id: userId } = getAuthUser() || {}
+  if (!userId) return []
+
+  try {
+    const catalog = await getAchievementsCatalog()
+    // Si el SQL todavía no se corrió, los códigos no están en el catálogo: no hacer nada.
+    if (!NEW_ACHIEVEMENT_CODES.some(c => catalog[c])) return []
+
+    let sessions = []
+    let activeSlugs = []
+    let currentId = null
+    if (slug) {
+      const { slugById, activeSlugs: act } = await getGamesForAchievements()
+      activeSlugs = act
+      const rows = await fetchFinishedChallengeSessions(userId)
+      sessions = rows.map(r => normalizeSessionRow(r, slugById))
+      // La sesión que acaba de terminar = la última de ese juego.
+      const last = sessions.filter(s => s.slug === slug).sort((a, b) => b.endedAt - a.endedAt)[0]
+      currentId = last?.id || null
+    }
+
+    const hits = evaluateNewAchievements({ sessions, activeSlugs, currentId, packsOpened })
+    if (!hits.length) return []
+
+    const { data: ownedRows } = await supabase
+      .from('user_achievements')
+      .select('achievements!inner(code)')
+      .eq('user_id', userId)
+    const owned = new Set((ownedRows || []).map(r => r?.achievements?.code).filter(Boolean))
+
+    const RANK = { common: 0, rare: 1, epic: 2, legendary: 3 }
+    const fresh = hits
+      .filter(h => catalog[h.code] && !owned.has(h.code))
+      .sort((a, b) => RANK[achievementIcon(b.code).rarity] - RANK[achievementIcon(a.code).rarity])
+    await Promise.all(fresh.map(h => unlockAchievementWithToast(h.code, h.meta)))
+    return fresh.map(h => h.code)
+  } catch (e) {
+    console.warn('[check-new-achievements]', e?.message || e)
+    return []
+  }
+}
+
+/** Coleccionista: 7 sobres del día abiertos (user_daily_claims kind='daily', 1 por día). */
+export async function checkCollectorAchievement() {
+  const { id: userId } = getAuthUser() || {}
+  if (!userId) return
+  try {
+    const { count, error } = await supabase
+      .from('user_daily_claims')
+      .select('day', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('kind', 'daily')
+    if (error) return
+    await checkNewAchievements(null, { packsOpened: count ?? 0 })
+  } catch {}
 }

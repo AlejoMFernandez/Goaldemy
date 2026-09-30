@@ -129,6 +129,7 @@
 import { ref, computed, onMounted } from 'vue';
 import AppLoader from '../common/AppLoader.vue';
 import { pushErrorToast } from '../../stores/notifications.js';
+import { normalizeSearch } from '../../services/text.js';
 
 export default {
     name: 'AdminTeamsManagement',
@@ -145,9 +146,9 @@ export default {
             if (!searchQuery.value.trim()) {
                 return teams.value;
             }
-            const query = searchQuery.value.toLowerCase();
-            return teams.value.filter(team => 
-                team.name.toLowerCase().includes(query)
+            const query = normalizeSearch(searchQuery.value);
+            return teams.value.filter(team =>
+                normalizeSearch(team.name).includes(query)
             );
         });
 

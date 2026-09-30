@@ -9,7 +9,6 @@ import { computed } from 'vue'
 import { notificationsState, clearProWelcome } from '../../stores/notifications'
 import { getAuthUser } from '../../services/auth'
 import { planStyle } from '../../services/plans-ui'
-import { triggerConfetti } from '../../services/confetti'
 import { soundManager } from '../../services/sounds'
 
 const pw = computed(() => notificationsState.proWelcome)
@@ -53,11 +52,6 @@ function close() {
 
 function onEnter() {
   try { soundManager.play('achievement') } catch {}
-  try {
-    triggerConfetti({ particleCount: 90, colors: isLegend.value
-      ? ['#fbbf24', '#f59e0b', '#fde047', '#fff7ed']
-      : ['#e879f9', '#d946ef', '#f0abfc', '#a855f7'] })
-  } catch {}
 }
 </script>
 

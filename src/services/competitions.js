@@ -25,12 +25,14 @@ export const COMPETITIONS = [
   // ── Selecciones nacionales ─────────────────────────────────────────────
   { id: 77,  slug: 'world-cup',   name: 'Copa del Mundo 2026', short: 'Mundial',     country: 'FIFA',     group: 'internacional', status: 'live', accent: 'amber',   bracket: true, tagline: 'USA · Canadá · México' },
   { id: 44,  slug: 'copa-america', name: 'Copa América',       short: 'Copa América', country: 'CONMEBOL', group: 'internacional', status: 'live', accent: 'emerald', bracket: true },
+  { id: 114, slug: 'amistosos-internacionales', name: 'Amistosos Internacionales', short: 'Amistosos', country: 'FIFA', group: 'internacional', status: 'live', accent: 'emerald', bracket: false, tagline: 'Fechas FIFA' },
 
   // ── Copas continentales de clubes ──────────────────────────────────────
   { id: 42,  slug: 'champions-league', name: 'Champions League',    short: 'Champions',    country: 'UEFA',     group: 'continental', status: 'live', accent: 'emerald', bracket: true, tagline: 'La élite de Europa' },
   { id: 73,  slug: 'europa-league',    name: 'Europa League',       short: 'Europa L.',    country: 'UEFA',     group: 'continental', status: 'live', accent: 'emerald', bracket: true },
   { id: 45,  slug: 'libertadores',     name: 'Copa Libertadores',   short: 'Libertadores', country: 'CONMEBOL', group: 'continental', status: 'live', accent: 'emerald', bracket: true, tagline: 'La gloria eterna' },
   { id: 299, slug: 'sudamericana',     name: 'Copa Sudamericana',   short: 'Sudamericana', country: 'CONMEBOL', group: 'continental', status: 'live', accent: 'emerald', bracket: true },
+  { id: 491, slug: 'recopa-sudamericana', name: 'Recopa Sudamericana', short: 'Recopa', country: 'CONMEBOL', group: 'continental', status: 'live', accent: 'emerald', bracket: false, tagline: 'Libertadores vs. Sudamericana' },
   { id: 78,  slug: 'mundial-clubes',   name: 'Mundial de Clubes',   short: 'M. Clubes',    country: 'FIFA',     group: 'continental', status: 'live', accent: 'emerald', bracket: true },
   { id: 525, slug: 'afc-champions',    name: 'AFC Champions League', short: 'AFC CL',      country: 'AFC',      group: 'continental', status: 'live', accent: 'emerald', bracket: true },
 
@@ -41,6 +43,7 @@ export const COMPETITIONS = [
   { id: 209, slug: 'dfb-pokal',       name: 'DFB-Pokal',       short: 'DFB-Pokal',   country: 'Alemania',   group: 'copas', status: 'live', accent: 'emerald', bracket: true },
   { id: 134, slug: 'coupe-de-france', name: 'Coupe de France', short: 'Coupe',       country: 'Francia',    group: 'copas', status: 'live', accent: 'emerald', bracket: true },
   { id: 133, slug: 'efl-cup',         name: 'EFL Cup',         short: 'EFL Cup',     country: 'Inglaterra', group: 'copas', status: 'live', accent: 'emerald', bracket: true },
+  { id: 9305, slug: 'copa-argentina', name: 'Copa Argentina',  short: 'Copa Arg.',   country: 'Argentina',  group: 'copas', status: 'live', accent: 'emerald', bracket: true },
 
   // ── Ligas ──────────────────────────────────────────────────────────────
   { id: 47,  slug: 'premier-league',    name: 'Premier League',   short: 'Premier',      country: 'Inglaterra',    group: 'ligas', status: 'live', accent: 'emerald', bracket: false },
@@ -72,6 +75,72 @@ export function competitionsByGroup() {
   return GROUPS
     .map(g => ({ ...g, items: COMPETITIONS.filter(c => c.group === g.key) }))
     .filter(g => g.items.length > 0)
+}
+
+/**
+ * Metadata visual para agrupar por país/confederación (bandera + etiqueta).
+ * El campo `country` de cada competición ya guarda o un país real ('España',
+ * 'Argentina', ...) o una confederación/organismo ('FIFA', 'UEFA', 'CONMEBOL',
+ * 'AFC') para las copas multi-país. Acá solo se define cómo mostrar cada key.
+ */
+const REGION_META = {
+  FIFA:     { label: 'Selecciones y FIFA',  flag: '🌐' },
+  UEFA:     { label: 'Europa · Clubes',     flag: '🇪🇺' },
+  CONMEBOL: { label: 'Sudamérica · Clubes', flag: '🌎' },
+  AFC:      { label: 'Asia · Clubes',       flag: '🌏' },
+}
+const CONFEDERATION_KEYS = Object.keys(REGION_META)
+
+// Windows/Chrome no dibuja banderas emoji de país (regional-indicator y las
+// secuencias con tag de Inglaterra/Escocia caen a texto plano tipo "DE"/"AR").
+// Para países reales usamos imágenes de flagcdn.com (código ISO 3166-1, con
+// 'gb-eng'/'gb-sct' para las naciones del Reino Unido). Las confederaciones
+// (FIFA/UEFA/CONMEBOL/AFC) no son un país, ahí sí sirve el emoji (🌐🌎🌏 se ven
+// bien en Windows porque no son banderas).
+export const FLAG_CDN = (code) => `https://flagcdn.com/40x30/${code}.png`
+
+const COUNTRY_FLAG_CODE = {
+  'Inglaterra':     'gb-eng',
+  'España':         'es',
+  'Italia':         'it',
+  'Alemania':       'de',
+  'Francia':        'fr',
+  'Argentina':      'ar',
+  'Países Bajos':   'nl',
+  'Portugal':       'pt',
+  'Turquía':        'tr',
+  'México':         'mx',
+  'Estados Unidos': 'us',
+  'Escocia':        'gb-sct',
+  'Bélgica':        'be',
+  'Brasil':         'br',
+}
+
+/**
+ * Competiciones agrupadas por país (ligas + copas nacionales del mismo país
+ * juntas), con las confederaciones/organismos multi-país (selecciones y copas
+ * continentales) primero. Pensado para el HUB: navegar "por país" en vez de
+ * por tipo de competición.
+ */
+export function competitionsByCountry() {
+  const map = new Map()
+  for (const c of COMPETITIONS) {
+    if (!map.has(c.country)) map.set(c.country, [])
+    map.get(c.country).push(c)
+  }
+  const countries = [...map.keys()]
+    .filter(k => !CONFEDERATION_KEYS.includes(k))
+    .sort((a, b) => map.get(b).length - map.get(a).length || a.localeCompare(b, 'es'))
+  const orderedKeys = [...CONFEDERATION_KEYS.filter(k => map.has(k)), ...countries]
+
+  return orderedKeys.map(key => ({
+    key,
+    label: REGION_META[key]?.label || key,
+    emoji: REGION_META[key]?.flag || null,
+    flagCode: COUNTRY_FLAG_CODE[key] || null,
+    isRegion: CONFEDERATION_KEYS.includes(key),
+    items: map.get(key),
+  }))
 }
 
 /** La competición destacada (primera 'live', fallback a la primera). */

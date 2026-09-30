@@ -1,0 +1,2009 @@
+{
+ "_about": "Nivel de fama por jugador (1 crack, 2 conocido, 3 del plantel). Revisado por Alejo el 2026-09-27. Clave = id de FotMob.",
+ "levels": {
+  "1": "crack",
+  "2": "conocido",
+  "3": "plantel"
+ },
+ "players": {
+  "268375": {
+   "name": "Emiliano Martínez",
+   "team": "Chelsea",
+   "fame": 1
+  },
+  "1117871": {
+   "name": "Teddy Sharman-Lowe",
+   "team": "Chelsea",
+   "fame": 3
+  },
+  "1319972": {
+   "name": "Mike Penders",
+   "team": "Chelsea",
+   "fame": 3
+  },
+  "1031220": {
+   "name": "Gabriel Słonina",
+   "team": "Chelsea",
+   "fame": 3
+  },
+  "917802": {
+   "name": "Wesley Fofana",
+   "team": "Chelsea",
+   "fame": 2
+  },
+  "950485": {
+   "name": "Maxence Lacroix",
+   "team": "Chelsea",
+   "fame": 2
+  },
+  "1096400": {
+   "name": "Levi Colwill",
+   "team": "Chelsea",
+   "fame": 2
+  },
+  "1413846": {
+   "name": "Jorrel Hato",
+   "team": "Chelsea",
+   "fame": 2
+  },
+  "807729": {
+   "name": "Reece James",
+   "team": "Chelsea",
+   "fame": 2
+  },
+  "1197250": {
+   "name": "Malo Gusto",
+   "team": "Chelsea",
+   "fame": 2
+  },
+  "988805": {
+   "name": "Pep Chavarría",
+   "team": "Chelsea",
+   "fame": 3
+  },
+  "1494947": {
+   "name": "Aaron Anselmino",
+   "team": "Chelsea",
+   "fame": 3
+  },
+  "1400216": {
+   "name": "Josh Acheampong",
+   "team": "Chelsea",
+   "fame": 3
+  },
+  "1473806": {
+   "name": "Marco Palestra",
+   "team": "Chelsea",
+   "fame": 3
+  },
+  "1272440": {
+   "name": "Valentín Barco",
+   "team": "Chelsea",
+   "fame": 2
+  },
+  "1096353": {
+   "name": "Cole Palmer",
+   "team": "Chelsea",
+   "fame": 1
+  },
+  "156008": {
+   "name": "Jordan Henderson",
+   "team": "Chelsea",
+   "fame": 3
+  },
+  "883080": {
+   "name": "Morgan Rogers",
+   "team": "Chelsea",
+   "fame": 2
+  },
+  "1137668": {
+   "name": "Moisés Caicedo",
+   "team": "Chelsea",
+   "fame": 1
+  },
+  "1190867": {
+   "name": "Roméo Lavia",
+   "team": "Chelsea",
+   "fame": 3
+  },
+  "1684584": {
+   "name": "Dastan Satpaev",
+   "team": "Chelsea",
+   "fame": 3
+  },
+  "843040": {
+   "name": "Pedro Neto",
+   "team": "Chelsea",
+   "fame": 2
+  },
+  "1021382": {
+   "name": "João Pedro",
+   "team": "Chelsea",
+   "fame": 2
+  },
+  "1113692": {
+   "name": "Jamie Gittens",
+   "team": "Chelsea",
+   "fame": 2
+  },
+  "113836": {
+   "name": "Danny Welbeck",
+   "team": "Chelsea",
+   "fame": 3
+  },
+  "1183148": {
+   "name": "Emanuel Emegha",
+   "team": "Chelsea",
+   "fame": 3
+  },
+  "1530314": {
+   "name": "Geovany Quenda",
+   "team": "Chelsea",
+   "fame": 3
+  },
+  "1580774": {
+   "name": "Estêvão",
+   "team": "Chelsea",
+   "fame": 2
+  },
+  "1341475": {
+   "name": "Antonín Kinský",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "72241": {
+   "name": "Martin Dúbravka",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "862993": {
+   "name": "Brandon Austin",
+   "team": "Tottenham Hotspur",
+   "fame": 3
+  },
+  "357880": {
+   "name": "Andrew Robertson",
+   "team": "Tottenham Hotspur",
+   "fame": 1
+  },
+  "683402": {
+   "name": "Tosin Adarabioyo",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "785411": {
+   "name": "Marcos Senesi",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "974618": {
+   "name": "Jan Paul van Hecke",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "1052898": {
+   "name": "Destiny Udogie",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "941573": {
+   "name": "Pedro Porro",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "276121": {
+   "name": "Ben Davies",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "1097466": {
+   "name": "Micky van de Ven",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "1173787": {
+   "name": "Xavi Simons",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "966027": {
+   "name": "Conor Gallagher",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "493165": {
+   "name": "James Maddison",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "1323305": {
+   "name": "Archie Gray",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "1386775": {
+   "name": "Lucas Bergvall",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "867414": {
+   "name": "Sandro Tonali",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "1356312": {
+   "name": "Mateus Fernandes",
+   "team": "Tottenham Hotspur",
+   "fame": 3
+  },
+  "935379": {
+   "name": "Dejan Kulusevski",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "620618": {
+   "name": "Rodrigo Bentancur",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "654908": {
+   "name": "Richarlison",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "1288111": {
+   "name": "Mathys Tel",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "1174337": {
+   "name": "Sávio",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "591734": {
+   "name": "Dominic Solanke",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "891743": {
+   "name": "Mohammed Kudus",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "839204": {
+   "name": "Omar Marmoush",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "976506": {
+   "name": "Mykhaylo Mudryk",
+   "team": "Tottenham Hotspur",
+   "fame": 2
+  },
+  "1341387": {
+   "name": "Wilson Odobert",
+   "team": "Tottenham Hotspur",
+   "fame": 3
+  },
+  "1178602": {
+   "name": "Senne Lammens",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "163604": {
+   "name": "Karl Darlow",
+   "team": "Manchester United",
+   "fame": 3
+  },
+  "24155": {
+   "name": "Tom Heaton",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "751550": {
+   "name": "Diogo Dalot",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "775539": {
+   "name": "Noussair Mazraoui",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "769895": {
+   "name": "Matthijs de Ligt",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "255610": {
+   "name": "Harry Maguire",
+   "team": "Manchester United",
+   "fame": 1
+  },
+  "847983": {
+   "name": "Lisandro Martínez",
+   "team": "Manchester United",
+   "fame": 1
+  },
+  "1358581": {
+   "name": "Leny Yoro",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "362694": {
+   "name": "Luke Shaw",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "1559639": {
+   "name": "Ayden Heaven",
+   "team": "Manchester United",
+   "fame": 3
+  },
+  "750032": {
+   "name": "Mason Mount",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "422685": {
+   "name": "Bruno Fernandes",
+   "team": "Manchester United",
+   "fame": 1
+  },
+  "1372921": {
+   "name": "Andrey Santos",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "465960": {
+   "name": "Youri Tielemans",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "1352713": {
+   "name": "Carlos Baleba",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "1035614": {
+   "name": "Manuel Ugarte",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "1292810": {
+   "name": "Kobbie Mainoo",
+   "team": "Manchester United",
+   "fame": 1
+  },
+  "1430832": {
+   "name": "Harry Amass",
+   "team": "Manchester United",
+   "fame": 3
+  },
+  "696365": {
+   "name": "Marcus Rashford",
+   "team": "Manchester United",
+   "fame": 1
+  },
+  "863098": {
+   "name": "Matheus Cunha",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "950830": {
+   "name": "Joshua Zirkzee",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "1526560": {
+   "name": "Patrick Dorgu",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "1070052": {
+   "name": "Amad Diallo",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "923312": {
+   "name": "Bryan Mbeumo",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "1073977": {
+   "name": "Benjamin Šeško",
+   "team": "Manchester United",
+   "fame": 2
+  },
+  "1436260": {
+   "name": "Shea Lacey",
+   "team": "Manchester United",
+   "fame": 3
+  },
+  "281762": {
+   "name": "Pietro Terracciano",
+   "team": "Milan",
+   "fame": 3
+  },
+  "466439": {
+   "name": "Mike Maignan",
+   "team": "Milan",
+   "fame": 1
+  },
+  "1642393": {
+   "name": "Lorenzo Torriani",
+   "team": "Milan",
+   "fame": 3
+  },
+  "1200630": {
+   "name": "Koni De Winter",
+   "team": "Milan",
+   "fame": 2
+  },
+  "1669433": {
+   "name": "Sankhoun Diawara",
+   "team": "Milan",
+   "fame": 3
+  },
+  "749662": {
+   "name": "Fikayo Tomori",
+   "team": "Milan",
+   "fame": 2
+  },
+  "1048023": {
+   "name": "Strahinja Pavlović",
+   "team": "Milan",
+   "fame": 2
+  },
+  "1106074": {
+   "name": "Mario Gila",
+   "team": "Milan",
+   "fame": 2
+  },
+  "1163501": {
+   "name": "Filippo Terracciano",
+   "team": "Milan",
+   "fame": 3
+  },
+  "844996": {
+   "name": "Matteo Gabbia",
+   "team": "Milan",
+   "fame": 3
+  },
+  "1209987": {
+   "name": "Warren Bondo",
+   "team": "Milan",
+   "fame": 3
+  },
+  "688278": {
+   "name": "Pervis Estupinán",
+   "team": "Milan",
+   "fame": 2
+  },
+  "604982": {
+   "name": "Ruben Loftus-Cheek",
+   "team": "Milan",
+   "fame": 2
+  },
+  "352879": {
+   "name": "Adrien Rabiot",
+   "team": "Milan",
+   "fame": 2
+  },
+  "31097": {
+   "name": "Luka Modrić",
+   "team": "Milan",
+   "fame": 1
+  },
+  "688300": {
+   "name": "Samuel Chukwueze",
+   "team": "Milan",
+   "fame": 2
+  },
+  "1787535": {
+   "name": "Christian Comotto",
+   "team": "Milan",
+   "fame": 3
+  },
+  "1163219": {
+   "name": "Ardon Jashari",
+   "team": "Milan",
+   "fame": 2
+  },
+  "1385856": {
+   "name": "Davide Bartesaghi",
+   "team": "Milan",
+   "fame": 3
+  },
+  "921341": {
+   "name": "Alexis Saelemaekers",
+   "team": "Milan",
+   "fame": 2
+  },
+  "1445650": {
+   "name": "Alphadjo Cissè",
+   "team": "Milan",
+   "fame": 3
+  },
+  "1137272": {
+   "name": "Yunus Musah",
+   "team": "Milan",
+   "fame": 2
+  },
+  "940087": {
+   "name": "Gonçalo Ramos",
+   "team": "Milan",
+   "fame": 2
+  },
+  "688295": {
+   "name": "Christian Pulisic",
+   "team": "Milan",
+   "fame": 1
+  },
+  "1215652": {
+   "name": "Omari Hutchinson",
+   "team": "Milan",
+   "fame": 3
+  },
+  "1342754": {
+   "name": "Diego Moreira",
+   "team": "Milan",
+   "fame": 3
+  },
+  "1794177": {
+   "name": "Cheveyo Mul-Balentien",
+   "team": "Milan",
+   "fame": 3
+  },
+  "1554575": {
+   "name": "Francesco Camarda",
+   "team": "Milan",
+   "fame": 3
+  },
+  "577912": {
+   "name": "Alex Meret",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "543021": {
+   "name": "Vanja Milinković-Savić",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "1529148": {
+   "name": "Luca Marianucci",
+   "team": "Napoli",
+   "fame": 3
+  },
+  "823018": {
+   "name": "Alessandro Buongiorno",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "955376": {
+   "name": "Benoît Badiashile",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "544693": {
+   "name": "Amir Rrahmani",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "1313884": {
+   "name": "Rafa Marín",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "729093": {
+   "name": "Mathías Olivera",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "414906": {
+   "name": "Giovanni Di Lorenzo",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "873573": {
+   "name": "Sam Beukema",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "1403328": {
+   "name": "Costantino Favasuli",
+   "team": "Napoli",
+   "fame": 3
+  },
+  "942549": {
+   "name": "Billy Gilmour",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "793066": {
+   "name": "David Neres",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "843099": {
+   "name": "Scott McTominay",
+   "team": "Napoli",
+   "fame": 1
+  },
+  "169200": {
+   "name": "Kevin De Bruyne",
+   "team": "Napoli",
+   "fame": 1
+  },
+  "415539": {
+   "name": "Matteo Politano",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "1320863": {
+   "name": "Antonio Vergara",
+   "team": "Napoli",
+   "fame": 3
+  },
+  "215242": {
+   "name": "Leonardo Spinazzola",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "308517": {
+   "name": "Stanislav Lobotka",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "612863": {
+   "name": "Frank Anguissa",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "1199272": {
+   "name": "Rasmus Højlund",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "1212630": {
+   "name": "Lorenzo Lucca",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "1355574": {
+   "name": "Giovane Nascimento",
+   "team": "Napoli",
+   "fame": 3
+  },
+  "837341": {
+   "name": "Noa Lang",
+   "team": "Napoli",
+   "fame": 2
+  },
+  "389050": {
+   "name": "Juan Musso",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "177126": {
+   "name": "Jan Oblak",
+   "team": "Atlético Madrid",
+   "fame": 1
+  },
+  "1553402": {
+   "name": "Salvi Esquivel",
+   "team": "Atlético Madrid",
+   "fame": 3
+  },
+  "602563": {
+   "name": "Marcos Llorente",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "727897": {
+   "name": "Dávid Hancko",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "1323897": {
+   "name": "Marc Pubill",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "789066": {
+   "name": "Cristian Romero",
+   "team": "Atlético Madrid",
+   "fame": 1
+  },
+  "609516": {
+   "name": "Robin Le Normand",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "1527038": {
+   "name": "Aleksa Puric",
+   "team": "Atlético Madrid",
+   "fame": 3
+  },
+  "1254394": {
+   "name": "Obed Vargas",
+   "team": "Atlético Madrid",
+   "fame": 3
+  },
+  "1419969": {
+   "name": "Rodrigo Mendoza",
+   "team": "Atlético Madrid",
+   "fame": 3
+  },
+  "1173678": {
+   "name": "Johnny Cardoso",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "184533": {
+   "name": "Koke",
+   "team": "Atlético Madrid",
+   "fame": 1
+  },
+  "1338192": {
+   "name": "Pablo Barrios",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "942372": {
+   "name": "Álex Baena",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "690516": {
+   "name": "Ademola Lookman",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "1226147": {
+   "name": "Giuliano Simeone",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "288406": {
+   "name": "Alejandro Grimaldo",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "950199": {
+   "name": "Morten Hjulmand",
+   "team": "Atlético Madrid",
+   "fame": 3
+  },
+  "940976": {
+   "name": "Kang-In Lee",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "440330": {
+   "name": "Alexander Sørloth",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "939569": {
+   "name": "Jonathan David",
+   "team": "Atlético Madrid",
+   "fame": 2
+  },
+  "1297989": {
+   "name": "Arnau Ortiz",
+   "team": "Atlético Madrid",
+   "fame": 3
+  },
+  "974753": {
+   "name": "Julián Álvarez",
+   "team": "Atlético Madrid",
+   "fame": 1
+  },
+  "764018": {
+   "name": "Gregor Kobel",
+   "team": "Borussia Dortmund",
+   "fame": 2
+  },
+  "664970": {
+   "name": "Waldemar Anton",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "1002058": {
+   "name": "Nico Schlotterbeck",
+   "team": "Borussia Dortmund",
+   "fame": 2
+  },
+  "559065": {
+   "name": "Ramy Bensebaini",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "1479742": {
+   "name": "Joane Gadou",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "307021": {
+   "name": "Emre Can",
+   "team": "Borussia Dortmund",
+   "fame": 2
+  },
+  "1750565": {
+   "name": "Kauã Prates",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "1663094": {
+   "name": "Filippo Mane",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "1845173": {
+   "name": "Luca Reggiani",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "1287373": {
+   "name": "Jobe Bellingham",
+   "team": "Borussia Dortmund",
+   "fame": 2
+  },
+  "966019": {
+   "name": "Felix Nmecha",
+   "team": "Borussia Dortmund",
+   "fame": 2
+  },
+  "1047667": {
+   "name": "Maximilian Beier",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "1089685": {
+   "name": "Carney Chukwuemeka",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "1254234": {
+   "name": "Ethan Nwaneri",
+   "team": "Borussia Dortmund",
+   "fame": 2
+  },
+  "215151": {
+   "name": "Marcel Sabitzer",
+   "team": "Borussia Dortmund",
+   "fame": 2
+  },
+  "1209228": {
+   "name": "Daniel Svensson",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "792429": {
+   "name": "Joey Veerman",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "659272": {
+   "name": "Julian Ryerson",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "1761151": {
+   "name": "Samuele Inácio",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "1729839": {
+   "name": "Enzo Duarte",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "1215014": {
+   "name": "Giannis Konstantelias",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "448540": {
+   "name": "Serhou Guirassy",
+   "team": "Borussia Dortmund",
+   "fame": 2
+  },
+  "1536436": {
+   "name": "Konstantinos Karetsas",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "1050158": {
+   "name": "Fábio Silva",
+   "team": "Borussia Dortmund",
+   "fame": 2
+  },
+  "1692797": {
+   "name": "Mathis Albert",
+   "team": "Borussia Dortmund",
+   "fame": 3
+  },
+  "319784": {
+   "name": "Alisson Becker",
+   "team": "Liverpool",
+   "fame": 1
+  },
+  "948800": {
+   "name": "Giorgi Mamardashvili",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "582276": {
+   "name": "Freddie Woodman",
+   "team": "Liverpool",
+   "fame": 3
+  },
+  "1068920": {
+   "name": "Vítezslav Jaroš",
+   "team": "Liverpool",
+   "fame": 3
+  },
+  "1236818": {
+   "name": "Harvey Davies",
+   "team": "Liverpool",
+   "fame": 3
+  },
+  "568571": {
+   "name": "Joseph Gomez",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "202643": {
+   "name": "Wataru Endo",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "209405": {
+   "name": "Virgil van Dijk",
+   "team": "Liverpool",
+   "fame": 1
+  },
+  "1473534": {
+   "name": "Jérémy Jacquet",
+   "team": "Liverpool",
+   "fame": 3
+  },
+  "1195281": {
+   "name": "Miloš Kerkez",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "1113690": {
+   "name": "Conor Bradley",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "1609209": {
+   "name": "Giovanni Leoni",
+   "team": "Liverpool",
+   "fame": 3
+  },
+  "966018": {
+   "name": "Jeremie Frimpong",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "921253": {
+   "name": "Ronald Araujo",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "846005": {
+   "name": "Dominik Szoboszlai",
+   "team": "Liverpool",
+   "fame": 1
+  },
+  "831489": {
+   "name": "Alexis Mac Allister",
+   "team": "Liverpool",
+   "fame": 1
+  },
+  "671529": {
+   "name": "Konstantinos Tsimikas",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "956683": {
+   "name": "Ryan Gravenberch",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "1436258": {
+   "name": "Trey Nyoni",
+   "team": "Liverpool",
+   "fame": 3
+  },
+  "1152455": {
+   "name": "Florian Wirtz",
+   "team": "Liverpool",
+   "fame": 1
+  },
+  "690107": {
+   "name": "Alexander Isak",
+   "team": "Liverpool",
+   "fame": 1
+  },
+  "784510": {
+   "name": "Federico Chiesa",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "806552": {
+   "name": "Cody Gakpo",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "1197030": {
+   "name": "Hugo Ekitiké",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "1553105": {
+   "name": "Víctor Muñoz",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "1297165": {
+   "name": "Bradley Barcola",
+   "team": "Liverpool",
+   "fame": 2
+  },
+  "1364042": {
+   "name": "Lewis Koumas",
+   "team": "Liverpool",
+   "fame": 3
+  },
+  "1597668": {
+   "name": "Rio Ngumoha",
+   "team": "Liverpool",
+   "fame": 3
+  },
+  "1167220": {
+   "name": "Joan García",
+   "team": "Barcelona",
+   "fame": 2
+  },
+  "169718": {
+   "name": "Wojciech Szczęsny",
+   "team": "Barcelona",
+   "fame": 2
+  },
+  "383971": {
+   "name": "Dominik Livaković",
+   "team": "Barcelona",
+   "fame": 2
+  },
+  "1818299": {
+   "name": "Eder Aller",
+   "team": "Barcelona",
+   "fame": 3
+  },
+  "361757": {
+   "name": "João Cancelo",
+   "team": "Barcelona",
+   "fame": 1
+  },
+  "1254166": {
+   "name": "Alejandro Balde",
+   "team": "Barcelona",
+   "fame": 2
+  },
+  "1532137": {
+   "name": "Pau Cubarsí",
+   "team": "Barcelona",
+   "fame": 2
+  },
+  "1815149": {
+   "name": "Xavi Espart",
+   "team": "Barcelona",
+   "fame": 3
+  },
+  "449232": {
+   "name": "Andreas Christensen",
+   "team": "Barcelona",
+   "fame": 2
+  },
+  "1598982": {
+   "name": "Gerard Martín",
+   "team": "Barcelona",
+   "fame": 3
+  },
+  "705450": {
+   "name": "Jules Koundé",
+   "team": "Barcelona",
+   "fame": 2
+  },
+  "940573": {
+   "name": "Eric García",
+   "team": "Barcelona",
+   "fame": 2
+  },
+  "1279040": {
+   "name": "Gavi",
+   "team": "Barcelona",
+   "fame": 1
+  },
+  "1404415": {
+   "name": "Fermín López",
+   "team": "Barcelona",
+   "fame": 1
+  },
+  "1083323": {
+   "name": "Pedri",
+   "team": "Barcelona",
+   "fame": 1
+  },
+  "959594": {
+   "name": "Karim Adeyemi",
+   "team": "Barcelona",
+   "fame": 1
+  },
+  "675088": {
+   "name": "Rodri",
+   "team": "Barcelona",
+   "fame": 1
+  },
+  "614834": {
+   "name": "Dani Olmo",
+   "team": "Barcelona",
+   "fame": 2
+  },
+  "638622": {
+   "name": "Frenkie de Jong",
+   "team": "Barcelona",
+   "fame": 1
+  },
+  "1573126": {
+   "name": "Marc Bernal",
+   "team": "Barcelona",
+   "fame": 3
+  },
+  "576165": {
+   "name": "Gabriel Jesus",
+   "team": "Barcelona",
+   "fame": 2
+  },
+  "1467236": {
+   "name": "Lamine Yamal",
+   "team": "Barcelona",
+   "fame": 1
+  },
+  "696679": {
+   "name": "Raphinha",
+   "team": "Barcelona",
+   "fame": 1
+  },
+  "906937": {
+   "name": "Anthony Gordon",
+   "team": "Barcelona",
+   "fame": 2
+  },
+  "1315475": {
+   "name": "Roony Bardghji",
+   "team": "Barcelona",
+   "fame": 3
+  },
+  "1656591": {
+   "name": "Jesse Bisiwu",
+   "team": "Barcelona",
+   "fame": 3
+  },
+  "562727": {
+   "name": "David Raya",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "317564": {
+   "name": "Kepa Arrizabalaga",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "952029": {
+   "name": "Illan Meslier",
+   "team": "Arsenal",
+   "fame": 3
+  },
+  "955406": {
+   "name": "William Saliba",
+   "team": "Arsenal",
+   "fame": 1
+  },
+  "1298907": {
+   "name": "Cristhian Mosquera",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "776151": {
+   "name": "Ben White",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "1137667": {
+   "name": "Piero Hincapié",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "795179": {
+   "name": "Gabriel",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "942381": {
+   "name": "Jurriën Timber",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "710159": {
+   "name": "Ezri Konsa",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "1105912": {
+   "name": "Riccardo Calafiori",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "1406436": {
+   "name": "Myles Lewis-Skelly",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "534670": {
+   "name": "Martin Ødegaard",
+   "team": "Arsenal",
+   "fame": 1
+  },
+  "818975": {
+   "name": "Eberechi Eze",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "574645": {
+   "name": "Mikel Merino",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "1031325": {
+   "name": "Martín Zubimendi",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "850354": {
+   "name": "Bruno Guimarães",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "654096": {
+   "name": "Declan Rice",
+   "team": "Arsenal",
+   "fame": 1
+  },
+  "1635773": {
+   "name": "Max Dowman",
+   "team": "Arsenal",
+   "fame": 3
+  },
+  "961995": {
+   "name": "Bukayo Saka",
+   "team": "Arsenal",
+   "fame": 1
+  },
+  "664500": {
+   "name": "Viktor Gyökeres",
+   "team": "Arsenal",
+   "fame": 1
+  },
+  "1157237": {
+   "name": "Christos Tzolis",
+   "team": "Arsenal",
+   "fame": 3
+  },
+  "1084981": {
+   "name": "Noni Madueke",
+   "team": "Arsenal",
+   "fame": 2
+  },
+  "749736": {
+   "name": "Kai Havertz",
+   "team": "Arsenal",
+   "fame": 1
+  },
+  "772168": {
+   "name": "Josep Martínez",
+   "team": "Inter",
+   "fame": 2
+  },
+  "364822": {
+   "name": "Ivan Provedel",
+   "team": "Inter",
+   "fame": 2
+  },
+  "263653": {
+   "name": "John Stones",
+   "team": "Inter",
+   "fame": 2
+  },
+  "521318": {
+   "name": "Manuel Akanji",
+   "team": "Inter",
+   "fame": 2
+  },
+  "611223": {
+   "name": "Benjamin Pavard",
+   "team": "Inter",
+   "fame": 2
+  },
+  "940829": {
+   "name": "Carlos Augusto",
+   "team": "Inter",
+   "fame": 2
+  },
+  "889535": {
+   "name": "Yann Aurel Bisseck",
+   "team": "Inter",
+   "fame": 2
+  },
+  "805451": {
+   "name": "Alessandro Bastoni",
+   "team": "Inter",
+   "fame": 2
+  },
+  "894803": {
+   "name": "Djed Spence",
+   "team": "Inter",
+   "fame": 2
+  },
+  "1410437": {
+   "name": "Aleksandar Stanković",
+   "team": "Inter",
+   "fame": 3
+  },
+  "362212": {
+   "name": "Piotr Zieliński",
+   "team": "Inter",
+   "fame": 2
+  },
+  "1382000": {
+   "name": "Petar Sučić",
+   "team": "Inter",
+   "fame": 3
+  },
+  "1114635": {
+   "name": "Luis Henrique",
+   "team": "Inter",
+   "fame": 2
+  },
+  "1254297": {
+   "name": "Andy Diouf",
+   "team": "Inter",
+   "fame": 2
+  },
+  "304733": {
+   "name": "Hakan Çalhanoglu",
+   "team": "Inter",
+   "fame": 2
+  },
+  "933768": {
+   "name": "Curtis Jones",
+   "team": "Inter",
+   "fame": 2
+  },
+  "73167": {
+   "name": "Henrikh Mkhitaryan",
+   "team": "Inter",
+   "fame": 2
+  },
+  "541820": {
+   "name": "Nicolò Barella",
+   "team": "Inter",
+   "fame": 1
+  },
+  "605224": {
+   "name": "Federico Dimarco",
+   "team": "Inter",
+   "fame": 2
+  },
+  "621562": {
+   "name": "Marcus Thuram",
+   "team": "Inter",
+   "fame": 2
+  },
+  "690230": {
+   "name": "Lautaro Martínez",
+   "team": "Inter",
+   "fame": 1
+  },
+  "1199383": {
+   "name": "Ange-Yoan Bonny",
+   "team": "Inter",
+   "fame": 3
+  },
+  "1646520": {
+   "name": "Mattia Mosconi",
+   "team": "Inter",
+   "fame": 3
+  },
+  "1367618": {
+   "name": "Francesco Pio Esposito",
+   "team": "Inter",
+   "fame": 3
+  },
+  "170323": {
+   "name": "Thibaut Courtois",
+   "team": "Real Madrid",
+   "fame": 1
+  },
+  "800882": {
+   "name": "Andriy Lunin",
+   "team": "Real Madrid",
+   "fame": 2
+  },
+  "1580528": {
+   "name": "Raúl Asencio",
+   "team": "Real Madrid",
+   "fame": 2
+  },
+  "844415": {
+   "name": "Éder Militao",
+   "team": "Real Madrid",
+   "fame": 2
+  },
+  "1367619": {
+   "name": "Dean Huijsen",
+   "team": "Real Madrid",
+   "fame": 2
+  },
+  "760712": {
+   "name": "Trent Alexander-Arnold",
+   "team": "Real Madrid",
+   "fame": 1
+  },
+  "820140": {
+   "name": "Ibrahima Konaté",
+   "team": "Real Madrid",
+   "fame": 2
+  },
+  "873289": {
+   "name": "Marc Cucurella",
+   "team": "Real Madrid",
+   "fame": 2
+  },
+  "1190025": {
+   "name": "Alvaro Carreras",
+   "team": "Real Madrid",
+   "fame": 2
+  },
+  "276738": {
+   "name": "Antonio Rüdiger",
+   "team": "Real Madrid",
+   "fame": 1
+  },
+  "623537": {
+   "name": "Ferland Mendy",
+   "team": "Real Madrid",
+   "fame": 2
+  },
+  "1077894": {
+   "name": "Jude Bellingham",
+   "team": "Real Madrid",
+   "fame": 1
+  },
+  "1015185": {
+   "name": "Eduardo Camavinga",
+   "team": "Real Madrid",
+   "fame": 1
+  },
+  "743533": {
+   "name": "Federico Valverde",
+   "team": "Real Madrid",
+   "fame": 1
+  },
+  "914458": {
+   "name": "Aurélien Tchouaméni",
+   "team": "Real Madrid",
+   "fame": 1
+  },
+  "1253890": {
+   "name": "Arda Güler",
+   "team": "Real Madrid",
+   "fame": 1
+  },
+  "488139": {
+   "name": "Bernardo Silva",
+   "team": "Real Madrid",
+   "fame": 1
+  },
+  "593118": {
+   "name": "Denzel Dumfries",
+   "team": "Real Madrid",
+   "fame": 2
+  },
+  "1796908": {
+   "name": "Thiago Pitarch",
+   "team": "Real Madrid",
+   "fame": 3
+  },
+  "846033": {
+   "name": "Vinícius Júnior",
+   "team": "Real Madrid",
+   "fame": 1
+  },
+  "1406729": {
+   "name": "Endrick",
+   "team": "Real Madrid",
+   "fame": 2
+  },
+  "701154": {
+   "name": "Kylian Mbappé",
+   "team": "Real Madrid",
+   "fame": 1
+  },
+  "895362": {
+   "name": "Rodrygo",
+   "team": "Real Madrid",
+   "fame": 1
+  },
+  "1610744": {
+   "name": "Carlos Espí",
+   "team": "Real Madrid",
+   "fame": 3
+  },
+  "750027": {
+   "name": "Brahim Díaz",
+   "team": "Real Madrid",
+   "fame": 2
+  },
+  "1735453": {
+   "name": "Yan Diomande",
+   "team": "Real Madrid",
+   "fame": 2
+  },
+  "27299": {
+   "name": "Manuel Neuer",
+   "team": "Bayern München",
+   "fame": 1
+  },
+  "1285872": {
+   "name": "Jonas Urbig",
+   "team": "Bayern München",
+   "fame": 2
+  },
+  "1664982": {
+   "name": "Leon Klanac",
+   "team": "Bayern München",
+   "fame": 3
+  },
+  "658554": {
+   "name": "Dayot Upamecano",
+   "team": "Bayern München",
+   "fame": 2
+  },
+  "828159": {
+   "name": "Min-Jae Kim",
+   "team": "Bayern München",
+   "fame": 2
+  },
+  "469700": {
+   "name": "Jonathan Tah",
+   "team": "Bayern München",
+   "fame": 2
+  },
+  "1286183": {
+   "name": "Tom Bischof",
+   "team": "Bayern München",
+   "fame": 3
+  },
+  "1395447": {
+   "name": "Nathaniel Brown",
+   "team": "Bayern München",
+   "fame": 2
+  },
+  "751202": {
+   "name": "Alphonso Davies",
+   "team": "Bayern München",
+   "fame": 1
+  },
+  "851626": {
+   "name": "Hiroki Ito",
+   "team": "Bayern München",
+   "fame": 2
+  },
+  "1034808": {
+   "name": "Sacha Boey",
+   "team": "Bayern München",
+   "fame": 2
+  },
+  "526827": {
+   "name": "Konrad Laimer",
+   "team": "Bayern München",
+   "fame": 2
+  },
+  "1771196": {
+   "name": "Cassiano Kiala",
+   "team": "Bayern München",
+   "fame": 3
+  },
+  "950824": {
+   "name": "Josip Stanišić",
+   "team": "Bayern München",
+   "fame": 2
+  },
+  "460632": {
+   "name": "Joshua Kimmich",
+   "team": "Bayern München",
+   "fame": 1
+  },
+  "385437": {
+   "name": "Serge Gnabry",
+   "team": "Bayern München",
+   "fame": 1
+  },
+  "1156141": {
+   "name": "Jamal Musiala",
+   "team": "Bayern München",
+   "fame": 1
+  },
+  "1180288": {
+   "name": "Ismael Saibari",
+   "team": "Bayern München",
+   "fame": 2
+  },
+  "1904968": {
+   "name": "Erblin Osmani",
+   "team": "Bayern München",
+   "fame": 3
+  },
+  "1798782": {
+   "name": "Bara Ndiaye",
+   "team": "Bayern München",
+   "fame": 3
+  },
+  "1473580": {
+   "name": "Aleksandar Pavlović",
+   "team": "Bayern München",
+   "fame": 2
+  },
+  "1771197": {
+   "name": "David Santos Daiber",
+   "team": "Bayern München",
+   "fame": 3
+  },
+  "194165": {
+   "name": "Harry Kane",
+   "team": "Bayern München",
+   "fame": 1
+  },
+  "860914": {
+   "name": "Luis Díaz",
+   "team": "Bayern München",
+   "fame": 1
+  },
+  "1029063": {
+   "name": "Michael Olise",
+   "team": "Bayern München",
+   "fame": 1
+  },
+  "1737700": {
+   "name": "Lennart Karl",
+   "team": "Bayern München",
+   "fame": 2
+  },
+  "1662399": {
+   "name": "Alessandro Longoni",
+   "team": "Paris Saint-Germain",
+   "fame": 3
+  },
+  "1177131": {
+   "name": "Lucas Chevalier",
+   "team": "Paris Saint-Germain",
+   "fame": 2
+  },
+  "800880": {
+   "name": "Matvey Safonov",
+   "team": "Paris Saint-Germain",
+   "fame": 2
+  },
+  "770881": {
+   "name": "Achraf Hakimi",
+   "team": "Paris Saint-Germain",
+   "fame": 1
+  },
+  "1255209": {
+   "name": "Lucas Beraldo",
+   "team": "Paris Saint-Germain",
+   "fame": 3
+  },
+  "267365": {
+   "name": "Marquinhos",
+   "team": "Paris Saint-Germain",
+   "fame": 1
+  },
+  "1140003": {
+   "name": "Ilya Zabarnyi",
+   "team": "Paris Saint-Germain",
+   "fame": 2
+  },
+  "210111": {
+   "name": "Lucas Digne",
+   "team": "Paris Saint-Germain",
+   "fame": 2
+  },
+  "504606": {
+   "name": "Lucas Hernández",
+   "team": "Paris Saint-Germain",
+   "fame": 2
+  },
+  "1158945": {
+   "name": "Nuno Mendes",
+   "team": "Paris Saint-Germain",
+   "fame": 2
+  },
+  "1137670": {
+   "name": "Willian Pacho",
+   "team": "Paris Saint-Germain",
+   "fame": 2
+  },
+  "605654": {
+   "name": "Fabián Ruiz",
+   "team": "Paris Saint-Germain",
+   "fame": 2
+  },
+  "1061249": {
+   "name": "Vítinha",
+   "team": "Paris Saint-Germain",
+   "fame": 1
+  },
+  "1574189": {
+   "name": "Senny Mayulu",
+   "team": "Paris Saint-Germain",
+   "fame": 3
+  },
+  "1682313": {
+   "name": "Dro Fernández",
+   "team": "Paris Saint-Germain",
+   "fame": 3
+  },
+  "1367615": {
+   "name": "Warren Zaïre-Emery",
+   "team": "Paris Saint-Germain",
+   "fame": 2
+  },
+  "1342757": {
+   "name": "João Neves",
+   "team": "Paris Saint-Germain",
+   "fame": 2
+  },
+  "900433": {
+   "name": "Khvicha Kvaratskhelia",
+   "team": "Paris Saint-Germain",
+   "fame": 1
+  },
+  "881771": {
+   "name": "Ferrán Torres",
+   "team": "Paris Saint-Germain",
+   "fame": 2
+  },
+  "692984": {
+   "name": "Ousmane Dembélé",
+   "team": "Paris Saint-Germain",
+   "fame": 1
+  },
+  "1305618": {
+   "name": "Maghnes Akliouche",
+   "team": "Paris Saint-Germain",
+   "fame": 2
+  },
+  "1339208": {
+   "name": "Désiré Doué",
+   "team": "Paris Saint-Germain",
+   "fame": 2
+  },
+  "1396372": {
+   "name": "Mika Godts",
+   "team": "Paris Saint-Germain",
+   "fame": 3
+  },
+  "618878": {
+   "name": "Gianluigi Donnarumma",
+   "team": "Manchester City",
+   "fame": 1
+  },
+  "363357": {
+   "name": "Marcus Bettinelli",
+   "team": "Manchester City",
+   "fame": 3
+  },
+  "245555": {
+   "name": "Gerónimo Rulli",
+   "team": "Manchester City",
+   "fame": 2
+  },
+  "614006": {
+   "name": "Rúben Dias",
+   "team": "Manchester City",
+   "fame": 1
+  },
+  "844425": {
+   "name": "Marc Guéhi",
+   "team": "Manchester City",
+   "fame": 2
+  },
+  "933845": {
+   "name": "Rayan Aït-Nouri",
+   "team": "Manchester City",
+   "fame": 2
+  },
+  "1580952": {
+   "name": "Vitor Reis",
+   "team": "Manchester City",
+   "fame": 3
+  },
+  "1070712": {
+   "name": "Joško Gvardiol",
+   "team": "Manchester City",
+   "fame": 1
+  },
+  "955529": {
+   "name": "Matheus Nunes",
+   "team": "Manchester City",
+   "fame": 2
+  },
+  "1300526": {
+   "name": "Nico O'Reilly",
+   "team": "Manchester City",
+   "fame": 2
+  },
+  "1362998": {
+   "name": "Abdukodir Khusanov",
+   "team": "Manchester City",
+   "fame": 3
+  },
+  "1288450": {
+   "name": "Rico Lewis",
+   "team": "Manchester City",
+   "fame": 2
+  },
+  "1187225": {
+   "name": "Josh Wilson-Esbrand",
+   "team": "Manchester City",
+   "fame": 3
+  },
+  "1089691": {
+   "name": "Elliot Anderson",
+   "team": "Manchester City",
+   "fame": 2
+  },
+  "239219": {
+   "name": "Mateo Kovačić",
+   "team": "Manchester City",
+   "fame": 2
+  },
+  "1104053": {
+   "name": "Rayan Cherki",
+   "team": "Manchester City",
+   "fame": 2
+  },
+  "1137705": {
+   "name": "Enzo Fernández",
+   "team": "Manchester City",
+   "fame": 1
+  },
+  "1561552": {
+   "name": "Ayyoub Bouaddi",
+   "team": "Manchester City",
+   "fame": 3
+  },
+  "815006": {
+   "name": "Phil Foden",
+   "team": "Manchester City",
+   "fame": 1
+  },
+  "965764": {
+   "name": "Iliman Ndiaye",
+   "team": "Manchester City",
+   "fame": 2
+  },
+  "737066": {
+   "name": "Erling Haaland",
+   "team": "Manchester City",
+   "fame": 1
+  },
+  "942368": {
+   "name": "Jérémy Doku",
+   "team": "Manchester City",
+   "fame": 2
+  },
+  "1721789": {
+   "name": "Allan",
+   "team": "Manchester City",
+   "fame": 3
+  },
+  "933576": {
+   "name": "Antoine Semenyo",
+   "team": "Manchester City",
+   "fame": 2
+  },
+  "1607566": { "name": "Franco Mastantuono", "team": "Fiorentina", "fame": 1 },
+  "1203665": { "name": "Alejandro Garnacho", "team": "Aston Villa", "fame": 1 },
+  "184138": { "name": "Antoine Griezmann", "team": "Orlando City", "fame": 1 },
+  "411617": { "name": "Aymeric Laporte", "team": "Athletic Club", "fame": 2 },
+  "30893": { "name": "Cristiano Ronaldo", "team": "Al Nassr FC", "fame": 1 },
+  "737857": { "name": "Dušan Vlahović", "team": "Beşiktaş", "fame": 1 },
+  "693599": { "name": "Exequiel Palacios", "team": "Ipswich Town", "fame": 2 },
+  "604126": { "name": "Giovani Lo Celso", "team": "Real Betis", "fame": 2 },
+  "687008": { "name": "Gonzalo Montiel", "team": "River Plate", "fame": 1 },
+  "26166": { "name": "Karim Benzema", "team": "Al Hilal", "fame": 1 },
+  "237606": { "name": "Leandro Paredes", "team": "Boca Juniors", "fame": 1 },
+  "30981": { "name": "Lionel Messi", "team": "Inter Miami CF", "fame": 1 },
+  "40636": { "name": "Luis Suárez", "team": "Inter Miami CF", "fame": 1 },
+  "678234": { "name": "Mikel Oyarzabal", "team": "Real Sociedad", "fame": 1 },
+  "292462": { "name": "Mohamed Salah", "team": "Trabzonspor", "fame": 1 },
+  "319300": { "name": "N'Golo Kanté", "team": "Fenerbahçe", "fame": 1 },
+  "726345": { "name": "Nahuel Molina", "team": "Roma", "fame": 2 },
+  "19533": { "name": "Neymar", "team": "Santos", "fame": 1 },
+  "1347574": { "name": "Nico Paz", "team": "Como", "fame": 1 },
+  "1202110": { "name": "Nico Williams", "team": "Athletic Club", "fame": 1 },
+  "841672": { "name": "Nicolás González", "team": "Juventus", "fame": 2 },
+  "174321": { "name": "Nicolás Otamendi", "team": "River Plate", "fame": 1 },
+  "195750": { "name": "Nicolás Tagliafico", "team": "Lyon", "fame": 2 },
+  "540088": { "name": "Ollie Watkins", "team": "Al Hilal", "fame": 2 },
+  "325916": { "name": "Paulo Dybala", "team": "Roma", "fame": 1 },
+  "848844": { "name": "Rafael Leão", "team": "Galatasaray", "fame": 1 },
+  "278343": { "name": "Riyad Mahrez", "team": "Al Ahli", "fame": 2 },
+  "93447": { "name": "Robert Lewandowski", "team": "Chicago Fire FC", "fame": 1 },
+  "324578": { "name": "Rodrigo De Paul", "team": "Inter Miami CF", "fame": 1 },
+  "303339": { "name": "Sadio Mané", "team": "Al Nassr FC", "fame": 1 },
+  "212867": { "name": "Son Heung-min", "team": "Los Angeles FC", "fame": 1 },
+  "724371": { "name": "Theo Hernández", "team": "Al Hilal", "fame": 2 },
+  "955271": { "name": "Thiago Almada", "team": "River Plate", "fame": 2 },
+  "660625": { "name": "Unai Simón", "team": "Athletic Club", "fame": 2 },
+  "687681": { "name": "Victor Osimhen", "team": "Galatasaray", "fame": 1 },
+  "46509": { "name": "Ángel Di María", "team": "Rosario Central", "fame": 1 }
+ },
+ "extras": [
+  "Alejandro Garnacho",
+  "Antoine Griezmann",
+  "Aymeric Laporte",
+  "Cristiano Ronaldo",
+  "Dušan Vlahović",
+  "Exequiel Palacios",
+  "Franco Mastantuono",
+  "Giovani Lo Celso",
+  "Gonzalo Montiel",
+  "Karim Benzema",
+  "Leandro Paredes",
+  "Lionel Messi",
+  "Luis Suárez",
+  "Mikel Oyarzabal",
+  "Mohamed Salah",
+  "N'Golo Kanté",
+  "Nahuel Molina",
+  "Neymar",
+  "Nico Paz",
+  "Nico Williams",
+  "Nicolás González",
+  "Nicolás Otamendi",
+  "Nicolás Tagliafico",
+  "Ollie Watkins",
+  "Paulo Dybala",
+  "Rafael Leão",
+  "Riyad Mahrez",
+  "Robert Lewandowski",
+  "Rodrigo De Paul",
+  "Sadio Mané",
+  "Son Heung-min",
+  "Theo Hernández",
+  "Thiago Almada",
+  "Unai Simón",
+  "Victor Osimhen",
+  "Ángel Di María"
+ ]
+}

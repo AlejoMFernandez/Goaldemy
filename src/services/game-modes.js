@@ -15,7 +15,7 @@
  * RACHAS DIARIAS:
  * - Se cuentan los días consecutivos ganando un juego específico
  * - Ejemplo: ganaste "who-is" hoy, ayer y anteayer = racha de 3 días
- * - Desbloquea logros como streak_3, streak_5, streak_10, streak_15
+ * - Desbloquea logros como streak_5, streak_10, streak_15
  * 
  * SUPERLOGRO daily_super_5x3:
  * - Requiere tener racha de 5+ días en 3 juegos diferentes simultáneamente
@@ -32,7 +32,7 @@ import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { fetchGameBySlug, friendlyNameForSlug } from './games'
 import { unlockAchievementWithToast } from './xp'
-import { checkAllAchievementsAfterChallenge, checkTimeBasedAchievements } from './achievement-triggers'
+import { checkAllAchievementsAfterChallenge, checkNewAchievements } from './achievement-triggers'
 import { getDailyChallengeLimit } from './premium'
 
 // Cache de game_id por slug para evitar consultas repetitivas
@@ -112,9 +112,6 @@ export async function getPlayableGameCount() {
  */
 export async function checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
   try {
-    // Verificar logros basados en tiempo (ej: jugar de madrugada)
-    await checkTimeBasedAchievements()
-
     // FUENTE DE VERDAD: la sesión recién terminada. Antes los juegos llamaban
     // sin `won`/`metadata` (quedaban en true/{}), por lo que perfectionist/comeback/
     // lucky_first nunca podían dispararse y `won` era siempre true. Ahora derivamos
@@ -129,8 +126,9 @@ export async function checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
     } catch {}
     if (won == null) won = true
 
-    // Solo verificar logros de victoria si el usuario ganó
-    if (!won) return
+    // Solo verificar logros de victoria si el usuario ganó. Los logros nuevos
+    // (achievements-new-1) también miran derrotas (Fuego azul, Enciclopedia).
+    if (!won) { await checkNewAchievements(slugJustPlayed); return }
 
     const wins = await countTodayDailyWins()           // juegos distintos ganados hoy
     const totalGames = await getPlayableGameCount()    // todos los juegos jugables (dinámico)
@@ -143,9 +141,9 @@ export async function checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
 
     // RACHAS DE ACIERTOS: aciertos SEGUIDOS dentro de este juego (no días).
     // Los logros de constancia por días son daily_streak_* (otro sistema).
+    // streak_3 quedó `active = false` (saturaba la primera partida): ya no se evalúa.
     try {
       const inStreak = Number(metadata.maxStreak || 0)
-      if (inStreak >= 3) await unlockAchievementWithToast('streak_3', { game: slugJustPlayed, streak: inStreak })
       if (inStreak >= 5) await unlockAchievementWithToast('streak_5', { game: slugJustPlayed, streak: inStreak })
       if (inStreak >= 10) await unlockAchievementWithToast('streak_10', { game: slugJustPlayed, streak: inStreak })
       if (inStreak >= 15) await unlockAchievementWithToast('streak_15', { game: slugJustPlayed, streak: inStreak })
@@ -160,6 +158,9 @@ export async function checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
 
     // Verificar todos los demás logros (puntaje, tiempo, etc.)
     await checkAllAchievementsAfterChallenge(slugJustPlayed, won, metadata)
+
+    // Logros nuevos (achievements-new-1): calculados desde las sesiones guardadas en Supabase
+    await checkNewAchievements(slugJustPlayed)
 
     // ESCENA DE COSMÉTICO: los logros recién desbloqueados pueden otorgar cosméticos
     // (get_cosmetics los marca owned al tener el logro). Detectarlos AHORA y encolarlos.
@@ -221,18 +222,43 @@ export async function isChallengeAvailable(slug) {
     }
   }
   const remaining = dailyLimit - finished.length
-  return { available: !already, reason: already ? `Ya usaste tus ${dailyLimit} intentos de hoy` : null, result, remaining }
+  // Ficha del partido de hoy para el póster del índice (moodboard 07)
+  const ficha = last ? matchFicha(slug, last.metadata || {}, Number(last.score_final || 0), result) : null
+  return { available: !already, reason: already ? `Ya usaste tus ${dailyLimit} intentos de hoy` : null, result, remaining, ficha }
 }
 
-// Start a challenge session and return session id
-export async function startChallengeSession(slug, seconds) {
+/**
+ * Resumen corto del último partido para mostrar en el póster: marcador y
+ * estrellas por PRECISIÓN (decidido en el moodboard 07): 3 = sin errores,
+ * 2 = hasta 2 errores, 1 = más. Solo se dan estrellas si ganó.
+ */
+export function matchFicha(slug, m = {}, scoreFinal = 0, result = null) {
+  const s = (slug || '').toLowerCase()
+  const win = result === 'win'
+  if (['value-order', 'age-order', 'height-order'].includes(s)) {
+    const ok = Number(m.correctPositions ?? m.corrects ?? Math.round(scoreFinal / 10))
+    return { score: `${Number.isFinite(ok) ? ok : 0}/5`, stars: win ? 3 : 0 }
+  }
+  if (Number.isFinite(Number(m.corrects)) && ['guess-player', 'nationality', 'player-position', 'shirt-number', 'stat-challenge'].includes(s)) {
+    const corrects = Number(m.corrects) || 0
+    const errors = Number(m.errors ?? Math.max(0, (Number(m.attempts) || corrects) - corrects))
+    const stars = win ? (errors === 0 ? 3 : errors <= 2 ? 2 : 1) : 0
+    return { score: `${Math.min(corrects, 10)}/10`, stars, errors }
+  }
+  return { score: '', stars: win ? 3 : 0 }
+}
+
+// Start a challenge session and return session id.
+// `extra` se mezcla en la metadata inicial: los juegos pasan { difficulty } para que
+// los logros que dependen de "en Difícil" (achievement-rules.js) lo lean de la sesión.
+export async function startChallengeSession(slug, seconds, extra = {}) {
   import('../stores/notifications').then(m => m.setSuppressOverlays(true)).catch(() => {})
   const { id: userId } = getAuthUser() || {}
   const gameId = await getGameId(slug)
   // Invitado o juego sin registrar en DB: sesión no persistida (sessionId null,
   // completeChallengeSession ya sabe no-opear con eso).
   if (!userId || !gameId) return null
-  const metadata = { mode: 'challenge', seconds: seconds }
+  const metadata = { mode: 'challenge', seconds: seconds, ...(extra || {}) }
   const { data, error } = await supabase
     .from('game_sessions')
     .insert([{ user_id: userId, game_id: gameId, metadata }])

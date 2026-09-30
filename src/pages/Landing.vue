@@ -551,6 +551,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
                     :game="g"
                     :unlocked="isGameUnlocked(g.slug, home.level)"
                     :unlock-level="getGameUnlockLevel(g.slug)"
+                    :user-level="Number(home.level) || 1"
                     :availability="state.availability[g.slug]"
                     :streak="state.streaks[g.slug] || 0"
                     :to="toChallenge(g.slug)"

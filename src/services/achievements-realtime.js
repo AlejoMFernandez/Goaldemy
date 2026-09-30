@@ -1,6 +1,5 @@
 import { supabase } from './supabase'
 import { pushAchievementToast } from '../stores/notifications'
-import { playAchievementSound } from './sounds'
 
 let channel = null
 let currentUserId = null
@@ -29,7 +28,9 @@ export function initAchievementsRealtime() {
               .eq('id', row.achievement_id)
               .single()
             if (!error && achievement) {
-              // Stagger slightly when multiple achievements arrive at the exact same time
+              // Stagger slightly when multiple achievements arrive at the exact same time.
+              // El sonido lo decide quien lo muestra (escena grande / toast / tarjeta
+              // agrupada en AchievementUnlockOverlay.vue), no acá — evita duplicar sonidos.
               const delay = 120 * (Math.random() * 2) // 0-240ms random
               setTimeout(() => {
                 pushAchievementToast({
@@ -40,8 +41,6 @@ export function initAchievementsRealtime() {
                   earnedAt: row.earned_at || new Date().toISOString(),
                   points: achievement.points || null,
                 })
-                // Solo sonido, sin confetti (puede ser tedioso con muchos logros)
-                playAchievementSound()
               }, delay)
             }
           }

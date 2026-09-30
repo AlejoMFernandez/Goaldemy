@@ -258,13 +258,13 @@ export function rarity(r) {
 // Clave = código del logro. Se usa para el hover del editor y el "por qué" de la escena de reclamo.
 export const ACHIEVEMENT_HINTS = {
   streak_15: 'Conseguí 15 aciertos seguidos en un juego',
+  daily_streak_7: 'Jugá 7 días seguidos',
   daily_streak_30: 'Jugá 30 días seguidos',
   perfectionist: 'Completá un juego sin ningún error',
-  night_owl: 'Jugá entre las 00:00 y las 08:00',
   daily_wins_all: 'Ganá todos los juegos del día',
   centurion: 'Acumulá 100 victorias totales',
   guess_master: 'Ganá 20 partidas de "Adivina el jugador"',
-  comeback_king: 'Ganá después de 3 errores seguidos',
+  comeback_king: 'Ganá un juego que perdiste el día anterior',
   lucky_first: 'Acertá al primer intento 10 veces',
   hat_trick: 'Ganá 3 juegos distintos el mismo día',
   chat_master: 'Enviá 100 mensajes en el chat',
@@ -345,7 +345,10 @@ export async function checkCosmeticUnlocks() {
     const seenSet = new Set(seen)
     const fresh = items.filter(c => c.owned && !seenSet.has(c.code) && c.code !== 'frame_none' && c.code !== 'icon_none')
     for (const c of fresh) {
-      if (isExclusiveCosmetic(c)) {
+      // Los cosméticos por NIVEL ya se muestran como cartas en la escena de nivel
+      // ("Desbloqueaste", moodboard 03/08): no se repiten en la escena grande.
+      const byLevel = c.unlock_level > 1 && c.unlock_level <= 100 && !c.unlock_achievement && !c.premium_only
+      if (isExclusiveCosmetic(c) && !byLevel) {
         // Exclusivos (legendarios/épicos, por logro o premium): escena premium tipo logro.
         queueCosmeticOverlay({ code: c.code, name: c.name, type: c.type, rarity: c.rarity, styleKey: c.style_key, reason: unlockReason(c) })
       } else {

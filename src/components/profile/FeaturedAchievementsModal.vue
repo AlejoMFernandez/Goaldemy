@@ -68,7 +68,7 @@ const canSave = computed(() => selected.value.length > 0 && selected.value.lengt
 
 <template>
   <div class="fixed inset-0 z-50 grid place-items-center bg-black/60 backdrop-blur-sm p-4" @click.self="cancel">
-    <div class="relative w-full max-w-3xl bg-slate-900 rounded-2xl border border-white/10 shadow-2xl overflow-hidden" @click.stop>
+    <div v-pop class="relative w-full max-w-3xl bg-slate-900 rounded-2xl border border-white/10 shadow-2xl overflow-hidden" @click.stop>
       <!-- Header -->
       <div class="p-6 border-b border-white/10">
         <div class="flex items-start justify-between">

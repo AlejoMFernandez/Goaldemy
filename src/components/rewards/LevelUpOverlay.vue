@@ -1,61 +1,197 @@
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+/**
+ * SUBIR DE NIVEL / SUBIR DE RANGO (Moodboard 03 + cartas del 08)
+ *
+ * Acto RANGO (solo si cambió el rango): ¡GOL! que abre la ceremonia → el escudo
+ * viejo tiembla y estalla → se forja el nuevo → "Al llegar ganás" (cartas del
+ * rango, boca abajo, se dan vuelta de a una) → próximo rango a la vista.
+ *
+ * Acto NIVEL: la barra se llena y desborda una vez por cada nivel (con
+ * contador ×2, ×3 si subiste varios), cada desborde es un ¡PUM! (corto en los
+ * intermedios, grande en el último) con la etiqueta "1 → 3".
+ * Después "Desbloqueaste": las recompensas REALES en cartas y, aparte, el XP
+ * y las ayudas como fichas simples (no son cartas, para no confundir).
+ * "Lo que viene" quedó oculto (pedido de Alejo: escena centrada en el nivel).
+ *
+ * Cola: resumen → logros → ESTO → cosméticos exclusivos (CosmeticUnlockOverlay
+ * espera a que esta escena termine). Tocar el fondo adelanta la animación.
+ */
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { notificationsState, shiftLevelUpQueue, setLevelUpActive } from '@/stores/notifications'
-import { getTierForLevel, tierAccentText } from '@/services/tiers'
-import { getLevelRewards, getUpcomingRewards } from '@/services/level-rewards'
+import { getTierForLevel, getNextTier } from '@/services/tiers'
+import { prizesForLevelRange, upcomingPrizes, tierPrizes } from '@/services/prize-card'
+import { revealPrizes } from '@/services/prize-reveal'
 import { soundManager } from '@/services/sounds'
-import { celebrateLevelUp, confettiGold } from '@/services/confetti'
-import PassCosmetic from './PassCosmetic.vue'
+import { sparks, center, fxOnTop, reducedMotion } from '@/services/game-fx'
+import PrizeCard from './PrizeCard.vue'
+import PowerupIcon from './PowerupIcon.vue'
+import RarityReveal from './RarityReveal.vue'
 
 const current = ref(null)
-const stage = ref('level')   // 'rank' (acto 1, solo si cambia de rango) | 'level' (acto 2)
-const rp = ref(0)            // fase de la animación de rango
-const lp = ref(0)            // fase de la animación de nivel
+const stage = ref('level')      // 'rank' | 'level'
+const rp = ref(0)               // fase del acto rango
+const lp = ref(0)               // fase del acto nivel
+const shownLevel = ref(0)       // número que se ve en el ¡PUM!
+const pumKey = ref(0)           // re-dispara la animación del número
+const bigPum = ref(false)
+const flashKey = ref(0)
+const rankFaceDown = ref([])    // por carta del rango
+const unlockIndex = ref(0)      // qué carta de "Desbloqueaste" se está mostrando (una por vez)
+const canAdvance = ref(false)   // la carta actual ya se sostuvo lo mínimo → dejar pasar a la próxima
+const unlocksDone = ref(false)  // ya se vieron todas las cartas de "Desbloqueaste"
+const rankCardEls = []
+const numEl = ref(null)
+const badgeEl = ref(null)
+const stageEl = ref(null)
 let timers = []
+let cancelReveal = null
 
-function clearTimers() { timers.forEach(clearTimeout); timers = [] }
+function T(fn, ms) { timers.push(setTimeout(fn, reducedMotion ? Math.min(ms, 60) : ms)) }
+function clearTimers() { timers.forEach(clearTimeout); timers = []; cancelReveal?.(); cancelReveal = null }
+onBeforeUnmount(clearTimers)
 
 const oldTier = computed(() => current.value ? getTierForLevel(current.value.oldLevel) : null)
 const newTier = computed(() => current.value ? getTierForLevel(current.value.newLevel) : null)
-const tierChanged = computed(() => oldTier.value && newTier.value && oldTier.value.key !== newTier.value.key)
-const isMilestone = computed(() => !!current.value?.milestone)
+const tierChanged = computed(() => !!(oldTier.value && newTier.value && oldTier.value.key !== newTier.value.key))
+const nextTier = computed(() => current.value ? getNextTier(current.value.newLevel) : null)
+const levelsUp = computed(() => current.value ? Math.max(1, current.value.newLevel - current.value.oldLevel) : 1)
 
-const levelRewards = computed(() => current.value ? getLevelRewards(current.value.newLevel) : [])
-// Los COSMÉTICOS de este nivel los revela en grande el carrusel Fortnite
-// (CosmeticUnlockOverlay). Acá solo mostramos lo que ese carrusel NO cubre: juegos.
-const gameUnlocks = computed(() => levelRewards.value.filter(r => r.kind === 'game'))
-// Línea de tiempo "lo que viene": próximos hitos por nivel (cosméticos/juegos/rangos).
-const upcoming = computed(() => current.value ? getUpcomingRewards(current.value.newLevel, 5) : [])
+// Cartas ganadas en el acto nivel (sin las del rango si ya se mostraron en su acto)
+const prizes = computed(() => {
+  if (!current.value) return []
+  const all = prizesForLevelRange(current.value.oldLevel, current.value.newLevel)
+  return tierChanged.value ? all.filter(p => p.kind !== 'tier' && !p.fromTier) : all
+})
+const rankCards = computed(() => tierChanged.value ? tierPrizes(newTier.value) : [])
+// Cartas = solo recompensas reales (cosméticos, rango, juegos). XP y ayudas van como fichas.
+const cardPrizes = computed(() => prizes.value.filter(p => p.kind !== 'xp' && p.kind !== 'powerup'))
+const xpTotal = computed(() => prizes.value.filter(p => p.kind === 'xp').reduce((a, p) => a + (Number(p.amount) || 0), 0))
+const helpPrizes = computed(() => prizes.value.filter(p => p.kind === 'powerup'))
+const hasUnlocks = computed(() => cardPrizes.value.length > 0 || xpTotal.value > 0 || helpPrizes.value.length > 0)
+const xpShown = ref(0)
+const combo = ref(0)
 
-const newTierColor = computed(() => tierAccentText(newTier.value?.color))
+const vw = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
+function onResize() { vw.value = window.innerWidth }
+const cardSize = computed(() => vw.value < 420 ? 104 : vw.value < 640 ? 120 : 140)
+const upSize = computed(() => vw.value < 420 ? 84 : 96)
 
-const COSMETIC_KINDS = new Set(['frame', 'icon', 'banner', 'title'])
-function isCos(kind) { return COSMETIC_KINDS.has(kind) }
-function cosObj(r) { return { type: r.kind, style_key: r.styleKey, rarity: r.rarity, name: r.name } }
-function typeLabelOf(r) {
-  if (r.kind === 'game') return 'Juego'
-  if (r.kind === 'tier') return 'Rango'
-  return r.typeLabel || ''
-}
+function flash() { flashKey.value++ }
 
+// ─── Acto RANGO ─────────────────────────────────────────────
 function runRank() {
   stage.value = 'rank'; rp.value = 0
+  rankFaceDown.value = rankCards.value.map(() => true)
   nextTick(() => {
-    timers.push(setTimeout(() => { rp.value = 1 }, 100))
-    timers.push(setTimeout(() => { rp.value = 2 }, 700))
-    timers.push(setTimeout(() => { rp.value = 3; confettiGold() }, 1300))
-    soundManager.play('levelUp')
+    T(() => { rp.value = 1; flash(); soundManager.playBig('goal') }, 150)        // ¡GOL!
+    T(() => { rp.value = 2 }, 1300)                                              // escudo viejo
+    T(() => { rp.value = 3 }, 1750)                                              // tiembla
+    T(() => {                                                                    // estalla y se forja
+      rp.value = 4; flash(); soundManager.playBig('forge')
+      const el = badgeEl.value
+      if (el) { const c = center(el); sparks(c.x, c.y, 40, ['#fcd34d', '#fff', '#f59e0b'], 140) }
+    }, 2400)
+    T(() => { rp.value = 5 }, 2900)                                              // nombre del rango
+    T(() => {                                                                    // "Al llegar ganás"
+      rp.value = 6
+      nextTick(() => {
+        cancelReveal = revealPrizes(rankCards.value, i => { rankFaceDown.value[i] = false }, i => rankCardEls[i], {
+          startDelay: 400,
+          onDone: () => { rp.value = 7 },
+        })
+      })
+    }, 3300)
   })
+}
+
+// ─── Acto NIVEL ─────────────────────────────────────────────
+function pum(level, big) {
+  shownLevel.value = level
+  bigPum.value = big
+  pumKey.value++
+  soundManager.playBig(big ? 'pum' : 'pumSmall')
+  if (big) {
+    flash()
+    nextTick(() => {
+      const el = numEl.value
+      if (el) { const c = center(el); sparks(c.x, c.y, 34, ['#fcd34d', '#fff', '#fde68a'], 160) }
+      stageEl.value?.animate?.([
+        { transform: 'translate(0,0)' }, { transform: 'translate(-6px,3px)' }, { transform: 'translate(5px,-3px)' },
+        { transform: 'translate(-3px,2px)' }, { transform: 'translate(0,0)' },
+      ], { duration: 360, easing: 'ease-out' })
+    })
+  }
+}
+
+function countXp(to) {
+  if (reducedMotion) { xpShown.value = to; return }
+  const t0 = performance.now()
+  const step = (t) => { const k = Math.min(1, (t - t0) / 700); xpShown.value = Math.round(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step) }
+  requestAnimationFrame(step)
 }
 
 function runLevel() {
   stage.value = 'level'; lp.value = 0
+  const from = current.value.oldLevel
+  const to = current.value.newLevel
+  shownLevel.value = from
+  combo.value = 0; xpShown.value = 0
+  unlockIndex.value = 0; canAdvance.value = false; unlocksDone.value = false
   nextTick(() => {
-    timers.push(setTimeout(() => { lp.value = 1 }, 100))
-    timers.push(setTimeout(() => { lp.value = 2; celebrateLevelUp() }, 700))
-    timers.push(setTimeout(() => { lp.value = 3 }, 1300))
-    if (!tierChanged.value) soundManager.play('levelUp')
+    T(() => { lp.value = 1 }, 80)
+    // Un ¡PUM! por nivel, cada uno más rápido (sin barra: solo cambia el número)
+    let t = 350
+    let k = 0
+    for (let l = from + 1; l <= to; l++) {
+      const lv = l, idx = ++k, last = l === to
+      const dur = Math.max(320, 800 - (idx - 1) * 220)
+      T(() => {
+        if (to - from > 1) combo.value = idx
+        // El último nivel ya dispara sus propias chispas grandes dentro de pum()
+        // (caso `big`) — acá solo sumamos chispas chicas para los intermedios.
+        if (!last) {
+          const el = numEl.value
+          if (el) { const c = center(el); sparks(c.x, c.y, 14, ['#fcd34d', '#fff', '#fde68a'], 55) }
+        }
+        pum(lv, last)
+        if (last) lp.value = 2
+      }, t + dur)
+      t += dur + (last ? 60 : 380)
+    }
+    T(() => {
+      lp.value = 3
+      if (xpTotal.value) countXp(xpTotal.value)
+      if (!cardPrizes.value.length) { unlocksDone.value = true; T(() => { lp.value = 4 }, 500) }
+    }, t + 800)
   })
+}
+
+// Una carta de "Desbloqueaste" ya se sostuvo lo mínimo (RarityReveal
+// @ready-to-advance) → un toque sobre ella pasa a la siguiente.
+function advanceUnlock() {
+  if (!canAdvance.value) return
+  canAdvance.value = false
+  unlockIndex.value++
+  if (unlockIndex.value >= cardPrizes.value.length) { unlocksDone.value = true; T(() => { lp.value = 4 }, 500) }
+}
+
+// Tocar el fondo (o "Ver todo"): adelanta todo (sin saltearse lo que se gana)
+function skip() {
+  if (stage.value === 'rank') {
+    if (rp.value >= 7) return goToLevel()
+    clearTimers()
+    rp.value = 7
+    rankFaceDown.value = rankCards.value.map(() => false)
+    return
+  }
+  if (lp.value >= 4) return dismiss()
+  clearTimers()
+  shownLevel.value = current.value.newLevel
+  xpShown.value = xpTotal.value
+  if (current.value.newLevel - current.value.oldLevel > 1) combo.value = current.value.newLevel - current.value.oldLevel
+  unlockIndex.value = cardPrizes.value.length
+  unlocksDone.value = true
+  lp.value = 4
 }
 
 function goToLevel() { clearTimers(); runLevel() }
@@ -64,17 +200,24 @@ function showNext() {
   clearTimers()
   if (notificationsState.suppressOverlays) return
   if (notificationsState.proWelcome) return
-  if (notificationsState.achievementQueue.length > 0) {
-    timers.push(setTimeout(showNext, 800))
+  // Los logros van antes que el nivel (cola: resumen → logros → nivel → cosméticos).
+  // Nunca se pisan: si hay un logro en pantalla o esperando, el nivel espera a que termine.
+  if (notificationsState.achievementActive || notificationsState.achievementQueue.length > 0) {
+    if (!current.value) setLevelUpActive(false)
     return
   }
-  // Prioridad: los cosméticos se revelan ANTES del nivel. Esperamos a que el
-  // carrusel termine. Los watchers de cosmeticActive/proWelcome re-disparan esto.
-  if (notificationsState.cosmeticActive || notificationsState.cosmeticQueue.length > 0) return
   const item = shiftLevelUpQueue()
-  if (!item) { current.value = null; setLevelUpActive(false); return }
-  current.value = item
-  setLevelUpActive(true)   // la escena de cosmético espera a que esto termine
+  if (!item) { current.value = null; setLevelUpActive(false); fxOnTop(false); return }
+  // Varias subidas encoladas seguidas → una sola escena de oldLevel al máximo
+  let merged = { ...item }
+  while (notificationsState.levelUpQueue.length && notificationsState.levelUpQueue[0].oldLevel <= merged.newLevel) {
+    const n = shiftLevelUpQueue()
+    merged = { ...merged, newLevel: Math.max(merged.newLevel, n.newLevel), xpBonus: (merged.xpBonus || 0) + (n.xpBonus || 0) }
+  }
+  if (!current.value) fxOnTop(true)
+  current.value = merged
+  setLevelUpActive(true)
+  window.addEventListener('resize', onResize)
   if (tierChanged.value) runRank()
   else runLevel()
 }
@@ -83,185 +226,117 @@ function dismiss() {
   clearTimers()
   current.value = null
   rp.value = 0; lp.value = 0
-  // Si no quedan más subidas de nivel, liberar la cola para la escena de cosmético.
+  window.removeEventListener('resize', onResize)
+  fxOnTop(false)
   if (notificationsState.levelUpQueue.length === 0) setLevelUpActive(false)
-  timers.push(setTimeout(showNext, 400))
+  T(showNext, 400)
 }
 
 watch(() => notificationsState.levelUpQueue.length, (len) => {
   if (len > 0 && !current.value) showNext()
 })
 watch(() => notificationsState.suppressOverlays, (suppressed) => {
-  if (!suppressed && notificationsState.levelUpQueue.length > 0 && !current.value) {
-    setTimeout(showNext, 600)
-  }
-})
-// El carrusel de cosméticos terminó → recién ahora mostramos la subida de nivel.
-watch(() => notificationsState.cosmeticActive, (a) => {
-  if (!a && notificationsState.levelUpQueue.length > 0 && !current.value) setTimeout(showNext, 400)
+  if (!suppressed && notificationsState.levelUpQueue.length > 0 && !current.value) setTimeout(showNext, 600)
 })
 watch(() => notificationsState.proWelcome, (pw) => {
   if (!pw && notificationsState.levelUpQueue.length > 0 && !current.value) setTimeout(showNext, 400)
+})
+// Cuando termina la escena del logro (o se vacía la cola), sigue el nivel
+watch(() => notificationsState.achievementActive, (active) => {
+  if (!active && notificationsState.levelUpQueue.length > 0 && !current.value) setTimeout(showNext, 500)
+})
+watch(() => notificationsState.achievementQueue.length, (len) => {
+  if (len === 0 && !notificationsState.achievementActive && notificationsState.levelUpQueue.length > 0 && !current.value) setTimeout(showNext, 500)
 })
 </script>
 
 <template>
   <Teleport to="body">
-    <Transition name="overlay-fade">
-      <div v-if="current" class="fixed inset-0 z-[60] grid place-items-center p-4" @click.self="stage === 'rank' ? null : dismiss()">
-        <div class="absolute inset-0 bg-black/92"></div>
+    <Transition name="lvo-fade">
+      <div v-if="current" class="lvo" @click.self="skip">
+        <div class="lvo-bg" @click="skip"></div>
+        <div :key="'f' + flashKey" class="lvo-flash" :class="{ on: flashKey > 0 }" aria-hidden="true"></div>
 
         <!-- ═══════════ ACTO 1 · ASCENSO DE RANGO ═══════════ -->
-        <div v-if="stage === 'rank'" class="relative flex flex-col items-center text-center max-w-md w-full">
-          <div class="font-display text-xs font-bold uppercase tracking-[0.2em] text-fuchsia-300 mb-8 transition-opacity duration-500"
-            :class="rp >= 1 ? 'opacity-100' : 'opacity-0'"
-            :style="rp >= 1 ? 'animation: tracking-reveal 0.6s var(--ease-out-expo) both' : ''">
-            ¡Ascendiste de rango!
+        <div v-if="stage === 'rank'" ref="stageEl" class="lvo-stage" @click.self="skip">
+          <div v-if="rp === 1" class="lvo-gol" aria-live="polite">
+            <span class="g">¡G</span><span class="o">OOO</span><span class="g">L!</span>
           </div>
 
-          <div class="flex items-center justify-center gap-5">
-            <!-- Escudo viejo: se agita y se va -->
-            <div class="flex flex-col items-center transition-all duration-500"
-              :class="[rp >= 1 ? 'opacity-40' : 'opacity-0', rp >= 2 && rp < 3 ? 'shake' : '']">
-              <img v-if="oldTier?.image" :src="oldTier.image" class="w-16 h-16 object-contain grayscale" :alt="oldTier.label" />
-              <span class="text-xs text-slate-500 mt-1">{{ oldTier?.label }}</span>
+          <template v-if="rp >= 2">
+            <p class="lvo-kick" :class="{ in: rp >= 5 }">¡Ascendiste de rango!</p>
+            <div ref="badgeEl" class="lvo-badge">
+              <img v-if="rp < 4 && oldTier?.image" :src="oldTier.image" class="old" :class="{ shake: rp === 3 }" :alt="oldTier.label" />
+              <template v-else-if="rp >= 4">
+                <span class="ring" aria-hidden="true"></span>
+                <img v-if="newTier?.image" :src="newTier.image" class="new" :alt="newTier.label" />
+              </template>
+            </div>
+            <h2 class="lvo-tier" :class="{ in: rp >= 5 }">{{ newTier?.label }}</h2>
+
+            <div v-if="rp >= 6" class="lvo-block">
+              <p class="lvo-h">Al llegar ganás</p>
+              <div class="lvo-cards">
+                <PrizeCard
+                  v-for="(p, i) in rankCards" :key="'rk' + i"
+                  :ref="el => { rankCardEls[i] = el?.$el || el }"
+                  :prize="p" :size="cardSize" :face-down="rankFaceDown[i]" :state="rankFaceDown[i] ? '' : 'new'"
+                  class="lvo-deal" :style="{ animationDelay: (i * 0.12) + 's' }"
+                />
+              </div>
             </div>
 
-            <svg class="w-7 h-7 text-fuchsia-400/70 shrink-0 transition-opacity duration-300" :class="rp >= 2 ? 'opacity-100' : 'opacity-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-
-            <!-- Escudo nuevo: cae encima, reluciente -->
-            <div class="relative flex flex-col items-center"
-              :style="rp >= 3 ? 'animation: scale-spring 0.6s var(--ease-bounce) both' : 'opacity:0'">
-              <div v-if="rp >= 3" class="pointer-events-none absolute -inset-4 rounded-full bg-fuchsia-400/30 blur-2xl" style="animation: evolution-flash 0.7s ease both"></div>
-              <img v-if="newTier?.image" :src="newTier.image" class="relative w-28 h-28 object-contain drop-shadow-[0_0_22px_rgba(232,121,249,0.55)]" :alt="newTier.label" />
-              <span class="relative text-xl font-display font-bold mt-2" :class="newTierColor">{{ newTier?.label }}</span>
+            <div v-if="rp >= 7" class="lvo-next">
+              <template v-if="nextTier">
+                <img :src="nextTier.image" alt="" />
+                <span>Próximo rango: <b>{{ nextTier.label }}</b> en el nivel {{ nextTier.minLevel }}</span>
+              </template>
+              <span v-else>Llegaste al rango máximo. ¡Leyenda!</span>
             </div>
-          </div>
-
-          <p class="text-sm text-slate-300 mt-8 max-w-xs transition-opacity duration-500" :class="rp >= 3 ? 'opacity-100' : 'opacity-0'">
-            Subiste al rango <span class="font-bold" :class="newTierColor">{{ newTier?.label }}</span>. ¡Felicitaciones, crack!
-          </p>
-
-          <button
-            v-if="rp >= 3"
-            @click="goToLevel"
-            class="mt-7 rounded-2xl px-8 py-3 font-display font-bold text-white hover:brightness-110 active:scale-95 transition-all shadow-lg border border-fuchsia-400/30 bg-fuchsia-500/15 backdrop-blur"
-            style="animation: scale-spring 0.4s var(--ease-bounce) both"
-          >
-            Continuar
-          </button>
+            <button v-if="rp >= 7" type="button" class="lvo-btn" @click="goToLevel">Seguir</button>
+          </template>
         </div>
 
-        <!-- ═══════════ ACTO 2 · NIVEL + DESBLOQUEOS ═══════════ -->
-        <div v-else class="relative flex flex-col items-center text-center max-w-md w-full">
-          <!-- Level morph -->
-          <div class="mb-4 transition-all duration-500" :class="lp >= 1 ? 'opacity-100' : 'opacity-0'">
-            <div class="font-display text-xs font-bold uppercase tracking-wider mb-4"
-              :class="isMilestone ? 'text-fuchsia-400' : 'text-yellow-400'"
-              :style="lp >= 1 ? 'animation: tracking-reveal 0.6s var(--ease-out-expo) both' : ''">
-              {{ isMilestone ? '¡Hito Alcanzado!' : '¡Subiste de Nivel!' }}
+        <!-- ═══════════ ACTO 2 · ¡PUM! DE NIVEL ═══════════ -->
+        <div v-else ref="stageEl" class="lvo-stage" @click.self="skip">
+          <p class="lvo-kick" :class="{ in: lp >= 1 }">{{ levelsUp > 1 ? `¡Subiste ${levelsUp} niveles!` : '¡Subiste de nivel!' }}</p>
+          <div ref="numEl" class="lvo-num" :class="{ big: bigPum }">
+            <span class="nv">Nivel</span>
+            <span :key="pumKey" class="n" :class="bigPum ? 'pum' : 'pum-s'">{{ shownLevel }}</span>
+            <span v-if="bigPum" class="shock" aria-hidden="true"></span>
+            <span v-if="combo > 1 && lp < 3" :key="'c' + combo" class="lvo-combo">×{{ combo }}</span>
+          </div>
+          <span v-if="levelsUp > 1 && lp >= 2" class="lvo-range">{{ current.oldLevel }} → {{ current.newLevel }}</span>
+
+          <div v-if="lp >= 3 && cardPrizes.length && !unlocksDone" class="lvo-block">
+            <p class="lvo-h">Desbloqueaste</p>
+            <div class="lvo-unlock-one" :class="{ can: canAdvance }" @click="advanceUnlock">
+              <RarityReveal
+                :key="'unlock' + unlockIndex"
+                :prize="cardPrizes[unlockIndex]"
+                @ready-to-advance="canAdvance = true"
+              />
             </div>
-            <div class="flex items-center justify-center gap-4">
-              <span class="text-5xl font-display font-bold text-slate-500 line-through decoration-2">{{ current.oldLevel }}</span>
-              <svg class="w-8 h-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-              <span class="text-7xl font-display font-bold text-yellow-400"
-                :style="lp >= 1 ? 'animation: level-morph 0.6s var(--ease-bounce) both' : ''">{{ current.newLevel }}</span>
+            <div v-if="cardPrizes.length > 1" class="lvo-dots">
+              <i v-for="(p, i) in cardPrizes" :key="'d' + i" :class="{ on: i <= unlockIndex }"></i>
             </div>
+            <p class="lvo-skip-hint">{{ canAdvance ? 'Tocá la carta para seguir' : '' }}</p>
+            <button type="button" class="lvo-all" @click="skip">Ver todo</button>
           </div>
 
-          <!-- XP bonus badge -->
-          <div class="mb-5 transition-all duration-500" :class="lp >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'">
-            <div class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-display font-bold text-sm"
-              :class="isMilestone
-                ? 'bg-gradient-to-r from-fuchsia-500/20 to-amber-500/20 border border-fuchsia-500/30 text-fuchsia-300'
-                : 'bg-emerald-500/15 border border-emerald-500/25 text-emerald-400'">
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <span>+{{ current.xpBonus }} XP</span>
-            </div>
-          </div>
-
-          <!-- Desbloqueaste JUEGOS (los cosméticos los revela el carrusel grande) -->
-          <div v-if="lp >= 2 && gameUnlocks.length" class="mb-4 w-full">
-            <p class="text-[10px] uppercase tracking-wider text-amber-300 font-semibold mb-2">Nuevo juego desbloqueado</p>
-            <div class="grid gap-2" :class="gameUnlocks.length === 1 ? 'grid-cols-1' : 'grid-cols-2'">
-              <div
-                v-for="(r, ri) in gameUnlocks"
-                :key="'g' + ri"
-                class="flex items-center gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-2.5"
-                :style="`animation: slide-up 0.35s ease ${0.08 * ri}s both`"
-              >
-                <img :src="`/games/${r.slug}.svg`" class="w-9 h-9 object-contain shrink-0" alt="" />
-                <div class="text-xs font-bold text-white leading-tight text-left">{{ r.name || r.label }}</div>
-              </div>
+          <div v-if="lp >= 3 && (unlocksDone || !cardPrizes.length) && hasUnlocks" class="lvo-block">
+            <p v-if="cardPrizes.length" class="lvo-h">Desbloqueaste</p>
+            <!-- XP y ayudas: fichas simples, no cartas -->
+            <div v-if="xpTotal || helpPrizes.length" class="lvo-chips">
+              <span v-if="xpTotal" class="lvo-chip xp"><b>+{{ xpShown }}</b> XP</span>
+              <span v-for="(h, i) in helpPrizes" :key="'h' + i" class="lvo-chip help" :style="{ animationDelay: (0.15 + i * 0.1) + 's' }">
+                <PowerupIcon :type="h.powerup" :size="20" />{{ h.name }}
+              </span>
             </div>
           </div>
 
-          <!-- ═══ LO QUE VIENE · línea de tiempo por nivel ═══ -->
-          <div v-if="lp >= 2 && upcoming.length" class="mb-5 w-full">
-            <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-3">Lo que viene — seguí subiendo</p>
-            <div class="relative px-1">
-              <!-- Riel base + tramo ya conquistado (emerald) que se desvanece hacia lo bloqueado -->
-              <div class="absolute top-[22px] left-3 right-3 h-[3px] rounded-full bg-white/10"></div>
-              <div class="absolute top-[22px] left-3 h-[3px] w-10 rounded-full bg-gradient-to-r from-amber-300 to-amber-300/0"></div>
-              <div class="relative flex items-start justify-between">
-                <div
-                  v-for="(r, ri) in upcoming"
-                  :key="'up' + ri"
-                  class="group relative z-10 flex flex-col items-center gap-1.5"
-                  style="width: 19%"
-                  :style="`animation: slide-up 0.35s ease ${0.2 + 0.07 * ri}s both`"
-                >
-                  <!-- Nodo bloqueado -->
-                  <div class="relative">
-                    <div class="w-11 h-11 rounded-xl grid place-items-center bg-slate-800/90 border border-white/10 ring-2 ring-slate-900">
-                      <div class="opacity-55 grayscale">
-                        <PassCosmetic v-if="isCos(r.kind)" :cos="cosObj(r)" :size="32" />
-                        <img v-else-if="r.kind === 'game'" :src="`/games/${r.slug}.svg`" class="w-7 h-7 object-contain" alt="" />
-                        <img v-else-if="r.kind === 'tier'" :src="r.image" class="w-8 h-8 object-contain" alt="" />
-                        <span v-else class="text-lg">🎁</span>
-                      </div>
-                    </div>
-                    <div class="absolute -bottom-1 -right-1 grid place-items-center w-4 h-4 rounded-full bg-slate-900 ring-1 ring-white/10">
-                      <svg class="w-2.5 h-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75M6.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
-                    </div>
-
-                    <!-- Hover: preview grande y claro del cosmético bloqueado -->
-                    <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 w-40 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150">
-                      <div class="rounded-xl bg-slate-950/95 border border-white/15 shadow-xl p-3 flex flex-col items-center gap-2">
-                        <div class="grid place-items-center h-14">
-                          <PassCosmetic v-if="isCos(r.kind)" :cos="cosObj(r)" :size="54" />
-                          <img v-else-if="r.kind === 'game'" :src="`/games/${r.slug}.svg`" class="w-12 h-12 object-contain" alt="" />
-                          <img v-else-if="r.kind === 'tier'" :src="r.image" class="w-12 h-12 object-contain" alt="" />
-                          <span v-else class="text-3xl">🎁</span>
-                        </div>
-                        <div class="text-center">
-                          <div class="text-[9px] uppercase tracking-wide text-slate-400">{{ typeLabelOf(r) }}</div>
-                          <div class="text-sm font-bold text-white leading-tight">{{ r.name || r.label }}</div>
-                          <div class="text-[11px] font-semibold text-amber-300 mt-0.5">Se desbloquea en nivel {{ r.level }}</div>
-                        </div>
-                      </div>
-                      <div class="w-2.5 h-2.5 bg-slate-950 border-r border-b border-white/15 rotate-45 mx-auto -mt-[6px]"></div>
-                    </div>
-                  </div>
-                  <div class="text-[9px] font-bold text-slate-500">Niv {{ r.level }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Dismiss -->
-          <div class="transition-all duration-400" :class="lp >= 3 ? 'opacity-100' : 'opacity-0'">
-            <button
-              @click="dismiss"
-              class="rounded-2xl px-8 py-3 font-display font-bold text-white hover:brightness-110 active:scale-95 transition-all shadow-lg border border-white/20 bg-white/10 backdrop-blur"
-            >
-              Continuar
-            </button>
-          </div>
+          <button v-if="lp >= 4" type="button" class="lvo-btn" @click="dismiss">Continuar</button>
+          <p v-if="lp < 4" class="lvo-skip">Tocá para adelantar</p>
         </div>
       </div>
     </Transition>
@@ -269,12 +344,92 @@ watch(() => notificationsState.proWelcome, (pw) => {
 </template>
 
 <style scoped>
-.overlay-fade-enter-active { transition: opacity 0.3s ease; }
-.overlay-fade-leave-active { transition: opacity 0.25s ease; }
-.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
+.lvo { position: fixed; inset: 0; z-index: 60; overflow-y: auto; display: grid; place-items: center; padding: 24px 16px; }
+.lvo-bg { position: fixed; inset: 0; background: radial-gradient(80% 60% at 50% 35%, rgba(18, 26, 70, .82), rgba(2, 4, 12, .97) 70%); -webkit-backdrop-filter: blur(10px) saturate(.6) brightness(.6); backdrop-filter: blur(10px) saturate(.6) brightness(.6); }
+.lvo-flash { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(50% 50% at 50% 40%, rgba(255, 244, 200, .9), rgba(255, 244, 200, 0) 70%); opacity: 0; }
+.lvo-flash.on { animation: lvo-flash .55s ease-out; }
+@keyframes lvo-flash { 0% { opacity: .95; } 100% { opacity: 0; } }
+/* Escenario de alto fijo, centrado en la pantalla: el contenido crece hacia abajo sin que salte todo */
+.lvo-stage { position: relative; width: min(100%, 760px); min-height: min(660px, calc(100vh - 48px)); display: flex; flex-direction: column; justify-content: flex-start; align-items: center; text-align: center; gap: 12px; padding-top: clamp(8px, 3vh, 80px); }
 
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+.lvo-kick { margin: 0; font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .18em; font-size: 14px; color: #fcd34d; opacity: 0; transform: translateY(6px); transition: opacity .4s, transform .4s; }
+.lvo-kick.in { opacity: 1; transform: none; }
+
+/* ¡PUM! */
+.lvo-num { position: relative; display: grid; justify-items: center; gap: 10px; }
+.lvo-num .nv { font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .32em; font-size: 20px; line-height: 1; color: #cbd5e1; padding-left: .32em; }
+.lvo-num .n { font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: clamp(80px, min(30vw, 24vh), 210px); line-height: .9; color: #fff; font-variant-numeric: tabular-nums; }
+.lvo-num.big .n { color: #fde68a; text-shadow: 0 6px 0 #b45309, 0 0 44px rgba(252, 211, 77, .6); }
+.n.pum-s { animation: lvo-pums .38s cubic-bezier(.34, 1.56, .64, 1); }
+.n.pum { animation: lvo-pum .6s cubic-bezier(.16, 1, .3, 1); }
+@keyframes lvo-pums { 0% { transform: scale(1.35); opacity: .4; } 100% { transform: none; opacity: 1; } }
+@keyframes lvo-pum { 0% { transform: scale(3); opacity: 0; filter: blur(12px); } 45% { transform: scale(.92); opacity: 1; filter: none; } 100% { transform: none; } }
+.lvo-num .shock { position: absolute; left: 50%; top: 58%; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 4px solid #fcd34d; opacity: 0; animation: lvo-shock .7s ease-out; pointer-events: none; }
+@keyframes lvo-shock { 0% { opacity: .9; transform: scale(.3); } 100% { opacity: 0; transform: scale(3.6); } }
+.lvo-combo { position: absolute; right: -8px; top: 4px; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 34px; line-height: 1; color: #fde68a; text-shadow: 0 3px 0 #b45309, 0 0 18px rgba(252, 211, 77, .7); transform: rotate(-8deg); animation: lvo-combo .45s cubic-bezier(.34, 1.56, .64, 1) both; }
+@keyframes lvo-combo { from { transform: rotate(-8deg) scale(2.4); opacity: 0; } to { transform: rotate(-8deg); opacity: 1; } }
+.lvo-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.lvo-chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; font-size: 16px; animation: lvo-in .4s ease both; }
+.lvo-chip.xp { background: rgba(252, 211, 77, .12); border: 1.5px solid rgba(252, 211, 77, .5); color: #fde68a; }
+.lvo-chip.xp b { font-size: 26px; line-height: 1; color: #fcd34d; font-variant-numeric: tabular-nums; }
+.lvo-chip.help { background: rgba(56, 189, 248, .1); border: 1.5px solid rgba(56, 189, 248, .45); color: #bae6fd; }
+.lvo-range { font-family: var(--font-bug); font-weight: 800; font-size: 18px; padding: 3px 12px; border-radius: 999px; background: rgba(252, 211, 77, .12); border: 1px solid rgba(252, 211, 77, .4); color: #fde68a; animation: lvo-in .4s ease both; }
+
+/* bloques de cartas */
+.lvo-block { width: 100%; display: grid; gap: 12px; justify-items: center; animation: lvo-in .45s ease both; }
+.lvo-h { margin: 0; font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .14em; font-size: 13px; color: #94a3b8; }
+.lvo-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 14px; padding-bottom: 8px; }
+.lvo-deal { animation: lvo-deal .45s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes lvo-deal { from { opacity: 0; transform: translateY(50px) scale(.7); } to { opacity: 1; transform: none; } }
+/* "Desbloqueaste" una carta a la vez (RarityReveal) */
+.lvo-unlock-one { width: 100%; cursor: default; }
+.lvo-unlock-one.can { cursor: pointer; }
+.lvo-unlock-one :deep(.rr) { height: 330px; }
+.lvo-dots { display: flex; gap: 6px; justify-content: center; }
+.lvo-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, .18); transition: background .25s, transform .25s; }
+.lvo-dots i.on { background: #fcd34d; transform: scale(1.15); }
+.lvo-skip-hint { margin: -4px 0 0; min-height: 16px; font-size: 12px; color: #94a3b8; animation: lvo-in .3s ease both; }
+.lvo-all { font-family: var(--font-bug); font-weight: 700; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: #8b93b8; background: none; border: 1px solid rgba(255, 255, 255, .12); border-radius: 999px; padding: 7px 16px; cursor: pointer; }
+.lvo-all:hover { color: #fff; border-color: rgba(255, 255, 255, .25); }
+@keyframes lvo-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.lvo-rail { display: flex; gap: 10px; overflow-x: auto; max-width: 100%; padding: 6px 4px 12px; scrollbar-width: thin; }
+.lvo-up { display: grid; justify-items: center; gap: 8px; flex: none; animation: lvo-in .4s ease both; }
+.lvo-up .lv { font-family: var(--font-bug); font-weight: 800; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; }
+.lvo-up .more { font-size: 11px; color: #64748b; margin-top: -6px; }
+.lvo-up.nx .lv { color: #fcd34d; }
+.lvo-up.nx :deep(.pcard) { animation: lvo-float 2s ease-in-out infinite; }
+@keyframes lvo-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+.lvo-btn { margin-top: 6px; font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .1em; font-size: 18px; padding: 12px 38px; border-radius: 14px; border: 0; cursor: pointer; color: #141005; background: linear-gradient(180deg, #fde68a, #f59e0b); box-shadow: 0 10px 26px rgba(245, 158, 11, .35); animation: lvo-in .4s ease both; }
+.lvo-btn:active { transform: scale(.96); }
+.lvo-skip { margin: 4px 0 0; font-size: 12px; color: #64748b; }
+
+/* ¡GOL! */
+.lvo-gol { font-family: var(--font-shout); font-weight: 800; font-style: italic; text-transform: uppercase; font-size: clamp(76px, 20vw, 170px); line-height: 1; color: #fff; text-shadow: 0 6px 0 #b45309, 0 0 50px rgba(252, 211, 77, .6); animation: lvo-gol 1.15s cubic-bezier(.16, 1, .3, 1) both; white-space: nowrap; }
+.lvo-gol .o { color: #fde68a; animation: lvo-stretch 1.1s ease-out both; }
+@keyframes lvo-gol { 0% { transform: scale(2.6) rotate(-4deg); opacity: 0; filter: blur(10px); } 30% { transform: scale(1) rotate(-4deg); opacity: 1; filter: none; } 80% { transform: scale(1.05) rotate(-4deg); opacity: 1; } 100% { transform: scale(1.6) rotate(-4deg); opacity: 0; } }
+@keyframes lvo-stretch { 0% { letter-spacing: -.08em; } 60% { letter-spacing: .06em; } 100% { letter-spacing: .03em; } }
+
+/* escudo */
+.lvo-badge { position: relative; width: clamp(130px, 32vw, 180px); aspect-ratio: 1; display: grid; place-items: center; }
+.lvo-badge img { width: 100%; height: 100%; object-fit: contain; }
+.lvo-badge .old { filter: grayscale(.5) brightness(.8); animation: lvo-in .4s ease both; }
+.lvo-badge .old.shake { animation: lvo-shake .6s ease-in-out infinite; filter: brightness(1.4) saturate(1.3); }
+@keyframes lvo-shake { 10%, 90% { transform: translate(-1px, 1px); } 20%, 80% { transform: translate(3px, -2px) rotate(2deg); } 30%, 50%, 70% { transform: translate(-5px, 3px) rotate(-3deg); } 40%, 60% { transform: translate(5px, -3px) rotate(3deg); } }
+.lvo-badge .new { animation: lvo-forge .9s cubic-bezier(.34, 1.56, .64, 1) both; filter: drop-shadow(0 0 26px rgba(252, 211, 77, .55)); }
+@keyframes lvo-forge { 0% { transform: scale(.1) rotate(-30deg); opacity: 0; filter: brightness(3) drop-shadow(0 0 40px #fff); } 60% { transform: scale(1.12) rotate(4deg); opacity: 1; } 100% { transform: none; filter: drop-shadow(0 0 26px rgba(252, 211, 77, .55)); } }
+.lvo-badge .ring { position: absolute; inset: 10%; border-radius: 50%; border: 4px solid #fcd34d; animation: lvo-shock .8s ease-out both; }
+.lvo-tier { margin: 0; font-family: var(--font-shout); font-weight: 800; font-style: italic; text-transform: uppercase; font-size: clamp(40px, 9vw, 64px); line-height: .95; color: #fff; opacity: 0; transform: scale(.8); transition: opacity .4s, transform .5s cubic-bezier(.34, 1.56, .64, 1); }
+.lvo-tier.in { opacity: 1; transform: none; }
+.lvo-next { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #cbd5e1; animation: lvo-in .4s ease both; }
+.lvo-next img { width: 40px; height: 40px; object-fit: contain; filter: grayscale(.4) brightness(.8); }
+.lvo-next b { color: #fcd34d; }
+
+.lvo-fade-enter-active { transition: opacity .3s ease; }
+.lvo-fade-leave-active { transition: opacity .25s ease; }
+.lvo-fade-enter-from, .lvo-fade-leave-to { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lvo *, .lvo-flash.on { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
 </style>

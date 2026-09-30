@@ -41,7 +41,7 @@ function close() { emit('close') }
       <div v-if="match" class="fixed inset-0 z-[70] overflow-y-auto">
         <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" @click="close"></div>
         <div class="relative min-h-full flex items-start sm:items-center justify-center p-3 sm:p-4" @click.self="close">
-          <div class="relative w-full max-w-md rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl my-4">
+          <div v-pop class="relative w-full max-w-md rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl my-4">
             <div class="flex items-center justify-between px-5 py-4 border-b border-white/10">
               <div class="flex items-center gap-2 min-w-0">
                 <img v-if="match.leagueLogo" :src="match.leagueLogo" width="16" height="16" class="w-4 h-4 object-contain shrink-0" alt="" @error="$event.target.style.display='none'" />

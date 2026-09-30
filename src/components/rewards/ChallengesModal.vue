@@ -100,7 +100,7 @@ watch(() => props.open, (o) => { if (o && !loaded.value) loadDaily() })
     <Transition name="ch-fade">
       <div v-if="open" class="fixed inset-0 z-[70] grid place-items-center p-4" @click.self="emit('close')">
         <div class="absolute inset-0 bg-black/75 backdrop-blur-sm"></div>
-        <div class="relative w-full max-w-lg max-h-[86vh] flex flex-col rounded-2xl border border-white/15 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl overflow-hidden">
+        <div v-pop class="relative w-full max-w-lg max-h-[86vh] flex flex-col rounded-2xl border border-white/15 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl overflow-hidden">
           <!-- Header -->
           <div class="shrink-0 flex items-center gap-2.5 px-5 py-4 border-b border-white/10 bg-white/[0.03]">
             <span class="grid place-items-center h-9 w-9 rounded-xl bg-amber-500/15 border border-amber-400/25 text-amber-300">

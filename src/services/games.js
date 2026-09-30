@@ -177,6 +177,31 @@ export const GRID_DIFFICULTY_CONFIG = {
   }
 };
 
+// Configuración de dificultad para juegos SQUAD (armar equipo contra reloj)
+export const SQUAD_DIFFICULTY_CONFIG = {
+  [DIFFICULTY_LEVELS.EASY]: {
+    label: 'Fácil',
+    icon: '🟢',
+    time: 180,
+    xpCompletion: 100,
+    description: 'Cualquier jugador que cumpla la condición'
+  },
+  [DIFFICULTY_LEVELS.NORMAL]: {
+    label: 'Normal',
+    icon: '🟡',
+    time: 180,
+    xpCompletion: 175,
+    description: 'Cualquier jugador que cumpla la condición'
+  },
+  [DIFFICULTY_LEVELS.HARD]: {
+    label: 'Difícil',
+    icon: '🔴',
+    time: 180,
+    xpCompletion: 300,
+    description: 'Cualquier jugador que cumpla la condición'
+  }
+};
+
 // Configuración de dificultad para juegos LIVES (con sistema de vidas)
 export const LIVES_DIFFICULTY_CONFIG = {
   [DIFFICULTY_LEVELS.EASY]: {
@@ -217,6 +242,7 @@ export function getDifficultyConfig(gameType, difficulty = DIFFICULTY_LEVELS.NOR
     [GAME_TYPES.CHAIN]: CHAIN_DIFFICULTY_CONFIG,
     [GAME_TYPES.PUZZLE]: PUZZLE_DIFFICULTY_CONFIG,
     [GAME_TYPES.GRID]: GRID_DIFFICULTY_CONFIG,
+    [GAME_TYPES.SQUAD]: SQUAD_DIFFICULTY_CONFIG,
   }
   const map = configs[gameType] || TIMED_DIFFICULTY_CONFIG
   return map[difficulty] || map[DIFFICULTY_LEVELS.NORMAL]
@@ -333,9 +359,9 @@ const GAME_METADATA = {
     mechanic: 'Hacé 10 aciertos antes de que se acabe el tiempo',
     videoUrl: '',
     tips: [
-      'Mirá todas las pistas antes de elegir',
-      'Eliminá opciones imposibles primero',
-      'Confiá en tu intuición y responde rápido'
+      'La foto arranca borrosa y se va aclarando',
+      'Si acertás rápido, con la foto borrosa, sumás hasta el doble de XP',
+      'Eliminá opciones imposibles primero'
     ]
   },
   'football-wordle': {
@@ -387,6 +413,16 @@ const GAME_METADATA = {
       'Fijate en los números altos — suelen ser jugadores top',
       'Compará mentalmente las stats con jugadores conocidos'
     ]
+  },
+  'once-ideal': {
+    type: GAME_TYPES.SQUAD,
+    mechanic: 'Armá el once titular con jugadores que cumplan la condición antes de que se acabe el tiempo',
+    videoUrl: '',
+    tips: [
+      'Escribí el jugador primero: si cumple la condición, elegís dónde va',
+      'Un jugador puede entrar en más de un puesto según su posición',
+      'Las líneas de la formación se iluminan cuando conectás dos puestos'
+    ]
   }
 }
 
@@ -408,9 +444,9 @@ const KNOWN_GAMES = [
 ]
 
 // Juegos pausados: no se muestran en el index ni en filtros.
-// stat-challenge (Duelo de Stats): las stats del dataset son placeholder (apariciones 0/1,
-// goles/asist desactualizados), así que se pausa hasta tener datos reales de temporada.
-const PAUSED_GAMES = new Set(['stat-challenge'])
+// stat-challenge (Duelo de Stats) se despausó: el refresco semanal ya trae
+// stats reales de temporada (partidos/minutos/goles/asistencias por jugador).
+const PAUSED_GAMES = new Set([])
 
 export function isGamePaused(slug) {
   return PAUSED_GAMES.has(slug)

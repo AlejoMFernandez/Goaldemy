@@ -1,4 +1,3 @@
-import { spawnXpBadge } from './ui-effects'
 import { onCorrect, onIncorrect } from './scoring'
 import { celebrateCorrect, celebrateIncorrect } from './game-celebrations'
 import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, shuffleArray, getOptionClasses, getBroadPosition } from './game-common'
@@ -72,7 +71,6 @@ export function pickAnswer(state, option, confettiHost) {
     const xpAmount = state.difficultyConfig?.xpPerCorrect || 10
     if (state.allowXp) {
       state.xpEarned += xpAmount
-      spawnXpBadge(confettiHost, `+${xpAmount} XP`, { position: 'top-right' })
     }
     onCorrect(state)
     state.streak = nextStreak
