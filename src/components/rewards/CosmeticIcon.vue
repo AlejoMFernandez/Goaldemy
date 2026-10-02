@@ -27,7 +27,7 @@ const EMOJI_MAP = {
   '⚽': 'ball', '👟': 'boot', '🧤': 'gloves', '🏅': 'medal',
   '🏆': 'trophy', '🐐': 'goat', '👑': 'crown', '⭐': 'star', '🛡️': 'shield', '🛡': 'shield',
 }
-const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel', 'chat', 'butterfly', 'globe', 'comet', 'phoenix', 'rank_bronze', 'rank_silver', 'rank_gold', 'rank_emerald', 'rank_cyan', 'rank_champion'])
+const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel', 'chat', 'butterfly', 'globe', 'comet', 'phoenix', 'rank_bronze', 'rank_silver', 'rank_gold', 'rank_emerald', 'rank_cyan', 'rank_champion', 'rank_figura', 'rank_idolo', 'rank_icono', 'rank_leyenda', 'rank_goat'])
 
 const key = computed(() => {
   const k = (props.iconKey || '').trim()
@@ -37,7 +37,7 @@ const key = computed(() => {
 })
 
 // Íconos de rango: arte del kit (public/cosmetics/rank/icon-<rango>.svg), tile completo 120×120.
-const RANK_ICON_TIER = { rank_bronze: 'aficionado', rank_silver: 'juvenil', rank_gold: 'amateur', rank_emerald: 'reserva', rank_cyan: 'profesional', rank_champion: 'crack' }
+const RANK_ICON_TIER = { rank_bronze: 'aficionado', rank_silver: 'juvenil', rank_gold: 'amateur', rank_emerald: 'reserva', rank_cyan: 'profesional', rank_champion: 'crack', rank_figura: 'figura', rank_idolo: 'idolo', rank_icono: 'icono', rank_leyenda: 'leyenda', rank_goat: 'goat' }
 const rankSrc = computed(() => (RANK_ICON_TIER[key.value] ? `/cosmetics/rank/icon-${RANK_ICON_TIER[key.value]}.svg` : ''))
 
 const isSvg = computed(() => !!key.value)

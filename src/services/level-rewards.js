@@ -99,10 +99,70 @@ export const MILESTONES = [
     color: 'violet',
     xpBonus: 1000,
     title: '¡Rango Crack!',
-    description: '¡Nivel máximo! Sos una enciclopedia viviente del fútbol',
+    description: 'Sos una enciclopedia viviente del fútbol',
     rewards: [
       { type: 'xp', label: '+1000 XP bonus' },
       { type: 'tier', label: 'Rango: Crack', image: '/badges/crack.svg' },
+    ],
+  },
+  {
+    level: 60,
+    tier: 'Figura',
+    color: 'rose',
+    xpBonus: 1250,
+    title: '¡Rango Figura!',
+    description: 'Brillás en cada partido',
+    rewards: [
+      { type: 'xp', label: '+1250 XP bonus' },
+      { type: 'tier', label: 'Rango: Figura', image: '/badges/figura.svg' },
+    ],
+  },
+  {
+    level: 70,
+    tier: 'Ídolo',
+    color: 'violet',
+    xpBonus: 1500,
+    title: '¡Rango Ídolo!',
+    description: 'La gente ya te canta desde la tribuna',
+    rewards: [
+      { type: 'xp', label: '+1500 XP bonus' },
+      { type: 'tier', label: 'Rango: Ídolo', image: '/badges/idolo.svg' },
+    ],
+  },
+  {
+    level: 80,
+    tier: 'Ícono',
+    color: 'sky',
+    xpBonus: 1750,
+    title: '¡Rango Ícono!',
+    description: 'Tu nombre quedó en la historia',
+    rewards: [
+      { type: 'xp', label: '+1750 XP bonus' },
+      { type: 'tier', label: 'Rango: Ícono', image: '/badges/icono.svg' },
+    ],
+  },
+  {
+    level: 90,
+    tier: 'Leyenda',
+    color: 'amber',
+    xpBonus: 2000,
+    title: '¡Rango Leyenda!',
+    description: 'Ya sos parte del museo del fútbol',
+    rewards: [
+      { type: 'xp', label: '+2000 XP bonus' },
+      { type: 'tier', label: 'Rango: Leyenda', image: '/badges/leyenda.svg' },
+    ],
+  },
+  {
+    level: 100,
+    tier: 'GOAT',
+    color: 'fuchsia',
+    xpBonus: 3000,
+    title: '¡Rango GOAT!',
+    description: '¡Nivel 100! El más grande de todos los tiempos',
+    rewards: [
+      { type: 'xp', label: '+3000 XP bonus' },
+      { type: 'tier', label: 'Rango: GOAT', image: '/badges/goat.svg' },
     ],
   },
 ]
@@ -172,7 +232,7 @@ export function getLevelRewards(level) {
 export function getUpcomingRewards(level, count = 3) {
   const lvl = Number(level) || 1
   const out = []
-  for (let l = lvl + 1; l <= 60 && out.length < count; l++) {
+  for (let l = lvl + 1; l <= 100 && out.length < count; l++) {
     const atLevel = getLevelRewards(l).filter(r => r.kind !== 'xp')
     for (const r of atLevel) {
       out.push({ level: l, ...r })

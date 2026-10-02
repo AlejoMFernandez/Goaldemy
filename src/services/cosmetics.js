@@ -135,7 +135,12 @@ export const FRAME_STYLES = {
   medal_gold: { wrap: 'frm-kit frm-kit-amateur', pad: '' },
   medal_diamond: { wrap: 'frm-kit frm-kit-profesional', pad: '' },
   medal_emerald: { wrap: 'frm-kit frm-kit-reserva', pad: '' },
-  medal_champion: { wrap: 'frm-kit frm-kit-crack', pad: '' },
+  medal_champion:{ wrap: 'frm-kit frm-kit-crack', pad: '' },
+  medal_figura: { wrap: 'frm-kit frm-kit-figura', pad: '' },
+  medal_idolo: { wrap: 'frm-kit frm-kit-idolo', pad: '' },
+  medal_icono: { wrap: 'frm-kit frm-kit-icono', pad: '' },
+  medal_leyenda: { wrap: 'frm-kit frm-kit-leyenda', pad: '' },
+  medal_goat: { wrap: 'frm-kit frm-kit-goat', pad: '' },
 }
 
 export function frameStyle(styleKey) {
@@ -159,6 +164,11 @@ export const BANNER_STYLES = {
   tier_reserva:     'bnr-tier-reserva',
   tier_profesional: 'bnr-tier-profesional',
   tier_crack:       'bnr-tier-crack',
+  tier_figura: 'bnr-tier-figura',
+  tier_idolo: 'bnr-tier-idolo',
+  tier_icono: 'bnr-tier-icono',
+  tier_leyenda: 'bnr-tier-leyenda',
+  tier_goat: 'bnr-tier-goat',
 }
 
 export function bannerStyle(styleKey) {
@@ -229,6 +239,11 @@ export const ICON_THEME_BG = {
   rank_emerald: 'bg-gradient-to-b from-emerald-600 to-emerald-950',
   rank_cyan: 'bg-gradient-to-b from-cyan-600 to-cyan-950',
   rank_champion: 'bg-gradient-to-b from-teal-700 to-slate-950',
+  rank_figura: 'bg-gradient-to-b from-rose-700 to-rose-950',
+  rank_idolo: 'bg-gradient-to-b from-violet-700 to-violet-950',
+  rank_icono: 'bg-gradient-to-b from-sky-700 to-slate-950',
+  rank_leyenda: 'bg-gradient-to-b from-amber-700 to-stone-950',
+  rank_goat: 'bg-gradient-to-b from-indigo-600 to-slate-950',
 }
 export function iconThemeBg(styleKey) {
   return ICON_THEME_BG[styleKey] || 'bg-gradient-to-b from-emerald-600 to-cyan-900'

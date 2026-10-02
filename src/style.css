@@ -427,6 +427,11 @@ option:disabled { color: #64748b; }
 .bnr-tier-amateur { background: #0b1220 url('/cosmetics/rank/banner-amateur.svg') left center / cover no-repeat; }
 .bnr-tier-reserva { background: #0b1220 url('/cosmetics/rank/banner-reserva.svg') left center / cover no-repeat; }
 .bnr-tier-profesional { background: #0b1220 url('/cosmetics/rank/banner-profesional.svg') left center / cover no-repeat; }
+.bnr-tier-figura { background: #0b1220 url('/cosmetics/rank/banner-figura.svg') left center / cover no-repeat; }
+.bnr-tier-idolo { background: #0b1220 url('/cosmetics/rank/banner-idolo.svg') left center / cover no-repeat; }
+.bnr-tier-icono { background: #0b1220 url('/cosmetics/rank/banner-icono.svg') left center / cover no-repeat; }
+.bnr-tier-leyenda { background: #0b1220 url('/cosmetics/rank/banner-leyenda.svg') left center / cover no-repeat; }
+.bnr-tier-goat { background: #0b1220 url('/cosmetics/rank/banner-goat.svg') left center / cover no-repeat; }
 .bnr-tier-crack { background: #0b1220 url('/cosmetics/rank/banner-crack.svg') left center / cover no-repeat; }
 /* Kit de rango: el SVG del borde (120×124) hace de marco; el avatar va en el círculo central r=34 (56 % del lado): se achica con scale para no depender del layout. */
 .frm-kit, .frm-kit.anim-pan { background-color: transparent; background-size: 100% 100% !important; background-repeat: no-repeat; border-radius: 0 !important; padding: 0 !important; box-shadow: none !important; animation: none !important; }
@@ -436,6 +441,11 @@ option:disabled { color: #64748b; }
 .frm-kit-amateur { background-image: url('/cosmetics/rank/border-amateur.svg'); }
 .frm-kit-reserva { background-image: url('/cosmetics/rank/border-reserva.svg'); }
 .frm-kit-profesional { background-image: url('/cosmetics/rank/border-profesional.svg'); }
+.frm-kit-figura { background-image: url('/cosmetics/rank/border-figura.svg'); }
+.frm-kit-idolo { background-image: url('/cosmetics/rank/border-idolo.svg'); }
+.frm-kit-icono { background-image: url('/cosmetics/rank/border-icono.svg'); }
+.frm-kit-leyenda { background-image: url('/cosmetics/rank/border-leyenda.svg'); }
+.frm-kit-goat { background-image: url('/cosmetics/rank/border-goat.svg'); }
 .frm-kit-crack { background-image: url('/cosmetics/rank/border-crack.svg'); }
 
 /* ═════════════════════════════════════════════════════════════════════

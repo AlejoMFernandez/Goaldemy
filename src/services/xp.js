@@ -133,7 +133,7 @@ export async function getUserRank(userId) {
   return { rank: idx >= 0 ? (top[idx].rank ?? (idx + 1)) : null, error: null }
 }
 
-const FALLBACK_THRESHOLDS = [
+export const FALLBACK_THRESHOLDS = [
   { level: 1, xp_required: 0 }, { level: 2, xp_required: 100 }, { level: 3, xp_required: 250 },
   { level: 4, xp_required: 450 }, { level: 5, xp_required: 700 }, { level: 6, xp_required: 1000 },
   { level: 7, xp_required: 1350 }, { level: 8, xp_required: 1750 }, { level: 9, xp_required: 2200 },
@@ -151,6 +151,24 @@ const FALLBACK_THRESHOLDS = [
   { level: 43, xp_required: 89400 }, { level: 44, xp_required: 94700 }, { level: 45, xp_required: 100200 },
   { level: 46, xp_required: 105900 }, { level: 47, xp_required: 111800 }, { level: 48, xp_required: 117900 },
   { level: 49, xp_required: 124200 }, { level: 50, xp_required: 130700 },
+  // 51–100: curva de feature/rangos-100 (espejo de supabase/pendientes/2026-10-03-rangos-curva-xp-51-100.sql)
+  { level: 51, xp_required: 137400 }, { level: 52, xp_required: 144300 }, { level: 53, xp_required: 151450 },
+  { level: 54, xp_required: 158800 }, { level: 55, xp_required: 166400 }, { level: 56, xp_required: 174250 },
+  { level: 57, xp_required: 182350 }, { level: 58, xp_required: 190750 }, { level: 59, xp_required: 199350 },
+  { level: 60, xp_required: 208250 }, { level: 61, xp_required: 217450 }, { level: 62, xp_required: 226950 },
+  { level: 63, xp_required: 236750 }, { level: 64, xp_required: 246850 }, { level: 65, xp_required: 257300 },
+  { level: 66, xp_required: 268050 }, { level: 67, xp_required: 279150 }, { level: 68, xp_required: 290650 },
+  { level: 69, xp_required: 302500 }, { level: 70, xp_required: 314700 }, { level: 71, xp_required: 327300 },
+  { level: 72, xp_required: 340350 }, { level: 73, xp_required: 353750 }, { level: 74, xp_required: 367650 },
+  { level: 75, xp_required: 381950 }, { level: 76, xp_required: 396750 }, { level: 77, xp_required: 411950 },
+  { level: 78, xp_required: 427700 }, { level: 79, xp_required: 443950 }, { level: 80, xp_required: 460750 },
+  { level: 81, xp_required: 478050 }, { level: 82, xp_required: 495900 }, { level: 83, xp_required: 514350 },
+  { level: 84, xp_required: 533350 }, { level: 85, xp_required: 553000 }, { level: 86, xp_required: 573250 },
+  { level: 87, xp_required: 594200 }, { level: 88, xp_required: 615800 }, { level: 89, xp_required: 638100 },
+  { level: 90, xp_required: 661100 }, { level: 91, xp_required: 684850 }, { level: 92, xp_required: 709350 },
+  { level: 93, xp_required: 734650 }, { level: 94, xp_required: 760750 }, { level: 95, xp_required: 787700 },
+  { level: 96, xp_required: 815500 }, { level: 97, xp_required: 844200 }, { level: 98, xp_required: 873850 },
+  { level: 99, xp_required: 904450 }, { level: 100, xp_required: 936000 },
 ]
 
 let _levelThresholdsCache = null

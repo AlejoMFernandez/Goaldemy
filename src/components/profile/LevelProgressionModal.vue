@@ -1,7 +1,7 @@
 <script setup>
 /**
  * El camino (Moodboard 03)
- * Mapa de los 6 rangos unidos por una ruta: lo recorrido en dorado, tu posición
+ * Mapa de los 11 rangos unidos por una ruta (hace scroll horizontal si no entra): lo recorrido en dorado, tu posición
  * marcada con un pin, lo que falta apagado con candado. Tocás un escudo y abajo
  * se abre su vitrina: "Al llegar ganás" (cartas reales) y "En el camino"
  * (lo que dan los niveles de ese rango). Por defecto se abre en el PRÓXIMO rango,
@@ -10,6 +10,8 @@
 import { computed, onMounted, onUnmounted, ref, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { TIERS, getTierForLevel } from '../../services/tiers'
+import { FALLBACK_THRESHOLDS } from '../../services/xp'
+import { forgeTier } from '../../services/rank-forge'
 import { MILESTONES } from '../../services/level-rewards'
 import { tierPrizes, prizesForLevelRange, xpPrize } from '../../services/prize-card'
 import PrizeCard from '../rewards/PrizeCard.vue'
@@ -20,30 +22,23 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 const router = useRouter()
 
-// XP acumulada para llegar a cada nivel (para "Se alcanza a los X XP").
-const XP_TABLE = [
-  0, 100, 250, 450, 700, 1000, 1350, 1750, 2200, 2700,
-  3300, 4000, 4800, 5700, 6700, 7800, 9000, 10300, 11700, 13200,
-  14850, 16650, 18600, 20700, 22950, 25350, 27900, 30600, 33450, 36450,
-  39600, 42900, 46350, 49950, 53700, 57600, 61650, 65850, 70200, 74700,
-  79400, 84300, 89400, 94700, 100200, 105900, 111800, 117900, 124200, 130700,
-]
-
-const TIER_GLOW = {
-  bronze: '#d97706', silver: '#cbd5e1', gold: '#facc15',
-  emerald: '#34d399', cyan: '#22d3ee', champion: '#fcd34d',
-}
+// XP acumulada para llegar a cada nivel (para "Se alcanza a los X XP"): XP_TABLE[nivel - 1].
+const XP_TABLE = FALLBACK_THRESHOLDS.map(t => t.xp_required)
+const glowOf = (t) => forgeTier(t.key)?.glow || '#fcd34d'
 const lvl = computed(() => Math.max(1, Number(props.currentLevel) || 1))
 const currentTier = computed(() => getTierForLevel(lvl.value))
 const currentIdx = computed(() => Math.max(0, TIERS.findIndex(t => t.key === currentTier.value?.key)))
 
-// ── Mapa: posiciones de los escudos sobre la ruta (viewBox 600×280) ──
-const NODES = [
-  { x: 50, y: 215 }, { x: 160, y: 120 }, { x: 275, y: 205 },
-  { x: 380, y: 100 }, { x: 470, y: 200 }, { x: 555, y: 80 },
-]
-const ROAD = 'M50 215 C 95 215, 110 120, 160 120 S 230 205, 275 205 S 335 100, 380 100 S 430 200, 470 200 S 560 150, 555 80'
-// Avance total sobre la ruta (0..1): cada tramo entre escudos es 1/5
+// ── Mapa: posiciones de los escudos sobre la ruta (viewBox MAP_W×MAP_H) ──
+const MAP_W = 60 + (TIERS.length - 1) * 98 + 60
+const MAP_H = 280
+const NODES = TIERS.map((_, i) => ({ x: 60 + i * 98, y: i % 2 === 0 ? 215 - i * 9 : 115 - i * 4 }))
+const ROAD = NODES.map((n, i) => {
+  if (i === 0) return `M${n.x} ${n.y}`
+  const m = (NODES[i - 1].x + n.x) / 2
+  return `C ${m} ${NODES[i - 1].y}, ${m} ${n.y}, ${n.x} ${n.y}`
+}).join(' ')
+// Avance total sobre la ruta (0..1): cada tramo entre escudos pesa lo mismo
 const progress = computed(() => {
   const i = currentIdx.value
   const t = TIERS[i]
@@ -53,6 +48,7 @@ const progress = computed(() => {
   return (i + within) / (TIERS.length - 1)
 })
 const roadEl = ref(null)
+const mapScroll = ref(null)
 const pin = ref({ x: NODES[0].x, y: NODES[0].y })
 const drawn = ref(0) // animación de la ruta (0 → progress)
 
@@ -61,6 +57,7 @@ const nextIdx = computed(() => Math.min(TIERS.length - 1, currentIdx.value + 1))
 const selected = ref(nextIdx.value)
 watch(() => props.currentLevel, () => { selected.value = nextIdx.value })
 
+watch(selected, (i) => centerOn(i, true))
 function stateOf(i) {
   if (i < currentIdx.value) return 'done'
   if (i === currentIdx.value) return 'current'
@@ -83,7 +80,7 @@ const show = computed(() => {
   const xpLeft = Math.max(0, (XP_TABLE[tier.minLevel - 1] ?? 0) - (XP_TABLE[lvl.value - 1] ?? 0))
   const span = Math.max(1, to - from + 1)
   const pct = st === 'current' ? (i === TIERS.length - 1 ? 100 : Math.round(Math.min(1, (lvl.value - from) / span) * 100)) : 0
-  return { tier, st, arrival, road, levelsLeft, xpLeft, pct, glow: TIER_GLOW[tier.color] || '#fcd34d', next: TIERS[i + 1] || null }
+  return { tier, st, arrival, road, levelsLeft, xpLeft, pct, glow: glowOf(tier), next: TIERS[i + 1] || null }
 })
 function fmtXp(n) { return n >= 1000 ? (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1).replace('.', ',') + 'K' : String(n) }
 
@@ -97,10 +94,17 @@ function placePin(f) {
   pin.value = { x: pt.x, y: pt.y }
 }
 let raf = 0
+function centerOn(i, smooth) {
+  const el = mapScroll.value
+  if (!el) return
+  const x = NODES[i].x - el.clientWidth / 2
+  el.scrollTo({ left: Math.max(0, x), behavior: smooth && !reduce ? 'smooth' : 'auto' })
+}
 onMounted(() => {
   document.body.style.overflow = 'hidden'
   document.addEventListener('keydown', onKeyDown)
   nextTick(() => {
+    centerOn(selected.value, false)
     const target = progress.value
     if (reduce) { drawn.value = target; placePin(target); return }
     const t0 = performance.now(), dur = 700 + target * 900
@@ -136,16 +140,17 @@ function goPlay() { emit('close'); router.push('/play/points') }
         </header>
 
         <div class="rd-scroll">
-          <!-- Mapa de los 6 escudos -->
-          <div class="rd-map">
-            <svg class="rd-road" viewBox="0 0 600 280" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <!-- Mapa de los 11 escudos: scroll horizontal, abre centrado en el próximo rango -->
+          <div ref="mapScroll" class="rd-map-scroll">
+          <div class="rd-map" :style="{ width: MAP_W + 'px' }">
+            <svg class="rd-road" :viewBox="`0 0 ${MAP_W} ${MAP_H}`" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
               <path :d="ROAD" class="base" />
               <path ref="roadEl" :d="ROAD" class="done" pathLength="1" :style="{ strokeDashoffset: 1 - drawn }" />
             </svg>
             <button
               v-for="(t, i) in TIERS" :key="t.key" type="button"
               class="rd-node" :class="['is-' + stateOf(i), { 'is-sel': selected === i }]"
-              :style="{ left: (NODES[i].x / 6) + '%', top: (NODES[i].y / 2.8) + '%', '--d': (0.15 + i * 0.09) + 's', '--g': TIER_GLOW[t.color] }"
+              :style="{ left: (NODES[i].x / MAP_W * 100) + '%', top: (NODES[i].y / MAP_H * 100) + '%', '--d': (0.15 + i * 0.09) + 's', '--g': glowOf(t) }"
               :aria-label="`${t.label}, nivel ${t.minLevel}`" :aria-pressed="selected === i"
               @click="selected = i"
             >
@@ -153,7 +158,8 @@ function goPlay() { emit('close'); router.push('/play/points') }
               <span class="lb">{{ t.label }}</span>
               <span v-if="stateOf(i) === 'locked'" class="lk">🔒 NV {{ t.minLevel }}</span>
             </button>
-            <span class="rd-pin" :style="{ left: (pin.x / 6) + '%', top: (pin.y / 2.8) + '%' }" aria-hidden="true"><b>{{ lvl }}</b></span>
+            <span class="rd-pin" :style="{ left: (pin.x / MAP_W * 100) + '%', top: (pin.y / MAP_H * 100) + '%' }" aria-hidden="true"><b>{{ lvl }}</b></span>
+          </div>
           </div>
 
           <!-- Vitrina del rango elegido -->
@@ -218,16 +224,17 @@ function goPlay() { emit('close'); router.push('/play/points') }
 .rd-scroll { flex: 1; overflow-y: auto; padding: 0 16px 12px; overscroll-behavior: contain; }
 
 /* Mapa */
-.rd-map { position: relative; aspect-ratio: 600 / 280; margin: 4px 0 8px; }
+.rd-map-scroll { overflow-x: auto; overscroll-behavior-x: contain; margin: 4px -16px 8px; padding: 0 16px; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .2) transparent; -webkit-overflow-scrolling: touch; }
+.rd-map { position: relative; aspect-ratio: 1100 / 280; flex: none; }
 .rd-road { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .rd-road path { fill: none; stroke-linecap: round; }
 .rd-road .base { stroke: rgba(255, 255, 255, .14); stroke-width: 6; stroke-dasharray: 2 12; }
 .rd-road .done { stroke: #fcd34d; stroke-width: 6; stroke-dasharray: 1; filter: drop-shadow(0 0 6px rgba(252, 211, 77, .6)); }
-.rd-node { position: absolute; width: clamp(40px, 10vw, 62px); transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 2px; padding: 0; border: 0; background: none; cursor: pointer; color: #fff;
+.rd-node { position: absolute; width: 60px; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 2px; padding: 0; border: 0; background: none; cursor: pointer; color: #fff;
   animation: rd-node-in .45s cubic-bezier(.34, 1.56, .64, 1) var(--d) both; z-index: 1; }
 @keyframes rd-node-in { from { opacity: 0; transform: translate(-50%, -30%) scale(.5); } }
 .rd-node img { width: 100%; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), filter .25s; }
-.rd-node .lb { font-family: var(--font-bug, sans-serif); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; font-size: clamp(9px, 2.2vw, 12px); white-space: nowrap; text-shadow: 0 1px 2px #000; }
+.rd-node .lb { font-family: var(--font-bug, sans-serif); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; font-size: 12px; white-space: nowrap; text-shadow: 0 1px 2px #000; }
 .rd-node .lk { margin-top: -1px; font-family: var(--font-bug, sans-serif); font-weight: 800; font-size: 10px; white-space: nowrap; padding: 1px 6px; border-radius: 999px; background: #0b1024; border: 1px solid rgba(255, 255, 255, .15); color: #94a3b8; }
 .rd-node.is-locked img { filter: grayscale(1) brightness(.55) drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); }
 .rd-node.is-locked .lb { color: #64748b; }
