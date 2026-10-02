@@ -315,7 +315,7 @@ export default {
       if (!c?.name) return;
       setSeo({
         title: c.name,
-        description: `Tabla de posiciones, fixture y resultados en vivo de ${c.name} en Fulvo.`,
+        description: `Tabla de posiciones, fixture y resultados en vivo de ${c.name} en FULVO.`,
         path: route.fullPath,
       });
     }, { immediate: true });

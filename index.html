@@ -5,9 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FULVO | Entrená tu conocimiento de fútbol</title>
 
-    <!-- Favicon: la bola sola del logo actual de FULVO. -->
-    <link rel="icon" type="image/png" href="/goaldemy.png" />
-    <link rel="apple-touch-icon" href="/goaldemy.png" />
+    <!-- Favicon: la bola sola del logo de FULVO. Cuadrados, múltiplos de 48 (requisito de Google).
+         Nombres propios (no goaldemy.png) porque vercel.json cachea los .png como immutable. -->
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
     <!-- Google Fonts - Montserrat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +22,7 @@
     <meta name="title" content="FULVO | Entrená tu conocimiento de fútbol" />
     <meta
       name="description"
-      content="Entrená tu conocimiento de fútbol jugando: micro‑juegos, rachas, logros y tablas de posiciones."
+      content="FULVO es una app de micro-juegos de fútbol para entrenar tu conocimiento: adiviná jugadores, armá rachas, sumá logros y competí en el ranking."
     />
     <link rel="canonical" href="https://fulvo.com.ar/" />
     <meta name="theme-color" content="#0f172a" />
@@ -31,7 +35,7 @@
     <meta property="og:site_name" content="FULVO" />
     <meta
       property="og:description"
-      content="Entrená tu conocimiento de fútbol jugando: micro‑juegos, rachas, logros y tablas de posiciones."
+      content="FULVO es una app de micro-juegos de fútbol para entrenar tu conocimiento: adiviná jugadores, armá rachas, sumá logros y competí en el ranking."
     />
     <meta property="og:image" content="https://fulvo.com.ar/og-image.png" />
     <meta property="og:image:width" content="1200" />
@@ -43,7 +47,7 @@
     <meta name="twitter:title" content="FULVO | Entrená tu conocimiento de fútbol" />
     <meta
       name="twitter:description"
-      content="Entrená tu conocimiento de fútbol jugando: micro‑juegos, rachas, logros y tablas de posiciones."
+      content="FULVO es una app de micro-juegos de fútbol para entrenar tu conocimiento: adiviná jugadores, armá rachas, sumá logros y competí en el ranking."
     />
     <meta name="twitter:image" content="https://fulvo.com.ar/og-image.png" />
     <meta name="twitter:url" content="https://fulvo.com.ar/" />
@@ -55,8 +59,18 @@
       "@type": "WebSite",
       "name": "FULVO",
       "url": "https://fulvo.com.ar/",
-      "description": "Entrená tu conocimiento de fútbol jugando: micro‑juegos, rachas, logros y tablas de posiciones.",
+      "description": "FULVO es una app de micro-juegos de fútbol para entrenar tu conocimiento: adiviná jugadores, armá rachas, sumá logros y competí en el ranking.",
       "inLanguage": "es-AR"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "FULVO",
+      "url": "https://fulvo.com.ar/",
+      "logo": "https://fulvo.com.ar/favicon-192.png",
+      "sameAs": ["https://www.instagram.com/fulvoapp/"]
     }
     </script>
   </head>

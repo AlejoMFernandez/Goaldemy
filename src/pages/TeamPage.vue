@@ -910,7 +910,7 @@ watch(teamData, (team) => {
   if (!team?.name) return;
   setSeo({
     title: team.name,
-    description: `Plantilla, últimos partidos y estadísticas de ${team.name} en Fulvo.`,
+    description: `Plantilla, últimos partidos y estadísticas de ${team.name} en FULVO.`,
     path: route.fullPath,
   });
 });

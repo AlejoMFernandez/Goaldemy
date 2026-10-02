@@ -51,13 +51,13 @@ const PrivacyPolicy = () => import('../pages/legal/PrivacyPolicy.vue');
 const TermsOfService = () => import('../pages/legal/TermsOfService.vue');
 
 const routes = [
-    { path: '/', component: Landing, meta: { zone: 'hub' } },
+    { path: '/', component: Landing, meta: { zone: 'hub', seo: { description: 'FULVO es una app de micro-juegos de fútbol para entrenar tu conocimiento: adiviná jugadores, armá rachas, sumá logros y competí en el ranking.' } } },
     { path: '/competiciones', component: CompetitionsHub, meta: { zone: 'data', seo: { title: 'Competiciones', description: 'Seguí ligas y torneos de fútbol: tablas de posiciones, fixtures, resultados y brackets actualizados.' } } },
     { path: '/leagues', redirect: '/competiciones' },
     { path: '/leagues/:slug', component: CompetitionPage, meta: { zone: 'data', seo: { title: 'Competición', description: 'Tabla de posiciones, fixture y resultados en vivo.' } } },
     { path: '/team/:teamId', component: TeamPage, meta: { zone: 'data', seo: { title: 'Equipo', description: 'Plantilla, últimos partidos y estadísticas del equipo.' } } },
-    { path: '/login', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth', seo: { title: 'Iniciar sesión', description: 'Ingresá a tu cuenta de Fulvo.', noindex: true } } },
-    { path: '/register', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth', seo: { title: 'Crear cuenta', description: 'Creá tu cuenta gratis en Fulvo y empezá a jugar.', noindex: true } } },
+    { path: '/login', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth', seo: { title: 'Iniciar sesión', description: 'Ingresá a tu cuenta de FULVO.', noindex: true } } },
+    { path: '/register', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth', seo: { title: 'Crear cuenta', description: 'Creá tu cuenta gratis en FULVO y empezá a jugar.', noindex: true } } },
     { path: '/verify-email', component: VerifyEmail, meta: { layout: 'auth', zone: 'hub', seo: { title: 'Verificar email', noindex: true } } },
     { path: '/forgot-password', component: ForgotPassword, meta: { layout: 'auth', zone: 'hub', seo: { title: 'Recuperar contraseña', noindex: true } } },
     { path: '/reset-password', component: ResetPassword, meta: { layout: 'auth', zone: 'hub', seo: { title: 'Restablecer contraseña', noindex: true } } },
@@ -79,7 +79,7 @@ const routes = [
     { path: '/games/connections', component: Connections, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Conexiones', noindex: true } } },
     { path: '/games/football-grid', component: FootballGrid, meta: { immersive: true, zone: 'play', seo: { title: 'La Grilla', noindex: true } } },
     { path: '/games/stat-challenge', component: StatChallenge, meta: { requiresAuth: true, immersive: true, zone: 'play', seo: { title: 'Desafío de estadísticas', noindex: true } } },
-    { path: '/leaderboards', component: Leaderboards, meta: { zone: 'data', seo: { title: 'Tabla de posiciones', description: 'Mirá el ranking global de jugadores de Fulvo por XP, rachas y logros.' } } },
+    { path: '/leaderboards', component: Leaderboards, meta: { zone: 'data', seo: { title: 'Tabla de posiciones', description: 'Mirá el ranking global de jugadores de FULVO por XP, rachas y logros.' } } },
     { path: '/u/:id', component: Profile, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Perfil de usuario', noindex: true } } },
     { path: '/notifications', component: Notifications, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Notificaciones', noindex: true } } },
     { path: '/messages', component: DirectMessages, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Mensajes', noindex: true } } },
@@ -87,9 +87,9 @@ const routes = [
     // Admin Panel
     { path: '/admin', component: AdminPanel, meta: { requiresAuth: true, requiresAdmin: true, zone: 'data', seo: { title: 'Admin', noindex: true } } },
     // About / Info
-    { path: '/about/me', component: AboutMe, meta: { zone: 'hub', seo: { title: 'Sobre mí', description: 'Quién está detrás de Fulvo.' } } },
-    { path: '/about/fulvo', component: AboutFulvo, meta: { zone: 'hub', seo: { title: 'Qué es Fulvo', description: 'Conocé Fulvo: la app de micro-juegos de fútbol con rachas, logros y ranking.' } } },
-    { path: '/about/objetivo', component: AboutObjective, meta: { zone: 'hub', seo: { title: 'Nuestro objetivo', description: 'La misión detrás de Fulvo.' } } },
+    { path: '/about/me', component: AboutMe, meta: { zone: 'hub', seo: { title: 'Sobre mí', description: 'Quién está detrás de FULVO.' } } },
+    { path: '/about/fulvo', component: AboutFulvo, meta: { zone: 'hub', seo: { title: 'Qué es FULVO', description: 'Conocé FULVO: la app de micro-juegos de fútbol con rachas, logros y ranking.' } } },
+    { path: '/about/objetivo', component: AboutObjective, meta: { zone: 'hub', seo: { title: 'Nuestro objetivo', description: 'La misión detrás de FULVO.' } } },
     { path: '/privacidad', component: PrivacyPolicy, meta: { zone: 'hub', seo: { title: 'Política de privacidad' } } },
     { path: '/terminos', component: TermsOfService, meta: { zone: 'hub', seo: { title: 'Términos de servicio' } } },
     // Play landing pages
@@ -98,9 +98,9 @@ const routes = [
     { path: '/play/free', redirect: '/play/points' },
     { path: '/rewards', component: RewardCenter, meta: { requiresAuth: true, zone: 'play', seo: { title: 'Recompensas', noindex: true } } },
     { path: '/tienda', component: Tienda, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Tienda', noindex: true } } },
-    { path: '/pricing', component: Pricing, meta: { zone: 'hub', seo: { title: 'Planes y precios', description: 'Conocé los planes PRO de Fulvo: cosméticos exclusivos, ayudas y más.' } } },
+    { path: '/pricing', component: Pricing, meta: { zone: 'hub', seo: { title: 'Planes y precios', description: 'Conocé los planes PRO de FULVO: cosméticos exclusivos, ayudas y más.' } } },
     // Modo Carrera — funnel público sin login, estilo Copero (viral, sesión corta)
-    { path: '/carrera', component: Career, meta: { zone: 'play', seo: { title: 'Modo Carrera', description: 'Encadená aciertos sin fallar en el modo Carrera de Fulvo. Jugá gratis, sin cuenta.' } } },
+    { path: '/carrera', component: Career, meta: { zone: 'play', seo: { title: 'Modo Carrera', description: 'Encadená aciertos sin fallar en el modo Carrera de FULVO. Jugá gratis, sin cuenta.' } } },
     // 404 fallback
     { path: '/:pathMatch(.*)*', component: NotFound, meta: { zone: 'hub', seo: { title: 'Página no encontrada', noindex: true } } },
 ]
