@@ -315,11 +315,12 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 
         <div class="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 text-center">
           <h1 class="font-display text-5xl sm:text-7xl font-bold text-white tracking-tight leading-[0.98]">
+            <span class="block mb-4 text-sm sm:text-base font-semibold uppercase tracking-[0.35em] text-violet-300/80">FULVO</span>
             Jugá. Aprendé.<br />
             <span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">Dominá.</span>
           </h1>
-          <p class="text-slate-300 max-w-sm mx-auto text-base sm:text-lg leading-relaxed mt-6">
-            Micro-desafíos diarios de fútbol.
+          <p class="text-slate-300 max-w-md mx-auto text-base sm:text-lg leading-relaxed mt-6">
+            FULVO es una app de micro-juegos de fútbol para entrenar tu conocimiento: adiviná jugadores, armá rachas, sumá logros y competí en el ranking.
           </p>
           <div class="flex flex-wrap gap-3 justify-center pt-8">
             <RouterLink to="/register" class="group rounded-xl bg-white px-7 py-3.5 font-semibold text-slate-900 text-sm transition-all hover:shadow-lg hover:shadow-white/20 hover:scale-105 active:scale-95">
