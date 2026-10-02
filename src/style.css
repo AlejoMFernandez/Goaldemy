@@ -422,12 +422,21 @@ option:disabled { color: #64748b; }
 .frm-diamond   { background: repeating-linear-gradient(135deg, rgba(255,255,255,0.32) 0 1.5px, transparent 1.5px 8px), linear-gradient(to bottom right, #cffafe, #7dd3fc, #38bdf8); }
 
 /* ─── BANNERS de CATEGORÍA (desbloqueables por nivel; familia de chevrons por tier) ─── */
-.bnr-tier-aficionado  { background: repeating-linear-gradient(135deg, rgba(16,185,129,0.18) 0 12px, transparent 12px 28px), linear-gradient(to bottom right, #065f46, #064e3b, #022c22); }
-.bnr-tier-juvenil     { background: repeating-linear-gradient(135deg, rgba(251,191,36,0.18) 0 12px, transparent 12px 28px), linear-gradient(to bottom right, #b45309, #92400e, #451a03); }
-.bnr-tier-amateur     { background: repeating-linear-gradient(135deg, rgba(249,115,22,0.18) 0 12px, transparent 12px 28px), linear-gradient(to bottom right, #c2410c, #9a3412, #431407); }
-.bnr-tier-reserva     { background: repeating-linear-gradient(135deg, rgba(239,68,68,0.18) 0 12px, transparent 12px 28px), linear-gradient(to bottom right, #b91c1c, #991b1b, #450a0a); }
-.bnr-tier-profesional { background: repeating-linear-gradient(135deg, rgba(56,189,248,0.18) 0 12px, transparent 12px 28px), linear-gradient(to bottom right, #0369a1, #075985, #082f49); }
-.bnr-tier-crack       { background: radial-gradient(circle at 75% 25%, rgba(216,180,254,0.35), transparent 45%), repeating-linear-gradient(135deg, rgba(167,139,250,0.20) 0 12px, transparent 12px 28px), linear-gradient(to bottom right, #6d28d9, #5b21b6, #2e1065); }
+.bnr-tier-aficionado { background: #0b1220 url('/cosmetics/rank/banner-aficionado.svg') left center / cover no-repeat; }
+.bnr-tier-juvenil { background: #0b1220 url('/cosmetics/rank/banner-juvenil.svg') left center / cover no-repeat; }
+.bnr-tier-amateur { background: #0b1220 url('/cosmetics/rank/banner-amateur.svg') left center / cover no-repeat; }
+.bnr-tier-reserva { background: #0b1220 url('/cosmetics/rank/banner-reserva.svg') left center / cover no-repeat; }
+.bnr-tier-profesional { background: #0b1220 url('/cosmetics/rank/banner-profesional.svg') left center / cover no-repeat; }
+.bnr-tier-crack { background: #0b1220 url('/cosmetics/rank/banner-crack.svg') left center / cover no-repeat; }
+/* Kit de rango: el SVG del borde (120×124) hace de marco; el avatar va en el círculo central r=34 (56 % del lado): se achica con scale para no depender del layout. */
+.frm-kit, .frm-kit.anim-pan { background-color: transparent; background-size: 100% 100% !important; background-repeat: no-repeat; border-radius: 0 !important; padding: 0 !important; box-shadow: none !important; animation: none !important; }
+.frm-kit > * { border-radius: 9999px !important; transform: scale(.56); overflow: hidden; }
+.frm-kit-aficionado { background-image: url('/cosmetics/rank/border-aficionado.svg'); }
+.frm-kit-juvenil { background-image: url('/cosmetics/rank/border-juvenil.svg'); }
+.frm-kit-amateur { background-image: url('/cosmetics/rank/border-amateur.svg'); }
+.frm-kit-reserva { background-image: url('/cosmetics/rank/border-reserva.svg'); }
+.frm-kit-profesional { background-image: url('/cosmetics/rank/border-profesional.svg'); }
+.frm-kit-crack { background-image: url('/cosmetics/rank/border-crack.svg'); }
 
 /* ═════════════════════════════════════════════════════════════════════
    PARTIDA CONTRARRELOJ (Moodboards 01 + 05)

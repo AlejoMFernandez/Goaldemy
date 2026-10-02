@@ -65,7 +65,7 @@ export function prizesForLevelRange(oldLevel, newLevel) {
     if (tu) {
       out.push({ kind: 'banner', name: `Banner ${tier.label}`, rarity: 'epic', styleKey: tu.banner, level: l, fromTier: true })
       out.push({ kind: 'frame', name: `Medalla ${tier.label}`, rarity: 'epic', styleKey: tu.frame, level: l, fromTier: true })
-      out.push({ kind: 'icon', name: `Escudo ${tier.label}`, rarity: 'epic', styleKey: tu.icon, level: l, fromTier: true })
+      out.push({ kind: 'icon', name: `Ícono de rango ${tier.label}`, rarity: 'epic', styleKey: tu.icon, level: l, fromTier: true })
     }
   }
   // El XP bonus va en una sola carta, al principio (la más común abre la tanda)
@@ -107,7 +107,7 @@ export function tierPrizes(tier) {
   return [
     { kind: 'banner', name: `Banner ${tier.label}`, rarity: 'epic', styleKey: tu.banner },
     { kind: 'frame', name: `Medalla ${tier.label}`, rarity: 'epic', styleKey: tu.frame },
-    { kind: 'icon', name: `Escudo ${tier.label}`, rarity: 'legendary', styleKey: tu.icon },
+    { kind: 'icon', name: `Ícono de rango ${tier.label}`, rarity: 'legendary', styleKey: tu.icon },
   ]
 }
 

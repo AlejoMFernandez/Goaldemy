@@ -36,6 +36,10 @@ const key = computed(() => {
   return '' // desconocido → render del glyph crudo
 })
 
+// Íconos de rango: arte del kit (public/cosmetics/rank/icon-<rango>.svg), tile completo 120×120.
+const RANK_ICON_TIER = { rank_bronze: 'aficionado', rank_silver: 'juvenil', rank_gold: 'amateur', rank_emerald: 'reserva', rank_cyan: 'profesional', rank_champion: 'crack' }
+const rankSrc = computed(() => (RANK_ICON_TIER[key.value] ? `/cosmetics/rank/icon-${RANK_ICON_TIER[key.value]}.svg` : ''))
+
 const isSvg = computed(() => !!key.value)
 
 // Marco del medallón por rareza (gradiente del aro + disco + glow).
@@ -69,7 +73,8 @@ function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = tr
 </script>
 
 <template>
-  <img v-if="useRaster" :src="rasterSrc" @error="onRasterError" class="cosmetic-icon w-full h-full object-cover" alt="" />
+  <img v-if="rankSrc" :src="rankSrc" class="cosmetic-icon w-full h-full object-cover" alt="" draggable="false" />
+  <img v-else-if="useRaster" :src="rasterSrc" @error="onRasterError" class="cosmetic-icon w-full h-full object-cover" alt="" />
   <svg v-else :width="size" :height="size" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="cosmetic-icon">
     <defs>
       <linearGradient :id="gid('silver')" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#94a3b8"/></linearGradient>
@@ -301,42 +306,6 @@ function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = tr
         <path d="M56 34 l8 -1 -5 5 z" fill="#facc15"/>
       </template>
 
-      <!-- ══ INSIGNIAS DE RANGO (escudo metálico + emblema) ══ -->
-      <!-- BRONCE: escudo + pelota -->
-      <template v-else-if="key === 'rank_bronze'">
-        <path d="M50 20 l24 9 v20 c0 19 -13 28 -24 33 c-11 -5 -24 -14 -24 -33 v-20 z" fill="#7c2d12" stroke="#f59e0b" stroke-width="3.5" stroke-linejoin="round"/>
-        <circle cx="50" cy="50" r="11" fill="none" stroke="#fbbf24" stroke-width="2.6"/>
-        <path d="M50 42 l7 5 -3 8 h-8 l-3 -8 z" fill="#fbbf24"/>
-      </template>
-      <!-- PLATA: escudo + botín -->
-      <template v-else-if="key === 'rank_silver'">
-        <path d="M50 20 l24 9 v20 c0 19 -13 28 -24 33 c-11 -5 -24 -14 -24 -33 v-20 z" fill="#334155" stroke="#e2e8f0" stroke-width="3.5" stroke-linejoin="round"/>
-        <path d="M36 52 c0 8 2 12 5 14 h20 c5 0 6 -3 6 -6 c0 -3 -2 -4 -5 -5 c-8 -2 -13 -5 -18 -10 c-3 -3 -8 -1 -8 6 z" fill="#e2e8f0"/>
-        <path d="M40 51 q8 5 17 8" fill="none" stroke="#334155" stroke-width="2.2" stroke-linecap="round"/>
-      </template>
-      <!-- ORO: escudo + estrella -->
-      <template v-else-if="key === 'rank_gold'">
-        <path d="M50 20 l24 9 v20 c0 19 -13 28 -24 33 c-11 -5 -24 -14 -24 -33 v-20 z" fill="#854d0e" stroke="#facc15" stroke-width="3.5" stroke-linejoin="round"/>
-        <path d="M50 36 l5 12 13 1 -10 8 3 13 -11 -7 -11 7 3 -13 -10 -8 13 -1 z" fill="#facc15" stroke="#b45309" stroke-width="1.2"/>
-      </template>
-      <!-- ESMERALDA: escudo + check -->
-      <template v-else-if="key === 'rank_emerald'">
-        <path d="M50 20 l24 9 v20 c0 19 -13 28 -24 33 c-11 -5 -24 -14 -24 -33 v-20 z" fill="#065f46" stroke="#34d399" stroke-width="3.5" stroke-linejoin="round"/>
-        <path d="M39 51 l8 9 16 -18" fill="none" stroke="#6ee7b7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-      </template>
-      <!-- CIAN: escudo + gema -->
-      <template v-else-if="key === 'rank_cyan'">
-        <path d="M50 20 l24 9 v20 c0 19 -13 28 -24 33 c-11 -5 -24 -14 -24 -33 v-20 z" fill="#0e7490" stroke="#22d3ee" stroke-width="3.5" stroke-linejoin="round"/>
-        <path d="M36 46 l7 -12 14 0 7 12 -14 22 z" fill="#67e8f9" stroke="#0891b2" stroke-width="1.4" stroke-linejoin="round"/>
-        <path d="M36 46 h28 M47 46 l3 22 M57 46 l-3 22" fill="none" stroke="#083344" stroke-width="1.1" opacity=".7"/>
-      </template>
-      <!-- CAMPEÓN: escudo + corona -->
-      <template v-else-if="key === 'rank_champion'">
-        <path d="M50 20 l24 9 v20 c0 19 -13 28 -24 33 c-11 -5 -24 -14 -24 -33 v-20 z" fill="#134e4a" stroke="#facc15" stroke-width="3.5" stroke-linejoin="round"/>
-        <path d="M34 60 L34 42 L44 50 L50 34 L56 50 L66 42 L66 60 Z" fill="none" stroke="#fde68a" stroke-width="2.6" stroke-linejoin="round"/>
-        <rect x="34" y="60" width="32" height="6" rx="1" fill="none" stroke="#fde68a" stroke-width="2.2"/>
-        <circle cx="44" cy="50" r="2.4" fill="#22d3ee"/><circle cx="50" cy="45" r="2.8" fill="#fde047"/><circle cx="56" cy="50" r="2.4" fill="#34d399"/>
-      </template>
     </g>
 
     <!-- Fallback: glyph crudo (emoji/letra) si la clave no está en el set -->

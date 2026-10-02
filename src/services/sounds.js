@@ -36,6 +36,13 @@ const SOUND_FILES = {
   cardEpic: '/sounds/card-epic.mp3',
   cardLegendary: '/sounds/card-legendary.mp3',
   coin: '/sounds/coin.mp3',                  // recompensa que llega a su contador
+  // Forja del ascenso de rango (rank-forge.js). Nombres reservados: soltá el mp3 y reemplaza
+  // al sintetizado de respaldo, sin tocar código.
+  forjaClang: '/sounds/forja-clang.mp3',     // golpe de metal (filo, emblema, estrellas)
+  forjaRumble: '/sounds/forja-rumble.mp3',   // el escudo se calienta
+  forjaClink: '/sounds/forja-clink.mp3',     // cada estrella al incrustarse
+  forjaFuse: '/sounds/forja-fuse.mp3',       // las estrellas viejas se funden en una
+  forjaChime: '/sounds/forja-chime.mp3',     // campanita al estamparse el nombre
 }
 
 // Sonidos "grandes" (pitazo, ¡PUM!, ¡GOL!, medalla, cartas raras+): nunca dos
@@ -94,11 +101,12 @@ class SoundManager {
     return this._loading[name]
   }
 
-  _playBuffer(buffer, vol = 1) {
+  _playBuffer(buffer, vol = 1, rate = 1) {
     const ctx = this._getCtx()
     const source = ctx.createBufferSource()
     const gain = ctx.createGain()
     source.buffer = buffer
+    source.playbackRate.value = rate
     source.connect(gain)
     gain.connect(ctx.destination)
     gain.gain.value = this.volume * vol
@@ -364,6 +372,28 @@ class SoundManager {
     } catch {
       try { this._oscillatorFallback(name) } catch {}
     }
+  }
+
+  // Pide los mp3 antes de necesitarlos (los 404 quedan cacheados como "faltan"),
+  // así el primer golpe suena en tiempo aunque no exista el archivo.
+  preload(names) {
+    if (!this.enabled) return
+    names.forEach(n => { this._loadFile(n).catch(() => {}) })
+  }
+
+  // Suena el mp3 `name` si existe; si no, el sintetizado `synth(ctx, out)` (out = ganancia
+  // maestra ya escalada al volumen del usuario). `rate` afina el mp3 (p. ej. una nota más aguda).
+  async playOrSynth(name, synth, { vol = 1, rate = 1 } = {}) {
+    if (!this.enabled) return
+    try {
+      const buffer = await this._loadFile(name)
+      if (buffer) return this._playBuffer(buffer, vol, rate)
+      const ctx = this._getCtx()
+      const out = ctx.createGain()
+      out.gain.value = this.volume / 0.3
+      out.connect(ctx.destination)
+      synth(ctx, out)
+    } catch {}
   }
 
   // Variante de play() para los cues "grandes" de las escenas de recompensa:

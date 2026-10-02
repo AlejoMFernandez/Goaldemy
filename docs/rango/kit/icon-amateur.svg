@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><defs><linearGradient id="am-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#854d0e"/><stop offset="1" stop-color="#422006"/></linearGradient><linearGradient id="am-met" x1="24" y1="20" x2="96" y2="120" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fef9c3"/><stop offset=".5" stop-color="#facc15"/><stop offset="1" stop-color="#b45309"/></linearGradient><linearGradient id="am-metB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fef9c3"/><stop offset=".5" stop-color="#facc15"/><stop offset="1" stop-color="#b45309"/></linearGradient><linearGradient id="am-star" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0abfc"/><stop offset=".5" stop-color="#a5f3fc"/><stop offset="1" stop-color="#fde68a"/></linearGradient><radialGradient id="rg" cx=".5" cy=".38" r=".7"><stop offset="0" stop-color="#854d0e"/><stop offset="1" stop-color="#422006"/></radialGradient></defs><circle cx="60" cy="60" r="57" fill="url(#rg)"/><circle cx="60" cy="60" r="57" fill="none" stroke="url(#am-met)" stroke-width="3"/><g transform="translate(60 60) scale(1.18) translate(-60 -64)"><g transform="rotate(-7 60 64)">
+<rect x="33" y="46" width="54" height="36" rx="4" fill="url(#am-met)" stroke="#b45309" stroke-width="1.4"/>
+<rect x="55" y="48.5" width="10" height="3" rx="1.5" fill="#78350f"/>
+<rect x="37.5" y="55" width="17" height="21" rx="2" fill="#78350f"/>
+<circle cx="46" cy="63" r="4.2" fill="#fde68a"/><path d="M39 76 C39 70 42 68.5 46 68.5 C50 68.5 53 70 53 76 Z" fill="#fde68a"/>
+<path d="M59 58 H82 M59 64 H78 M59 70 H74" stroke="#92400e" stroke-width="2.4" stroke-linecap="round"/>
+<path d="M36 50 H66" stroke="#fffbeb" stroke-opacity=".7" stroke-width="1.4" stroke-linecap="round"/>
+</g>
+<circle cx="80" cy="80" r="9.5" fill="#b45309" stroke="#fde047" stroke-width="1.6" opacity=".95"/>
+<circle cx="80" cy="80" r="6.6" fill="none" stroke="#fde047" stroke-width=".9" stroke-dasharray="1.6 1.2"/>
+<polygon points="80.0,76.2 81.1,78.9 84.0,79.1 81.7,81.0 82.5,83.8 80.0,82.2 77.5,83.8 78.3,81.0 76.0,79.1 78.9,78.9" fill="#fde047"/></g></svg>
