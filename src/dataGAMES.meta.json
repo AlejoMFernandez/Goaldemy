@@ -1,16 +1,16 @@
 {
   "season": "2026/2027",
-  "generatedAt": "2026-11-02T06:12:32.087Z",
+  "generatedAt": "2026-11-09T06:13:00.968Z",
   "source": "FotMob player page mainLeague (temporada/liga principal de cada jugador)",
   "teams": {
     "refreshed": 42,
     "kept": 0
   },
   "players": {
-    "total": 1258,
-    "statsUpdated": 1157,
-    "statsFallback": 100,
-    "extraAdded": 36,
-    "extraFailed": 0
+    "total": 1267,
+    "statsUpdated": 0,
+    "statsFallback": 1267,
+    "extraAdded": 0,
+    "extraFailed": 36
   }
 }
