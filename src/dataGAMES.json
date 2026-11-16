@@ -248,7 +248,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "RB,RWB,LB",
+            "positionIdsDesc": "RB,LB,RWB",
             "height": 179,
             "age": 23,
             "dateOfBirth": "2003-05-19",
@@ -1029,7 +1029,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "RB,RM,RW",
+            "positionIdsDesc": "RB,RM",
             "height": 176,
             "age": 27,
             "dateOfBirth": "1999-09-13",
@@ -1118,7 +1118,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CAM,LW,CM,ST",
+            "positionIdsDesc": "CAM,LW,RW",
             "height": 179,
             "age": 23,
             "dateOfBirth": "2003-04-21",
@@ -1361,7 +1361,7 @@
           },
           {
             "id": 1636112,
-            "name": "Luca Williams-Barnett",
+            "name": "Lucá Williams-Barnett",
             "shirtNumber": 68,
             "cname": "England",
             "ccode": "eng",
@@ -1515,7 +1515,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "RW,RM",
+            "positionIdsDesc": "RW,CAM,RM",
             "height": 175,
             "age": 26,
             "dateOfBirth": "2000-08-02",
@@ -1782,9 +1782,9 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "LB,RB,CB,RWB",
+            "positionIdsDesc": "LB,RB,CB",
             "height": 183,
-            "age": 28,
+            "age": 29,
             "dateOfBirth": "1997-11-14",
             "transferValue": 16421829,
             "stats": {
@@ -1896,7 +1896,7 @@
             "positionId": 1,
             "positionIdsDesc": "CB,RB",
             "height": 190,
-            "age": 20,
+            "age": 21,
             "dateOfBirth": "2005-11-13",
             "transferValue": 58299854,
             "stats": {
@@ -2380,7 +2380,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "RW,RWB,CAM",
+            "positionIdsDesc": "RW,RWB",
             "height": 174,
             "age": 24,
             "dateOfBirth": "2002-07-11",
@@ -2889,7 +2889,7 @@
           },
           {
             "id": 688278,
-            "name": "Pervis Estupinán",
+            "name": "Pervis Estupiñán",
             "shirtNumber": 2,
             "cname": "Ecuador",
             "ccode": "ecu",
@@ -3094,7 +3094,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "LM,LB,LWB,CB",
+            "positionIdsDesc": "LM,LWB,LB,CB",
             "height": 193,
             "age": 20,
             "dateOfBirth": "2005-12-29",
@@ -3351,7 +3351,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "RW,RWB,LWB,LM,LW",
+            "positionIdsDesc": "RW,RWB,LWB,LM,LW,RM",
             "height": 179,
             "age": 22,
             "dateOfBirth": "2004-08-06",
@@ -3702,7 +3702,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "RB,CB,RWB,RM",
+            "positionIdsDesc": "CB,RB,RWB,RM",
             "height": 183,
             "age": 33,
             "dateOfBirth": "1993-08-04",
@@ -3875,7 +3875,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CDM,CM,CAM",
+            "positionIdsDesc": "CDM,CM,CAM,ST",
             "height": 193,
             "age": 29,
             "dateOfBirth": "1996-12-08",
@@ -3942,34 +3942,6 @@
               "goals": 2,
               "assists": 3,
               "yellowCards": 1,
-              "redCards": 0,
-              "competition": "Serie A",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1355574,
-            "name": "Giovane Nascimento",
-            "shirtNumber": 23,
-            "cname": "Brazil",
-            "ccode": "bra",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CAM,ST",
-            "height": 184,
-            "age": 22,
-            "dateOfBirth": "2003-11-24",
-            "transferValue": 15298322,
-            "stats": {
-              "appearances": 4,
-              "minutes": 107,
-              "goals": 0,
-              "assists": 1,
-              "yellowCards": 0,
               "redCards": 0,
               "competition": "Serie A",
               "season": "2026/2027",
@@ -4178,6 +4150,34 @@
             }
           },
           {
+            "id": 1355574,
+            "name": "Giovane Nascimento",
+            "shirtNumber": 23,
+            "cname": "Brazil",
+            "ccode": "bra",
+            "role": {
+              "key": "attacker_long",
+              "fallback": "Attacker"
+            },
+            "positionId": 3,
+            "positionIdsDesc": "ST,CAM,RW",
+            "height": 184,
+            "age": 22,
+            "dateOfBirth": "2003-11-24",
+            "transferValue": 15298322,
+            "stats": {
+              "appearances": 4,
+              "minutes": 107,
+              "goals": 0,
+              "assists": 1,
+              "yellowCards": 0,
+              "redCards": 0,
+              "competition": "Serie A",
+              "season": "2026/2027",
+              "updatedAt": "2026-11-02T06:12:32.087Z"
+            }
+          },
+          {
             "id": 837341,
             "name": "Noa Lang",
             "shirtNumber": 70,
@@ -4188,7 +4188,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "LW,CAM,LM",
+            "positionIdsDesc": "LW,CAM",
             "height": 170,
             "age": 27,
             "dateOfBirth": "1999-06-17",
@@ -4258,7 +4258,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 189,
+            "height": 188,
             "age": 33,
             "dateOfBirth": "1993-01-07",
             "transferValue": 11774497,
@@ -4286,7 +4286,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 193,
+            "height": 190,
             "age": 21,
             "dateOfBirth": "2005-09-30",
             "transferValue": 1518938,
@@ -4316,7 +4316,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB,CM,RM,CDM",
-            "height": 180,
+            "height": 183,
             "age": 31,
             "dateOfBirth": "1995-01-30",
             "transferValue": 11291329,
@@ -4429,7 +4429,7 @@
             "positionId": 1,
             "positionIdsDesc": "CB",
             "height": 187,
-            "age": 29,
+            "age": 30,
             "dateOfBirth": "1996-11-11",
             "transferValue": 17990085,
             "stats": {
@@ -4442,6 +4442,34 @@
               "competition": "LaLiga",
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
+            }
+          },
+          {
+            "id": 1842329,
+            "name": "Jorge Domínguez",
+            "shirtNumber": 27,
+            "cname": "Spain",
+            "ccode": "esp",
+            "role": {
+              "key": "defender_long",
+              "fallback": "Defender"
+            },
+            "positionId": 1,
+            "positionIdsDesc": "CB,RB",
+            "height": 192,
+            "age": 16,
+            "dateOfBirth": "2009-12-21",
+            "transferValue": null,
+            "stats": {
+              "appearances": 0,
+              "minutes": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "competition": null,
+              "season": null,
+              "updatedAt": "2026-11-16T06:14:03.708Z"
             }
           },
           {
@@ -4488,7 +4516,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,CDM,LM",
+            "positionIdsDesc": "CM,LM",
             "height": 175,
             "age": 21,
             "dateOfBirth": "2005-08-05",
@@ -4545,7 +4573,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CM,CDM",
-            "height": 182,
+            "height": 186,
             "age": 25,
             "dateOfBirth": "2001-09-20",
             "transferValue": 22331351,
@@ -4601,7 +4629,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CM,CDM",
-            "height": 181,
+            "height": 183,
             "age": 23,
             "dateOfBirth": "2003-06-15",
             "transferValue": 72119439,
@@ -4628,8 +4656,8 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "LM,LW,CAM,ST,CM,RM",
-            "height": 174,
+            "positionIdsDesc": "LW,LM,CAM,ST,CM,RM",
+            "height": 175,
             "age": 25,
             "dateOfBirth": "2001-07-20",
             "transferValue": 44555561,
@@ -4764,9 +4792,9 @@
         "members": [
           {
             "id": 940976,
-            "name": "Kang-In Lee",
+            "name": "Lee Kang-In",
             "shirtNumber": 7,
-            "cname": "South Korea",
+            "cname": "Korea Republic",
             "ccode": "kor",
             "role": {
               "key": "attacker_long",
@@ -4802,7 +4830,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "ST,RW",
-            "height": 193,
+            "height": 195,
             "age": 30,
             "dateOfBirth": "1995-12-05",
             "transferValue": 11685177,
@@ -4830,7 +4858,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "ST",
-            "height": 175,
+            "height": 178,
             "age": 26,
             "dateOfBirth": "2000-01-14",
             "transferValue": 33057630,
@@ -4927,7 +4955,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 193,
+            "height": 195,
             "age": 28,
             "dateOfBirth": "1997-12-06",
             "transferValue": 34596271,
@@ -4955,35 +4983,10 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 193,
+            "height": 194,
             "age": 33,
             "dateOfBirth": "1993-02-04",
             "transferValue": 320255,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1316269,
-            "name": "Silas Ostrzinski",
-            "shirtNumber": 31,
-            "cname": "Germany",
-            "ccode": "ger",
-            "role": {
-              "key": "keeper_long",
-              "fallback": "Keeper"
-            },
-            "positionId": 0,
-            "positionIdsDesc": "GK",
-            "height": 197,
-            "age": 22,
-            "dateOfBirth": "2003-11-19",
-            "transferValue": 150094,
             "stats": {
               "appearances": 0,
               "goals": 0,
@@ -5005,7 +5008,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 196,
+            "height": 195,
             "age": 35,
             "dateOfBirth": "1991-04-13",
             "transferValue": 246971,
@@ -5023,56 +5026,6 @@
       {
         "title": "defenders",
         "members": [
-          {
-            "id": 1845215,
-            "name": "Jan-Luca Riedl",
-            "shirtNumber": null,
-            "cname": "Germany",
-            "ccode": "ger",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "CB",
-            "height": null,
-            "age": 17,
-            "dateOfBirth": "2009-05-29",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1845220,
-            "name": "Roméo Ritter",
-            "shirtNumber": null,
-            "cname": "Germany",
-            "ccode": "ger",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "CB",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-03-30",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
           {
             "id": 664970,
             "name": "Waldemar Anton",
@@ -5141,7 +5094,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB,LWB",
-            "height": 186,
+            "height": 187,
             "age": 31,
             "dateOfBirth": "1995-04-16",
             "transferValue": 3101854,
@@ -5169,7 +5122,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB,RB",
-            "height": 195,
+            "height": 194,
             "age": 19,
             "dateOfBirth": "2007-01-17",
             "transferValue": 34199665,
@@ -5197,7 +5150,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 184,
+            "height": 186,
             "age": 32,
             "dateOfBirth": "1994-01-12",
             "transferValue": 1850134,
@@ -5225,7 +5178,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "LB",
-            "height": 184,
+            "height": 183,
             "age": 18,
             "dateOfBirth": "2008-08-12",
             "transferValue": 13567246,
@@ -5240,118 +5193,12 @@
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
             }
-          },
-          {
-            "id": 1663094,
-            "name": "Filippo Mane",
-            "shirtNumber": 39,
-            "cname": "Italy",
-            "ccode": "ita",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "CB",
-            "height": 188,
-            "age": 21,
-            "dateOfBirth": "2005-03-08",
-            "transferValue": 5737690,
-            "stats": {
-              "appearances": 2,
-              "minutes": 48,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Bundesliga",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1684432,
-            "name": "Mussa Kaba",
-            "shirtNumber": 48,
-            "cname": "Germany",
-            "ccode": "ger",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "CB",
-            "height": null,
-            "age": 17,
-            "dateOfBirth": "2008-11-17",
-            "transferValue": 381550,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
-          {
-            "id": 1845173,
-            "name": "Luca Reggiani",
-            "shirtNumber": 49,
-            "cname": "Italy",
-            "ccode": "ita",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "CB",
-            "height": 194,
-            "age": 18,
-            "dateOfBirth": "2008-01-09",
-            "transferValue": 14675077,
-            "stats": {
-              "appearances": 1,
-              "minutes": 27,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 1,
-              "redCards": 0,
-              "competition": "Bundesliga",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
           }
         ]
       },
       {
         "title": "midfielders",
         "members": [
-          {
-            "id": 1845223,
-            "name": "Miguel Adje",
-            "shirtNumber": null,
-            "cname": "Germany",
-            "ccode": "ger",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "RM",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-02-03",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
           {
             "id": 1287373,
             "name": "Jobe Bellingham",
@@ -5364,7 +5211,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM,CM,CAM",
-            "height": 191,
+            "height": 188,
             "age": 21,
             "dateOfBirth": "2005-09-23",
             "transferValue": 47149230,
@@ -5448,7 +5295,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CAM",
-            "height": 188,
+            "height": 187,
             "age": 23,
             "dateOfBirth": "2003-10-20",
             "transferValue": 18156504,
@@ -5504,7 +5351,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM,LW,CM,CAM",
-            "height": 177,
+            "height": 178,
             "age": 32,
             "dateOfBirth": "1994-03-17",
             "transferValue": 2388134,
@@ -5531,7 +5378,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "LWB,RWB,LM,LB,CB,RB",
+            "positionIdsDesc": "LWB,RWB,LM,LB,RB,CB",
             "height": 183,
             "age": 24,
             "dateOfBirth": "2002-02-12",
@@ -5605,34 +5452,6 @@
             }
           },
           {
-            "id": 1636870,
-            "name": "Justin Lerma",
-            "shirtNumber": 28,
-            "cname": "Ecuador",
-            "ccode": "ecu",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CAM,CDM,CM",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-05-05",
-            "transferValue": 1276647,
-            "stats": {
-              "appearances": 10,
-              "minutes": 481,
-              "goals": 1,
-              "assists": 1,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Serie A",
-              "season": "2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
             "id": 1761151,
             "name": "Samuele Inácio",
             "shirtNumber": 40,
@@ -5644,7 +5463,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CAM",
-            "height": 176,
+            "height": 180,
             "age": 18,
             "dateOfBirth": "2008-04-02",
             "transferValue": 24543710,
@@ -5661,34 +5480,6 @@
             }
           },
           {
-            "id": 1729839,
-            "name": "Enzo Duarte",
-            "shirtNumber": 44,
-            "cname": "Luxembourg",
-            "ccode": "lux",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CAM",
-            "height": 186,
-            "age": 17,
-            "dateOfBirth": "2009-01-28",
-            "transferValue": 764144,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 1,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Regionalliga West",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
             "id": 1215014,
             "name": "Giannis Konstantelias",
             "shirtNumber": 45,
@@ -5699,8 +5490,8 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CAM,CDM,ST",
-            "height": 175,
+            "positionIdsDesc": "CAM,ST",
+            "height": 176,
             "age": 23,
             "dateOfBirth": "2003-03-05",
             "transferValue": 24212890,
@@ -5721,31 +5512,6 @@
       {
         "title": "attackers",
         "members": [
-          {
-            "id": 1845228,
-            "name": "Marwan-Omir Mirza",
-            "shirtNumber": null,
-            "cname": "Germany",
-            "ccode": "ger",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "RWB",
-            "height": null,
-            "age": 17,
-            "dateOfBirth": "2009-09-01",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
           {
             "id": 448540,
             "name": "Serhou Guirassy",
@@ -5786,7 +5552,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "RW,CAM,RM,CM",
-            "height": 171,
+            "height": 173,
             "age": 18,
             "dateOfBirth": "2007-11-19",
             "transferValue": 44938122,
@@ -5823,34 +5589,6 @@
               "minutes": 246,
               "goals": 3,
               "assists": 1,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Bundesliga",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1692797,
-            "name": "Mathis Albert",
-            "shirtNumber": 41,
-            "cname": "USA",
-            "ccode": "usa",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "LW,CAM",
-            "height": null,
-            "age": 17,
-            "dateOfBirth": "2009-05-21",
-            "transferValue": 699729,
-            "stats": {
-              "appearances": 1,
-              "minutes": 20,
-              "goals": 0,
-              "assists": 0,
               "yellowCards": 0,
               "redCards": 0,
               "competition": "Bundesliga",
@@ -6325,7 +6063,7 @@
           },
           {
             "id": 229803,
-            "name": "Rodrigo Battaglia",
+            "name": "Rodrigo Andrés Battaglia",
             "shirtNumber": 6,
             "cname": "Argentina",
             "ccode": "arg",
@@ -6647,7 +6385,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "LW,CAM,RW",
+            "positionIdsDesc": "LW,RW,CAM",
             "height": 167,
             "age": 24,
             "dateOfBirth": "2002-07-27",
@@ -7063,7 +6801,7 @@
             "positionId": 1,
             "positionIdsDesc": "CB",
             "height": 185,
-            "age": 19,
+            "age": 20,
             "dateOfBirth": "2006-11-11",
             "transferValue": 6102722,
             "stats": {
@@ -7097,6 +6835,34 @@
             "stats": {
               "appearances": 9,
               "minutes": 493,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "competition": "Liga Profesional",
+              "season": "2026",
+              "updatedAt": "2026-11-02T06:12:32.087Z"
+            }
+          },
+          {
+            "id": 1201814,
+            "name": "Juan Carlos Portillo",
+            "shirtNumber": 5,
+            "cname": "Argentina",
+            "ccode": "arg",
+            "role": {
+              "key": "defender_long",
+              "fallback": "Defender"
+            },
+            "positionId": 1,
+            "positionIdsDesc": "CB",
+            "height": 182,
+            "age": 26,
+            "dateOfBirth": "2000-05-18",
+            "transferValue": 2297137,
+            "stats": {
+              "appearances": 1,
+              "minutes": 7,
               "goals": 0,
               "assists": 0,
               "yellowCards": 0,
@@ -7360,34 +7126,6 @@
       {
         "title": "midfielders",
         "members": [
-          {
-            "id": 1201814,
-            "name": "Juan Carlos Portillo",
-            "shirtNumber": 5,
-            "cname": "Argentina",
-            "ccode": "arg",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CM",
-            "height": 182,
-            "age": 26,
-            "dateOfBirth": "2000-05-18",
-            "transferValue": 2297137,
-            "stats": {
-              "appearances": 1,
-              "minutes": 7,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Liga Profesional",
-              "season": "2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
           {
             "id": 1025557,
             "name": "Aníbal Moreno",
@@ -7862,7 +7600,7 @@
           },
           {
             "id": 1783664,
-            "name": "Juan Cruz Meza",
+            "name": "Juan Meza",
             "shirtNumber": 24,
             "cname": "Argentina",
             "ccode": "arg",
@@ -8188,7 +7926,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "RB,RWB",
+            "positionIdsDesc": "RB",
             "height": 180,
             "age": 24,
             "dateOfBirth": "2002-06-12",
@@ -8445,7 +8183,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,CDM",
+            "positionIdsDesc": "CM",
             "height": 184,
             "age": 21,
             "dateOfBirth": "2005-01-28",
@@ -8473,7 +8211,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,LM,CDM,CAM,LW",
+            "positionIdsDesc": "CM,LM,CDM,CAM",
             "height": 176,
             "age": 25,
             "dateOfBirth": "2001-05-09",
@@ -8529,7 +8267,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,CDM,CAM,LM",
+            "positionIdsDesc": "CM,CDM,CAM",
             "height": 180,
             "age": 29,
             "dateOfBirth": "1997-04-19",
@@ -9328,7 +9066,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 188,
+            "height": 190,
             "age": 21,
             "dateOfBirth": "2005-07-13",
             "transferValue": 86409865,
@@ -9515,6 +9253,34 @@
         "title": "midfielders",
         "members": [
           {
+            "id": 1152455,
+            "name": "Florian Wirtz",
+            "shirtNumber": 7,
+            "cname": "Germany",
+            "ccode": "ger",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CAM,LW,ST",
+            "height": 175,
+            "age": 23,
+            "dateOfBirth": "2003-05-03",
+            "transferValue": 79305056,
+            "stats": {
+              "appearances": 9,
+              "minutes": 705,
+              "goals": 0,
+              "assists": 2,
+              "yellowCards": 1,
+              "redCards": 0,
+              "competition": "Premier League",
+              "season": "2026/2027",
+              "updatedAt": "2026-11-02T06:12:32.087Z"
+            }
+          },
+          {
             "id": 846005,
             "name": "Dominik Szoboszlai",
             "shirtNumber": 8,
@@ -9659,34 +9425,6 @@
       {
         "title": "attackers",
         "members": [
-          {
-            "id": 1152455,
-            "name": "Florian Wirtz",
-            "shirtNumber": 7,
-            "cname": "Germany",
-            "ccode": "ger",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "CAM,LW,ST",
-            "height": 175,
-            "age": 23,
-            "dateOfBirth": "2003-05-03",
-            "transferValue": 79305056,
-            "stats": {
-              "appearances": 9,
-              "minutes": 705,
-              "goals": 0,
-              "assists": 2,
-              "yellowCards": 1,
-              "redCards": 0,
-              "competition": "Premier League",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
           {
             "id": 690107,
             "name": "Alexander Isak",
@@ -9895,7 +9633,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "LW,RW",
-            "height": null,
+            "height": 178,
             "age": 18,
             "dateOfBirth": "2008-08-29",
             "transferValue": 73176178,
@@ -10053,7 +9791,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "LB",
-            "height": 175,
+            "height": 177,
             "age": 23,
             "dateOfBirth": "2003-10-18",
             "transferValue": 42869241,
@@ -10063,6 +9801,34 @@
               "goals": 0,
               "assists": 0,
               "yellowCards": 1,
+              "redCards": 0,
+              "competition": "LaLiga",
+              "season": "2026/2027",
+              "updatedAt": "2026-11-02T06:12:32.087Z"
+            }
+          },
+          {
+            "id": 1821727,
+            "name": "Brian Fariñas",
+            "shirtNumber": 4,
+            "cname": "Spain",
+            "ccode": "esp",
+            "role": {
+              "key": "defender_long",
+              "fallback": "Defender"
+            },
+            "positionId": 1,
+            "positionIdsDesc": "RB,CM",
+            "height": 180,
+            "age": 20,
+            "dateOfBirth": "2006-02-09",
+            "transferValue": null,
+            "stats": {
+              "appearances": 1,
+              "minutes": 90,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
               "redCards": 0,
               "competition": "LaLiga",
               "season": "2026/2027",
@@ -10081,7 +9847,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 184,
+            "height": 183,
             "age": 19,
             "dateOfBirth": "2007-01-22",
             "transferValue": 159740482,
@@ -10137,7 +9903,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 188,
+            "height": 189,
             "age": 30,
             "dateOfBirth": "1996-04-10",
             "transferValue": 6107975,
@@ -10193,8 +9959,8 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB",
-            "height": 180,
-            "age": 27,
+            "height": 181,
+            "age": 28,
             "dateOfBirth": "1998-11-12",
             "transferValue": 53369708,
             "stats": {
@@ -10221,7 +9987,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB,CB,CDM",
-            "height": 182,
+            "height": 180,
             "age": 25,
             "dateOfBirth": "2001-01-09",
             "transferValue": 45342867,
@@ -10243,34 +10009,6 @@
         "title": "midfielders",
         "members": [
           {
-            "id": 1821727,
-            "name": "Brian Fariñas",
-            "shirtNumber": 4,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CM,RB",
-            "height": 180,
-            "age": 20,
-            "dateOfBirth": "2006-02-09",
-            "transferValue": null,
-            "stats": {
-              "appearances": 1,
-              "minutes": 90,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "LaLiga",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
             "id": 1279040,
             "name": "Gavi",
             "shirtNumber": 6,
@@ -10282,7 +10020,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM,LW",
-            "height": 173,
+            "height": 174,
             "age": 22,
             "dateOfBirth": "2004-08-05",
             "transferValue": 31525432,
@@ -10337,7 +10075,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CDM,CM",
+            "positionIdsDesc": "CDM,CM,CAM",
             "height": 174,
             "age": 23,
             "dateOfBirth": "2002-11-25",
@@ -10394,7 +10132,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CAM,CM,LW,ST",
-            "height": 180,
+            "height": 182,
             "age": 28,
             "dateOfBirth": "1998-05-07",
             "transferValue": 57508645,
@@ -10450,7 +10188,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM,CM",
-            "height": 191,
+            "height": 193,
             "age": 19,
             "dateOfBirth": "2007-05-26",
             "transferValue": 46646311,
@@ -10511,7 +10249,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "RW",
-            "height": 180,
+            "height": 178,
             "age": 19,
             "dateOfBirth": "2007-07-13",
             "transferValue": 220611934,
@@ -10567,7 +10305,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "CAM,RW,LW,ST",
-            "height": 176,
+            "height": 180,
             "age": 24,
             "dateOfBirth": "2002-01-18",
             "transferValue": 39803855,
@@ -10595,7 +10333,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "LW,ST",
-            "height": 182,
+            "height": 183,
             "age": 25,
             "dateOfBirth": "2001-02-24",
             "transferValue": 75953921,
@@ -10624,7 +10362,7 @@
             "positionId": 3,
             "positionIdsDesc": "RW",
             "height": 173,
-            "age": 20,
+            "age": 21,
             "dateOfBirth": "2005-11-15",
             "transferValue": 12178746,
             "stats": {
@@ -10635,34 +10373,6 @@
               "yellowCards": 0,
               "redCards": 0,
               "competition": "LaLiga",
-              "season": "2025/2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1656591,
-            "name": "Jesse Bisiwu",
-            "shirtNumber": 27,
-            "cname": "Belgium",
-            "ccode": "bel",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "LW",
-            "height": 185,
-            "age": 18,
-            "dateOfBirth": "2008-01-22",
-            "transferValue": 1273449,
-            "stats": {
-              "appearances": 15,
-              "minutes": 1013,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 2,
-              "redCards": 0,
-              "competition": "First Division B",
               "season": "2025/2026",
               "updatedAt": "2026-11-02T06:12:32.087Z"
             }
@@ -11151,7 +10861,7 @@
             "positionId": 2,
             "positionIdsDesc": "CM,CDM,CAM",
             "height": 182,
-            "age": 28,
+            "age": 29,
             "dateOfBirth": "1997-11-16",
             "transferValue": 65587017,
             "stats": {
@@ -11216,6 +10926,34 @@
               "goals": 0,
               "assists": 0,
               "yellowCards": 2,
+              "redCards": 0,
+              "competition": "Premier League",
+              "season": "2026/2027",
+              "updatedAt": "2026-11-02T06:12:32.087Z"
+            }
+          },
+          {
+            "id": 1635773,
+            "name": "Max Dowman",
+            "shirtNumber": 56,
+            "cname": "England",
+            "ccode": "eng",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "RW,CAM,CM",
+            "height": 183,
+            "age": 16,
+            "dateOfBirth": "2009-12-31",
+            "transferValue": 63461213,
+            "stats": {
+              "appearances": 2,
+              "minutes": 19,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
               "redCards": 0,
               "competition": "Premier League",
               "season": "2026/2027",
@@ -11361,34 +11099,6 @@
               "goals": 3,
               "assists": 0,
               "yellowCards": 1,
-              "redCards": 0,
-              "competition": "Premier League",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1635773,
-            "name": "Max Dowman",
-            "shirtNumber": 56,
-            "cname": "England",
-            "ccode": "eng",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "RW,CAM,CM",
-            "height": 183,
-            "age": 16,
-            "dateOfBirth": "2009-12-31",
-            "transferValue": 63461213,
-            "stats": {
-              "appearances": 2,
-              "minutes": 19,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
               "redCards": 0,
               "competition": "Premier League",
               "season": "2026/2027",
@@ -11765,7 +11475,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,CAM",
+            "positionIdsDesc": "CM,CAM,RW",
             "height": 183,
             "age": 23,
             "dateOfBirth": "2003-10-25",
@@ -11840,7 +11550,7 @@
           },
           {
             "id": 304733,
-            "name": "Hakan Çalhanoglu",
+            "name": "Hakan Çalhanoğlu",
             "shirtNumber": 20,
             "cname": "Turkiye",
             "ccode": "tur",
@@ -11963,7 +11673,7 @@
             "positionId": 2,
             "positionIdsDesc": "LM,LW",
             "height": 174,
-            "age": 28,
+            "age": 29,
             "dateOfBirth": "1997-11-10",
             "transferValue": 45468201,
             "stats": {
@@ -12148,7 +11858,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 199,
+            "height": 200,
             "age": 34,
             "dateOfBirth": "1992-05-11",
             "transferValue": 11693114,
@@ -12227,7 +11937,7 @@
           },
           {
             "id": 844415,
-            "name": "Éder Militao",
+            "name": "Éder Militão",
             "shirtNumber": 3,
             "cname": "Brazil",
             "ccode": "bra",
@@ -12293,7 +12003,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB",
-            "height": 180,
+            "height": 175,
             "age": 28,
             "dateOfBirth": "1998-10-07",
             "transferValue": 54998685,
@@ -12321,7 +12031,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 192,
+            "height": 194,
             "age": 27,
             "dateOfBirth": "1999-05-25",
             "transferValue": 43419099,
@@ -12348,8 +12058,8 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "LB,LWB",
-            "height": 177,
+            "positionIdsDesc": "LB,LM,LWB",
+            "height": 174,
             "age": 28,
             "dateOfBirth": "1998-07-22",
             "transferValue": 55172481,
@@ -12367,7 +12077,7 @@
           },
           {
             "id": 1190025,
-            "name": "Alvaro Carreras",
+            "name": "Álvaro Carreras",
             "shirtNumber": 18,
             "cname": "Spain",
             "ccode": "esp",
@@ -12433,7 +12143,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "LB",
-            "height": 178,
+            "height": 180,
             "age": 31,
             "dateOfBirth": "1995-06-08",
             "transferValue": 2506810,
@@ -12461,7 +12171,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB,RM",
-            "height": 189,
+            "height": 188,
             "age": 30,
             "dateOfBirth": "1996-04-18",
             "transferValue": 24742174,
@@ -12523,7 +12233,7 @@
             "positionId": 2,
             "positionIdsDesc": "CDM,CM,LM,LB",
             "height": 182,
-            "age": 23,
+            "age": 24,
             "dateOfBirth": "2002-11-10",
             "transferValue": 60509687,
             "stats": {
@@ -12578,7 +12288,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CM,CDM",
-            "height": 185,
+            "height": 187,
             "age": 26,
             "dateOfBirth": "2000-01-27",
             "transferValue": 59724229,
@@ -12598,7 +12308,7 @@
             "id": 1253890,
             "name": "Arda Güler",
             "shirtNumber": 15,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "midfielder_long",
@@ -12633,7 +12343,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CDM,CAM,RW,CM",
+            "positionIdsDesc": "CDM,CAM,CM,RW",
             "height": 173,
             "age": 32,
             "dateOfBirth": "1994-08-10",
@@ -12647,34 +12357,6 @@
               "redCards": 0,
               "competition": "LaLiga",
               "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1796908,
-            "name": "Thiago Pitarch",
-            "shirtNumber": 27,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CM,LM",
-            "height": 175,
-            "age": 19,
-            "dateOfBirth": "2007-08-03",
-            "transferValue": 19512838,
-            "stats": {
-              "appearances": 10,
-              "minutes": 596,
-              "goals": 0,
-              "assists": 2,
-              "yellowCards": 2,
-              "redCards": 0,
-              "competition": "LaLiga",
-              "season": "2025/2026",
               "updatedAt": "2026-11-02T06:12:32.087Z"
             }
           }
@@ -12695,7 +12377,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "LW,ST",
-            "height": 177,
+            "height": 176,
             "age": 26,
             "dateOfBirth": "2000-07-12",
             "transferValue": 99728385,
@@ -12723,7 +12405,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "RW,ST",
-            "height": 173,
+            "height": 172,
             "age": 20,
             "dateOfBirth": "2006-07-21",
             "transferValue": 49460181,
@@ -12855,16 +12537,16 @@
             "id": 1735453,
             "name": "Yan Diomande",
             "shirtNumber": 25,
-            "cname": "Ivory Coast",
+            "cname": "Côte d'Ivoire",
             "ccode": "civ",
             "role": {
               "key": "attacker_long",
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "RW,LW,LM,RM",
-            "height": 180,
-            "age": 19,
+            "positionIdsDesc": "RW,LW,RM,LM",
+            "height": 181,
+            "age": 20,
             "dateOfBirth": "2006-11-14",
             "transferValue": 101368575,
             "stats": {
@@ -12975,65 +12657,12 @@
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
             }
-          },
-          {
-            "id": 1664982,
-            "name": "Leon Klanac",
-            "shirtNumber": 48,
-            "cname": "Germany",
-            "ccode": "ger",
-            "role": {
-              "key": "keeper_long",
-              "fallback": "Keeper"
-            },
-            "positionId": 0,
-            "positionIdsDesc": "GK",
-            "height": 185,
-            "age": 19,
-            "dateOfBirth": "2007-03-01",
-            "transferValue": 287606,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
           }
         ]
       },
       {
         "title": "defenders",
         "members": [
-          {
-            "id": 1432341,
-            "name": "Tarek Buchmann",
-            "shirtNumber": null,
-            "cname": "Germany",
-            "ccode": "ger",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "CB",
-            "height": 188,
-            "age": 21,
-            "dateOfBirth": "2005-02-28",
-            "transferValue": 151669,
-            "stats": {
-              "appearances": 2,
-              "minutes": 94,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 1,
-              "redCards": 0,
-              "competition": "2. Bundesliga",
-              "season": "2025/2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
           {
             "id": 658554,
             "name": "Dayot Upamecano",
@@ -13046,7 +12675,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 185,
+            "height": 186,
             "age": 28,
             "dateOfBirth": "1998-10-27",
             "transferValue": 69106671,
@@ -13064,9 +12693,9 @@
           },
           {
             "id": 828159,
-            "name": "Min-Jae Kim",
+            "name": "Kim Min-Jae",
             "shirtNumber": 3,
-            "cname": "South Korea",
+            "cname": "Korea Republic",
             "ccode": "kor",
             "role": {
               "key": "defender_long",
@@ -13074,8 +12703,8 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 188,
-            "age": 29,
+            "height": 190,
+            "age": 30,
             "dateOfBirth": "1996-11-15",
             "transferValue": 16897042,
             "stats": {
@@ -13102,7 +12731,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 194,
+            "height": 195,
             "age": 30,
             "dateOfBirth": "1996-02-11",
             "transferValue": 28702645,
@@ -13130,7 +12759,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "LB,LWB,CAM,LM,RB,LW",
-            "height": 180,
+            "height": 176,
             "age": 23,
             "dateOfBirth": "2003-06-16",
             "transferValue": 69858144,
@@ -13158,7 +12787,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "LB,LW",
-            "height": 183,
+            "height": 185,
             "age": 26,
             "dateOfBirth": "2000-11-02",
             "transferValue": 45363566,
@@ -13186,7 +12815,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB,LB",
-            "height": 186,
+            "height": 188,
             "age": 27,
             "dateOfBirth": "1999-05-12",
             "transferValue": 16036585,
@@ -13269,7 +12898,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "RB,LB,RWB",
+            "positionIdsDesc": "RB,LB,RWB,CB",
             "height": 186,
             "age": 26,
             "dateOfBirth": "2000-04-02",
@@ -13303,7 +12932,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM,RB",
-            "height": 176,
+            "height": 177,
             "age": 31,
             "dateOfBirth": "1995-02-08",
             "transferValue": 36659722,
@@ -13331,7 +12960,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CAM,LW",
-            "height": 175,
+            "height": 176,
             "age": 31,
             "dateOfBirth": "1995-07-14",
             "transferValue": 12463360,
@@ -13387,7 +13016,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CAM,LW",
-            "height": 180,
+            "height": 186,
             "age": 23,
             "dateOfBirth": "2003-02-26",
             "transferValue": 87654754,
@@ -13428,34 +13057,6 @@
               "redCards": 0,
               "competition": "Bundesliga",
               "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1904968,
-            "name": "Erblin Osmani",
-            "shirtNumber": 38,
-            "cname": "Kosovo",
-            "ccode": "kvx",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CM",
-            "height": null,
-            "age": 17,
-            "dateOfBirth": "2009-05-19",
-            "transferValue": 1970221,
-            "stats": {
-              "appearances": 1,
-              "minutes": 3,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Bundesliga",
-              "season": "2025/2026",
               "updatedAt": "2026-11-02T06:12:32.087Z"
             }
           },
@@ -13542,34 +13143,6 @@
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
             }
-          },
-          {
-            "id": 1771197,
-            "name": "David Santos Daiber",
-            "shirtNumber": 47,
-            "cname": "Portugal",
-            "ccode": "por",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CDM,CM",
-            "height": 185,
-            "age": 19,
-            "dateOfBirth": "2007-01-10",
-            "transferValue": 2036597,
-            "stats": {
-              "appearances": 2,
-              "minutes": 27,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Bundesliga",
-              "season": "2025/2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
           }
         ]
       },
@@ -13644,7 +13217,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "RW,CAM",
-            "height": 184,
+            "height": 180,
             "age": 24,
             "dateOfBirth": "2001-12-12",
             "transferValue": 178377437,
@@ -13673,31 +13246,6 @@
       {
         "title": "keepers",
         "members": [
-          {
-            "id": 1662399,
-            "name": "Alessandro Longoni",
-            "shirtNumber": 16,
-            "cname": "Italy",
-            "ccode": "ita",
-            "role": {
-              "key": "keeper_long",
-              "fallback": "Keeper"
-            },
-            "positionId": 0,
-            "positionIdsDesc": "Keeper",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-01-31",
-            "transferValue": 987787,
-            "stats": {
-              "appearances": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "minutes": 0
-            }
-          },
           {
             "id": 1177131,
             "name": "Lucas Chevalier",
@@ -13826,7 +13374,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "CB",
+            "positionIdsDesc": "CB,RB",
             "height": 189,
             "age": 24,
             "dateOfBirth": "2002-09-01",
@@ -13883,7 +13431,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "LB,CB",
-            "height": 183,
+            "height": 184,
             "age": 30,
             "dateOfBirth": "1996-02-14",
             "transferValue": 13216565,
@@ -13911,7 +13459,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "LB",
-            "height": 184,
+            "height": 180,
             "age": 24,
             "dateOfBirth": "2002-06-19",
             "transferValue": 71894613,
@@ -13925,62 +13473,6 @@
               "competition": "Ligue 1",
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1367615,
-            "name": "Warren Zaïre-Emery",
-            "shirtNumber": 33,
-            "cname": "France",
-            "ccode": "fra",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "CM,RB,LB,CDM",
-            "height": 178,
-            "age": 20,
-            "dateOfBirth": "2006-03-08",
-            "transferValue": 75546951,
-            "stats": {
-              "appearances": 9,
-              "minutes": 658,
-              "goals": 0,
-              "assists": 1,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Ligue 1",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1830689,
-            "name": "David Boly",
-            "shirtNumber": 42,
-            "cname": "France",
-            "ccode": "fra",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "RB",
-            "height": null,
-            "age": 17,
-            "dateOfBirth": "2009-01-22",
-            "transferValue": 870817,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-11-09T06:13:00.968Z"
             }
           },
           {
@@ -14018,7 +13510,7 @@
         "members": [
           {
             "id": 1255209,
-            "name": "Lucas Beraldo",
+            "name": "Beraldo",
             "shirtNumber": 4,
             "cname": "Brazil",
             "ccode": "bra",
@@ -14111,7 +13603,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,ST,RB,LW",
+            "positionIdsDesc": "CM,ST,RB",
             "height": 183,
             "age": 20,
             "dateOfBirth": "2006-05-17",
@@ -14140,7 +13632,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CM",
-            "height": 180,
+            "height": 182,
             "age": 18,
             "dateOfBirth": "2008-01-12",
             "transferValue": 19370679,
@@ -14150,6 +13642,34 @@
               "goals": 0,
               "assists": 0,
               "yellowCards": 1,
+              "redCards": 0,
+              "competition": "Ligue 1",
+              "season": "2026/2027",
+              "updatedAt": "2026-11-02T06:12:32.087Z"
+            }
+          },
+          {
+            "id": 1367615,
+            "name": "Warren Zaïre-Emery",
+            "shirtNumber": 33,
+            "cname": "France",
+            "ccode": "fra",
+            "role": {
+              "key": "midfielder_long",
+              "fallback": "Midfielder"
+            },
+            "positionId": 2,
+            "positionIdsDesc": "CM,RB,LB,CDM",
+            "height": 178,
+            "age": 20,
+            "dateOfBirth": "2006-03-08",
+            "transferValue": 75546951,
+            "stats": {
+              "appearances": 9,
+              "minutes": 658,
+              "goals": 0,
+              "assists": 1,
+              "yellowCards": 0,
               "redCards": 0,
               "competition": "Ligue 1",
               "season": "2026/2027",
@@ -14229,7 +13749,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "ST,RW,LW",
-            "height": 184,
+            "height": 182,
             "age": 26,
             "dateOfBirth": "2000-02-29",
             "transferValue": 52510168,
@@ -14313,7 +13833,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "RW,LW,ST,CM",
-            "height": 178,
+            "height": 181,
             "age": 21,
             "dateOfBirth": "2005-06-03",
             "transferValue": 103136743,
@@ -14369,7 +13889,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "ST,CM",
-            "height": null,
+            "height": 182,
             "age": 19,
             "dateOfBirth": "2007-07-23",
             "transferValue": null,
@@ -14908,34 +14428,6 @@
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
             }
-          },
-          {
-            "id": 815006,
-            "name": "Phil Foden",
-            "shirtNumber": 47,
-            "cname": "England",
-            "ccode": "eng",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CAM,RW,LW,ST",
-            "height": 171,
-            "age": 26,
-            "dateOfBirth": "2000-05-28",
-            "transferValue": 63414204,
-            "stats": {
-              "appearances": 7,
-              "minutes": 352,
-              "goals": 1,
-              "assists": 2,
-              "yellowCards": 1,
-              "redCards": 1,
-              "competition": "Premier League",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
           }
         ]
       },
@@ -15077,6 +14569,34 @@
               "assists": 3,
               "yellowCards": 0,
               "redCards": 0,
+              "competition": "Premier League",
+              "season": "2026/2027",
+              "updatedAt": "2026-11-02T06:12:32.087Z"
+            }
+          },
+          {
+            "id": 815006,
+            "name": "Phil Foden",
+            "shirtNumber": 47,
+            "cname": "England",
+            "ccode": "eng",
+            "role": {
+              "key": "attacker_long",
+              "fallback": "Attacker"
+            },
+            "positionId": 3,
+            "positionIdsDesc": "CAM,RW,LW,ST",
+            "height": 171,
+            "age": 26,
+            "dateOfBirth": "2000-05-28",
+            "transferValue": 63414204,
+            "stats": {
+              "appearances": 7,
+              "minutes": 352,
+              "goals": 1,
+              "assists": 2,
+              "yellowCards": 1,
+              "redCards": 1,
               "competition": "Premier League",
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
@@ -15508,7 +15028,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,CDM",
+            "positionIdsDesc": "CM,CDM,CAM",
             "height": 188,
             "age": 26,
             "dateOfBirth": "2000-01-20",
@@ -15879,7 +15399,7 @@
             "positionId": 3,
             "positionIdsDesc": "RW,LM,LB",
             "height": 178,
-            "age": 25,
+            "age": 26,
             "dateOfBirth": "2000-11-09",
             "transferValue": 6788131,
             "stats": {
@@ -16063,7 +15583,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "RB,RWB,RM",
+            "positionIdsDesc": "RB,RM",
             "height": 185,
             "age": 29,
             "dateOfBirth": "1997-08-07",
@@ -16516,7 +16036,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CDM,LW",
+            "positionIdsDesc": "LW,CDM",
             "height": null,
             "age": 19,
             "dateOfBirth": "2007-03-04",
@@ -16689,7 +16209,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "RW,LW",
+            "positionIdsDesc": "RW,LW,RM",
             "height": 175,
             "age": 18,
             "dateOfBirth": "2008-01-24",
@@ -16745,7 +16265,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "RW,LW",
+            "positionIdsDesc": "RW",
             "height": 184,
             "age": 20,
             "dateOfBirth": "2006-05-05",
@@ -16866,7 +16386,7 @@
         "members": [
           {
             "id": 571685,
-            "name": "Adrián Marin",
+            "name": "Adrián Marín",
             "shirtNumber": 3,
             "cname": "Spain",
             "ccode": "esp",
@@ -16933,7 +16453,7 @@
             "positionId": 1,
             "positionIdsDesc": "CB",
             "height": 185,
-            "age": 34,
+            "age": 35,
             "dateOfBirth": "1991-11-15",
             "transferValue": 167607,
             "stats": {
@@ -17160,7 +16680,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CDM,CM",
+            "positionIdsDesc": "CM,CDM",
             "height": null,
             "age": 19,
             "dateOfBirth": "2007-04-12",
@@ -17356,7 +16876,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CDM,CM",
+            "positionIdsDesc": "CM,CDM",
             "height": null,
             "age": 18,
             "dateOfBirth": "2008-06-05",
@@ -17585,7 +17105,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "LW,LM",
+            "positionIdsDesc": "LW",
             "height": 185,
             "age": 25,
             "dateOfBirth": "2000-12-04",
@@ -17739,7 +17259,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 185,
+            "height": 190,
             "age": 23,
             "dateOfBirth": "2003-09-01",
             "transferValue": null,
@@ -17760,34 +17280,6 @@
       {
         "title": "defenders",
         "members": [
-          {
-            "id": 1425770,
-            "name": "Unai Eguiluz",
-            "shirtNumber": null,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "CB",
-            "height": 186,
-            "age": 24,
-            "dateOfBirth": "2002-03-19",
-            "transferValue": 585244,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-10-12T06:23:36.283Z"
-            }
-          },
           {
             "id": 940743,
             "name": "Daniel Vivian",
@@ -17856,7 +17348,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 183,
+            "height": 182,
             "age": 31,
             "dateOfBirth": "1995-01-24",
             "transferValue": 1003817,
@@ -17901,6 +17393,34 @@
             }
           },
           {
+            "id": 1425770,
+            "name": "Unai Eguiluz",
+            "shirtNumber": 13,
+            "cname": "Spain",
+            "ccode": "esp",
+            "role": {
+              "key": "defender_long",
+              "fallback": "Defender"
+            },
+            "positionId": 1,
+            "positionIdsDesc": "CB",
+            "height": 186,
+            "age": 24,
+            "dateOfBirth": "2002-03-19",
+            "transferValue": 585244,
+            "stats": {
+              "appearances": 0,
+              "minutes": 0,
+              "goals": 0,
+              "assists": 0,
+              "yellowCards": 0,
+              "redCards": 0,
+              "competition": null,
+              "season": null,
+              "updatedAt": "2026-10-12T06:23:36.283Z"
+            }
+          },
+          {
             "id": 411617,
             "name": "Aymeric Laporte",
             "shirtNumber": 14,
@@ -17912,7 +17432,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 191,
+            "height": 189,
             "age": 32,
             "dateOfBirth": "1994-05-27",
             "transferValue": 5578792,
@@ -17940,7 +17460,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB",
-            "height": 185,
+            "height": 183,
             "age": 23,
             "dateOfBirth": "2003-01-27",
             "transferValue": 4037672,
@@ -17979,34 +17499,6 @@
               "assists": 0,
               "yellowCards": 3,
               "redCards": 1,
-              "competition": "LaLiga",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1327006,
-            "name": "Johaneko Louis-Jean",
-            "shirtNumber": 31,
-            "cname": "France",
-            "ccode": "fra",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "LB",
-            "height": 175,
-            "age": 22,
-            "dateOfBirth": "2004-06-28",
-            "transferValue": 1784452,
-            "stats": {
-              "appearances": 8,
-              "minutes": 277,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 1,
-              "redCards": 0,
               "competition": "LaLiga",
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
@@ -18085,7 +17577,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM",
-            "height": 174,
+            "height": 175,
             "age": 33,
             "dateOfBirth": "1993-08-06",
             "transferValue": 1315295,
@@ -18114,7 +17606,7 @@
             "positionId": 2,
             "positionIdsDesc": "CDM,CAM",
             "height": 177,
-            "age": 22,
+            "age": 23,
             "dateOfBirth": "2003-11-13",
             "transferValue": 26263705,
             "stats": {
@@ -18197,7 +17689,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CAM,RM,LM,RW",
-            "height": 176,
+            "height": 175,
             "age": 27,
             "dateOfBirth": "1999-08-16",
             "transferValue": 2372516,
@@ -18398,7 +17890,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "RW",
-            "height": 176,
+            "height": 181,
             "age": 23,
             "dateOfBirth": "2003-03-05",
             "transferValue": 1528516,
@@ -18440,62 +17932,6 @@
               "competition": "LaLiga",
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1820604,
-            "name": "Christian Imga",
-            "shirtNumber": 33,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "LW",
-            "height": null,
-            "age": 17,
-            "dateOfBirth": "2009-02-17",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-11-09T06:13:00.968Z"
-            }
-          },
-          {
-            "id": 1899917,
-            "name": "Txus Vizcay",
-            "shirtNumber": 34,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "Attacker",
-            "height": 186,
-            "age": 21,
-            "dateOfBirth": "2005-08-05",
-            "transferValue": 316205,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-11-09T06:13:00.968Z"
             }
           }
         ]
@@ -18910,7 +18346,7 @@
           },
           {
             "id": 2395557,
-            "name": "Yassine Sallem",
+            "name": "Yassin Sallem",
             "shirtNumber": 46,
             "cname": "Tunisia",
             "ccode": "tun",
@@ -19055,7 +18491,7 @@
           },
           {
             "id": 1130583,
-            "name": "Samú Costa",
+            "name": "Samú",
             "shirtNumber": 11,
             "cname": "Portugal",
             "ccode": "por",
@@ -19379,7 +18815,7 @@
             "positionId": 3,
             "positionIdsDesc": "CAM,ST,LW",
             "height": 181,
-            "age": 26,
+            "age": 27,
             "dateOfBirth": "1999-11-10",
             "transferValue": 19938895,
             "stats": {
@@ -19467,7 +18903,7 @@
             "id": 958273,
             "name": "Doğan Alemdar",
             "shirtNumber": 80,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "keeper_long",
@@ -19475,7 +18911,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 189,
+            "height": 192,
             "age": 24,
             "dateOfBirth": "2002-10-29",
             "transferValue": 1909585,
@@ -19495,7 +18931,7 @@
             "id": 1664710,
             "name": "Emir Yaşar",
             "shirtNumber": 96,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "keeper_long",
@@ -19528,7 +18964,7 @@
             "id": 1387194,
             "name": "Kassoum Ouattara",
             "shirtNumber": 11,
-            "cname": "Ivory Coast",
+            "cname": "Côte d'Ivoire",
             "ccode": "civ",
             "role": {
               "key": "defender_long",
@@ -19556,7 +18992,7 @@
             "id": 1114979,
             "name": "Emmanuel Agbadou",
             "shirtNumber": 12,
-            "cname": "Ivory Coast",
+            "cname": "Côte d'Ivoire",
             "ccode": "civ",
             "role": {
               "key": "defender_long",
@@ -19612,7 +19048,7 @@
             "id": 992071,
             "name": "Rıdvan Yılmaz",
             "shirtNumber": 33,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "defender_long",
@@ -19696,7 +19132,7 @@
             "id": 873855,
             "name": "Emirhan Topçu",
             "shirtNumber": 53,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "defender_long",
@@ -19704,7 +19140,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 188,
+            "height": 187,
             "age": 26,
             "dateOfBirth": "2000-10-11",
             "transferValue": 9637020,
@@ -19724,7 +19160,7 @@
             "id": 1393980,
             "name": "Yasin Özcan",
             "shirtNumber": 58,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "defender_long",
@@ -19732,7 +19168,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "LB,CB",
-            "height": 187,
+            "height": 185,
             "age": 20,
             "dateOfBirth": "2006-04-20",
             "transferValue": 6516577,
@@ -19760,7 +19196,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB,RWB,CB",
-            "height": 183,
+            "height": 184,
             "age": 30,
             "dateOfBirth": "1996-02-11",
             "transferValue": 4658754,
@@ -19774,34 +19210,6 @@
               "competition": "Super Lig",
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 2210579,
-            "name": "Azem Yortac",
-            "shirtNumber": 63,
-            "cname": "Turkiye",
-            "ccode": "tur",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "Defender",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-03-01",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-10-12T06:23:36.283Z"
             }
           }
         ]
@@ -19841,7 +19249,7 @@
             "id": 738064,
             "name": "Salih Özcan",
             "shirtNumber": 6,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "midfielder_long",
@@ -19849,7 +19257,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM,CM",
-            "height": 180,
+            "height": 182,
             "age": 28,
             "dateOfBirth": "1998-01-11",
             "transferValue": 4653094,
@@ -19869,7 +19277,7 @@
             "id": 1001348,
             "name": "Kartal Yılmaz",
             "shirtNumber": 8,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "midfielder_long",
@@ -19877,7 +19285,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM",
-            "height": 177,
+            "height": 174,
             "age": 26,
             "dateOfBirth": "2000-11-04",
             "transferValue": 1431541,
@@ -19895,9 +19303,9 @@
           },
           {
             "id": 935409,
-            "name": "Orkun Kökcü",
+            "name": "Orkun Kökçü",
             "shirtNumber": 10,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "midfielder_long",
@@ -19961,7 +19369,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CAM,LW,RWB,LWB",
-            "height": 172,
+            "height": 173,
             "age": 22,
             "dateOfBirth": "2004-01-28",
             "transferValue": 24212890,
@@ -19989,7 +19397,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CAM,CDM,LW",
-            "height": 179,
+            "height": 180,
             "age": 23,
             "dateOfBirth": "2003-08-03",
             "transferValue": 16061111,
@@ -20006,31 +19414,31 @@
             }
           },
           {
-            "id": 1638880,
-            "name": "Fahri Ay",
-            "shirtNumber": 68,
-            "cname": "Turkiye",
+            "id": 2210599,
+            "name": "Ozan Sevim",
+            "shirtNumber": 66,
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "midfielder_long",
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CAM",
-            "height": 178,
-            "age": 21,
-            "dateOfBirth": "2005-01-01",
-            "transferValue": 532360,
+            "positionIdsDesc": "Midfielder",
+            "height": 179,
+            "age": 19,
+            "dateOfBirth": "2007-01-24",
+            "transferValue": null,
             "stats": {
-              "appearances": 7,
-              "minutes": 152,
-              "goals": 1,
+              "appearances": 0,
+              "minutes": 0,
+              "goals": 0,
               "assists": 0,
-              "yellowCards": 1,
-              "redCards": 1,
-              "competition": "1. Lig",
-              "season": "2025/2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
+              "yellowCards": 0,
+              "redCards": 0,
+              "competition": null,
+              "season": null,
+              "updatedAt": "2026-10-12T06:23:36.283Z"
             }
           }
         ]
@@ -20038,34 +19446,6 @@
       {
         "title": "attackers",
         "members": [
-          {
-            "id": 1073569,
-            "name": "Can Keleş",
-            "shirtNumber": null,
-            "cname": "Austria",
-            "ccode": "aut",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "RW",
-            "height": 180,
-            "age": 25,
-            "dateOfBirth": "2001-09-02",
-            "transferValue": 952191,
-            "stats": {
-              "appearances": 24,
-              "minutes": 852,
-              "goals": 0,
-              "assists": 1,
-              "yellowCards": 2,
-              "redCards": 1,
-              "competition": "Super Lig",
-              "season": "2025/2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
           {
             "id": 660165,
             "name": "Milot Rashica",
@@ -20078,7 +19458,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "RW",
-            "height": 178,
+            "height": 177,
             "age": 30,
             "dateOfBirth": "1996-06-28",
             "transferValue": 1345152,
@@ -20096,9 +19476,9 @@
           },
           {
             "id": 1044299,
-            "name": "Hyeon-Gyu Oh",
+            "name": "Oh Hyeon-Gyu",
             "shirtNumber": 9,
-            "cname": "South Korea",
+            "cname": "Korea Republic",
             "ccode": "kor",
             "role": {
               "key": "attacker_long",
@@ -20106,7 +19486,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "ST",
-            "height": 183,
+            "height": 187,
             "age": 25,
             "dateOfBirth": "2001-04-12",
             "transferValue": 16629530,
@@ -20124,7 +19504,7 @@
           },
           {
             "id": 623540,
-            "name": "Václav Cerny",
+            "name": "Václav Černý",
             "shirtNumber": 18,
             "cname": "Czechia",
             "ccode": "cze",
@@ -20134,7 +19514,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "RW,CAM",
-            "height": 178,
+            "height": 182,
             "age": 29,
             "dateOfBirth": "1997-10-17",
             "transferValue": 5467517,
@@ -20161,7 +19541,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "LW,RW,CM",
+            "positionIdsDesc": "LW,RW,CAM",
             "height": 172,
             "age": 31,
             "dateOfBirth": "1994-12-04",
@@ -20182,7 +19562,7 @@
             "id": 1576040,
             "name": "Mustafa Hekimoğlu",
             "shirtNumber": 23,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "attacker_long",
@@ -20238,7 +19618,7 @@
             "id": 1642084,
             "name": "İlhan Fakılı",
             "shirtNumber": 29,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "attacker_long",
@@ -20246,7 +19626,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "LW,RW,RM,LM",
-            "height": 176,
+            "height": 180,
             "age": 20,
             "dateOfBirth": "2006-01-20",
             "transferValue": 1642100,
@@ -20263,38 +19643,10 @@
             }
           },
           {
-            "id": 2210599,
-            "name": "Ozan Sevim",
-            "shirtNumber": 66,
-            "cname": "Turkiye",
-            "ccode": "tur",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "Attacker",
-            "height": null,
-            "age": 19,
-            "dateOfBirth": "2007-01-24",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-10-12T06:23:36.283Z"
-            }
-          },
-          {
             "id": 1896214,
             "name": "Ahmet Bircan",
             "shirtNumber": 70,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "attacker_long",
@@ -20302,7 +19654,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "ST",
-            "height": null,
+            "height": 178,
             "age": 19,
             "dateOfBirth": "2007-01-24",
             "transferValue": null,
@@ -20322,7 +19674,7 @@
             "id": 1435689,
             "name": "Semih Kiliçsoy",
             "shirtNumber": 90,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "attacker_long",
@@ -20428,7 +19780,7 @@
             "positionId": 0,
             "positionIdsDesc": "GK",
             "height": 196,
-            "age": 30,
+            "age": 31,
             "dateOfBirth": "1995-11-09",
             "transferValue": 1960931,
             "stats": {
@@ -21183,7 +20535,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 192,
+            "height": 190,
             "age": 29,
             "dateOfBirth": "1997-07-25",
             "transferValue": 10840547,
@@ -21211,7 +20563,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 185,
+            "height": 188,
             "age": 28,
             "dateOfBirth": "1998-10-28",
             "transferValue": 2242729,
@@ -21272,7 +20624,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 185,
+            "height": 186,
             "age": 33,
             "dateOfBirth": "1993-08-16",
             "transferValue": 1862965,
@@ -21501,7 +20853,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM,CM",
-            "height": 187,
+            "height": 189,
             "age": 23,
             "dateOfBirth": "2003-08-21",
             "transferValue": 12607909,
@@ -21585,7 +20937,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CM,CAM,CDM",
-            "height": 175,
+            "height": 174,
             "age": 29,
             "dateOfBirth": "1997-04-09",
             "transferValue": 4188486,
@@ -21613,7 +20965,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM,CM,CAM,ST",
-            "height": 178,
+            "height": 185,
             "age": 26,
             "dateOfBirth": "2000-02-06",
             "transferValue": 10034604,
@@ -21640,7 +20992,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CAM,CM,LW",
+            "positionIdsDesc": "CM,CAM,RW",
             "height": 177,
             "age": 30,
             "dateOfBirth": "1996-04-09",
@@ -21725,7 +21077,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM,CM",
-            "height": 176,
+            "height": 179,
             "age": 30,
             "dateOfBirth": "1996-08-07",
             "transferValue": 4710400,
@@ -21747,34 +21099,6 @@
         "title": "attackers",
         "members": [
           {
-            "id": 1726794,
-            "name": "Dylan Vanney",
-            "shirtNumber": null,
-            "cname": "USA",
-            "ccode": "usa",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "CAM,LW,ST",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2007-11-29",
-            "transferValue": null,
-            "stats": {
-              "appearances": 16,
-              "minutes": 1350,
-              "goals": 7,
-              "assists": 3,
-              "yellowCards": 4,
-              "redCards": 0,
-              "competition": "MLS Next Pro",
-              "season": "2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
             "id": 967622,
             "name": "Antony",
             "shirtNumber": 7,
@@ -21786,7 +21110,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "RW,RM",
-            "height": 172,
+            "height": 174,
             "age": 26,
             "dateOfBirth": "2000-02-24",
             "transferValue": 40260906,
@@ -21870,7 +21194,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "LW,RW",
-            "height": 174,
+            "height": 173,
             "age": 26,
             "dateOfBirth": "2000-04-02",
             "transferValue": 3847074,
@@ -21890,7 +21214,7 @@
             "id": 942365,
             "name": "Troy Parrott",
             "shirtNumber": 19,
-            "cname": "Ireland",
+            "cname": "Republic of Ireland",
             "ccode": "irl",
             "role": {
               "key": "attacker_long",
@@ -21907,34 +21231,6 @@
               "minutes": 309,
               "goals": 1,
               "assists": 1,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "LaLiga",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1793845,
-            "name": "José Antonio Morante",
-            "shirtNumber": 27,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "LW,RW",
-            "height": null,
-            "age": 19,
-            "dateOfBirth": "2007-06-28",
-            "transferValue": null,
-            "stats": {
-              "appearances": 1,
-              "minutes": 1,
-              "goals": 1,
-              "assists": 0,
               "yellowCards": 0,
               "redCards": 0,
               "competition": "LaLiga",
@@ -22443,7 +21739,7 @@
           },
           {
             "id": 463301,
-            "name": "Milinkovic-Savic",
+            "name": "Milinković-Savić",
             "shirtNumber": 22,
             "cname": "Serbia",
             "ccode": "srb",
@@ -22765,7 +22061,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "RW,LW,RM,RWB",
+            "positionIdsDesc": "RW,RM,RWB",
             "height": 171,
             "age": 18,
             "dateOfBirth": "2008-02-29",
@@ -23007,7 +22303,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "RB,RM,LB",
+            "positionIdsDesc": "RB,RM",
             "height": 170,
             "age": 27,
             "dateOfBirth": "1999-03-23",
@@ -23460,7 +22756,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,LM,CAM,LW",
+            "positionIdsDesc": "CM,CAM,LM,LW",
             "height": 175,
             "age": 24,
             "dateOfBirth": "2002-02-11",
@@ -23607,7 +22903,7 @@
             "positionId": 3,
             "positionIdsDesc": "ST,LW",
             "height": 173,
-            "age": 27,
+            "age": 28,
             "dateOfBirth": "1998-11-13",
             "transferValue": 12835628,
             "stats": {
@@ -23689,7 +22985,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "LW,LM,RW,ST",
+            "positionIdsDesc": "LW,LM,RW",
             "height": 175,
             "age": 20,
             "dateOfBirth": "2006-01-14",
@@ -23820,7 +23116,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB",
-            "height": 174,
+            "height": 176,
             "age": 24,
             "dateOfBirth": "2002-07-23",
             "transferValue": 18179262,
@@ -23876,7 +23172,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB,RB",
-            "height": 180,
+            "height": 181,
             "age": 29,
             "dateOfBirth": "1997-03-30",
             "transferValue": 5317240,
@@ -23904,7 +23200,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 187,
+            "height": 186,
             "age": 20,
             "dateOfBirth": "2006-04-23",
             "transferValue": 29185985,
@@ -23960,7 +23256,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "LB",
-            "height": 171,
+            "height": 173,
             "age": 26,
             "dateOfBirth": "2000-09-04",
             "transferValue": 16775464,
@@ -24016,7 +23312,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB",
-            "height": 178,
+            "height": 176,
             "age": 30,
             "dateOfBirth": "1995-12-14",
             "transferValue": 706883,
@@ -24054,34 +23350,6 @@
               "goals": 0,
               "assists": 1,
               "yellowCards": 0,
-              "redCards": 0,
-              "competition": "LaLiga",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1697334,
-            "name": "Luken Beitia",
-            "shirtNumber": 34,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "CB",
-            "height": 191,
-            "age": 22,
-            "dateOfBirth": "2004-06-30",
-            "transferValue": 923691,
-            "stats": {
-              "appearances": 3,
-              "minutes": 270,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 1,
               "redCards": 0,
               "competition": "LaLiga",
               "season": "2026/2027",
@@ -24160,7 +23428,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "LM,LW,RW,RM",
+            "positionIdsDesc": "LM,LW,RM,ST",
             "height": 179,
             "age": 29,
             "dateOfBirth": "1996-11-29",
@@ -24169,34 +23437,6 @@
               "appearances": 10,
               "minutes": 526,
               "goals": 2,
-              "assists": 1,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "LaLiga",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 848289,
-            "name": "Takefusa Kubo",
-            "shirtNumber": 14,
-            "cname": "Japan",
-            "ccode": "jpn",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "RW,RM,CAM",
-            "height": 174,
-            "age": 25,
-            "dateOfBirth": "2001-06-04",
-            "transferValue": 22331351,
-            "stats": {
-              "appearances": 7,
-              "minutes": 309,
-              "goals": 1,
               "assists": 1,
               "yellowCards": 0,
               "redCards": 0,
@@ -24217,7 +23457,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CM,CDM,CAM,ST",
-            "height": 183,
+            "height": 180,
             "age": 29,
             "dateOfBirth": "1997-01-02",
             "transferValue": 6290962,
@@ -24245,7 +23485,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CM,CDM",
-            "height": 182,
+            "height": 184,
             "age": 28,
             "dateOfBirth": "1998-01-07",
             "transferValue": 5068086,
@@ -24306,7 +23546,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "LW,LM,RW,RM",
-            "height": 178,
+            "height": 175,
             "age": 24,
             "dateOfBirth": "2001-12-27",
             "transferValue": 19247675,
@@ -24362,7 +23602,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "ST",
-            "height": 180,
+            "height": 181,
             "age": 29,
             "dateOfBirth": "1997-04-21",
             "transferValue": 19417455,
@@ -24399,6 +23639,34 @@
               "minutes": 294,
               "goals": 1,
               "assists": 3,
+              "yellowCards": 0,
+              "redCards": 0,
+              "competition": "LaLiga",
+              "season": "2026/2027",
+              "updatedAt": "2026-11-02T06:12:32.087Z"
+            }
+          },
+          {
+            "id": 848289,
+            "name": "Takefusa Kubo",
+            "shirtNumber": 14,
+            "cname": "Japan",
+            "ccode": "jpn",
+            "role": {
+              "key": "attacker_long",
+              "fallback": "Attacker"
+            },
+            "positionId": 3,
+            "positionIdsDesc": "RW,RM,CAM",
+            "height": 173,
+            "age": 25,
+            "dateOfBirth": "2001-06-04",
+            "transferValue": 22331351,
+            "stats": {
+              "appearances": 7,
+              "minutes": 309,
+              "goals": 1,
+              "assists": 1,
               "yellowCards": 0,
               "redCards": 0,
               "competition": "LaLiga",
@@ -24446,7 +23714,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "LW",
-            "height": 180,
+            "height": 182,
             "age": 23,
             "dateOfBirth": "2003-05-26",
             "transferValue": 10433744,
@@ -24454,34 +23722,6 @@
               "appearances": 5,
               "minutes": 72,
               "goals": 1,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "LaLiga",
-              "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1721611,
-            "name": "Álex Marchal",
-            "shirtNumber": 29,
-            "cname": "Spain",
-            "ccode": "esp",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "LM,ST,LW",
-            "height": 180,
-            "age": 19,
-            "dateOfBirth": "2007-09-17",
-            "transferValue": 6435002,
-            "stats": {
-              "appearances": 5,
-              "minutes": 112,
-              "goals": 0,
               "assists": 0,
               "yellowCards": 0,
               "redCards": 0,
@@ -24507,7 +23747,7 @@
             "id": 1677467,
             "name": "Ahmet Yıldırım",
             "shirtNumber": 1,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "keeper_long",
@@ -24563,7 +23803,7 @@
             "id": 1504681,
             "name": "Onuralp Çevikkan",
             "shirtNumber": 25,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "keeper_long",
@@ -24571,7 +23811,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 190,
+            "height": 192,
             "age": 20,
             "dateOfBirth": "2006-01-02",
             "transferValue": null,
@@ -24591,7 +23831,7 @@
             "id": 1752855,
             "name": "Erol Çolak",
             "shirtNumber": 96,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "keeper_long",
@@ -24599,7 +23839,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": null,
+            "height": 190,
             "age": 20,
             "dateOfBirth": "2006-01-02",
             "transferValue": null,
@@ -24624,7 +23864,7 @@
             "id": 424380,
             "name": "Samet Akaydin",
             "shirtNumber": 4,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "defender_long",
@@ -24652,7 +23892,7 @@
             "id": 214339,
             "name": "Okay Yokuşlu",
             "shirtNumber": 5,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "defender_long",
@@ -24660,7 +23900,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 188,
+            "height": 190,
             "age": 32,
             "dateOfBirth": "1994-03-09",
             "transferValue": 333575,
@@ -24688,7 +23928,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 186,
+            "height": 187,
             "age": 35,
             "dateOfBirth": "1991-01-08",
             "transferValue": 433119,
@@ -24708,7 +23948,7 @@
             "id": 889717,
             "name": "Mustafa Eskihellaç",
             "shirtNumber": 19,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "defender_long",
@@ -24736,7 +23976,7 @@
             "id": 1460591,
             "name": "Wagner Pina",
             "shirtNumber": 20,
-            "cname": "Cape Verde",
+            "cname": "Cabo Verde",
             "ccode": "cpv",
             "role": {
               "key": "defender_long",
@@ -24792,7 +24032,7 @@
             "id": 1107951,
             "name": "Cenk Özkacar",
             "shirtNumber": 39,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "defender_long",
@@ -24846,9 +24086,9 @@
           },
           {
             "id": 1441786,
-            "name": "Sidny Lopes Cabral",
+            "name": "Sidny Cabral",
             "shirtNumber": 55,
-            "cname": "Cape Verde",
+            "cname": "Cabo Verde",
             "ccode": "cpv",
             "role": {
               "key": "defender_long",
@@ -24856,7 +24096,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "LB,RB,RM,LW",
-            "height": 170,
+            "height": 176,
             "age": 24,
             "dateOfBirth": "2002-09-18",
             "transferValue": 12542516,
@@ -24870,34 +24110,6 @@
               "competition": "Super Lig",
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1922904,
-            "name": "Kuzey Akçay",
-            "shirtNumber": 81,
-            "cname": "Turkiye",
-            "ccode": "tur",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "Defender",
-            "height": null,
-            "age": 16,
-            "dateOfBirth": "2010-04-09",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-10-19T06:18:20.339Z"
             }
           }
         ]
@@ -24972,8 +24184,8 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CAM,RW,CM,LM,LW,RM",
-            "height": 185,
+            "positionIdsDesc": "CAM,CM,RW,LM,LW,RM",
+            "height": 180,
             "age": 25,
             "dateOfBirth": "2001-03-19",
             "transferValue": 11056501,
@@ -25002,7 +24214,7 @@
             "positionId": 2,
             "positionIdsDesc": "CDM,CM",
             "height": 165,
-            "age": 24,
+            "age": 25,
             "dateOfBirth": "2001-11-13",
             "transferValue": 2477003,
             "stats": {
@@ -25021,14 +24233,14 @@
             "id": 358936,
             "name": "Ozan Tufan",
             "shirtNumber": 11,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "midfielder_long",
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CDM,RB,CAM,CM,CB",
+            "positionIdsDesc": "CDM,RB,CM,CAM,CB",
             "height": 179,
             "age": 31,
             "dateOfBirth": "1995-03-23",
@@ -25057,7 +24269,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CM,CDM,CAM",
-            "height": 180,
+            "height": 181,
             "age": 33,
             "dateOfBirth": "1993-05-04",
             "transferValue": 1638246,
@@ -25105,7 +24317,7 @@
             "id": 718867,
             "name": "Melih Kabasakal",
             "shirtNumber": 57,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "midfielder_long",
@@ -25133,7 +24345,7 @@
             "id": 1126769,
             "name": "Aral Şimşir",
             "shirtNumber": 58,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "midfielder_long",
@@ -25141,7 +24353,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CAM,LW,ST,LM",
-            "height": null,
+            "height": 175,
             "age": 24,
             "dateOfBirth": "2002-06-19",
             "transferValue": 17503789,
@@ -25156,96 +24368,12 @@
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
             }
-          },
-          {
-            "id": 1747246,
-            "name": "Yiğithan Çubukcu",
-            "shirtNumber": 82,
-            "cname": "Turkiye",
-            "ccode": "tur",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "Midfielder",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-09-09",
-            "transferValue": 358371,
-            "stats": {
-              "appearances": 1,
-              "minutes": 10,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Super Lig",
-              "season": "2025/2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1840956,
-            "name": "Oğuzhan Ertem",
-            "shirtNumber": 90,
-            "cname": "Turkiye",
-            "ccode": "tur",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CM",
-            "height": 178,
-            "age": 18,
-            "dateOfBirth": "2008-08-01",
-            "transferValue": 351161,
-            "stats": {
-              "appearances": 1,
-              "minutes": 24,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Super Lig",
-              "season": "2025/2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
           }
         ]
       },
       {
         "title": "attackers",
         "members": [
-          {
-            "id": 1747245,
-            "name": "Umut Beşli",
-            "shirtNumber": null,
-            "cname": "Turkiye",
-            "ccode": "tur",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "Attacker",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-03-18",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-10-26T06:18:22.760Z"
-            }
-          },
           {
             "id": 1374500,
             "name": "Franculino",
@@ -25258,7 +24386,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "ST,CAM,RW",
-            "height": null,
+            "height": 182,
             "age": 22,
             "dateOfBirth": "2004-06-28",
             "transferValue": 24108157,
@@ -25306,7 +24434,7 @@
             "id": 411605,
             "name": "Mehmet Umut Nayir",
             "shirtNumber": 14,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "attacker_long",
@@ -25342,7 +24470,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "ST",
-            "height": 202,
+            "height": 201,
             "age": 32,
             "dateOfBirth": "1994-05-28",
             "transferValue": 4161886,
@@ -25362,8 +24490,8 @@
             "id": 1324890,
             "name": "Cihan Çanak",
             "shirtNumber": 61,
-            "cname": "Belgium",
-            "ccode": "bel",
+            "cname": "Türkiye",
+            "ccode": "tur",
             "role": {
               "key": "attacker_long",
               "fallback": "Attacker"
@@ -25398,7 +24526,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "LW,LM,RW",
-            "height": null,
+            "height": 181,
             "age": 22,
             "dateOfBirth": "2004-03-07",
             "transferValue": 13942639,
@@ -25418,7 +24546,7 @@
             "id": 389181,
             "name": "Metehan Mimaroğlu",
             "shirtNumber": 77,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "attacker_long",
@@ -25426,7 +24554,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "LW",
-            "height": 178,
+            "height": 180,
             "age": 32,
             "dateOfBirth": "1994-07-07",
             "transferValue": 281730,
@@ -25443,38 +24571,10 @@
             }
           },
           {
-            "id": 1840965,
-            "name": "Ahmet Güren",
-            "shirtNumber": 89,
-            "cname": "Turkiye",
-            "ccode": "tur",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "Attacker",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-05-16",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-11-09T06:13:00.968Z"
-            }
-          },
-          {
             "id": 1691776,
             "name": "Ali Habeşoğlu",
             "shirtNumber": 99,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "attacker_long",
@@ -25515,7 +24615,7 @@
             "id": 903995,
             "name": "Tarık Çetin",
             "shirtNumber": 13,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "keeper_long",
@@ -25571,7 +24671,7 @@
             "id": 150372,
             "name": "Mert Günok",
             "shirtNumber": 34,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "keeper_long",
@@ -25593,34 +24693,6 @@
               "competition": "Super Lig",
               "season": "2025/2026",
               "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 2133064,
-            "name": "Kuzey Sapaz",
-            "shirtNumber": 75,
-            "cname": "Turkiye",
-            "ccode": "tur",
-            "role": {
-              "key": "keeper_long",
-              "fallback": "Keeper"
-            },
-            "positionId": 0,
-            "positionIdsDesc": "GK",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-02-14",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-10-12T06:23:36.283Z"
             }
           }
         ]
@@ -25660,7 +24732,7 @@
             "id": 1414040,
             "name": "Yiğit Efe Demir",
             "shirtNumber": 14,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "defender_long",
@@ -25716,7 +24788,7 @@
             "id": 904098,
             "name": "Mert Müldür",
             "shirtNumber": 18,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "defender_long",
@@ -25724,7 +24796,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB,LB,CB",
-            "height": 188,
+            "height": 184,
             "age": 27,
             "dateOfBirth": "1999-04-03",
             "transferValue": 3938447,
@@ -25752,7 +24824,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB,RB",
-            "height": 188,
+            "height": 185,
             "age": 22,
             "dateOfBirth": "2004-06-04",
             "transferValue": 15474987,
@@ -25772,8 +24844,8 @@
             "id": 1080172,
             "name": "Levent Mercan",
             "shirtNumber": 22,
-            "cname": "Germany",
-            "ccode": "ger",
+            "cname": "Türkiye",
+            "ccode": "tur",
             "role": {
               "key": "defender_long",
               "fallback": "Defender"
@@ -25836,7 +24908,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB,LB",
-            "height": 180,
+            "height": 179,
             "age": 32,
             "dateOfBirth": "1993-11-16",
             "transferValue": 2068035,
@@ -25892,7 +24964,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB,CB",
-            "height": 179,
+            "height": 182,
             "age": 22,
             "dateOfBirth": "2004-08-17",
             "transferValue": 2340227,
@@ -25915,9 +24987,9 @@
         "members": [
           {
             "id": 1183589,
-            "name": "Ismail Yüksek",
+            "name": "İsmail Yüksek",
             "shirtNumber": 5,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "midfielder_long",
@@ -25973,7 +25045,7 @@
             "id": 796006,
             "name": "Mert Hakan Yandaş",
             "shirtNumber": 8,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "midfielder_long",
@@ -26029,7 +25101,7 @@
             "id": 1216728,
             "name": "Bartuğ Elmaz",
             "shirtNumber": 28,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "midfielder_long",
@@ -26051,34 +25123,6 @@
               "competition": "Super Lig",
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1797492,
-            "name": "Abdou Aziz Fall",
-            "shirtNumber": 60,
-            "cname": "Senegal",
-            "ccode": "sen",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "Midfielder",
-            "height": 180,
-            "age": 19,
-            "dateOfBirth": "2007-02-20",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-10-12T06:23:36.283Z"
             }
           },
           {
@@ -26115,38 +25159,10 @@
         "title": "attackers",
         "members": [
           {
-            "id": 1537000,
-            "name": "Amara Diouf",
-            "shirtNumber": null,
-            "cname": "Senegal",
-            "ccode": "sen",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "RW",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-06-07",
-            "transferValue": 1387101,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-10-12T06:23:36.283Z"
-            }
-          },
-          {
             "id": 1117570,
             "name": "Kerem Aktürkoglu",
             "shirtNumber": 7,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "attacker_long",
@@ -26230,7 +25246,7 @@
             "id": 316544,
             "name": "İrfan Kahveci",
             "shirtNumber": 17,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "attacker_long",
@@ -26238,7 +25254,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "RW,CAM,CDM",
-            "height": 176,
+            "height": 180,
             "age": 31,
             "dateOfBirth": "1995-07-15",
             "transferValue": 1672566,
@@ -26314,14 +25330,14 @@
             "id": 1092015,
             "name": "Oğuz Aydın",
             "shirtNumber": 70,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "attacker_long",
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "LW,RW,RWB,RM",
+            "positionIdsDesc": "LW,RW,RWB,RM,RB",
             "height": 183,
             "age": 26,
             "dateOfBirth": "2000-10-27",
@@ -26362,7 +25378,7 @@
               "fallback": "Keeper"
             },
             "positionId": 0,
-            "positionIdsDesc": "Keeper",
+            "positionIdsDesc": "GK",
             "height": null,
             "age": 17,
             "dateOfBirth": "2009-03-20",
@@ -26811,7 +25827,7 @@
           },
           {
             "id": 1280082,
-            "name": "Matias Soulé",
+            "name": "Matías Soulé",
             "shirtNumber": 18,
             "cname": "Argentina",
             "ccode": "arg",
@@ -26850,7 +25866,7 @@
             "positionId": 2,
             "positionIdsDesc": "CAM,ST",
             "height": 177,
-            "age": 32,
+            "age": 33,
             "dateOfBirth": "1993-11-15",
             "transferValue": 2180119,
             "stats": {
@@ -28020,7 +27036,7 @@
         "members": [
           {
             "id": 528348,
-            "name": "Everton",
+            "name": "Éverton",
             "shirtNumber": 7,
             "cname": "Brazil",
             "ccode": "bra",
@@ -28244,7 +27260,7 @@
           },
           {
             "id": 1312459,
-            "name": "Miguel Terceros",
+            "name": "Miguelito",
             "shirtNumber": 30,
             "cname": "Bolivia",
             "ccode": "bol",
@@ -29116,7 +28132,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM",
+            "positionIdsDesc": "LM",
             "height": null,
             "age": 18,
             "dateOfBirth": "2007-12-26",
@@ -29928,7 +28944,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CAM,RWB,CM,RM,RW,LWB,CDM",
+            "positionIdsDesc": "CAM,RWB,CM,RW,RM,LWB,CDM",
             "height": 185,
             "age": 28,
             "dateOfBirth": "1998-08-28",
@@ -29984,7 +29000,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "LM,CAM,LWB,LW",
+            "positionIdsDesc": "LM,CAM,LW",
             "height": 180,
             "age": 28,
             "dateOfBirth": "1998-04-06",
@@ -30215,7 +29231,7 @@
             "positionId": 3,
             "positionIdsDesc": "ST,CAM",
             "height": 188,
-            "age": 19,
+            "age": 20,
             "dateOfBirth": "2006-11-11",
             "transferValue": 22266683,
             "stats": {
@@ -30339,7 +29355,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 194,
+            "height": 196,
             "age": 30,
             "dateOfBirth": "1996-06-25",
             "transferValue": 1151072,
@@ -30353,34 +29369,6 @@
               "competition": "Ligue 1",
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1510394,
-            "name": "Lassine Diarra",
-            "shirtNumber": 50,
-            "cname": "Mali",
-            "ccode": "mli",
-            "role": {
-              "key": "keeper_long",
-              "fallback": "Keeper"
-            },
-            "positionId": 0,
-            "positionIdsDesc": "GK",
-            "height": 190,
-            "age": 23,
-            "dateOfBirth": "2002-11-11",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-10-12T06:23:36.283Z"
             }
           }
         ]
@@ -30400,7 +29388,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "LB,CB",
-            "height": 169,
+            "height": 172,
             "age": 34,
             "dateOfBirth": "1992-08-31",
             "transferValue": 2034899,
@@ -30428,7 +29416,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB,RM",
-            "height": 180,
+            "height": 181,
             "age": 21,
             "dateOfBirth": "2004-12-13",
             "transferValue": 18389176,
@@ -30455,8 +29443,8 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "LB,CDM,LWB,LW",
-            "height": 181,
+            "positionIdsDesc": "LB,LWB,LW,CDM,CM",
+            "height": 182,
             "age": 26,
             "dateOfBirth": "2000-05-27",
             "transferValue": 11587096,
@@ -30484,7 +29472,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 180,
+            "height": 190,
             "age": 30,
             "dateOfBirth": "1996-03-08",
             "transferValue": 12414088,
@@ -30539,7 +29527,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "CB,LB,RB",
+            "positionIdsDesc": "CB,LB",
             "height": 187,
             "age": 25,
             "dateOfBirth": "2001-05-21",
@@ -30583,124 +29571,12 @@
               "season": "2026/2027",
               "updatedAt": "2026-11-02T06:12:32.087Z"
             }
-          },
-          {
-            "id": 1922172,
-            "name": "Steeve Kango",
-            "shirtNumber": 37,
-            "cname": "France",
-            "ccode": "fra",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "RB",
-            "height": null,
-            "age": 19,
-            "dateOfBirth": "2006-12-09",
-            "transferValue": 1554964,
-            "stats": {
-              "appearances": 4,
-              "minutes": 77,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Ligue 1",
-              "season": "2025/2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 2402214,
-            "name": "Angel Garcia",
-            "shirtNumber": 38,
-            "cname": "France",
-            "ccode": "fra",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "Defender",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-02-03",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
-              "updatedAt": "2026-10-26T06:18:22.760Z"
-            }
-          },
-          {
-            "id": 1744188,
-            "name": "Noham Kamara",
-            "shirtNumber": 85,
-            "cname": "France",
-            "ccode": "fra",
-            "role": {
-              "key": "defender_long",
-              "fallback": "Defender"
-            },
-            "positionId": 1,
-            "positionIdsDesc": "CB",
-            "height": 185,
-            "age": 19,
-            "dateOfBirth": "2007-01-22",
-            "transferValue": 4294834,
-            "stats": {
-              "appearances": 2,
-              "minutes": 6,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Ligue 1",
-              "season": "2025/2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
           }
         ]
       },
       {
         "title": "midfielders",
         "members": [
-          {
-            "id": 797132,
-            "name": "Paul Akouokou",
-            "shirtNumber": null,
-            "cname": "Ivory Coast",
-            "ccode": "civ",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "CDM",
-            "height": 181,
-            "age": 28,
-            "dateOfBirth": "1997-12-20",
-            "transferValue": 299714,
-            "stats": {
-              "appearances": 11,
-              "minutes": 771,
-              "goals": 1,
-              "assists": 0,
-              "yellowCards": 4,
-              "redCards": 2,
-              "competition": "LaLiga2",
-              "season": "2025/2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
           {
             "id": 1081025,
             "name": "Mads Bidstrup",
@@ -30713,7 +29589,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CM,CDM",
-            "height": 175,
+            "height": 174,
             "age": 25,
             "dateOfBirth": "2001-02-25",
             "transferValue": 16525420,
@@ -30741,7 +29617,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CM,CDM,CB",
-            "height": 191,
+            "height": 188,
             "age": 25,
             "dateOfBirth": "2001-09-24",
             "transferValue": 11318271,
@@ -30768,8 +29644,8 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,CDM,CAM,LW",
-            "height": 180,
+            "positionIdsDesc": "CM,CAM,CDM,LW",
+            "height": 181,
             "age": 32,
             "dateOfBirth": "1994-08-03",
             "transferValue": 8257814,
@@ -30797,7 +29673,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CAM,CM,ST",
-            "height": null,
+            "height": 178,
             "age": 19,
             "dateOfBirth": "2007-02-24",
             "transferValue": 21021532,
@@ -30825,7 +29701,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM,CM,CB",
-            "height": 176,
+            "height": 185,
             "age": 24,
             "dateOfBirth": "2002-10-31",
             "transferValue": 34355962,
@@ -30838,34 +29714,6 @@
               "redCards": 0,
               "competition": "Ligue 1",
               "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 2429665,
-            "name": "Cluver Sambi Mbungu",
-            "shirtNumber": 33,
-            "cname": "DR Congo",
-            "ccode": "cod",
-            "role": {
-              "key": "midfielder_long",
-              "fallback": "Midfielder"
-            },
-            "positionId": 2,
-            "positionIdsDesc": "Midfielder",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-11-08",
-            "transferValue": null,
-            "stats": {
-              "appearances": 0,
-              "minutes": 0,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": null,
-              "season": null,
               "updatedAt": "2026-11-02T06:12:32.087Z"
             }
           },
@@ -31026,7 +29874,7 @@
             },
             "positionId": 3,
             "positionIdsDesc": "ST",
-            "height": 174,
+            "height": 177,
             "age": 26,
             "dateOfBirth": "2000-02-16",
             "transferValue": 25442744,
@@ -31081,8 +29929,8 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "RW,CAM,LW",
-            "height": null,
+            "positionIdsDesc": "RW,CAM",
+            "height": 175,
             "age": 20,
             "dateOfBirth": "2006-06-15",
             "transferValue": 11115434,
@@ -31099,34 +29947,6 @@
             }
           },
           {
-            "id": 1603531,
-            "name": "Alejandro Gomes Rodríguez",
-            "shirtNumber": 32,
-            "cname": "England",
-            "ccode": "eng",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "LW",
-            "height": null,
-            "age": 18,
-            "dateOfBirth": "2008-03-11",
-            "transferValue": 1357197,
-            "stats": {
-              "appearances": 13,
-              "minutes": 509,
-              "goals": 2,
-              "assists": 1,
-              "yellowCards": 2,
-              "redCards": 0,
-              "competition": "Ligue 2",
-              "season": "2025/2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
             "id": 1793704,
             "name": "Rémi Himbert",
             "shirtNumber": 45,
@@ -31137,8 +29957,8 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "ST,RW",
-            "height": null,
+            "positionIdsDesc": "ST",
+            "height": 178,
             "age": 18,
             "dateOfBirth": "2008-02-29",
             "transferValue": 11047121,
@@ -31169,9 +29989,9 @@
         "members": [
           {
             "id": 603669,
-            "name": "Uğurcan Çakir",
+            "name": "Uğurcan Çakır",
             "shirtNumber": 1,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "keeper_long",
@@ -31197,9 +30017,9 @@
           },
           {
             "id": 335429,
-            "name": "Günay Güvenc",
+            "name": "Günay Güvenç",
             "shirtNumber": 19,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "keeper_long",
@@ -31207,7 +30027,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 185,
+            "height": 187,
             "age": 35,
             "dateOfBirth": "1991-06-25",
             "transferValue": 442611,
@@ -31227,7 +30047,7 @@
             "id": 1286950,
             "name": "Jankat Yılmaz",
             "shirtNumber": 24,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "keeper_long",
@@ -31235,7 +30055,7 @@
             },
             "positionId": 0,
             "positionIdsDesc": "GK",
-            "height": 188,
+            "height": 193,
             "age": 22,
             "dateOfBirth": "2004-08-16",
             "transferValue": 1471377,
@@ -31255,7 +30075,7 @@
             "id": 1793856,
             "name": "Enes Büyük",
             "shirtNumber": 70,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "keeper_long",
@@ -31380,7 +30200,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "RB,LW,RW",
-            "height": 180,
+            "height": 183,
             "age": 29,
             "dateOfBirth": "1997-05-22",
             "transferValue": 11436478,
@@ -31400,7 +30220,7 @@
             "id": 1041660,
             "name": "Eren Elmalı",
             "shirtNumber": 17,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "defender_long",
@@ -31408,7 +30228,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "LB,LWB,LW",
-            "height": 180,
+            "height": 181,
             "age": 26,
             "dateOfBirth": "2000-07-07",
             "transferValue": 4182902,
@@ -31428,7 +30248,7 @@
             "id": 291399,
             "name": "Abdülkerim Bardakci",
             "shirtNumber": 42,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "defender_long",
@@ -31436,7 +30256,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 184,
+            "height": 185,
             "age": 32,
             "dateOfBirth": "1994-09-07",
             "transferValue": 3110021,
@@ -31456,7 +30276,7 @@
             "id": 1108328,
             "name": "Kazımcan Karataş",
             "shirtNumber": 88,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "defender_long",
@@ -31484,7 +30304,7 @@
             "id": 1027472,
             "name": "Wilfried Singo",
             "shirtNumber": 90,
-            "cname": "Ivory Coast",
+            "cname": "Côte d'Ivoire",
             "ccode": "civ",
             "role": {
               "key": "defender_long",
@@ -31512,7 +30332,7 @@
             "id": 1433600,
             "name": "Arda Ünyay",
             "shirtNumber": 91,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "defender_long",
@@ -31520,7 +30340,7 @@
             },
             "positionId": 1,
             "positionIdsDesc": "CB",
-            "height": 184,
+            "height": 187,
             "age": 19,
             "dateOfBirth": "2007-01-18",
             "transferValue": 1449312,
@@ -31544,16 +30364,16 @@
           {
             "id": 1300864,
             "name": "Eyüp Aydın",
-            "shirtNumber": null,
-            "cname": "Germany",
-            "ccode": "ger",
+            "shirtNumber": 5,
+            "cname": "Türkiye",
+            "ccode": "tur",
             "role": {
               "key": "midfielder_long",
               "fallback": "Midfielder"
             },
             "positionId": 2,
             "positionIdsDesc": "CAM",
-            "height": 175,
+            "height": 181,
             "age": 22,
             "dateOfBirth": "2004-08-02",
             "transferValue": 761550,
@@ -31581,7 +30401,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM,CAM",
-            "height": 177,
+            "height": 176,
             "age": 27,
             "dateOfBirth": "1999-06-26",
             "transferValue": 24794748,
@@ -31601,7 +30421,7 @@
             "id": 845991,
             "name": "Yunus Akgün",
             "shirtNumber": 11,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "midfielder_long",
@@ -31636,8 +30456,8 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,CDM,CAM",
-            "height": 188,
+            "positionIdsDesc": "CDM,CM,CAM",
+            "height": 190,
             "age": 22,
             "dateOfBirth": "2004-03-26",
             "transferValue": 24212890,
@@ -31655,7 +30475,7 @@
           },
           {
             "id": 178818,
-            "name": "Ilkay Gündogan",
+            "name": "İlkay Gündoğan",
             "shirtNumber": 20,
             "cname": "Germany",
             "ccode": "ger",
@@ -31685,7 +30505,7 @@
             "id": 441164,
             "name": "Kaan Ayhan",
             "shirtNumber": 23,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "midfielder_long",
@@ -31693,8 +30513,8 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CB,CDM",
-            "height": 184,
-            "age": 31,
+            "height": 185,
+            "age": 32,
             "dateOfBirth": "1994-11-10",
             "transferValue": 856915,
             "stats": {
@@ -31721,7 +30541,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM,CM",
-            "height": 168,
+            "height": 166,
             "age": 30,
             "dateOfBirth": "1996-02-11",
             "transferValue": 6295248,
@@ -31749,7 +30569,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CDM,CM",
-            "height": 175,
+            "height": 176,
             "age": 19,
             "dateOfBirth": "2007-03-27",
             "transferValue": 7792074,
@@ -31777,7 +30597,7 @@
             },
             "positionId": 2,
             "positionIdsDesc": "CAM,CM,ST",
-            "height": 168,
+            "height": 173,
             "age": 21,
             "dateOfBirth": "2005-06-09",
             "transferValue": 34750313,
@@ -31804,7 +30624,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CDM,CB,CM",
+            "positionIdsDesc": "CDM,CB",
             "height": 184,
             "age": 33,
             "dateOfBirth": "1993-09-01",
@@ -31826,34 +30646,6 @@
       {
         "title": "attackers",
         "members": [
-          {
-            "id": 1783494,
-            "name": "Ada Yüzgec",
-            "shirtNumber": null,
-            "cname": "Turkiye",
-            "ccode": "tur",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "ST",
-            "height": null,
-            "age": 17,
-            "dateOfBirth": "2009-04-03",
-            "transferValue": null,
-            "stats": {
-              "appearances": 1,
-              "minutes": 1,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Super Lig",
-              "season": "2025/2026",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
           {
             "id": 530859,
             "name": "Leroy Sané",
@@ -31886,7 +30678,7 @@
             "id": 1406300,
             "name": "Deniz Gül",
             "shirtNumber": 21,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "attacker_long",
@@ -31907,34 +30699,6 @@
               "redCards": 0,
               "competition": "Super Lig",
               "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1901084,
-            "name": "Armando Güner",
-            "shirtNumber": 27,
-            "cname": "Argentina",
-            "ccode": "arg",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "RW,CAM",
-            "height": 178,
-            "age": 18,
-            "dateOfBirth": "2008-01-07",
-            "transferValue": 701421,
-            "stats": {
-              "appearances": 1,
-              "minutes": 1,
-              "goals": 0,
-              "assists": 0,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "Super Lig",
-              "season": "2025/2026",
               "updatedAt": "2026-11-02T06:12:32.087Z"
             }
           },
@@ -31998,7 +30762,7 @@
             "id": 890232,
             "name": "Barış Alper Yılmaz",
             "shirtNumber": 53,
-            "cname": "Turkiye",
+            "cname": "Türkiye",
             "ccode": "tur",
             "role": {
               "key": "attacker_long",
@@ -32019,34 +30783,6 @@
               "redCards": 0,
               "competition": "Super Lig",
               "season": "2026/2027",
-              "updatedAt": "2026-11-02T06:12:32.087Z"
-            }
-          },
-          {
-            "id": 1682656,
-            "name": "Berat Luş",
-            "shirtNumber": 73,
-            "cname": "Turkiye",
-            "ccode": "tur",
-            "role": {
-              "key": "attacker_long",
-              "fallback": "Attacker"
-            },
-            "positionId": 3,
-            "positionIdsDesc": "LW",
-            "height": null,
-            "age": 19,
-            "dateOfBirth": "2007-04-20",
-            "transferValue": 1599651,
-            "stats": {
-              "appearances": 35,
-              "minutes": 1311,
-              "goals": 5,
-              "assists": 2,
-              "yellowCards": 0,
-              "redCards": 0,
-              "competition": "1. Lig",
-              "season": "2025/2026",
               "updatedAt": "2026-11-02T06:12:32.087Z"
             }
           }
@@ -32219,7 +30955,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "CB,RB,LB",
+            "positionIdsDesc": "CB,RB",
             "height": 180,
             "age": 22,
             "dateOfBirth": "2004-04-08",
@@ -32247,7 +30983,7 @@
               "fallback": "Defender"
             },
             "positionId": 1,
-            "positionIdsDesc": "RB,RWB,RW",
+            "positionIdsDesc": "RWB,RB,RW",
             "height": 172,
             "age": 26,
             "dateOfBirth": "2000-09-23",
@@ -32266,7 +31002,7 @@
           },
           {
             "id": 1734316,
-            "name": "Abubacarr Kinteh",
+            "name": "Abubacarr Sedi Kinteh",
             "shirtNumber": 24,
             "cname": "Gambia",
             "ccode": "gam",
@@ -32467,7 +31203,7 @@
           },
           {
             "id": 1439625,
-            "name": "Valentin Atangana",
+            "name": "Valentin Atangana Edoa",
             "shirtNumber": 6,
             "cname": "France",
             "ccode": "fra",
@@ -32504,7 +31240,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CAM,RW,LW,RM",
+            "positionIdsDesc": "CAM,RW,LW",
             "height": 184,
             "age": 26,
             "dateOfBirth": "1999-12-29",
@@ -32588,7 +31324,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CDM",
+            "positionIdsDesc": "CM",
             "height": 185,
             "age": 18,
             "dateOfBirth": "2008-04-14",
@@ -32607,7 +31343,7 @@
           },
           {
             "id": 2219280,
-            "name": "Faisal Ibrahim Fallatah",
+            "name": "Faisal Fallatah",
             "shirtNumber": 25,
             "cname": "Saudi Arabia",
             "ccode": "ksa",
@@ -32646,7 +31382,7 @@
             "positionId": 2,
             "positionIdsDesc": "CDM,CM,CAM",
             "height": 180,
-            "age": 24,
+            "age": 25,
             "dateOfBirth": "2001-11-11",
             "transferValue": 717304,
             "stats": {
@@ -32700,7 +31436,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CDM,LB,CM",
+            "positionIdsDesc": "CDM,CM",
             "height": 177,
             "age": 25,
             "dateOfBirth": "2001-03-08",
@@ -32780,7 +31516,7 @@
           },
           {
             "id": 1527318,
-            "name": "Meshal Al Mutairi",
+            "name": "Meshal Al-Mutairi",
             "shirtNumber": 11,
             "cname": "Saudi Arabia",
             "ccode": "ksa",
@@ -33428,7 +32164,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "RWB,LW,ST,RB,CAM",
+            "positionIdsDesc": "RWB,LW,ST,CAM",
             "height": 183,
             "age": 25,
             "dateOfBirth": "2001-07-23",
@@ -34380,7 +33116,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CM,CAM,CDM",
+            "positionIdsDesc": "CM,CDM,CAM",
             "height": 175,
             "age": 18,
             "dateOfBirth": "2008-10-08",
@@ -34639,7 +33375,7 @@
             "positionId": 3,
             "positionIdsDesc": "LW,RW",
             "height": null,
-            "age": 23,
+            "age": 24,
             "dateOfBirth": "2002-11-09",
             "transferValue": 194810,
             "stats": {
@@ -34667,7 +33403,7 @@
             "positionId": 3,
             "positionIdsDesc": "LW,ST,CAM",
             "height": 180,
-            "age": 31,
+            "age": 32,
             "dateOfBirth": "1994-11-11",
             "transferValue": 5250006,
             "stats": {
@@ -34738,7 +33474,7 @@
             "height": 183,
             "age": 33,
             "dateOfBirth": "1993-02-13",
-            "transferValue": null,
+            "transferValue": 914815,
             "stats": {
               "appearances": 13,
               "minutes": 1170,
@@ -34842,7 +33578,7 @@
           },
           {
             "id": 529624,
-            "name": "Juan Cruz Komar",
+            "name": "Juan Komar",
             "shirtNumber": 6,
             "cname": "Argentina",
             "ccode": "arg",
@@ -35010,7 +33746,7 @@
           },
           {
             "id": 1925924,
-            "name": "Lucas Ramos López",
+            "name": "Lucas Ramos",
             "shirtNumber": 35,
             "cname": "Argentina",
             "ccode": "arg",
@@ -35077,7 +33813,7 @@
             "positionId": 1,
             "positionIdsDesc": "Defender",
             "height": null,
-            "age": 19,
+            "age": 20,
             "dateOfBirth": "2006-11-09",
             "transferValue": null,
             "stats": {
@@ -35248,7 +33984,7 @@
               "fallback": "Midfielder"
             },
             "positionId": 2,
-            "positionIdsDesc": "CAM,RW,LW,ST",
+            "positionIdsDesc": "CAM,RW,LW",
             "height": 178,
             "age": 38,
             "dateOfBirth": "1988-02-14",
@@ -35524,7 +34260,7 @@
           },
           {
             "id": 837870,
-            "name": "Jaminton Campaz",
+            "name": "Jáminton Campaz",
             "shirtNumber": 8,
             "cname": "Colombia",
             "ccode": "col",
@@ -36107,7 +34843,7 @@
         "members": [
           {
             "id": 1000876,
-            "name": "Mohamed Ben Romdhane",
+            "name": "Mohamed Ali Ben Romdhane",
             "shirtNumber": 5,
             "cname": "Tunisia",
             "ccode": "tun",
@@ -36275,7 +35011,7 @@
           },
           {
             "id": 1260147,
-            "name": "Mohamed Hrimat",
+            "name": "Mohamed Rabie Hrimat",
             "shirtNumber": 34,
             "cname": "Morocco",
             "ccode": "mar",
@@ -36457,7 +35193,7 @@
               "fallback": "Attacker"
             },
             "positionId": 3,
-            "positionIdsDesc": "ST",
+            "positionIdsDesc": "LW",
             "height": 176,
             "age": 34,
             "dateOfBirth": "1992-10-10",
