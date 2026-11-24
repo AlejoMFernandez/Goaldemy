@@ -25,6 +25,7 @@ const SECTIONS = computed(() => [
     items: [
       { key: 'perfil', label: 'Mi perfil', to: '/profile', icon: 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0' },
       { key: 'editar', label: 'Editar perfil', to: '/profile-edit', icon: 'M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4' },
+      { key: 'notificaciones', label: 'Notificaciones', to: '/notifications', icon: 'M6 9a6 6 0 1112 0c0 2.3.7 3.6 1.2 4.4.4.6.6.9.6 1.1 0 .8-.7 1.5-1.5 1.5H5.7A1.7 1.7 0 014 14.3c0-.2.2-.5.6-1.1C5.1 12.6 6 11.3 6 9zM14 18.5a2 2 0 11-4 0', count: shellState.notifCount },
       { key: 'mensajes', label: 'Mensajes', to: '/messages', icon: 'M4 5h16v11H8l-4 4V5z' },
       { key: 'desafios', label: 'Objetivos y desafíos', action: 'challenges', icon: 'M5 21V4M5 4h13l-3 4 3 4H5' },
       { key: 'planes', label: 'Premium · Planes', to: '/pricing', icon: 'M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z', accent: true },
@@ -83,17 +84,23 @@ onBeforeUnmount(() => { document.removeEventListener('keydown', onKey); document
         role="dialog" aria-modal="true" aria-label="Cuenta y ajustes">
         <div class="pt-2.5 pb-1 grid place-items-center"><span class="block h-1.5 w-10 rounded-full bg-white/20"></span></div>
 
-        <!-- Cabecera: avatar + nombre + rango -->
-        <div class="flex items-center gap-3 px-5 pt-2 pb-4 border-b border-white/10">
-          <UserAvatar :size="48" :avatar-url="shellState.user?.avatar_url || ''" :initial="(name.trim()[0] || '?').toUpperCase()"
-            :frame-key="shellState.equipped.frameKey" :icon-glyph="shellState.equipped.iconGlyph" :icon-bg="shellState.equipped.iconBg" :frame-premium="shellState.equipped.framePremium" />
-          <div class="min-w-0 flex-1">
-            <div class="font-display font-bold text-white truncate">{{ name }}</div>
-            <div class="text-xs text-amber-300/90 font-semibold">Nivel {{ shellState.stats.level }}<span v-if="tier"> · {{ tier.label }}</span></div>
+        <!-- Cabecera: igual que el menú de usuario de siempre (avatar, nombre, Nivel · XP y la barra verde→cian→violeta) -->
+        <div class="px-5 pt-2 pb-4 border-b border-white/10">
+          <div class="flex items-center gap-3">
+            <UserAvatar :size="48" :avatar-url="shellState.user?.avatar_url || ''" :initial="(name.trim()[0] || '?').toUpperCase()"
+              :frame-key="shellState.equipped.frameKey" :icon-glyph="shellState.equipped.iconGlyph" :icon-bg="shellState.equipped.iconBg" :frame-premium="shellState.equipped.framePremium" />
+            <div class="min-w-0 flex-1">
+              <div class="font-display font-bold text-white truncate leading-tight">{{ name }}</div>
+              <div class="text-[11px] text-slate-400">Nivel {{ shellState.stats.level }}<span v-if="shellState.stats.xpTotal"> · {{ shellState.stats.xpTotal.toLocaleString('es-AR') }} XP</span><span v-if="tier"> · {{ tier.label }}</span></div>
+            </div>
+            <img v-if="tier?.image" :src="tier.image" :alt="tier.label" width="34" height="40" class="w-[34px] h-[40px] shrink-0" />
+            <button type="button" class="h-11 w-11 grid place-items-center rounded-full text-slate-300 hover:text-white hover:bg-white/10" aria-label="Cerrar" @click="closeSettings()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="h-5 w-5"><path d="M6 18 18 6M6 6l12 12"/></svg>
+            </button>
           </div>
-          <button type="button" class="h-11 w-11 grid place-items-center rounded-full text-slate-300 hover:text-white hover:bg-white/10" aria-label="Cerrar" @click="closeSettings()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="h-5 w-5"><path d="M6 18 18 6M6 6l12 12"/></svg>
-          </button>
+          <div class="mt-3 h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 transition-all duration-700" :style="{ width: (shellState.stats.levelPct || 0) + '%' }"></div>
+          </div>
         </div>
 
         <div class="settings-scroll overflow-y-auto px-3 py-2">
@@ -104,6 +111,7 @@ onBeforeUnmount(() => { document.removeEventListener('keydown', onKey); document
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-[18px] w-[18px]"><path :d="it.icon"/></svg>
               </span>
               <span class="flex-1 text-[14.5px] font-semibold" :class="it.accent ? 'text-amber-200' : 'text-slate-100'">{{ it.label }}</span>
+              <span v-if="it.count > 0" class="min-w-[20px] h-5 px-1.5 rounded-full bg-rose-500 text-white text-[11px] font-bold grid place-items-center">{{ it.count > 9 ? '9+' : it.count }}</span>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-slate-600"><path d="M9 6l6 6-6 6"/></svg>
             </button>
           </div>

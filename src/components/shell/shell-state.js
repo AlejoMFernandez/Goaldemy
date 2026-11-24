@@ -24,7 +24,7 @@ export const shellState = reactive({
   notifCount: 0,
   isAdmin: false,
   // Stats propias del shell
-  stats: { loaded: false, loading: false, error: false, level: 1, levelPct: 0, streak: 0, fichas: 0, balones: 0 },
+  stats: { loaded: false, loading: false, error: false, level: 1, levelPct: 0, xpTotal: 0, streak: 0, fichas: 0, balones: 0 },
   // UI
   settingsOpen: false,
   bugRequest: 0,
@@ -59,6 +59,7 @@ export function loadShellStats(force = false) {
       Object.assign(shellState.stats, {
         level: Number(info?.level) || 1,
         levelPct: computeProgressPercentSync(info) || 0,
+        xpTotal: Number(info?.xp_total ?? info?.total_xp ?? info?.xp ?? 0) || 0,
         streak: prof?.data?.daily_streak || 0,
         fichas: Number(wallet?.fichas) || 0,
         balones: Number(wallet?.balones) || 0,

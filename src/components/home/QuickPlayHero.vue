@@ -1,9 +1,10 @@
 <script setup>
 /**
- * JUGAR RÁPIDO — héroe de la home logueada.
- * Un solo botón gigante dorado que arranca directo el próximo desafío diario
- * disponible (services/quick-play.js). Debajo, la jornada de hoy: una pelota
- * por juego (verde ganado · roja perdido · vacía pendiente).
+ * JUGAR RÁPIDO — héroe de la home logueada (moodboard 10 v2).
+ * Muestra el PÓSTER real del próximo desafío (GamePoster) y el botón dorado que
+ * lo arranca directo (services/quick-play.js). Debajo, la jornada de hoy con la
+ * pelota de FULVO (BALL_SVG): pelota = ganado · pelota apagada = perdido ·
+ * círculo punteado = pendiente.
  * Si ya jugó todo: "¡Jornada completa!" + cuenta regresiva al reinicio (00:00)
  * y link a la jornada (/play/points).
  */
@@ -11,6 +12,8 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { tapHaptic } from '../shell/shell-state'
 import HubState from '../shell/HubState.vue'
+import GamePoster from '../game/GamePoster.vue'
+import { BALL_SVG, GAME_POSTER_META } from '../../services/game-art'
 
 const props = defineProps({
   level: { type: Number, default: 1 },
@@ -49,6 +52,7 @@ const balls = computed(() => {
   if (!d) return []
   return Array.from({ length: d.total }, (_, i) => (i < d.won ? 'win' : i < d.won + lost.value ? 'loss' : 'todo'))
 })
+const nextSub = computed(() => GAME_POSTER_META[data.value?.next?.slug]?.sub || '')
 const countdown = computed(() => (data.value?.resetAt && fmt) ? fmt(data.value.resetAt, now.value) : '')
 
 function play() {
@@ -69,20 +73,23 @@ onBeforeUnmount(() => clearInterval(timer))
 </script>
 
 <template>
-  <div class="qp-card relative overflow-hidden rounded-3xl border border-amber-400/25 p-5 sm:p-6">
-    <div class="qp-rays pointer-events-none absolute inset-0" aria-hidden="true"></div>
+  <div class="qp-card relative overflow-hidden rounded-2xl border border-white/[0.07] p-3 sm:p-4">
 
     <HubState v-if="loading" loading :rows="1" />
     <HubState v-else-if="error" error message="No pudimos armar tu jornada." @retry="load" />
 
     <template v-else-if="!done">
-      <div class="relative text-center">
-        <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/80">Desafío del día</div>
-        <div class="mt-1 font-display text-lg font-bold text-white truncate">{{ data.next.name }}</div>
+      <div class="relative flex items-stretch gap-3">
+        <GamePoster class="qp-poster" :slug="data.next.slug" :name="data.next.name" :sub="nextSub" />
+        <div class="min-w-0 flex-1 flex flex-col justify-center gap-1.5">
+          <div class="text-[11px] font-bold uppercase tracking-[0.14em] text-cyan-300">Te toca · {{ data.played + 1 }} de {{ data.total }}</div>
+          <div class="font-display text-lg font-bold text-white leading-tight">{{ data.next.name }}</div>
+          <div v-if="nextSub" class="text-[13px] text-slate-400">{{ nextSub }}</div>
+        </div>
       </div>
-      <button type="button" class="qp-btn relative mt-4 w-full" aria-label="Jugar rápido: arrancar el próximo desafío" @click="play">
+      <button type="button" class="qp-btn relative mt-3 w-full" aria-label="Jugar rápido: arrancar el próximo desafío" @click="play">
         <span class="qp-btn-face">
-          <svg class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 001.5.86l12.5-7.5a1 1 0 000-1.72L8.5 3.64A1 1 0 007 4.5z"/></svg>
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 001.5.86l12.5-7.5a1 1 0 000-1.72L8.5 3.64A1 1 0 007 4.5z"/></svg>
           JUGAR RÁPIDO
         </span>
       </button>
@@ -108,53 +115,43 @@ onBeforeUnmount(() => clearInterval(timer))
         <span class="text-slate-300">Jornada de hoy</span>
         <span class="text-slate-400 tabular-nums"><span class="text-white font-bold">{{ data.played }}</span>/{{ data.total }} jugados · <span class="text-emerald-300">{{ data.won }} ganados</span></span>
       </div>
-      <div class="mt-2 flex flex-wrap gap-1.5" aria-hidden="true">
-        <i v-for="(b, i) in balls" :key="i" class="qp-ball" :class="'is-' + b"></i>
+      <div class="mt-2 qp-balls" aria-hidden="true">
+        <span v-for="(b, i) in balls" :key="i" class="qp-ball" :class="'is-' + b" v-html="b === 'todo' ? '' : BALL_SVG"></span>
       </div>
     </RouterLink>
   </div>
 </template>
 
 <style scoped>
-.qp-card {
-  background:
-    radial-gradient(120% 80% at 50% 0%, rgba(251,191,36,.18), transparent 60%),
-    linear-gradient(180deg, #111a2e, #0b1220);
-  box-shadow: 0 18px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);
-}
-.qp-rays {
-  background: repeating-conic-gradient(from 0deg at 50% 38%, rgba(251,191,36,.06) 0deg 8deg, transparent 8deg 20deg);
-  mask-image: radial-gradient(circle at 50% 38%, #000 0%, transparent 65%);
-  -webkit-mask-image: radial-gradient(circle at 50% 38%, #000 0%, transparent 65%);
-  animation: qp-spin 40s linear infinite;
-}
-@keyframes qp-spin { to { transform: rotate(360deg); } }
+.qp-card { background: #111a2e; }
+.qp-poster { width: 112px; flex: none; }
 
-/* Botón gigante dorado con "cara" 3D y latido */
-.qp-btn { display: block; border-radius: 22px; padding-bottom: 6px; background: #92400e; -webkit-tap-highlight-color: transparent; animation: qp-pulse 1.8s ease-in-out infinite; }
+/* Botón dorado con "cara" 3D y un latido suave */
+.qp-btn { display: block; border-radius: 16px; padding-bottom: 4px; background: #b45309; -webkit-tap-highlight-color: transparent; animation: qp-pulse 2s ease-in-out infinite; }
 .qp-btn-face {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  min-height: 72px; border-radius: 22px;
-  font-family: var(--font-display); font-weight: 900; font-size: 24px; letter-spacing: .04em; color: #1c1206;
-  background: linear-gradient(180deg, #fff3b0 0%, #fcd34d 38%, #f59e0b 100%);
-  box-shadow: inset 0 2px 0 rgba(255,255,255,.7), inset 0 -3px 0 rgba(180,83,9,.35);
-  transform: translateY(-6px);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; border-radius: 16px;
+  font-family: var(--font-shout); font-style: italic; font-weight: 800; font-size: 24px; letter-spacing: .04em; color: #1c1206;
+  background: linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.55);
+  transform: translateY(-4px);
   transition: transform .09s ease;
-  text-shadow: 0 1px 0 rgba(255,255,255,.4);
 }
 .qp-btn:active .qp-btn-face { transform: translateY(-1px); }
 @keyframes qp-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,.0), 0 10px 26px rgba(245,158,11,.35); transform: scale(1); }
-  50% { box-shadow: 0 0 0 8px rgba(251,191,36,.12), 0 12px 34px rgba(245,158,11,.55); transform: scale(1.02); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,.45); }
+  50% { box-shadow: 0 0 0 8px rgba(251,191,36,0); }
 }
 .qp-trophy { animation: qp-bob 2.4s ease-in-out infinite; }
 @keyframes qp-bob { 50% { transform: translateY(-4px); } }
 
-.qp-ball { width: 16px; height: 16px; border-radius: 9999px; display: block; border: 2px solid rgba(255,255,255,.15); background: rgba(255,255,255,.04); }
-.qp-ball.is-win { background: radial-gradient(circle at 35% 30%, #a7f3d0, #10b981); border-color: #34d399; box-shadow: 0 0 8px rgba(16,185,129,.5); }
-.qp-ball.is-loss { background: radial-gradient(circle at 35% 30%, #fecaca, #ef4444); border-color: #f87171; }
+.qp-balls { display: grid; grid-template-columns: repeat(auto-fill, minmax(18px, 1fr)); gap: 4px; max-width: 100%; }
+.qp-ball { display: block; aspect-ratio: 1; border-radius: 9999px; }
+.qp-ball :deep(svg) { width: 100%; height: 100%; display: block; }
+.qp-ball.is-loss { filter: grayscale(1) brightness(.45); }
+.qp-ball.is-todo { border: 1.5px dashed rgba(255,255,255,.2); }
 
 @media (prefers-reduced-motion: reduce) {
-  .qp-rays, .qp-btn, .qp-trophy { animation: none; }
+  .qp-btn, .qp-trophy { animation: none; }
 }
 </style>
