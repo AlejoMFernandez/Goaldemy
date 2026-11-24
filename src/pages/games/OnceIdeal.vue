@@ -367,7 +367,8 @@ export default {
       this.score = 0
       this.generateConstraint()
       try {
-        this.sessionId = await startChallengeSession('once-ideal', this.totalTime(), { difficulty: this.selectedDifficulty })
+        const totalSeconds = this.totalTime()
+        this.sessionId = await startChallengeSession('once-ideal', totalSeconds, { difficulty: this.selectedDifficulty })
       } catch (e) { console.error('[OnceIdeal start]', e) }
       this.overlayOpen = false
       this.beginClock()
