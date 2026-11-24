@@ -10,7 +10,11 @@
     "refresh:data": "node scripts/refresh-fotmob-squads.cjs",
     "refresh:players": "node scripts/refresh-fotmob-squads.cjs",
     "smoke": "node scripts/smoke-test.mjs",
-    "test:achievements": "node scripts/test-achievement-rules.mjs"
+    "test:achievements": "node scripts/test-achievement-rules.mjs",
+    "icons": "node scripts/generate-icons.mjs",
+    "cap:sync": "npm run build && npx cap sync",
+    "cap:android": "npm run cap:sync && npx cap open android",
+    "cap:ios": "npm run cap:sync && npx cap open ios"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",
