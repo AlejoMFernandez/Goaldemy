@@ -13,8 +13,17 @@ import { isChallengeAvailable, startChallengeSession, completeChallengeSession }
 import { celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
 import { getGameMetadata } from '../../services/games'
 import * as fx from '../../services/game-fx'
+import { createDailyRng } from '../../services/seeded-random'
+import { getUserLevel } from '../../services/xp'
+import { getGameUnlockLevel, isGameUnlocked } from '../../services/level-rewards'
+import { pushInfoToast } from '../../stores/notifications'
 
+// Tiempo por dificultad (relanzamiento): antes las 3 dificultades eran iguales
+// (180 s, misma restricción) y solo cambiaba el XP. Ahora el reloj aprieta:
+// Fácil 240 s · Normal 180 s · Difícil 120 s (ver SQUAD_DIFFICULTY_CONFIG).
 const TOTAL_TIME = 180
+// Cuántos jugadores pide la 4-3-3 por posición amplia (0 POR / 1 DEF / 2 MED / 3 DEL)
+const NEED_BY_BROAD = { 0: 1, 1: 4, 2: 3, 3: 3 }
 
 // Formación 4-3-3 con posiciones % en la cancha y su posición amplia
 // (0 POR / 1 DEF / 2 MED / 3 DEL, mismo esquema que positionId de los jugadores).
@@ -122,6 +131,14 @@ export default {
     else this.mode = 'free'
     if (this.mode === 'free') this.allowXp = false
 
+    // Reloj por fecha límite: con la app en segundo plano no se "pausa"
+    this._onVisibility = () => { if (!document.hidden && this.clockRunning) this.clockTick() }
+    document.addEventListener('visibilitychange', this._onVisibility)
+
+    // Candado de nivel también DENTRO del juego (antes solo en el índice: entrando
+    // por URL directa se jugaba sin nivel 18). La revisión no se bloquea.
+    if (!this.reviewMode && !(await this.ensureUnlocked())) return
+
     this.allPlayers = getAllPlayers()
     this.loading = false
 
@@ -146,6 +163,7 @@ export default {
   },
   beforeUnmount() {
     clearInterval(this.timer)
+    document.removeEventListener('visibilitychange', this._onVisibility)
   },
   methods: {
     surname,
@@ -158,20 +176,44 @@ export default {
       this._toastT = setTimeout(() => { this.toastMsg = '' }, 1900)
     },
 
+    async ensureUnlocked() {
+      const need = getGameUnlockLevel('once-ideal')
+      if (need <= 1) return true
+      try {
+        const { data, error } = await getUserLevel(null)
+        if (error) return true // ante la duda no bloqueamos (el índice ya filtra)
+        const info = Array.isArray(data) ? data[0] : data
+        const level = Number(info?.level) || 1
+        if (isGameUnlocked('once-ideal', level)) return true
+        pushInfoToast(`Once Ideal se desbloquea en el nivel ${need}. ¡Seguí jugando!`)
+        this.$router.replace('/play/points')
+        return false
+      } catch { return true }
+    },
+    /** Los jugadores que cumplen la condición alcanzan para la 4-3-3 completa. */
+    coversFormation(list) {
+      const byBroad = { 0: 0, 1: 0, 2: 0, 3: 0 }
+      for (const p of list) if (byBroad[p.positionId] != null) byBroad[p.positionId]++
+      return Object.keys(NEED_BY_BROAD).every(k => byBroad[k] >= NEED_BY_BROAD[k])
+    },
+    // Restricción: en desafío sale de la semilla del día (todos juegan la misma y
+    // no se puede "re-sortear" reintentando); en modo libre es al azar.
     generateConstraint() {
       const players = this.allPlayers
       if (!players.length) return
-      const roll = Math.random()
+      const rnd = this.mode === 'challenge' ? createDailyRng('once-ideal') : Math.random
+      const pick = (arr) => arr[Math.floor(rnd() * arr.length)]
+      const roll = rnd()
 
       if (roll < 0.4) {
         const byTeam = {}
         players.forEach(p => {
-          if (!byTeam[p.teamId]) byTeam[p.teamId] = { id: p.teamId, name: p.teamName, logo: p.teamLogo, count: 0 }
-          byTeam[p.teamId].count++
+          if (!byTeam[p.teamId]) byTeam[p.teamId] = { id: p.teamId, name: p.teamName, logo: p.teamLogo, list: [] }
+          byTeam[p.teamId].list.push(p)
         })
-        const eligible = Object.values(byTeam).filter(t => t.count >= 11)
+        const eligible = Object.values(byTeam).filter(t => this.coversFormation(t.list)).sort((a, b) => String(a.id).localeCompare(String(b.id)))
         if (eligible.length) {
-          const t = eligible[Math.floor(Math.random() * eligible.length)]
+          const t = pick(eligible)
           this.constraint = { type: 'team', id: t.id, label: t.name, logo: t.logo }
           return
         }
@@ -182,12 +224,12 @@ export default {
         players.forEach(p => {
           const code = (p.ccode || '').toLowerCase()
           if (!code) return
-          if (!byNat[code]) byNat[code] = { code, name: p.cname, count: 0 }
-          byNat[code].count++
+          if (!byNat[code]) byNat[code] = { code, name: p.cname, list: [] }
+          byNat[code].list.push(p)
         })
-        const eligible = Object.values(byNat).filter(n => n.count >= 11)
+        const eligible = Object.values(byNat).filter(n => this.coversFormation(n.list)).sort((a, b) => a.code.localeCompare(b.code))
         if (eligible.length) {
-          const n = eligible[Math.floor(Math.random() * eligible.length)]
+          const n = pick(eligible)
           this.constraint = { type: 'nationality', code: n.code, label: countryNameEs(n.name), flag: `https://flagcdn.com/w80/${n.code}.png` }
           return
         }
@@ -197,12 +239,12 @@ export default {
       players.forEach(p => {
         const lid = p.leagueId
         if (!lid || !LEAGUE_INFO[lid]) return
-        if (!byLeague[lid]) byLeague[lid] = { id: lid, ...LEAGUE_INFO[lid], count: 0 }
-        byLeague[lid].count++
+        if (!byLeague[lid]) byLeague[lid] = { id: lid, ...LEAGUE_INFO[lid], list: [] }
+        byLeague[lid].list.push(p)
       })
-      const eligibleLeague = Object.values(byLeague).filter(l => l.count >= 11)
+      const eligibleLeague = Object.values(byLeague).filter(l => this.coversFormation(l.list)).sort((a, b) => Number(a.id) - Number(b.id))
       if (eligibleLeague.length) {
-        const l = eligibleLeague[Math.floor(Math.random() * eligibleLeague.length)]
+        const l = pick(eligibleLeague)
         this.constraint = { type: 'league', id: l.id, label: l.name, logo: l.logo }
         return
       }
@@ -211,12 +253,12 @@ export default {
       players.forEach(p => {
         const code = (p.ccode || '').toLowerCase()
         if (!code) return
-        if (!byNat2[code]) byNat2[code] = { code, name: p.cname, count: 0 }
-        byNat2[code].count++
+        if (!byNat2[code]) byNat2[code] = { code, name: p.cname, list: [] }
+        byNat2[code].list.push(p)
       })
-      const natEligible = Object.values(byNat2).filter(n => n.count >= 11)
+      const natEligible = Object.values(byNat2).filter(n => n.list.length >= 11).sort((a, b) => a.code.localeCompare(b.code))
       if (natEligible.length) {
-        const n = natEligible[Math.floor(Math.random() * natEligible.length)]
+        const n = pick(natEligible)
         this.constraint = { type: 'nationality', code: n.code, label: countryNameEs(n.name), flag: `https://flagcdn.com/w80/${n.code}.png` }
       }
     },
@@ -278,9 +320,13 @@ export default {
     },
 
     // ── Reloj / kickoff ──
+    totalTime() {
+      return this.mode === 'challenge' ? (Number(this.difficultyConfig?.time) || TOTAL_TIME) : TOTAL_TIME
+    },
     beginClock() {
       clearInterval(this.timer)
-      this.timeLeft = TOTAL_TIME
+      this._deadline = 0
+      this.timeLeft = this.totalTime()
       this.gameOver = false
       this.clockRunning = false
       this.kickoff = true
@@ -289,14 +335,19 @@ export default {
       this.kickoff = false
       this.clockRunning = true
       clearInterval(this.timer)
-      this.timer = setInterval(() => {
-        if (this.timeLeft > 0) this.timeLeft--
-        if (this.timeLeft <= 0) {
-          clearInterval(this.timer)
-          this.clockRunning = false
-          if (!this.gameOver) this.finishGame('loss')
-        }
-      }, 1000)
+      this._deadline = Date.now() + this.timeLeft * 1000
+      this.timer = setInterval(() => this.clockTick(), 250)
+    },
+    clockTick() {
+      if (!this._deadline || this.gameOver) return
+      const left = Math.max(0, Math.ceil((this._deadline - Date.now()) / 1000))
+      if (left !== this.timeLeft) this.timeLeft = left
+      if (left <= 0) {
+        clearInterval(this.timer)
+        this.clockRunning = false
+        this._deadline = 0
+        this.finishGame('loss')
+      }
     },
 
     async checkAvailability() { this.availability = await isChallengeAvailable('once-ideal') },
@@ -316,7 +367,7 @@ export default {
       this.score = 0
       this.generateConstraint()
       try {
-        this.sessionId = await startChallengeSession('once-ideal', TOTAL_TIME, { difficulty: this.selectedDifficulty })
+        this.sessionId = await startChallengeSession('once-ideal', this.totalTime(), { difficulty: this.selectedDifficulty })
       } catch (e) { console.error('[OnceIdeal start]', e) }
       this.overlayOpen = false
       this.beginClock()
@@ -327,6 +378,7 @@ export default {
       this.gameOver = true
       this.won = result === 'win'
       clearInterval(this.timer)
+      this._deadline = 0
       this.clockRunning = false
 
       if (this.won) {

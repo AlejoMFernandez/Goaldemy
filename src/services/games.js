@@ -182,23 +182,23 @@ export const SQUAD_DIFFICULTY_CONFIG = {
   [DIFFICULTY_LEVELS.EASY]: {
     label: 'Fácil',
     icon: '🟢',
-    time: 180,
+    time: 240,
     xpCompletion: 100,
-    description: 'Cualquier jugador que cumpla la condición'
+    description: '4 minutos para armar el once'
   },
   [DIFFICULTY_LEVELS.NORMAL]: {
     label: 'Normal',
     icon: '🟡',
     time: 180,
     xpCompletion: 175,
-    description: 'Cualquier jugador que cumpla la condición'
+    description: '3 minutos para armar el once'
   },
   [DIFFICULTY_LEVELS.HARD]: {
     label: 'Difícil',
     icon: '🔴',
-    time: 180,
+    time: 120,
     xpCompletion: 300,
-    description: 'Cualquier jugador que cumpla la condición'
+    description: '2 minutos para armar el once'
   }
 };
 
@@ -420,7 +420,7 @@ const GAME_METADATA = {
     videoUrl: '',
     tips: [
       'Escribí el jugador primero: si cumple la condición, elegís dónde va',
-      'Un jugador puede entrar en más de un puesto según su posición',
+      'Cada jugador va en un puesto de su línea: arquero, defensa, medio o delantero',
       'Las líneas de la formación se iluminan cuando conectás dos puestos'
     ]
   }
