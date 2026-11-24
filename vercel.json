@@ -7,21 +7,47 @@
   "redirects": [
     {
       "source": "/(.*)",
-      "has": [{ "type": "host", "value": "goaldemy.vercel.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "goaldemy.vercel.app"
+        }
+      ],
       "destination": "https://fulvo.com.ar/$1",
       "permanent": true
     }
   ],
   "rewrites": [
-    { "source": "/fotmob", "destination": "https://www.fotmob.com/" },
-    { "source": "/fotmob/:path*", "destination": "https://www.fotmob.com/:path*" },
-    { "source": "/(.*)", "destination": "/" }
+    {
+      "source": "/fotmob",
+      "destination": "https://www.fotmob.com/"
+    },
+    {
+      "source": "/fotmob/:path*",
+      "destination": "https://www.fotmob.com/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)\\.(js|css|woff2|png|jpg|jpeg|svg)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(sw\\.js|workbox-(.*)\\.js|manifest\\.webmanifest)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
       ]
     }
   ]
