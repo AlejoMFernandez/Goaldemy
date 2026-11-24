@@ -3,7 +3,7 @@ import { onMounted, onUnmounted, reactive, computed, ref, defineAsyncComponent }
 import { RouterLink, useRouter } from 'vue-router'
 import { supabase } from '../services/supabase'
 import { getAuthUser } from '../services/auth'
-import { fetchGames, gameRouteForSlug } from '../services/games'
+import { fetchGames, gameRouteForSlug, friendlyNameForSlug, friendlyDescForSlug } from '../services/games'
 import { getDailyChallenges, getDailyReward } from '../services/rewards'
 import { getUserLevel, getLeaderboard, getUserRank, computeProgressPercentSync, fetchLevelThresholds } from '../services/xp'
 import { getUserAchievements, getAchievementsCatalog } from '../services/achievements'
@@ -53,7 +53,13 @@ const guestSlugs = new Set(
     .filter(r => /^\/games\/[a-z0-9-]+$/.test(r.path) && !r.meta?.requiresAuth)
     .map(r => r.path.replace('/games/', ''))
 )
-const guestGames = computed(() => state.allGames.filter(g => guestSlugs.has(g.slug)))
+// Si el catálogo no llegó (red caída), igual se muestran con nombre local: un
+// invitado nunca tiene que ver la sección vacía.
+const guestGames = computed(() => {
+  const fromDb = state.allGames.filter(g => guestSlugs.has(g.slug))
+  if (fromDb.length) return fromDb
+  return [...guestSlugs].map(slug => ({ id: slug, slug, name: friendlyNameForSlug(slug), description: friendlyDescForSlug(slug), cover_url: null }))
+})
 const lockedForGuest = computed(() => Math.max(0, state.totalGames - guestGames.value.length))
 const guestPlayTo = computed(() => {
   const first = guestGames.value[0]?.slug || [...guestSlugs][0] || 'guess-player'
@@ -286,7 +292,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
     <!-- ══════════════════ INVITADO: una sola columna, sin cambios de fondo ══════════════════ -->
     <template v-if="!state.isAuthenticated">
       <!-- Hero inmersivo full-bleed (video de fondo secundario + degradé) -->
-      <div class="relative overflow-hidden hero-fullbleed -mt-10 lg:mt-0 mb-12 lg:mb-20 min-h-[460px] sm:min-h-[600px] flex items-center justify-center">
+      <div class="relative overflow-hidden hero-fullbleed -mt-6 lg:mt-0 mb-12 lg:mb-20 min-h-[460px] sm:min-h-[600px] flex items-center justify-center">
         <div class="absolute inset-0 hero-aurora"></div>
         <video
           v-if="HERO_VIDEO_SRC && showHeroVideo"
