@@ -10,7 +10,14 @@
  *  - Debajo: mis amigos (jugando → en línea → desconectados) con presencia en vivo.
  *  - Chat 1-a-1 integrado.
  *  - Abajo de todo: accesos rápidos (Desafíos, Reportar bug).
- *  - Mobile (<lg): botón flotante → drawer con el mismo contenido.
+ *  - Mobile (<lg): ya NO hay cluster flotante (tapaba contenido y competía con
+ *    la tab bar). La lista/chat vive embebida en /social → Amigos (prop
+ *    `embedded`), "Reportar un problema" y "Desafíos" se piden desde la hoja de
+ *    ajustes (shell-state). El panel full-screen sigue abriéndose al tocar un
+ *    toast de DM.
+ *  - embedded: renderiza SOLO el panel lista/chat, inline (sin rail, sin
+ *    modales, sin canal realtime propio → el dock global sigue siendo el único
+ *    que escucha DMs y tira toasts).
  */
 import { subscribeToAuthStateChanges, logout } from '../services/auth'
 import { listConnections } from '../services/connections'
@@ -31,16 +38,17 @@ import { pushErrorToast, pushSuccessToast, pushDmToast } from '../stores/notific
 import { normalizeSearch } from '../services/text'
 import { playNotifySound } from '../services/sounds'
 import { setSidebarUser, sidebarState } from '../stores/sidebar'
+import { shellState } from './shell/shell-state'
 import UserAvatar from './common/UserAvatar.vue'
 import ChallengesModal from './rewards/ChallengesModal.vue'
 import ProfileHoverCard from './profile/ProfileHoverCard.vue'
 
-let unsubscribeAuth = () => {}
-let unsubscribeDM = () => {}
-
 export default {
   name: 'FriendsDock',
   components: { UserAvatar, ChallengesModal, ProfileHoverCard },
+  props: {
+    embedded: { type: Boolean, default: false },
+  },
   data() {
     return {
       user: { id: null, email: null, avatar_url: null, display_name: null },
@@ -84,6 +92,9 @@ export default {
       headerH: 72,
       sidebarGapPx: 44, // 80 (muy corta) -> 24 (muy larga) -> 34 -> 44: +10px más de aire de cada lado
       retentionInfoOpen: false,
+      shellState,
+      _unsubAuth: null,
+      _unsubDM: null,
     }
   },
   computed: {
@@ -92,6 +103,7 @@ export default {
     // chicas, así que no se muestra ahí.
     hideMobileDock() { return !!this.$route?.meta?.immersive },
     openChatRequest() { return sidebarState.openChatRequest },
+    panelOpen() { return this.embedded || this.mobileOpen },
     sidebarTopPx() { return (this.headerH + this.sidebarGapPx) + 'px' },
     sidebarBottomPx() { return this.sidebarGapPx + 'px' },
     presence() { return presenceState.value },
@@ -159,8 +171,13 @@ export default {
   watch: {
     // Click en un toast de DM (o cualquier otro disparador externo) → abrir ese chat.
     openChatRequest(req) {
+      if (this.embedded) return
       if (req?.peerId) this.openFromRail(req.peerId)
     },
+    // Pedidos desde la hoja de ajustes del shell mobile.
+    'shellState.bugRequest'() { if (!this.embedded) this.bugOpen = true },
+    'shellState.challengesRequest'() { if (!this.embedded) this.challengesOpen = true },
+    activePeerId(id) { if (this.embedded) shellState.embeddedChatPeer = (this.view === 'chat' ? id : null) },
   },
   methods: {
     formatTimeOnly,
@@ -186,6 +203,7 @@ export default {
       else if (this.view === 'chat') { this.view = 'list'; this.detachChatRealtime() }
     },
     closeMobile() {
+      if (this.embedded) { if (this.view === 'chat') this.backToList(); return }
       this.mobileOpen = false
       if (this.view === 'chat') { this.view = 'list'; this.detachChatRealtime() }
     },
@@ -201,7 +219,7 @@ export default {
       } catch { this.headerH = 72 }
     },
     onDocumentPointerDown(e) {
-      if (!this.mobileOpen) return
+      if (this.embedded || !this.mobileOpen) return
       try {
         const panel = this.$refs.dockPanel
         const toggles = [this.$refs.desktopToggleBtn, this.$refs.mobileToggleBtn].filter(Boolean)
@@ -335,9 +353,9 @@ export default {
     },
     scrollChatToBottom() { const el = this.$refs.chatContainer; if (el) el.scrollTop = el.scrollHeight },
     attachChatRealtime() {
-      if (unsubscribeDM) { try { unsubscribeDM() } catch {} }
+      if (this._unsubDM) { try { this._unsubDM() } catch {} }
       const peerId = this.activePeerId
-      unsubscribeDM = subscribeConversation(peerId, {
+      this._unsubDM = subscribeConversation(peerId, {
         onInsert: async (row) => {
           const a = row.sender_id, b = row.recipient_id
           const ok = (a === this.user.id && b === peerId) || (a === peerId && b === this.user.id)
@@ -359,7 +377,7 @@ export default {
         },
       })
     },
-    detachChatRealtime() { if (unsubscribeDM) { try { unsubscribeDM() } catch {} } },
+    detachChatRealtime() { if (this._unsubDM) { try { this._unsubDM() } catch {} this._unsubDM = null } },
     isOwn(m) { return !!m && (m.sender_id === this.user.id || m.email === this.user.email) },
     async handleSubmit() {
       const raw = this.newMessage.content || ''
@@ -399,7 +417,7 @@ export default {
     maybeToastIncomingDm(row) {
       if (!row?.sender_id) return
       const viewingThisChat = this.mobileOpen && this.view === 'chat' && this.activePeerId === row.sender_id
-      if (viewingThisChat) return
+      if (viewingThisChat || shellState.embeddedChatPeer === row.sender_id) return
       const friend = (this.friends || []).find(f => f.id === row.sender_id)
       const c = this.cos[row.sender_id] || {}
       pushDmToast({
@@ -415,20 +433,23 @@ export default {
     },
   },
   async mounted() {
-    document.addEventListener('mousedown', this.onDocumentPointerDown)
-    this.measureHeader()
-    window.addEventListener('resize', this.measureHeader)
-    unsubscribeAuth = subscribeToAuthStateChanges(async (u) => {
+    if (!this.embedded) {
+      document.addEventListener('mousedown', this.onDocumentPointerDown)
+      this.measureHeader()
+      window.addEventListener('resize', this.measureHeader)
+    }
+    this._unsubAuth = subscribeToAuthStateChanges(async (u) => {
       this.user = u || { id: null }
-      setSidebarUser(!!this.user?.id)
-      if (this.user?.id) { await this._doRefresh(); this.loadSelf(); this.setupDmRealtime() }
+      if (!this.embedded) setSidebarUser(!!this.user?.id)
+      if (this.user?.id) { await this._doRefresh(); if (!this.embedded) { this.loadSelf(); this.setupDmRealtime() } }
       else { this.friends = []; this.threads = []; this.cos = {}; this.levelInfo = null }
     })
   },
   unmounted() {
     document.removeEventListener('mousedown', this.onDocumentPointerDown)
     window.removeEventListener('resize', this.measureHeader)
-    try { unsubscribeAuth() } catch {}
+    try { this._unsubAuth?.() } catch {}
+    if (this.embedded) shellState.embeddedChatPeer = null
     try { this._rtChannel?.unsubscribe?.() } catch {}
     try { clearInterval(this._notifInterval) } catch {}
     if (this._debounceTimer) clearTimeout(this._debounceTimer)
@@ -443,7 +464,7 @@ export default {
          Ya NO es una columna full-height: es una card centrada verticalmente y
          separada del borde (right-3) para dejar la barra de scroll de la página
          totalmente libre a su derecha. Flota sobre el contenido. -->
-    <div class="hidden lg:flex fixed right-5 z-30 w-[58px] flex-col items-center rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 shadow-2xl py-2"
+    <div v-if="!embedded" class="hidden lg:flex fixed right-5 z-30 w-[58px] flex-col items-center rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 shadow-2xl py-2"
       :style="{ top: sidebarTopPx, bottom: sidebarBottomPx }">
       <!-- Abrir lista completa -->
       <button ref="desktopToggleBtn" @click="toggleMobile" title="Ver amigos" class="relative mb-1 h-10 w-10 grid place-items-center rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition">
@@ -473,33 +494,18 @@ export default {
       </div>
     </div>
 
-    <!-- ───────── Mobile: cluster flotante (desafíos + bug + amigos) ─────────
-         Se esconde entero mientras el panel está abierto: en mobile el panel pasa
-         a ocupar TODA la pantalla (ver más abajo), así que este cluster flotando
-         arriba tapa el compose bar del chat. El panel ya trae su propio cierre
-         (X en la lista, Volver en el chat) — igual que cualquier chat full-screen. -->
-    <div v-if="!mobileOpen && !hideMobileDock" class="lg:hidden fixed bottom-5 right-4 z-40 flex flex-col items-center gap-2.5">
-      <button @click="challengesOpen = true" title="Desafíos" class="h-11 w-11 grid place-items-center rounded-full border border-white/15 bg-slate-800/90 text-amber-300 shadow-xl hover:brightness-110 transition active:scale-95">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
-      </button>
-      <button @click="bugOpen = true" title="Reportar bug" class="h-11 w-11 grid place-items-center rounded-full border border-white/15 bg-slate-800/90 text-slate-300 shadow-xl hover:brightness-110 transition active:scale-95">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M8 2l1.5 2.5M16 2l-1.5 2.5"/><rect x="7" y="6" width="10" height="12" rx="5"/><path d="M12 10v6M4 10h3M17 10h3M4 15h3M17 15h3M5 20l2.5-2M19 20l-2.5-2"/></svg>
-      </button>
-      <button ref="mobileToggleBtn" @click="toggleMobile" title="Amigos" class="relative h-14 w-14 rounded-full grid place-items-center bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-2xl shadow-indigo-500/40 border border-white/20 hover:brightness-110 transition active:scale-95">
-        <svg viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-        <span v-if="totalUnread > 0" class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold grid place-items-center border border-white/20">{{ totalUnread > 9 ? '9+' : totalUnread }}</span>
-      </button>
-    </div>
+    <!-- Mobile: el cluster flotante (desafíos + bug + amigos) se retiró con el
+         shell mobile → Amigos vive en /social, bug y desafíos en la hoja de ajustes. -->
 
     <!-- ───────── Panel de AMIGOS/CHAT ─────────
          Mobile: toma TODA la pantalla (inset-0, sin bordes redondeados ni card) —
          antes era una card chica flotante en la esquina, quedaba apretada para
          escribir o leer. Desktop (lg+): sigue siendo la card flotante de siempre. -->
     <Transition name="dock-pop">
-    <div v-if="mobileOpen" ref="dockPanel"
-      class="fd-dock-panel fixed z-40 inset-0 w-full h-full
-             lg:inset-auto lg:right-5 lg:w-[320px] lg:h-auto lg:max-h-none
-             flex flex-col overflow-hidden border-0 lg:rounded-2xl lg:border lg:border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 lg:backdrop-blur-xl shadow-2xl"
+    <div v-if="panelOpen" ref="dockPanel"
+      :class="embedded
+        ? 'fd-embedded relative w-full flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950'
+        : 'fd-dock-panel fixed z-[46] inset-0 w-full h-full lg:inset-auto lg:right-5 lg:w-[320px] lg:h-auto lg:max-h-none flex flex-col overflow-hidden border-0 lg:rounded-2xl lg:border lg:border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 lg:backdrop-blur-xl shadow-2xl'"
       :style="{ '--fd-top': sidebarTopPx, '--fd-bottom': sidebarBottomPx }">
 
       <!-- ===== Vista LISTA ===== -->
@@ -507,7 +513,7 @@ export default {
         <div class="flex items-center gap-2 px-3.5 py-2.5 border-b border-white/10 bg-white/[0.02]">
           <span class="font-display font-bold text-white leading-tight text-sm flex-1">Amigos</span>
           <span class="text-[11px] text-slate-400 mr-0.5"><span class="text-emerald-400 font-bold">{{ onlineCount }}</span> en línea</span>
-          <button @click="closeMobile" class="shrink-0 h-8 w-8 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition" title="Cerrar">
+          <button v-if="!embedded" @click="closeMobile" class="shrink-0 h-8 w-8 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition" title="Cerrar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M6 18 18 6M6 6l12 12"/></svg>
           </button>
         </div>
@@ -637,7 +643,7 @@ export default {
     </Transition>
 
     <!-- ───────── Modal: reportar bug ───────── -->
-    <Teleport to="body">
+    <Teleport v-if="!embedded" to="body">
       <div v-if="bugOpen" class="fixed inset-0 z-[70] grid place-items-center p-4" @click.self="bugOpen = false">
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
         <div class="relative w-full max-w-md rounded-2xl border border-white/15 bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl p-5">
@@ -679,7 +685,7 @@ export default {
     </Teleport>
 
     <!-- ───────── Popup de Objetivos (desafíos) ───────── -->
-    <ChallengesModal :open="challengesOpen" @close="challengesOpen = false" />
+    <ChallengesModal v-if="!embedded" :open="challengesOpen" @close="challengesOpen = false" />
 
     <!-- ───────── Hover card estilo Steam sobre los avatares del rail ───────── -->
     <Teleport to="body">
@@ -705,6 +711,10 @@ export default {
 
 /* Solo en desktop el panel se centra entre el header y el borde de la pantalla
    (en mobile ocupa toda la pantalla, ver clases inset-0 de arriba). */
+/* Embebido en /social: alto fijo (pantalla menos top bar, tabs y tab bar) para
+   que la lista scrollee adentro y el compose del chat quede siempre a mano. */
+.fd-embedded { height: calc(100dvh - var(--shell-topbar-h, 56px) - var(--shell-tabbar-h, 64px) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 150px); min-height: 380px; }
+@media (min-width: 1024px) { .fd-embedded { height: 620px; } }
 @media (min-width: 1024px) {
   .fd-dock-panel { top: var(--fd-top, 90px); bottom: var(--fd-bottom, 80px); }
 }
