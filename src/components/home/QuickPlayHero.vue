@@ -2,18 +2,15 @@
 /**
  * JUGAR RÁPIDO — héroe de la home logueada (moodboard 10 v2).
  * Muestra el PÓSTER real del próximo desafío (GamePoster) y el botón dorado que
- * lo arranca directo (services/quick-play.js). Debajo, la jornada de hoy con la
- * pelota de FULVO (BALL_SVG): pelota = ganado · pelota apagada = perdido ·
- * círculo punteado = pendiente.
- * Si ya jugó todo: "¡Jornada completa!" + cuenta regresiva al reinicio (00:00)
- * y link a la jornada (/play/points).
+ * lo arranca directo (services/quick-play.js). La jornada (14 pósters con ✓/✕)
+ * va debajo, en la home. Con todo jugado queda un cartel chico con la cuenta regresiva.
  */
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { tapHaptic } from '../shell/shell-state'
 import HubState from '../shell/HubState.vue'
 import GamePoster from '../game/GamePoster.vue'
-import { BALL_SVG, GAME_POSTER_META } from '../../services/game-art'
+import { GAME_POSTER_META } from '../../services/game-art'
 
 const props = defineProps({
   level: { type: Number, default: 1 },
@@ -46,12 +43,6 @@ async function load() {
 }
 
 const done = computed(() => !!data.value && !data.value.next)
-const lost = computed(() => Math.max(0, (data.value?.played || 0) - (data.value?.won || 0)))
-const balls = computed(() => {
-  const d = data.value
-  if (!d) return []
-  return Array.from({ length: d.total }, (_, i) => (i < d.won ? 'win' : i < d.won + lost.value ? 'loss' : 'todo'))
-})
 const nextSub = computed(() => GAME_POSTER_META[data.value?.next?.slug]?.sub || '')
 const countdown = computed(() => (data.value?.resetAt && fmt) ? fmt(data.value.resetAt, now.value) : '')
 
@@ -73,7 +64,7 @@ onBeforeUnmount(() => clearInterval(timer))
 </script>
 
 <template>
-  <div class="qp-card relative overflow-hidden rounded-2xl border border-white/[0.07] p-3 sm:p-4">
+  <div class="qp-card relative overflow-hidden rounded-2xl border p-3 sm:p-4" :class="done ? 'is-done border-emerald-400/30' : 'border-white/[0.07]'">
 
     <HubState v-if="loading" loading :rows="1" />
     <HubState v-else-if="error" error message="No pudimos armar tu jornada." @retry="load" />
@@ -96,34 +87,21 @@ onBeforeUnmount(() => clearInterval(timer))
     </template>
 
     <template v-else>
-      <div class="relative text-center py-2">
-        <div class="qp-trophy mx-auto w-14 h-14 grid place-items-center rounded-full bg-amber-400/15 border border-amber-300/40 text-amber-300">
-          <svg viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7"><path d="M5 3h14l-1.5 5H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V16a1 1 0 01-1 1h-1.1l.6 3H8l.6-3H7.5a1 1 0 01-1-1v-1.23A5 5 0 013 10V9a1 1 0 011-1h2.5L5 3z"/></svg>
+      <div class="relative flex items-center gap-3">
+        <span class="w-12 h-12 shrink-0 grid place-items-center rounded-full bg-emerald-500 text-white">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+        </span>
+        <div class="min-w-0">
+          <div class="font-shout font-extrabold text-xl leading-none text-white uppercase">Jugaste los {{ data.total }} de hoy</div>
+          <div class="text-[12px] text-slate-300 mt-1">{{ data.won }} ganados · nuevos en <span class="font-bold text-amber-200 tabular-nums">{{ countdown }}</span></div>
         </div>
-        <div class="mt-3 font-display text-2xl font-bold text-white">¡Jornada completa!</div>
-        <p class="text-slate-300 text-sm mt-1">Nuevos desafíos en <span class="font-bold text-amber-200 tabular-nums">{{ countdown }}</span></p>
-        <RouterLink to="/play/points" class="mt-4 inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-amber-400/40 bg-amber-500/10 px-5 text-sm font-bold text-amber-100 active:scale-95 transition">
-          Ver la jornada
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M9 6l6 6-6 6"/></svg>
-        </RouterLink>
       </div>
     </template>
-
-    <!-- Jornada de hoy -->
-    <RouterLink v-if="!loading && !error && data?.total" to="/play/points" class="relative mt-5 block" aria-label="Ver la jornada de hoy">
-      <div class="flex items-center justify-between text-[11.5px] font-semibold">
-        <span class="text-slate-300">Jornada de hoy</span>
-        <span class="text-slate-400 tabular-nums"><span class="text-white font-bold">{{ data.played }}</span>/{{ data.total }} jugados · <span class="text-emerald-300">{{ data.won }} ganados</span></span>
-      </div>
-      <div class="mt-2 qp-balls" aria-hidden="true">
-        <span v-for="(b, i) in balls" :key="i" class="qp-ball" :class="'is-' + b" v-html="b === 'todo' ? '' : BALL_SVG"></span>
-      </div>
-    </RouterLink>
   </div>
 </template>
-
 <style scoped>
 .qp-card { background: #111a2e; }
+.qp-card.is-done { background: linear-gradient(135deg, rgba(34,197,94,.16), #111a2e 60%); }
 .qp-poster { width: 112px; flex: none; }
 
 /* Botón dorado con "cara" 3D y un latido suave */
@@ -144,12 +122,6 @@ onBeforeUnmount(() => clearInterval(timer))
 }
 .qp-trophy { animation: qp-bob 2.4s ease-in-out infinite; }
 @keyframes qp-bob { 50% { transform: translateY(-4px); } }
-
-.qp-balls { display: grid; grid-template-columns: repeat(auto-fill, minmax(18px, 1fr)); gap: 4px; max-width: 100%; }
-.qp-ball { display: block; aspect-ratio: 1; border-radius: 9999px; }
-.qp-ball :deep(svg) { width: 100%; height: 100%; display: block; }
-.qp-ball.is-loss { filter: grayscale(1) brightness(.45); }
-.qp-ball.is-todo { border: 1.5px dashed rgba(255,255,255,.2); }
 
 @media (prefers-reduced-motion: reduce) {
   .qp-btn, .qp-trophy { animation: none; }
