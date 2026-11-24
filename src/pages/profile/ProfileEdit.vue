@@ -7,6 +7,7 @@ import { flagUrl } from '../../services/countries';
 import SearchSelect from '../../components/common/SearchSelect.vue';
 import { getAllPlayers, getAllTeams } from '../../services/players';
 import CosmeticsCollection from '../../components/profile/CosmeticsCollection.vue';
+import { ACCOUNT_DELETION_ENABLED, DELETE_CONFIRM_WORD, deleteMyAccount } from '../../services/account';
 
 let unsubscribeAuth = () => {};
 
@@ -33,6 +34,13 @@ export default {
       players: getAllPlayers().map(p => ({ value: p.name, label: p.name })),
       teams: getAllTeams().map(t => ({ value: t.name, label: t.name })),
       _debounceTimer: null,
+      // Zona de peligro: borrar cuenta (doble confirmación)
+      accountDeletionEnabled: ACCOUNT_DELETION_ENABLED,
+      deleteConfirmWord: DELETE_CONFIRM_WORD,
+      deleteOpen: false,
+      deleteText: '',
+      deleting: false,
+      deleteError: '',
     }
   },
   computed: {
@@ -54,6 +62,23 @@ export default {
         alert(error?.message || 'No se pudo guardar el perfil')
       }
       this.loading = false;
+    },
+    cancelDelete() {
+      this.deleteOpen = false;
+      this.deleteText = '';
+      this.deleteError = '';
+    },
+    async confirmDelete() {
+      if (this.deleteText.trim() !== this.deleteConfirmWord || this.deleting) return;
+      this.deleting = true;
+      this.deleteError = '';
+      const res = await deleteMyAccount(this.deleteText);
+      this.deleting = false;
+      if (!res.ok) {
+        this.deleteError = res.error;
+        return;
+      }
+      this.$router.replace('/');
     }
   },
   mounted() {
@@ -196,6 +221,40 @@ export default {
       <!-- redireccionamos a perfil -->
       <AppButton type="submit">Guardar cambios</AppButton>
         </form>
+
+        <!-- Zona de peligro: borrar cuenta (requisito de Apple). Doble confirmación: abrir + tipear BORRAR. -->
+        <section v-if="accountDeletionEnabled" class="mt-10 rounded-xl border border-red-500/30 bg-red-500/5 p-4" aria-labelledby="danger-zone-title">
+          <h2 id="danger-zone-title" class="text-sm font-semibold text-red-300">Zona de peligro</h2>
+          <p class="mt-1 text-sm text-slate-400">
+            Borrar tu cuenta elimina para siempre tu progreso, XP, logros, Fichas, Balones, cosméticos y mensajes.
+            Si tenés un plan pago, se cancela. No se puede deshacer.
+          </p>
+
+          <button v-if="!deleteOpen" type="button" @click="deleteOpen = true"
+                  class="mt-3 inline-flex items-center rounded-lg border border-red-500/50 px-3 py-2 text-sm font-medium text-red-300 hover:bg-red-500/10 transition">
+            Borrar mi cuenta
+          </button>
+
+          <div v-else class="mt-3 space-y-3">
+            <label for="delete-confirm" class="label">
+              Para confirmar, escribí <strong class="text-red-300">{{ deleteConfirmWord }}</strong>
+            </label>
+            <input id="delete-confirm" v-model="deleteText" type="text" class="input" autocomplete="off"
+                   autocapitalize="characters" spellcheck="false" :placeholder="deleteConfirmWord" :disabled="deleting" />
+            <p v-if="deleteError" class="text-sm text-red-400" role="alert">{{ deleteError }}</p>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" @click="confirmDelete"
+                      :disabled="deleteText.trim() !== deleteConfirmWord || deleting"
+                      class="inline-flex items-center rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                {{ deleting ? 'Borrando…' : 'Borrar mi cuenta para siempre' }}
+              </button>
+              <button type="button" @click="cancelDelete" :disabled="deleting"
+                      class="inline-flex items-center rounded-lg px-3 py-2 text-sm text-slate-300 hover:text-white transition">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </section>
       </template>
     </CosmeticsCollection>
   </div>
