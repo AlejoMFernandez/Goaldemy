@@ -604,3 +604,24 @@ option:disabled { color: #64748b; }
   .sbug-wrap, .tq-stage { transition: none; }
   .sbug-vig.beat, .tq-bubble, .sbug-pop, .sbug-balls i.on { animation: none; }
 }
+
+/* ══════════════════ Shell mobile (top bar + tab bar) ══════════════════
+   Ver components/shell/* y docs/relanzamiento/SHELL.md. Solo <lg: en desktop
+   sigue la navbar de siempre. */
+:root {
+  --shell-topbar-h: 56px;
+  --shell-tabbar-h: 64px;
+}
+/* Reserva el alto de la tab bar (+ home indicator) para que nada quede tapado. */
+@media (max-width: 1023.98px) {
+  .shell-pad-tabbar { padding-bottom: calc(var(--shell-tabbar-h) + env(safe-area-inset-bottom, 0px) + 8px); }
+  .shell-safe-x { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+  .shell-safe-top { display: block; height: env(safe-area-inset-top, 0px); }
+  .shell-auth-safe { padding-top: env(safe-area-inset-top, 0px); }
+}
+/* Toasts (AppToast, ClaimNotificationStack) suben por encima de la tab bar.
+   App.vue pone body.has-tabbar mientras la tab bar se ve. */
+@media (max-width: 1023.98px) {
+  body.has-tabbar .fixed.bottom-3.right-5,
+  body.has-tabbar .fixed.bottom-4.right-4 { bottom: calc(var(--shell-tabbar-h) + env(safe-area-inset-bottom, 0px) + 14px); }
+}

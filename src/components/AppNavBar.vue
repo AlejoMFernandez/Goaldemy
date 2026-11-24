@@ -16,6 +16,7 @@ import UserAvatar from './common/UserAvatar.vue';
 import GlobalSearchResults from './GlobalSearchResults.vue';
 import { getUnclaimedCount } from '../stores/notifications';
 import { playNotifySound } from '../services/sounds';
+import { shellState } from './shell/shell-state';
 
 export default {
   name: 'AppNavBar',
@@ -361,6 +362,13 @@ export default {
     },
     mounted() {
                     subscribeToAuthStateChanges(userState => { this.user = userState; this.loadEquipped(); });
+                    // Shell mobile (TopBar/SettingsSheet): espejo de lo que la navbar ya
+                    // mantiene (usuario, cosméticos, contador de notificaciones con
+                    // realtime, admin) → una sola fuente, sin canales duplicados.
+                    this.$watch(() => this.user, (u) => { shellState.user = u ? { ...u } : { id: null } }, { immediate: true, deep: true })
+                    this.$watch(() => this.equipped, (e) => { shellState.equipped = { ...e } }, { immediate: true, deep: true })
+                    this.$watch(() => this.notifCount, (n) => { shellState.notifCount = n || 0 }, { immediate: true })
+                    this.$watch(() => this.isAdminUser, (v) => { shellState.isAdmin = !!v }, { immediate: true })
                     // Close menus on outside click
                     this._onDocClick = (e) => {
                         // Puede haber dos disparadores (avatar desktop + mobile): cerrar
@@ -452,7 +460,8 @@ export default {
 </script>
 
 <template>
-    <header class="sticky top-0 z-40">
+    <!-- Desktop (lg+): navbar de siempre. En mobile la reemplazan shell/TopBar + shell/TabBar. -->
+    <header class="hidden lg:block sticky top-0 z-40">
         <div class="border-b border-white/10 bg-slate-900/92">
             <nav class="container mx-auto flex items-center justify-between px-4 py-4 gap-3">
                 <RouterLink to="/" class="flex-none">
