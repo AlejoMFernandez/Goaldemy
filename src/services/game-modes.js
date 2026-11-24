@@ -516,6 +516,36 @@ export async function fetchMaxDailyWinStreak(slug) {
   return maxStreak
 }
 
+/**
+ * Próximo desafío diario disponible después de `currentSlug` (en el orden de
+ * DAILY_GAMES, dando la vuelta). Respeta intentos del día y candado de nivel.
+ * Devuelve la ruta lista para navegar ('/games/x?mode=challenge') o null.
+ */
+export async function findNextDailyGame(currentSlug) {
+  try {
+    const list = DAILY_GAMES
+    const start = Math.max(0, list.indexOf(currentSlug) + 1)
+    const ordered = [...list.slice(start), ...list.slice(0, start)].filter(s => s !== currentSlug)
+    let level = null
+    try {
+      const { getUserLevel } = await import('./xp')
+      const { data } = await getUserLevel(null)
+      const info = Array.isArray(data) ? data[0] : data
+      level = Number(info?.level) || null
+    } catch {}
+    const { isGameUnlocked } = await import('./level-rewards')
+    const { gameRouteForSlug } = await import('./games')
+    const avail = await Promise.all(ordered.map(s => isChallengeAvailable(s).catch(() => ({ available: false }))))
+    for (let i = 0; i < ordered.length; i++) {
+      const slug = ordered[i]
+      if (!avail[i]?.available) continue
+      if (level != null && !isGameUnlocked(slug, level)) continue
+      return `${gameRouteForSlug(slug)}?mode=challenge`
+    }
+  } catch {}
+  return null
+}
+
 // Helper to get display list with names for UI
 export function getDailyGamesList() {
   return DAILY_GAMES.map(slug => ({ slug, name: friendlyNameForSlug(slug) }))
