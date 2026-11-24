@@ -312,7 +312,7 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
                 <RankCrest :tier="nextTier" :size="36" :ribbon="false" locked />
                 <span>Próximo rango: <b>{{ nextTier.label }}</b> en el nivel {{ nextTier.minLevel }}</span>
               </template>
-              <span v-else>Llegaste al rango máximo. ¡Leyenda!</span>
+              <span v-else>Llegaste al rango máximo. ¡Sos el GOAT!</span>
             </div>
             <button v-if="rp >= 7" type="button" class="lvo-btn" @click="goToLevel">Seguir</button>
           </template>
