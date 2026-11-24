@@ -40,6 +40,15 @@ const emit = defineEmits(['update:order', 'done'])
 
 const horizontal = computed(() => props.variant === 'team' || props.variant === 'timeline')
 const n = computed(() => props.order.length)
+// 6+ cartas en fila (Difícil = 7) no entran en un celu de 375 px con el nombre
+// completo: modo "apretado" con apellido solo y letra ≥ 12 px (ver CSS .is-crowded).
+const crowded = computed(() => horizontal.value && n.value >= 6)
+function cardName(p) {
+  const name = (p?.name || '').trim()
+  if (!crowded.value) return name
+  const w = name.split(/\s+/)
+  return w.length > 1 ? w.slice(1).join(' ') : name
+}
 
 // ── Orden que se ve (durante la animación final puede diferir de `order`) ──
 const shown = ref([...props.order])
@@ -273,7 +282,7 @@ const spread = computed(() => vMax.value - vMin.value)
 </script>
 
 <template>
-  <div class="olad" :class="[`v-${variant}`, { horiz: horizontal, 'is-locked': locked || !!result, 'is-dragging': dragPos != null }]" :style="{ '--n': n }">
+  <div class="olad" :class="[`v-${variant}`, { horiz: horizontal, 'is-crowded': crowded, 'is-locked': locked || !!result, 'is-dragging': dragPos != null }]" :style="{ '--n': n }">
     <div class="olad-ends" aria-hidden="true"><span>{{ startLabel }}</span><span>{{ endLabel }}</span></div>
 
     <div ref="boardEl" class="olad-board" role="listbox" :aria-label="`${startLabel} a ${endLabel}`">
@@ -311,14 +320,14 @@ const spread = computed(() => vMax.value - vMin.value)
               <i class="body"></i>
               <i v-if="revealed[idx]" class="mark" aria-hidden="true"></i>
             </span>
-            <span class="nm">{{ items[idx]?.name }}</span>
+            <span class="nm">{{ cardName(items[idx]) }}</span>
             <b class="val"><template v-if="revealed[idx]">{{ splitVal(valueText(idx))[0] }}<small>{{ splitVal(valueText(idx))[1] }}</small></template><template v-else>?</template></b>
           </template>
 
           <!-- LÍNEA DE TIEMPO -->
           <template v-else>
             <img :src="items[idx]?.image" :alt="''" class="ph" draggable="false" />
-            <span class="nm">{{ items[idx]?.name }}</span>
+            <span class="nm">{{ cardName(items[idx]) }}</span>
             <b class="val"><template v-if="revealed[idx]">{{ splitVal(valueText(idx))[0] }}<small>{{ splitVal(valueText(idx))[1] }}</small></template><template v-else>?</template></b>
           </template>
 
@@ -393,6 +402,24 @@ const spread = computed(() => vMax.value - vMin.value)
 .v-team .val, .v-timeline .val { display: grid; justify-items: center; min-height: 2.1em; line-height: 1; font-family: var(--font-bug); font-weight: 800; font-size: 17px; color: #fde68a; font-variant-numeric: tabular-nums; }
 .v-team .val small, .v-timeline .val small { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #c9a94a; margin-top: 2px; }
 .horiz .olad-card .off { top: -8px; bottom: auto; left: -6px; --tx: 0; }
+/* 6-7 cartas en fila en celu: menos aire, apellido a 12 px, valor a 14 px.
+   Cada carta sigue midiendo ≥ 44 px de ancho (toque). */
+@media (max-width: 480px) {
+  .is-crowded .olad-list { gap: 3px; }
+  .is-crowded .olad-card { padding-left: 1px; padding-right: 1px; min-width: 44px; }
+  .is-crowded .nm { font-size: 12px; letter-spacing: -0.01em; overflow-wrap: anywhere; hyphens: auto; }
+  .is-crowded .val { font-size: 14px; }
+  .is-crowded .val small { font-size: 9px; letter-spacing: .04em; }
+  .v-team.is-crowded .olad-board { padding-left: 16px; }
+  .v-team.is-crowded .olad-ruler { left: 3px; width: 8px; }
+  .v-team.is-crowded .fig { width: 100%; }
+}
+/* Escalera con 7 en pantallas bajas: filas de 44 px */
+@media (max-height: 700px) {
+  .v-stairs .olad-list { gap: 6px; }
+  .v-stairs .olad-card { min-height: 44px; padding-top: 4px; padding-bottom: 4px; }
+  .v-stairs .olad-card .ph { width: 32px; height: 32px; }
+}
 
 /* ── LÍNEA DE TIEMPO ── */
 .v-timeline .olad-card { flex: 1 1 0; min-width: 0; display: grid; justify-items: center; gap: 4px; padding: 8px 4px; border-radius: 12px; border: 1.5px solid rgba(255, 255, 255, .12); background: #141a38; }

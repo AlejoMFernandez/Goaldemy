@@ -111,6 +111,11 @@ defineExpose({ reload: load })
 @media (max-width: 420px) {
   .pubar-nm { display: none; }
 }
+/* Celus bajos: la barra no puede empujar las opciones fuera de pantalla */
+@media (max-height: 760px) {
+  .pubar { margin-top: 8px; gap: 6px; }
+  .pubar-btn { min-height: 44px; }
+}
 .dock-fade-enter-active, .dock-fade-leave-active { transition: opacity 0.3s ease; }
 .dock-fade-enter-from, .dock-fade-leave-to { opacity: 0; }
 </style>

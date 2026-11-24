@@ -452,6 +452,15 @@ export default {
   aspect-ratio: 1; perspective: 300px; animation: wdFlap 0.5s ease both;
 }
 .wd-flap img { width: 20px; height: 20px; object-fit: contain; }
+/* Celu (≤ 639 px): 8 columnas en ~343 px. Avatar más angosto, celdas un poco
+   más bajas que anchas y números a 12 px (antes 11 px mono, ~37 px por celda). */
+@media (max-width: 639px) {
+  .wd-row { grid-template-columns: 28px repeat(7, minmax(0, 1fr)); gap: 2px; }
+  .wd-row-head { font-size: 10px; letter-spacing: 0; }
+  .wd-flap { aspect-ratio: auto; min-height: 40px; font-size: 12px !important; font-family: var(--font-bug, inherit) !important; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; }
+  .wd-flap img { width: 18px; height: 18px; }
+  .wd-avatar { aspect-ratio: auto; min-height: 40px; }
+}
 @keyframes wdFlap {
   0% { transform: rotateX(0deg); opacity: 1; }
   49% { transform: rotateX(90deg); opacity: 0.25; }

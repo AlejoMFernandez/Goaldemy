@@ -15,11 +15,12 @@ export default {
     subtitle: { type: String, default: '' },
   },
   data() {
-    return { availH: null, _onResize: null }
+    return { availH: null, hasNav: true, _onResize: null }
   },
   computed: {
     shellStyle() {
-      return this.availH ? { height: this.availH + 'px' } : { minHeight: 'calc(100dvh - 4.6rem)' }
+      // Fallback sin JS medido: 100dvh (barra del navegador móvil) → clase .game-shell
+      return this.availH ? { height: this.availH + 'px' } : null
     },
   },
   methods: {
@@ -31,8 +32,18 @@ export default {
     measure() {
       if (typeof window === 'undefined') return
       const nav = document.querySelector('nav')
-      const navH = nav ? Math.round(nav.getBoundingClientRect().height) : 74
-      this.availH = Math.max(320, Math.round(window.innerHeight - navH))
+      this.hasNav = !!nav
+      const navH = nav ? Math.round(nav.getBoundingClientRect().height) : 0
+      // Alto VISIBLE real: visualViewport descuenta la barra de URL del celu
+      // (innerHeight en iOS a veces la incluye → el juego quedaba cortado abajo).
+      // Con el teclado abierto NO achicamos (el viewport visual baja y todo
+      // saltaría): en ese caso mantenemos la última medida.
+      const ae = document.activeElement
+      const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)
+      if (typing && this.availH) return
+      const vv = window.visualViewport
+      const viewH = vv ? Math.min(vv.height, window.innerHeight) : window.innerHeight
+      this.availH = Math.max(320, Math.round(viewH - navH))
     },
     scheduleMeasure() {
       this.$nextTick(() => {
@@ -49,18 +60,20 @@ export default {
     this._onResize = () => this.measure()
     window.addEventListener('resize', this._onResize)
     window.addEventListener('orientationchange', this._onResize)
+    window.visualViewport?.addEventListener('resize', this._onResize)
   },
   beforeUnmount() {
     if (this._onResize) {
       window.removeEventListener('resize', this._onResize)
       window.removeEventListener('orientationchange', this._onResize)
+      window.visualViewport?.removeEventListener('resize', this._onResize)
     }
   },
 }
 </script>
 
 <template>
-  <div class="game-shell" :style="shellStyle">
+  <div class="game-shell" :class="{ 'gs-nonav': !hasNav }" :style="shellStyle">
     <!-- Sub-header integrado -->
     <div class="gs-header">
       <router-link :to="backPath" class="gs-back" aria-label="Volver">
@@ -92,7 +105,11 @@ export default {
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-height: calc(100vh - 4.6rem);
+  min-height: calc(100dvh - 4.6rem);
 }
+/* Sin navbar arriba (pantalla completa / app instalada): respetar el notch */
+.gs-nonav .gs-header { padding-top: max(0.5rem, env(safe-area-inset-top, 0px)); }
 .gs-header {
   flex: none;
   display: grid;
@@ -150,7 +167,13 @@ export default {
   min-height: 0;
   display: grid;
   place-items: center;
-  padding: 0.75rem 0;
+  padding: 0.75rem 0 max(0.75rem, env(safe-area-inset-bottom, 0px));
   overflow: auto;
+  overscroll-behavior: contain;
+}
+/* Pantallas bajas (iPhone SE 375×667 y similares): achicar aire del sub-header */
+@media (max-height: 700px) {
+  .gs-header { padding: 0.25rem 0.25rem 0.4rem; }
+  .gs-body { padding-top: 0.4rem; }
 }
 </style>
