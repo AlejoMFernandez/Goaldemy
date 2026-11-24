@@ -31,6 +31,7 @@ import { installGlobalErrorHandler } from './services/errors.js';
 import { pushErrorToast, pushSuccessToast, pushInfoToast } from './stores/notifications.js';
 import { installTapOrigin, vPop } from './services/tap-origin.js';
 import { ensurePlayersLoaded } from './services/players.js';
+import { isNative, initNative } from './services/native.js';
 
 // Precarga de dataGAMES.json (~1 MB) en su propio chunk, en paralelo al primer
 // render: la home no la espera y para cuando el usuario entra a un juego ya
@@ -55,6 +56,19 @@ const app = createApp(App);
 app.directive('pop', vPop);
 app.use(router);
 app.mount('#app');
+
+// App nativa (Capacitor): status bar, splash y botón atrás de Android.
+// En web/PWA no hace nada.
+initNative(router);
+
+// Service worker de la PWA (vite-plugin-pwa, autoUpdate). Sólo en web: dentro
+// de la app nativa el bundle ya viene empaquetado y un SW sólo suma riesgo de
+// servir versiones viejas. Tampoco en dev (el plugin no genera SW en dev).
+if (!isNative() && import.meta.env.PROD && 'serviceWorker' in navigator) {
+	import('virtual:pwa-register')
+		.then(({ registerSW }) => registerSW({ immediate: true }))
+		.catch(() => { /* sin SW la app anda igual */ });
+}
 
 // Kick realtime after initial navigation to avoid interfering with login redirects
 router.isReady().then(() => {
