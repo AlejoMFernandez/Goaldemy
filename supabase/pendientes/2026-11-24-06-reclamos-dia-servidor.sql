@@ -174,13 +174,13 @@ CREATE POLICY "game_result_reports read own" ON public.game_result_reports
   FOR SELECT TO authenticated USING (user_id = auth.uid());
 
 -- Racha: no-op hasta que se aplique el parche 08 (que la redefine).
-DO $$ BEGIN
+DO $do$ BEGIN
   IF to_regprocedure('public._touch_daily_streak(uuid)') IS NULL THEN
     EXECUTE $f$CREATE FUNCTION public._touch_daily_streak(p_uid UUID) RETURNS JSON
-      LANGUAGE sql SECURITY DEFINER SET search_path = public AS $b$ SELECT NULL::json $b$$f$;
+      LANGUAGE sql SECURITY DEFINER SET search_path = public AS $b$ SELECT NULL::json $b$ $f$;
     EXECUTE 'REVOKE ALL ON FUNCTION public._touch_daily_streak(uuid) FROM PUBLIC, anon, authenticated';
   END IF;
-END $$;
+END $do$;
 
 CREATE OR REPLACE FUNCTION public.report_game_result(p_game_slug TEXT, p_won BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
