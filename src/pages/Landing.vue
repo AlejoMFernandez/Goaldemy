@@ -188,7 +188,8 @@ async function loadFeaturedStates() {
     // Import diferido: game-modes arrastra un grafo pesado (achievement-triggers,
     // premium…) que no queremos en el chunk inicial de la home.
     const { isChallengeAvailable, fetchDailyWinStreak } = await import('../services/game-modes')
-    const list = state.featuredGames
+    // Todos los juegos: la home mobile muestra la jornada completa (como el índice).
+    const list = state.allGames.length ? state.allGames : state.featuredGames
     const [av, st] = await Promise.all([
       Promise.all(list.map(async g => [g.slug, await isChallengeAvailable(g.slug)])),
       Promise.all(list.map(async g => [g.slug, await fetchDailyWinStreak(g.slug)])),
@@ -199,6 +200,19 @@ async function loadFeaturedStates() {
     console.warn('[Landing] featured states error', e)
   }
 }
+
+// Jornada de hoy (home mobile): mismo orden que el índice → los que te quedan,
+// los jugados y los bloqueados. Así se ve de un vistazo qué falta (✓ / ✕ en el póster).
+const jornadaGames = computed(() => {
+  const lvl = Number(home.level) || 1
+  const rank = (g) => {
+    if (!isGameUnlocked(g.slug, lvl)) return 2
+    return state.availability[g.slug]?.available === false ? 1 : 0
+  }
+  return (state.allGames || []).map((g, i) => ({ g, i })).sort((a, b) => rank(a.g) - rank(b.g) || a.i - b.i).map(x => x.g)
+})
+const jornadaPlayable = computed(() => jornadaGames.value.filter(g => isGameUnlocked(g.slug, Number(home.level) || 1)).length)
+const jornadaPlayed = computed(() => Object.values(state.availability || {}).filter(a => a?.available === false).length)
 
 // Jugado hoy → review (ver resultado). Sin jugar → arrancar el desafío. (igual que el índice)
 function toChallenge(slug) {
@@ -527,8 +541,30 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 
         <!-- Columna derecha: Jugá hoy, Top jugador, Planes -->
         <div class="flex flex-col gap-10 lg:gap-12 mt-8 lg:mt-0 min-w-0">
-          <!-- Jugá hoy: rail en mobile/tablet, grid en desktop (hay lugar para verlos todos) -->
-          <div>
+          <!-- Jornada de hoy (mobile): los 14 pósters marcados ✓ / ✕, como el índice -->
+          <section class="lg:hidden" aria-label="Jornada de hoy">
+            <div class="flex items-baseline justify-between gap-3 mb-3">
+              <h2 class="font-shout font-extrabold text-lg tracking-wide text-white uppercase">Jornada de hoy · <span class="text-emerald-400 tabular-nums">{{ jornadaPlayed }}/{{ jornadaPlayable }}</span></h2>
+              <RouterLink to="/play/points" class="text-xs font-semibold text-slate-400">Ver premios</RouterLink>
+            </div>
+            <div v-if="state.loading" class="grid grid-cols-3 gap-2">
+              <div v-for="i in 9" :key="i" class="rounded-xl bg-white/[0.04] animate-pulse aspect-[4/5]"></div>
+            </div>
+            <div v-else class="grid grid-cols-3 gap-2 stagger-grid">
+              <GameCard v-for="g in jornadaGames" :key="g.slug"
+                :game="g"
+                :unlocked="isGameUnlocked(g.slug, home.level)"
+                :unlock-level="getGameUnlockLevel(g.slug)"
+                :user-level="Number(home.level) || 1"
+                :availability="state.availability[g.slug]"
+                :streak="state.streaks[g.slug] || 0"
+                :to="toChallenge(g.slug)"
+              />
+            </div>
+          </section>
+
+          <!-- Jugá hoy: grid en desktop (en mobile lo reemplaza la jornada de arriba) -->
+          <div class="hidden lg:block">
             <div class="flex items-center justify-between gap-3 mb-6">
               <h2 class="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight">Jugá hoy</h2>
               <RouterLink to="/play/points" class="group inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-violet-400 transition-colors">
