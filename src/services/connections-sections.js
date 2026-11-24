@@ -21,6 +21,7 @@
  */
 
 import { createRngForDate, seededShuffle, seededSample } from './seeded-random.js'
+import { appToday } from './app-date'
 
 export const GAME_SLUG = 'connections'
 export const MIN_SECTION_SIZE = 8
@@ -294,7 +295,8 @@ function computeBoardForDateInternal(allPlayers, dateStr, depth, memo) {
 }
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10)
+  // Día de Argentina (igual que app_today() del servidor), no UTC.
+  return appToday()
 }
 
 /** Tablero del día de hoy (el que usan los desafíos diarios). */

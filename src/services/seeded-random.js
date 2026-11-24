@@ -22,9 +22,12 @@ export function createRngForDate(dateStr, gameSlug) {
   return mulberry32(hashCode(`${dateStr}:${gameSlug}`))
 }
 
+import { appToday } from './app-date'
+
+/** RNG del desafío diario: el día es el de Argentina (igual que el servidor),
+ * no UTC — antes el juego del día cambiaba a las 21 h de Argentina. */
 export function createDailyRng(gameSlug) {
-  const today = new Date().toISOString().slice(0, 10)
-  return createRngForDate(today, gameSlug)
+  return createRngForDate(appToday(), gameSlug)
 }
 
 export function seededShuffle(arr, rng) {

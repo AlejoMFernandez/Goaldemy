@@ -443,6 +443,9 @@ const KNOWN_GAMES = [
   { slug: 'stat-challenge', name: FALLBACK_NAMES['stat-challenge'], description: FALLBACK_DESC['stat-challenge'], cover_url: '/games/stat-challenge.svg' },
 ]
 
+/** Slugs de todos los juegos que existen en la app (fuente de DAILY_GAMES). */
+export const KNOWN_GAME_SLUGS = KNOWN_GAMES.map(g => g.slug)
+
 // Juegos pausados: no se muestran en el index ni en filtros.
 // stat-challenge (Duelo de Stats) se despausó: el refresco semanal ya trae
 // stats reales de temporada (partidos/minutos/goles/asistencias por jugador).
