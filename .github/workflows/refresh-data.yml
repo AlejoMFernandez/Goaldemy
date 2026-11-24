@@ -1,14 +1,21 @@
 name: Refrescar datos de jugadores
 
-# Regenera src/dataGAMES.json con los planteles actuales de FotMob y, si hubo
-# cambios, commitea el archivo. El push dispara el redeploy automático en Vercel.
+# Regenera src/dataGAMES.json con los planteles actuales de FotMob, lo valida
+# y, si hubo cambios, abre (o actualiza) un PR en la rama bot/refresh-planteles.
+# NUNCA commitea directo a main: Alejo revisa y mergea el PR, y recién ahí
+# Vercel redeploya.
 on:
   schedule:
     - cron: '0 6 * * 1'   # Todos los lunes 06:00 UTC (03:00 ART)
   workflow_dispatch: {}    # Botón para correrlo a mano desde la pestaña Actions
 
 permissions:
-  contents: write          # necesario para que el bot pueda hacer push
+  contents: write          # crear/actualizar la rama del bot
+  pull-requests: write     # abrir/actualizar el PR
+
+concurrency:
+  group: refresh-planteles
+  cancel-in-progress: false
 
 jobs:
   refresh:
@@ -18,19 +25,31 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Refrescar planteles desde FotMob
         run: node scripts/refresh-fotmob-squads.cjs
 
-      - name: Commitear si hay cambios
-        run: |
-          git config user.name "goaldemy-bot"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/dataGAMES.json src/dataGAMES.meta.json
-          if git diff --staged --quiet; then
-            echo "Sin cambios en dataGAMES.json — no se commitea nada."
-          else
-            git commit -m "chore(data): refresco automático de planteles (FotMob)"
-            git push
-          fi
+      # Falla el job (y no abre PR) si el JSON no parsea o se perdieron
+      # más del 10% de equipos/jugadores respecto de main.
+      - name: Validar JSON
+        run: node scripts/validate-planteles.mjs src/dataGAMES.json HEAD
+
+      - name: Abrir/actualizar PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: bot/refresh-planteles
+          delete-branch: true
+          add-paths: |
+            src/dataGAMES.json
+            src/dataGAMES.meta.json
+          commit-message: 'chore(data): refresco automático de planteles (FotMob)'
+          committer: goaldemy-bot <github-actions[bot]@users.noreply.github.com>
+          author: goaldemy-bot <github-actions[bot]@users.noreply.github.com>
+          title: 'chore(data): refresco automático de planteles (FotMob)'
+          body: |
+            Refresco semanal de `src/dataGAMES.json` desde FotMob.
+
+            - Validado con `scripts/validate-planteles.mjs` (JSON parseable, sin caída >10% de equipos/jugadores).
+            - Revisar el diff y mergear para que Vercel redeploye.
+          labels: datos

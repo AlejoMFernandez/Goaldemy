@@ -12,15 +12,15 @@ dist
 dist-ssr
 *.local
 
-# Capturas de scripts/screenshot-games.mjs
+# Capturas de scripts/screenshot-games.mjs y scripts/smoke-test.mjs
 .shots
+.smoke-shots/
 
 # Capturas sueltas de verificación manual en la raíz (no son assets del sitio)
 /*.png
 
-# Environment variables
-.env
-.env.*
+# Environment variables (.env, .env.local, .env.production, etc.)
+.env*
 
 # Editor directories and files
 .vscode/*
@@ -56,7 +56,6 @@ graphify-out/
 src/dataGAMES.backup-before-refresh.json
 raw-video-sources/
 .vercel
-.env*
 
 # Salidas de Claude (Cowork)
 Claude outputs/

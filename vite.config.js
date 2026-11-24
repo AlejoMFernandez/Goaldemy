@@ -2,54 +2,88 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+import { VitePWA } from 'vite-plugin-pwa'
 
-// Optional PWA plugin; loaded dynamically so build doesn't fail if not installed yet
-export default defineConfig(async ({ mode }) => {
-  let VitePWA = null
-  try {
-    // dynamic import to avoid hard dependency
-    const m = await import('vite-plugin-pwa')
-    VitePWA = m?.VitePWA || null
-  } catch {}
-
-  const pwa = VitePWA ? VitePWA({
-    registerType: 'autoUpdate',
-    includeAssets: ['goaldemy.png'],
-    manifest: {
-      name: 'Fulvo',
-      short_name: 'Fulvo',
-      description: 'Entrená tu conocimiento de fútbol jugando: micro‑juegos, rachas y logros.',
-      start_url: '/',
-      display: 'standalone',
-      background_color: '#0f172a',
-      theme_color: '#0f172a',
-      icons: [
-        { src: '/goaldemy.png', sizes: '192x192', type: 'image/png' },
-        { src: '/goaldemy.png', sizes: '512x512', type: 'image/png' },
-      ],
-    },
-    workbox: {
-      navigateFallback: '/index.html',
-      runtimeCaching: [
-        {
-          urlPattern: ({ request }) => request.destination === 'image',
-          handler: 'CacheFirst',
-          options: {
-            cacheName: 'images',
-            expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 7 },
-          },
+// PWA (vite-plugin-pwa): manifest + service worker con Workbox.
+// El SW se registra a mano en src/main.js (sólo en web, nunca dentro de la app
+// nativa de Capacitor), por eso injectRegister: null.
+const pwa = VitePWA({
+  registerType: 'autoUpdate',
+  injectRegister: null,
+  includeAssets: ['favicon.ico', 'favicon-48.png', 'favicon-96.png', 'apple-touch-icon.png'],
+  manifest: {
+    id: '/',
+    name: 'FULVO',
+    short_name: 'FULVO',
+    description: 'Entrená tu conocimiento de fútbol jugando: micro-juegos, rachas y logros.',
+    lang: 'es-AR',
+    dir: 'ltr',
+    start_url: '/',
+    scope: '/',
+    display: 'standalone',
+    orientation: 'portrait',
+    background_color: '#0b1220', // body de src/style.css
+    theme_color: '#0b1220',
+    categories: ['games', 'sports', 'entertainment'],
+    icons: [
+      { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    ],
+  },
+  workbox: {
+    // App shell: JS/CSS/HTML + fuentes self-hosted + íconos. NO precacheamos
+    // public/ entero (videos del hero, cosméticos, etc.: pesan mucho).
+    globPatterns: ['**/*.{js,css,html,woff2}', 'icons/*.png', 'favicon*.{ico,png}'],
+    // dataGAMES (~540 kB) entra holgado; subimos el tope por si crece.
+    maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+    navigateFallback: '/index.html',
+    // /fotmob/* es un proxy (rewrite de Vercel), no una ruta de la SPA.
+    navigateFallbackDenylist: [/^\/fotmob/],
+    cleanupOutdatedCaches: true,
+    clientsClaim: true,
+    skipWaiting: true,
+    runtimeCaching: [
+      // Datos en vivo: nunca desde cache (auth, saldos, rankings, partidos).
+      { urlPattern: ({ url }) => url.hostname.endsWith('supabase.co'), handler: 'NetworkOnly' },
+      { urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith('/fotmob/'), handler: 'NetworkOnly' },
+      { urlPattern: ({ url }) => url.hostname === 'images.fotmob.com', handler: 'NetworkOnly' },
+      // Banderas y fuentes externas: inmutables, cache-first.
+      {
+        urlPattern: ({ url }) => url.hostname === 'flagcdn.com' || url.hostname.endsWith('.flagcdn.com'),
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'flags',
+          expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 365 },
+          cacheableResponse: { statuses: [0, 200] },
         },
-        {
-          urlPattern: ({ request }) => request.destination === 'script' || request.destination === 'style',
-          handler: 'StaleWhileRevalidate',
-          options: { cacheName: 'static-resources' },
+      },
+      {
+        urlPattern: ({ url, request }) =>
+          url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com' || request.destination === 'font',
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'fonts',
+          expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 365 },
+          cacheableResponse: { statuses: [0, 200] },
         },
-      ],
-    },
-  }) : null
+      },
+      // Imágenes propias (public/): cache-first con tope.
+      {
+        urlPattern: ({ request, sameOrigin }) => sameOrigin && request.destination === 'image',
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'images',
+          expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 },
+        },
+      },
+    ],
+  },
+})
 
+export default defineConfig(() => {
   return {
-    plugins: [vue(), tailwindcss(), pwa].filter(Boolean),
+    plugins: [vue(), tailwindcss(), pwa],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src')
