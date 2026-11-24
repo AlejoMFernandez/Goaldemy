@@ -147,7 +147,7 @@ export default {
         const last = await mod.fetchTodayLastSession('once-ideal')
         if (last) {
           const mm = last.metadata || {}
-          this.xpEarned = Number(mm.xpEarned || 0)
+          this.xpEarned = Number(mm.xpView?.xpEarned ?? mm.xpEarned ?? last.xp_earned ?? 0)
           this.won = !!mm.won
           this.score = Number(last.score_final || 0)
           this.showSummary = true

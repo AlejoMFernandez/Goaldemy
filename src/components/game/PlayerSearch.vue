@@ -9,17 +9,20 @@
  *
  * Uso: <PlayerSearch @pick="onPick" :show-team="true" ref="search" />
  *      this.$refs.search.shake()  // feedback de error (borde rojo + temblor)
+ *      this.$refs.search.focus()  // abrir teclado (ej. al tocar una celda)
  *
- * Todavía no está conectado a ningún juego — lo consume cada juego cuando
- * migre su propio input/autocomplete a este componente.
+ * drop-up: las sugerencias se abren ARRIBA del input (para hojas pegadas abajo,
+ * donde el teclado del celu las tapaba). Con window.visualViewport se limita el
+ * alto de la lista al espacio visible y se sube el input sobre el teclado.
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { getAllPlayers } from '../../services/players'
 
 const props = defineProps({
   showTeam: { type: Boolean, default: false },
   placeholder: { type: String, default: 'Escribí el nombre del jugador...' },
   maxSuggestions: { type: Number, default: 4 },
+  dropUp: { type: Boolean, default: false },
 })
 const emit = defineEmits(['pick'])
 
@@ -27,9 +30,33 @@ const query = ref('')
 const open = ref(false)
 const shaking = ref(false)
 const allPlayers = ref([])
+const inputEl = ref(null)
+const listMax = ref(256)
+
+// Espacio visible arriba/abajo del input según el viewport VISUAL (descuenta el
+// teclado en iOS/Android) y, si el teclado tapa el input, lo sube a la vista.
+function fitToViewport() {
+  const el = inputEl.value
+  if (!el || typeof window === 'undefined') return
+  const vv = window.visualViewport
+  const top = vv ? vv.offsetTop : 0
+  const height = vv ? vv.height : window.innerHeight
+  const r = el.getBoundingClientRect()
+  const overflow = r.bottom - (top + height) + 12
+  if (document.activeElement === el && overflow > 0) window.scrollBy({ top: overflow, behavior: 'smooth' })
+  const rr = el.getBoundingClientRect()
+  const avail = props.dropUp ? (rr.top - top - 8) : (top + height - rr.bottom - 8)
+  listMax.value = Math.max(120, Math.min(256, Math.floor(avail)))
+}
 
 onMounted(() => {
   allPlayers.value = getAllPlayers()
+  window.visualViewport?.addEventListener('resize', fitToViewport)
+  window.visualViewport?.addEventListener('scroll', fitToViewport)
+})
+onBeforeUnmount(() => {
+  window.visualViewport?.removeEventListener('resize', fitToViewport)
+  window.visualViewport?.removeEventListener('scroll', fitToViewport)
 })
 
 function normalize(s) {
@@ -110,31 +137,51 @@ function shake() {
   setTimeout(() => { shaking.value = false }, 450)
 }
 
-defineExpose({ shake })
+function focus() {
+  inputEl.value?.focus({ preventScroll: true })
+  // el teclado tarda en abrir: reajustar cuando ya cambió el viewport
+  setTimeout(fitToViewport, 50)
+  setTimeout(fitToViewport, 350)
+}
+
+function onFocus() {
+  open.value = true
+  setTimeout(fitToViewport, 300)
+}
+
+defineExpose({ shake, focus })
 </script>
 
 <template>
   <div class="relative w-full">
     <input
+      ref="inputEl"
       v-model="query"
       type="text"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="none"
+      spellcheck="false"
+      enterkeyhint="search"
       :placeholder="placeholder"
       class="w-full rounded-xl border bg-white/5 px-3 py-2.5 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 transition-colors duration-150"
       :class="shaking ? 'ps-shake border-red-500 ring-2 ring-red-500/40' : 'border-white/15 focus:ring-amber-300/30'"
-      @focus="open = true"
+      @focus="onFocus"
       @input="open = true"
       @blur="onBlur"
       @keydown.enter.prevent="onEnter"
     />
     <div
       v-if="open && suggestions.length"
-      class="absolute z-30 mt-1 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl max-h-64 overflow-auto"
+      class="absolute z-30 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur shadow-2xl overflow-auto overscroll-contain"
+      :class="dropUp ? 'bottom-full mb-1' : 'mt-1'"
+      :style="{ maxHeight: listMax + 'px' }"
     >
       <ul>
         <li
           v-for="p in suggestions"
           :key="p.id"
-          class="px-3 py-2 cursor-pointer text-slate-200 flex items-center gap-2 hover:bg-white/10 transition-colors"
+          class="px-3 py-2 min-h-[44px] cursor-pointer text-slate-200 flex items-center gap-2 hover:bg-white/10 transition-colors"
           @mousedown.prevent="choose(p)"
         >
           <img
