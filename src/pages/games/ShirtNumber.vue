@@ -5,7 +5,7 @@ import { initScoring, onCorrect, onIncorrect } from '../../services/scoring'
 import { awardXpBatch } from '../../services/game-xp'
 import { createDailyRng } from '../../services/seeded-random'
 import { celebrateCorrect, celebrateIncorrect, celebrateGameLevelUp } from '../../services/game-celebrations'
-import { getGameMetadata } from '../../services/games'
+import { getGameMetadata, gameSummaryBlurb } from '../../services/games'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 import ScoreBug from '../../components/game/ScoreBug.vue'
@@ -352,6 +352,7 @@ export default {
           :hide="overlayOpen || kickoff"
           :disabled-types="answered ? ['fifty_fifty','shield','extra_time','reveal_hint'] : []"
           :active-types="shieldActive ? ['shield'] : []"
+          :can-apply="canUsePowerup"
           @use="handlePowerup"
         />
 

@@ -9,8 +9,11 @@
  * DESAFÍOS DIARIOS:
  * - Cada juego tiene 1 desafío por día (se resetea a las 00:00)
  * - Se registra en la tabla "game_sessions" con mode: 'challenge'
- * - Solo las sesiones TERMINADAS (ended_at !== null) cuentan como "jugadas"
- * - Esto permite salir a mitad de juego sin perder el intento diario
+ * - Toda sesión EMPEZADA cuenta como intento del día (relanzamiento): antes solo
+ *   contaban las terminadas y se podía "mirar y reintentar" (ver las preguntas,
+ *   salir y volver a empezar). Una sesión sin terminar se muestra en la revisión
+ *   como partido abandonado (derrota).
+ * - "Hoy" es el día de Argentina (services/app-date.js = app_today() del server).
  * 
  * RACHAS DIARIAS:
  * - Se cuentan los días consecutivos ganando un juego específico
@@ -34,6 +37,8 @@ import { fetchGameBySlug, friendlyNameForSlug } from './games'
 import { unlockAchievementWithToast } from './xp'
 import { checkAllAchievementsAfterChallenge, checkNewAchievements } from './achievement-triggers'
 import { getDailyChallengeLimit } from './premium'
+import { appDayStartIso, appDateKey, appToday } from './app-date'
+import { KNOWN_GAME_SLUGS, isGamePaused } from './games'
 
 // Cache de game_id por slug para evitar consultas repetitivas
 const _gameIdCache = new Map()
@@ -49,15 +54,23 @@ async function getGameId(slug) {
   return id
 }
 
-// Lista de juegos con desafío diario habilitado (mantener actualizado)
-export const DAILY_GAMES = ['who-is','guess-player','nationality','value-order','age-order','height-order','player-position','shirt-number']
+// Juegos con desafío diario: TODOS los juegos conocidos que no estén pausados
+// (los 14 tienen modo desafío). Antes era una lista a mano de 8, por lo que el
+// superlogro 5x3 y las rachas del perfil ignoraban 6 juegos.
+export const DAILY_GAMES = KNOWN_GAME_SLUGS.filter(s => !isGamePaused(s))
 
 /**
- * Retorna el inicio del día actual en formato ISO (00:00:00)
- * Usado para filtrar sesiones de "hoy"
+ * Inicio del día de HOY en Argentina (ISO), para filtrar sesiones de "hoy".
+ * Antes usaba la hora local del dispositivo (un usuario de viaje veía otro día).
  */
 function todayStartIso() {
-  return new Date(new Date().setHours(0,0,0,0)).toISOString()
+  return appDayStartIso()
+}
+
+/** Cantidad de jugadores del partido de ordenar (3/5/7 según dificultad). */
+function orderingTotal(m = {}) {
+  const n = Array.isArray(m.items) ? m.items.length : Number(m.total || 0)
+  return n > 0 ? n : 5
 }
 
 /**
@@ -194,24 +207,26 @@ export async function isChallengeAvailable(slug) {
     .select('id, started_at, ended_at, metadata, score_final')
     .eq('user_id', userId)
     .eq('game_id', gameId)
-    .gte('started_at', new Date(new Date().setHours(0,0,0,0)).toISOString())
+    .gte('started_at', todayStartIso())
   if (error) return { available: false, reason: 'Error verificando disponibilidad' }
-  // Consider ONLY finished sessions as "already played" to allow leaving mid-game without burning the daily
+  // Cuenta TODA sesión empezada hoy (terminada o no): si no, se podía ver el
+  // desafío, salir y reintentar con las respuestas sabidas.
   const todaySessions = (data || []).filter(r => (r?.metadata || {})?.mode === 'challenge')
-  const finished = todaySessions.filter(r => !!r.ended_at)
   const dailyLimit = await getDailyChallengeLimit()
-  const already = finished.length >= dailyLimit
-  const last = finished.sort((a,b)=> new Date(b.started_at) - new Date(a.started_at))[0]
-  let result = last?.metadata?.result || null
+  const already = todaySessions.length >= dailyLimit
+  const last = pickReviewSession(todaySessions)
+  const abandoned = !!(last && !last.ended_at)
+  let result = abandoned ? 'loss' : (last?.metadata?.result || null)
   // Robust fallback: infer result if missing, so UI can always show ✓/✕
   if (!result && last) {
     const slugLower = (slug || '').toLowerCase()
     const m = last.metadata || {}
     const score = Number(last.score_final || 0)
     const corrects = Number(m.corrects ?? NaN)
-    // Non-timed ordering games: win only if 5/5 (score 50)
+    // Ordenar: gana solo con todos en su lugar (3, 5 o 7 según dificultad)
     if (['value-order','age-order','height-order'].includes(slugLower)) {
-      result = score >= 50 ? 'win' : 'loss'
+      const ok = Number(m.correctPositions ?? m.corrects ?? NaN)
+      result = Number.isFinite(ok) ? (ok >= orderingTotal(m) ? 'win' : 'loss') : (score >= orderingTotal(m) * 20 ? 'win' : 'loss')
     } else if (['who-is'].includes(slugLower)) {
       // WhoIs should set result always; keep as null if truly unknown
       if (m.result === 'win' || m.result === 'loss') result = m.result
@@ -221,10 +236,20 @@ export async function isChallengeAvailable(slug) {
       else result = score >= 100 ? 'win' : 'loss'
     }
   }
-  const remaining = dailyLimit - finished.length
+  const remaining = Math.max(0, dailyLimit - todaySessions.length)
   // Ficha del partido de hoy para el póster del índice (moodboard 07)
   const ficha = last ? matchFicha(slug, last.metadata || {}, Number(last.score_final || 0), result) : null
-  return { available: !already, reason: already ? `Ya usaste tus ${dailyLimit} intentos de hoy` : null, result, remaining, ficha }
+  if (ficha && abandoned) ficha.abandoned = true
+  return { available: !already, reason: already ? `Ya usaste tus ${dailyLimit} intentos de hoy` : null, result, remaining, ficha, abandoned }
+}
+
+/**
+ * Sesión a mostrar como "el partido de hoy": la última TERMINADA si hay; si no,
+ * la última empezada (abandonada). Así un abandono no tapa un resultado real.
+ */
+function pickReviewSession(rows = []) {
+  const sorted = [...rows].sort((a, b) => new Date(b.started_at) - new Date(a.started_at))
+  return sorted.find(r => !!r.ended_at) || sorted[0] || null
 }
 
 /**
@@ -236,8 +261,8 @@ export function matchFicha(slug, m = {}, scoreFinal = 0, result = null) {
   const s = (slug || '').toLowerCase()
   const win = result === 'win'
   if (['value-order', 'age-order', 'height-order'].includes(s)) {
-    const ok = Number(m.correctPositions ?? m.corrects ?? Math.round(scoreFinal / 10))
-    return { score: `${Number.isFinite(ok) ? ok : 0}/5`, stars: win ? 3 : 0 }
+    const ok = Number(m.correctPositions ?? m.corrects ?? Math.round(scoreFinal / 20))
+    return { score: `${Number.isFinite(ok) ? ok : 0}/${orderingTotal(m)}`, stars: win ? 3 : 0 }
   }
   if (Number.isFinite(Number(m.corrects)) && ['guess-player', 'nationality', 'player-position', 'shirt-number', 'stat-challenge'].includes(s)) {
     const corrects = Number(m.corrects) || 0
@@ -268,49 +293,85 @@ export async function startChallengeSession(slug, seconds, extra = {}) {
   return data?.id || null
 }
 
-// Complete session with final score/xp
+// Sesiones ya cerradas en este cliente: el reporte a recompensas sale UNA vez.
+const _completedSessions = new Set()
+
+/**
+ * Cierra la sesión con el resultado final y reporta a recompensas (pase, retos
+ * diarios, Fichas) EXACTAMENTE una vez por sesión.
+ *
+ * Antes ~9 juegos llamaban esto dos veces (resultado + foto del XP) y cada
+ * llamada reportaba: puntos del pase, progreso de retos y Fichas duplicados.
+ * Ahora, si la sesión ya estaba terminada (en este cliente o en la DB), una
+ * segunda llamada solo mezcla metadata — igual que saveSessionXpView().
+ */
 export async function completeChallengeSession(sessionId, score, xp, metadataPatch) {
   if (!sessionId) return
+  if (_completedSessions.has(sessionId)) return saveSessionMeta(sessionId, metadataPatch)
+  _completedSessions.add(sessionId)
   // Merge metadata to preserve mode/seconds and add result/maxStreak, etc.
   let existing = null
+  let gameId = null
+  let alreadyEnded = false
   try {
     const { data: cur } = await supabase
       .from('game_sessions')
-      .select('metadata')
+      .select('metadata, game_id, ended_at')
       .eq('id', sessionId)
       .maybeSingle()
     existing = cur?.metadata || null
+    gameId = cur?.game_id || null
+    alreadyEnded = !!cur?.ended_at
   } catch (_) {}
+  if (alreadyEnded) return saveSessionMeta(sessionId, metadataPatch, existing)
   const metadata = { ...(existing || {}), ...(metadataPatch || {}) }
-  
-  // 🔍 DEBUG: Log what we're saving
-  console.log('[completeChallengeSession] Saving:', { sessionId, score, xp, metadata })
-  
+
   const { error } = await supabase
     .from('game_sessions')
     .update({ score_final: score ?? 0, xp_earned: xp ?? 0, ended_at: new Date().toISOString(), metadata })
     .eq('id', sessionId)
-  
+
   if (error) {
     console.error('[completeChallengeSession] Error:', error)
-  } else {
-    console.log('[completeChallengeSession] ✅ Saved successfully')
+    // Dejar reintentar el cierre si falló la escritura
+    _completedSessions.delete(sessionId)
+    return
   }
 
-  // Reportar resultado a recompensas (retos diarios) — centralizado, sin tocar cada juego
+  // Reportar resultado a recompensas (retos diarios) — centralizado, una sola vez
   try {
     const won = !!(metadata && metadata.result === 'win')
-    const { data: srow } = await supabase
-      .from('game_sessions').select('game_id').eq('id', sessionId).maybeSingle()
-    if (srow?.game_id) {
+    if (gameId) {
       const { data: grow } = await supabase
-        .from('games').select('slug').eq('id', srow.game_id).maybeSingle()
+        .from('games').select('slug').eq('id', gameId).maybeSingle()
       if (grow?.slug) {
         const { reportGameResult } = await import('./rewards')
         await reportGameResult(grow.slug, won)
       }
     }
   } catch (_) {}
+}
+
+/** Mezcla metadata en una sesión SIN cerrarla ni reportar nada. */
+async function saveSessionMeta(sessionId, patch, existing = undefined) {
+  if (!sessionId || !patch) return
+  try {
+    let base = existing
+    if (base === undefined) {
+      const { data: cur } = await supabase
+        .from('game_sessions').select('metadata').eq('id', sessionId).maybeSingle()
+      base = cur?.metadata || null
+    }
+    await supabase
+      .from('game_sessions')
+      .update({ metadata: { ...(base || {}), ...patch } })
+      .eq('id', sessionId)
+  } catch (_) {}
+}
+
+/** Guarda la foto del XP (para la revisión) sin volver a cerrar ni reportar. */
+export async function saveSessionXpView(sessionId, xpView) {
+  return saveSessionMeta(sessionId, { xpView })
 }
 
 // Fetch the latest FINISHED session for today for a given game slug (for review mode)
@@ -327,8 +388,12 @@ export async function fetchTodayLastSession(slug) {
     .order('started_at', { ascending: false })
     .limit(5)
   if (error) return null
-  const finished = (data || []).filter(r => !!r.ended_at && (r?.metadata || {}).mode === 'challenge')
-  return finished[0] || null
+  const rows = (data || []).filter(r => (r?.metadata || {}).mode === 'challenge')
+  const pick = pickReviewSession(rows)
+  if (!pick) return null
+  if (pick.ended_at) return pick
+  // Partido abandonado: cuenta como intento del día → se revisa como derrota en 0.
+  return { ...pick, score_final: 0, xp_earned: 0, metadata: { ...(pick.metadata || {}), result: 'loss', abandoned: true } }
 }
 
 // Developer helper: reset today's challenge sessions for current user (to replay all daily games)
@@ -370,6 +435,34 @@ export async function fetchLifetimeMaxStreak(slug) {
   return max
 }
 
+/**
+ * Día (Argentina) → resultado de ese día, para las rachas diarias.
+ * - Manda la última sesión TERMINADA del día (antes podía ganar una sesión sin
+ *   terminar con result null y "borrar" el resultado real).
+ * - Un día pasado con solo sesiones abandonadas cuenta como derrota (si no,
+ *   abandonar servía para no cortar la racha). Hoy sin terminar: no cuenta aún.
+ */
+function dailyResults(rows = []) {
+  const today = appToday()
+  const byDay = new Map()
+  for (const r of (rows || [])) {
+    const m = r?.metadata || {}
+    if (m.mode && m.mode !== 'challenge') continue
+    const key = appDateKey(r.started_at)
+    if (!key) continue
+    const cur = byDay.get(key) || { finished: null, open: false }
+    if (r.ended_at) { if (!cur.finished) cur.finished = m.result || null } // filas vienen de más nueva a más vieja
+    else cur.open = true
+    byDay.set(key, cur)
+  }
+  const out = new Map()
+  for (const [key, v] of byDay) {
+    if (v.finished) out.set(key, v.finished)
+    else if (v.open && key !== today) out.set(key, 'loss')
+  }
+  return out
+}
+
 // Compute current daily win streak per requested rule:
 // - Incrementa sólo cuando jugás y GANÁS ese día
 // - Días sin jugar NO cortan la racha
@@ -380,21 +473,13 @@ export async function fetchDailyWinStreak(slug) {
   if (!userId || !gameId) return 0
   const { data, error } = await supabase
     .from('game_sessions')
-    .select('started_at, metadata')
+    .select('started_at, ended_at, metadata')
     .eq('user_id', userId)
     .eq('game_id', gameId)
     .order('started_at', { ascending: false })
     .limit(365)
   if (error) return 0
-  // Build a map day -> last result that day
-  const byDay = new Map()
-  for (const r of (data || [])) {
-    const d = new Date(r.started_at)
-    const dayKey = d.toISOString().slice(0,10)
-    if (!byDay.has(dayKey)) {
-      byDay.set(dayKey, (r?.metadata || {}).result || null)
-    }
-  }
+  const byDay = dailyResults(data)
   // Iterate from most recent played day backwards, counting wins until first loss.
   const days = Array.from(byDay.entries()).sort((a,b) => (a[0] < b[0] ? 1 : -1))
   let streak = 0
@@ -413,19 +498,13 @@ export async function fetchMaxDailyWinStreak(slug) {
   if (!userId || !gameId) return 0
   const { data, error } = await supabase
     .from('game_sessions')
-    .select('started_at, metadata')
+    .select('started_at, ended_at, metadata')
     .eq('user_id', userId)
     .eq('game_id', gameId)
     .order('started_at', { ascending: false })
     .limit(365)
   if (error) return 0
-  // Build unique days with result
-  const byDay = new Map()
-  for (const r of (data || [])) {
-    const d = new Date(r.started_at)
-    const key = d.toISOString().slice(0,10)
-    if (!byDay.has(key)) byDay.set(key, (r?.metadata || {}).result || null)
-  }
+  const byDay = dailyResults(data)
   // Iterate from oldest to newest measuring max consecutive win streaks; gaps don't cut
   const days = Array.from(byDay.entries()).sort((a,b) => (a[0] > b[0] ? 1 : -1))
   let maxStreak = 0
@@ -435,6 +514,36 @@ export async function fetchMaxDailyWinStreak(slug) {
     if (cur > maxStreak) maxStreak = cur
   }
   return maxStreak
+}
+
+/**
+ * Próximo desafío diario disponible después de `currentSlug` (en el orden de
+ * DAILY_GAMES, dando la vuelta). Respeta intentos del día y candado de nivel.
+ * Devuelve la ruta lista para navegar ('/games/x?mode=challenge') o null.
+ */
+export async function findNextDailyGame(currentSlug) {
+  try {
+    const list = DAILY_GAMES
+    const start = Math.max(0, list.indexOf(currentSlug) + 1)
+    const ordered = [...list.slice(start), ...list.slice(0, start)].filter(s => s !== currentSlug)
+    let level = null
+    try {
+      const { getUserLevel } = await import('./xp')
+      const { data } = await getUserLevel(null)
+      const info = Array.isArray(data) ? data[0] : data
+      level = Number(info?.level) || null
+    } catch {}
+    const { isGameUnlocked } = await import('./level-rewards')
+    const { gameRouteForSlug } = await import('./games')
+    const avail = await Promise.all(ordered.map(s => isChallengeAvailable(s).catch(() => ({ available: false }))))
+    for (let i = 0; i < ordered.length; i++) {
+      const slug = ordered[i]
+      if (!avail[i]?.available) continue
+      if (level != null && !isGameUnlocked(slug, level)) continue
+      return `${gameRouteForSlug(slug)}?mode=challenge`
+    }
+  } catch {}
+  return null
 }
 
 // Helper to get display list with names for UI

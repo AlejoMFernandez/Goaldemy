@@ -182,23 +182,23 @@ export const SQUAD_DIFFICULTY_CONFIG = {
   [DIFFICULTY_LEVELS.EASY]: {
     label: 'Fácil',
     icon: '🟢',
-    time: 180,
+    time: 240,
     xpCompletion: 100,
-    description: 'Cualquier jugador que cumpla la condición'
+    description: '4 minutos para armar el once'
   },
   [DIFFICULTY_LEVELS.NORMAL]: {
     label: 'Normal',
     icon: '🟡',
     time: 180,
     xpCompletion: 175,
-    description: 'Cualquier jugador que cumpla la condición'
+    description: '3 minutos para armar el once'
   },
   [DIFFICULTY_LEVELS.HARD]: {
     label: 'Difícil',
     icon: '🔴',
-    time: 180,
+    time: 120,
     xpCompletion: 300,
-    description: 'Cualquier jugador que cumpla la condición'
+    description: '2 minutos para armar el once'
   }
 };
 
@@ -349,8 +349,9 @@ const GAME_METADATA = {
     mechanic: 'Adiviná jugadores sin perder todas las vidas',
     videoUrl: '',
     tips: [
-      'La imagen se va desblurreando con cada error',
-      'Usá las pistas: posición, nacionalidad, equipo',
+      'Con cada error se destapa una pista: primero la edad, después el dorsal',
+      'Si tardás, las pistas se destapan solas (en Difícil es la única forma)',
+      'Repetir un nombre que ya probaste no te saca vida',
       'El buscador te ayuda con sugerencias'
     ]
   },
@@ -420,7 +421,7 @@ const GAME_METADATA = {
     videoUrl: '',
     tips: [
       'Escribí el jugador primero: si cumple la condición, elegís dónde va',
-      'Un jugador puede entrar en más de un puesto según su posición',
+      'Cada jugador va en un puesto de su línea: arquero, defensa, medio o delantero',
       'Las líneas de la formación se iluminan cuando conectás dos puestos'
     ]
   }
@@ -442,6 +443,9 @@ const KNOWN_GAMES = [
   { slug: 'football-grid', name: FALLBACK_NAMES['football-grid'], description: FALLBACK_DESC['football-grid'], cover_url: '/games/football-grid.svg' },
   { slug: 'stat-challenge', name: FALLBACK_NAMES['stat-challenge'], description: FALLBACK_DESC['stat-challenge'], cover_url: '/games/stat-challenge.svg' },
 ]
+
+/** Slugs de todos los juegos que existen en la app (fuente de DAILY_GAMES). */
+export const KNOWN_GAME_SLUGS = KNOWN_GAMES.map(g => g.slug)
 
 // Juegos pausados: no se muestran en el index ni en filtros.
 // stat-challenge (Duelo de Stats) se despausó: el refresco semanal ya trae

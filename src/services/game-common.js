@@ -163,6 +163,33 @@ export function shuffleArray(arr, rng) {
 }
 
 /**
+ * Próxima posición a preguntar, sacada de una "bolsa" mezclada con el RNG del
+ * juego (semilla diaria en desafío). Antes era una rotación fija DEL→MED→DEF→ARQ:
+ * a los pocos jugadores se adivinaba qué posición venía. La bolsa mantiene la
+ * mezcla balanceada (cada `weights[pos]` veces por vuelta) sin orden fijo.
+ */
+export function nextPositionFromBag(state, weights = { FW: 3, MF: 3, DF: 3, GK: 2 }) {
+  const rand = state.rng || Math.random
+  // Si cambió el RNG (arrancó el desafío con la semilla del día) se rearma la
+  // bolsa: así la secuencia del día es la misma para todos.
+  if (state._posBagRng !== rand) { state._posBag = null; state._lastPos = null; state._posBagRng = rand; state._usedIds = null }
+  if (!Array.isArray(state._posBag) || !state._posBag.length) {
+    const bag = []
+    for (const [pos, n] of Object.entries(weights)) for (let i = 0; i < n; i++) bag.push(pos)
+    let shuffled = shuffleArray(bag, rand)
+    // Que no arranque con la misma posición con la que terminó la bolsa anterior
+    if (state._lastPos && shuffled.length > 1 && shuffled[0] === state._lastPos) {
+      const j = 1 + Math.floor(rand() * (shuffled.length - 1))
+      ;[shuffled[0], shuffled[j]] = [shuffled[j], shuffled[0]]
+    }
+    state._posBag = shuffled
+  }
+  const pos = state._posBag.shift()
+  state._lastPos = pos
+  return pos
+}
+
+/**
  * Selecciona jugador aleatorio de un bucket de posición
  * @param {Object} state - Estado del juego
  * @returns {Object|null} - Jugador seleccionado o null
@@ -175,7 +202,8 @@ export function selectRandomPlayerFromBucket(state) {
   let selectedPlayer = null
 
   for (let k = 0; k < order.length; k++) {
-    const bucket = order[state.posIndex % order.length]
+    // Posición sorteada (bolsa balanceada), no rotación fija
+    const bucket = nextPositionFromBag(state)
     const arr = state.byPos[bucket] || []
     state.posIndex = (state.posIndex + 1) % order.length
 

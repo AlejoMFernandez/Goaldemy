@@ -62,14 +62,23 @@ export default {
       return Math.max(0, (this.attempts || 0) - (this.corrects || 0))
     },
   },
+  mounted() {
+    // Reloj por fecha límite (Date.now), no por ticks: en el celu, con la app en
+    // segundo plano el setInterval se frena y el reloj quedaba "en pausa" (se
+    // podía salir a buscar la respuesta). Al volver se resincroniza al instante.
+    this._onVisibility = () => { if (!document.hidden && this.clockRunning) this.clockTick() }
+    document.addEventListener('visibilitychange', this._onVisibility)
+  },
   beforeUnmount() {
     clearInterval(this.timer)
     clearTimeout(this._advanceT)
+    document.removeEventListener('visibilitychange', this._onVisibility)
   },
   methods: {
     // ─── Reloj ───────────────────────────────────────────────
     beginClock(seconds) {
       clearInterval(this.timer)
+      this._deadline = 0
       this.timeLeft = seconds
       this.chosenSeconds = seconds
       this.clockTotal = seconds
@@ -87,16 +96,22 @@ export default {
       this.kickoff = false
       this.clockRunning = true
       clearInterval(this.timer)
-      this.timer = setInterval(() => this.clockTick(), 1000)
+      this._deadline = Date.now() + (this.timeLeft || 0) * 1000
+      this.timer = setInterval(() => this.clockTick(), 250)
     },
     clockTick() {
-      if (this.timeOver) return
-      if (this.timeLeft > 0) this.timeLeft -= 1
-      if (this.timeLeft > 0 && this.timeLeft <= 2) fx.jolt(this.$refs.card)
-      if (this.timeLeft <= 0) this.endByTime()
+      if (this.timeOver || !this._deadline) return
+      const left = Math.max(0, Math.ceil((this._deadline - Date.now()) / 1000))
+      if (left !== this.timeLeft) {
+        this.timeLeft = left
+        if (left > 0 && left <= 2) fx.jolt(this.$refs.card)
+      }
+      if (left <= 0) this.endByTime()
     },
     addTime(seconds) {
-      this.timeLeft = Math.min(this.timeLeft + seconds, 999)
+      const next = Math.min(this.timeLeft + seconds, 999)
+      if (this._deadline) this._deadline += (next - this.timeLeft) * 1000
+      this.timeLeft = next
       this.clockTotal += seconds
     },
 
@@ -201,6 +216,7 @@ export default {
         }
         if (timed && (this.corrects || 0) >= TIMED_TARGET) {
           clearInterval(this.timer) // el reloj se clava acá: los segundos que quedan son el bonus
+          this._deadline = 0
           setTimeout(() => this.endByBasta(), 450)
           return
         }
@@ -222,6 +238,17 @@ export default {
     },
 
     // ─── Ayudas ──────────────────────────────────────────────
+    /** ¿La ayuda tiene efecto ahora? PowerupBar lo consulta antes de gastarla. */
+    canUsePowerup(type) {
+      if (this.timeOver || this.answered || this.kickoff || !this.clockRunning) return false
+      if (type === 'fifty_fifty') {
+        const left = (this.options || []).filter(o => !(this.eliminatedOptions || []).includes(o.value))
+        return left.length > 2 && left.filter(o => !this.isCorrectOption(o)).length >= 2
+      }
+      if (type === 'shield') return !this.shieldActive
+      if (type === 'reveal_hint') return !this.hintVisible
+      return true
+    },
     async runPowerup(type, btnEl) {
       const card = this.$refs.card
       const bug = this.$refs.bug

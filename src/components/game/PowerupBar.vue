@@ -11,6 +11,10 @@ const props = defineProps({
   disabledTypes: { type: Array, default: () => [] },
   activeTypes: { type: Array, default: () => [] }, // ej. ['shield'] mientras el escudo está puesto
   hide: { type: Boolean, default: false },
+  // (type) => boolean: ¿la ayuda puede actuar AHORA? Se consulta ANTES de
+  // gastarla en el servidor (antes se consumía y después el juego la ignoraba:
+  // 50/50 con 2 opciones, +15 s con el reloj ya parado, pista ya visible…).
+  canApply: { type: Function, default: null },
 })
 
 const emit = defineEmits(['use'])
@@ -32,14 +36,18 @@ async function load() {
   powerups.value = await getAvailablePowerups()
 }
 
+function applicable(key) {
+  try { return props.canApply ? props.canApply(key) !== false : true } catch { return true }
+}
+
 function isDisabled(pu) {
-  return pu.count <= 0 || props.disabledTypes.includes(pu.key) || props.activeTypes.includes(pu.key) || using.value === pu.key
+  return pu.count <= 0 || !applicable(pu.key) || props.disabledTypes.includes(pu.key) || props.activeTypes.includes(pu.key) || using.value === pu.key
 }
 
 async function activate(pu) {
   if (using.value || isDisabled(pu)) return
   using.value = pu.key
-  const ok = await usePowerup(pu.key)
+  const ok = applicable(pu.key) && await usePowerup(pu.key)
   if (ok) {
     pu.count--
     emit('use', pu.key, btns[pu.key] || null)
@@ -102,6 +110,11 @@ defineExpose({ reload: load })
 }
 @media (max-width: 420px) {
   .pubar-nm { display: none; }
+}
+/* Celus bajos: la barra no puede empujar las opciones fuera de pantalla */
+@media (max-height: 760px) {
+  .pubar { margin-top: 8px; gap: 6px; }
+  .pubar-btn { min-height: 44px; }
 }
 .dock-fade-enter-active, .dock-fade-leave-active { transition: opacity 0.3s ease; }
 .dock-fade-enter-from, .dock-fade-leave-to { opacity: 0; }

@@ -22,7 +22,7 @@ import { friendlyNameForSlug } from '@/services/games'
 import { buildShareText, shareOrCopy } from '@/services/share'
 import { getAuthUser } from '@/services/auth'
 import { computeGuestRewards, getPendingGuestSummary } from '@/services/guest-play'
-import { fetchDailyWinStreak } from '@/services/game-modes'
+import { fetchDailyWinStreak, findNextDailyGame } from '@/services/game-modes'
 import { upcomingPrizes, nextRealPrize, PRIZE_TYPE_LABEL } from '@/services/prize-card'
 import { sparks, center, smoke, reducedMotion } from '@/services/game-fx'
 import PrizePeek from '@/components/rewards/PrizePeek.vue'
@@ -288,12 +288,25 @@ export default {
 
     function onContinue() { emit('close'); setSuppressOverlays(false) }
 
+    // ── Siguiente juego del día: el CTA principal del relanzamiento ──
+    // Busca el próximo desafío disponible (intentos + nivel); sin ninguno → índice.
+    const nextHref = ref('/play/points')
+    const nextIsGame = ref(false)
+    async function resolveNext() {
+      if (props.guest) return
+      const href = await findNextDailyGame(slug.value)
+      nextHref.value = href || '/play/points'
+      nextIsGame.value = !!href
+    }
+    watch(() => props.show, (val) => { if (val) resolveNext() })
+    onMounted(() => { if (props.show) resolveNext() })
+
     return { barCombo, barEl,
       phase, won, animatedXp, starsRevealed, starCount, accuracy, precisionLine, missing, ballsTotal, xpBarWidth,
       levelShown, levelPop, claimGate, guestPreview, guestSummary, guestTotalXp, guestShowsAccumulated,
       subLine, totalXp, chips, didLevelUp, nextPrize, nextPrizeTypeLabel, perCorrect,
       streakBefore, streakAfter, rkPhase, showStreak, flamesShown, FLAME_PATH,
-      shared, onShare, onContinue, cardEl, starEls, flameNewEl, flamesEl,
+      shared, onShare, onContinue, nextHref, nextIsGame, cardEl, starEls, flameNewEl, flamesEl,
     }
   },
 }
@@ -386,9 +399,12 @@ export default {
             </div>
 
             <!-- 6 · acciones -->
+            <router-link v-if="!guest" :to="nextHref" class="cta-next" :class="{ in: phase >= 6 }" @click="onContinue">
+              {{ nextIsGame ? 'Siguiente juego del día' : 'Ver juegos del día' }} <span aria-hidden="true">→</span>
+            </router-link>
             <div class="cta" :class="{ in: phase >= 6 }">
               <button type="button" class="ghost" @click="onShare">{{ shared ? '¡Copiado!' : 'Compartir' }}</button>
-              <router-link v-if="!guest" :to="backPath" class="main" @click="onContinue">Continuar</router-link>
+              <router-link v-if="!guest" :to="backPath" class="ghost" @click="onContinue">Continuar</router-link>
               <button v-else-if="!claimGate" type="button" class="main claim" @click="claimGate = true">Reclamar mis recompensas</button>
             </div>
             <div v-if="guest && claimGate" class="gate">
@@ -498,6 +514,9 @@ export default {
 .cta .ghost { background: #141a38; color: #eef1ff; border: 1px solid rgba(255, 255, 255, .1); }
 .cta .main { border: 0; color: #141005; background: linear-gradient(180deg, #fde68a, #f59e0b); box-shadow: 0 8px 22px rgba(245, 158, 11, .3); }
 .cta .main.claim { animation: sm-claim 1.8s ease-in-out infinite; }
+.cta-next { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; margin-top: 14px; border-radius: 12px; padding: 12px; font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; font-size: 16px; text-decoration: none; color: #141005; background: linear-gradient(180deg, #fde68a, #f59e0b); box-shadow: 0 8px 22px rgba(245, 158, 11, .3); opacity: 0; transform: translateY(8px); transition: opacity .3s ease, transform .3s ease; }
+.cta-next.in { opacity: 1; transform: none; }
+.cta-next + .cta { margin-top: 8px; }
 @keyframes sm-claim { 0%, 100% { box-shadow: 0 8px 24px rgba(245, 158, 11, .3); } 50% { box-shadow: 0 8px 34px rgba(245, 158, 11, .55); } }
 .gate { display: grid; gap: 8px; text-align: center; padding: 14px; border-radius: 14px; border: 1px solid rgba(252, 211, 77, .3); background: rgba(252, 211, 77, .06); animation: sm-gate .35s cubic-bezier(.16, 1, .3, 1) both; }
 @keyframes sm-gate { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }

@@ -409,7 +409,7 @@ export default {
           <img v-if="flagSrc(gridConfig.cols[activeCell.col])" :src="flagSrc(gridConfig.cols[activeCell.col])" alt="" class="w-7 h-5 object-cover rounded-sm" />
           <span>{{ gridConfig.cols[activeCell.col].label }}</span>
         </div>
-        <PlayerSearch v-if="activeCell" ref="search" :show-team="false" placeholder="¿Quién va acá? Escribí un jugador…" @pick="submitPlayer" />
+        <PlayerSearch v-if="activeCell" ref="search" drop-up :show-team="false" placeholder="¿Quién va acá? Escribí un jugador…" @pick="submitPlayer" />
       </div>
       <Transition name="fade"><div v-if="activeCell" class="grid-scrim" @click="closeSheet"></div></Transition>
 
@@ -526,8 +526,9 @@ export default {
   transform: translateY(12px);
   transition: transform 0.35s cubic-bezier(.16,1,.3,1), opacity 0.25s, max-height 0.35s cubic-bezier(.16,1,.3,1), padding 0.35s;
 }
-.grid-sheet.on { max-height: 220px; opacity: 1; transform: none; padding: 12px; }
-.grid-sheet-close { position: absolute; right: 10px; top: 8px; background: none; border: 0; color: rgb(148,163,184); font-size: 16px; cursor: pointer; line-height: 1; }
+.grid-sheet.on { max-height: 220px; opacity: 1; transform: none; padding: 12px; overflow: visible; }
+/* Las sugerencias se abren hacia arriba (drop-up): la hoja no las recorta */
+.grid-sheet-close { position: absolute; right: 2px; top: 0; width: 44px; height: 44px; display: grid; place-items: center; background: none; border: 0; color: rgb(148,163,184); font-size: 16px; cursor: pointer; line-height: 1; }
 .grid-sheet-q { display: flex; gap: 8px; align-items: center; font-weight: 800; text-transform: uppercase; font-size: 14px; color: #eef1ff; margin-bottom: 8px; padding-right: 20px; }
 
 .grid-toast {

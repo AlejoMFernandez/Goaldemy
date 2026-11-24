@@ -2,7 +2,8 @@
 import GameShell from '../../components/game/GameShell.vue'
 import PlayerSearch from '../../components/game/PlayerSearch.vue'
 import ScoreBug from '../../components/game/ScoreBug.vue'
-import { initState, loadPlayers, nextRound, submitGuess, posLabel, countryFlag, teamLogo } from '../../services/guess-player-typing'
+import { initState, loadPlayers, nextRound, submitGuess, posLabel, countryFlag, teamLogo, revealHint, hintScheduleFor } from '../../services/guess-player-typing'
+import { pushInfoToast } from '../../stores/notifications'
 import { countryNameEs } from '../../services/countries'
 import { initScoring, GAME_SCORING } from '../../services/scoring'
 import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
@@ -85,10 +86,28 @@ export default {
       this.checkAvailability()
     }
   },
+  beforeUnmount() {
+    clearInterval(this._hintT)
+  },
   methods: {
     nextRound() {
       this.gameWon = false
       nextRound(this)
+      this.startHintClock()
+    },
+    // Pistas que se destapan solas con el tiempo (por reloj real, sigue
+    // contando aunque la app quede en segundo plano). No corre con el modal previo.
+    startHintClock() {
+      clearInterval(this._hintT)
+      this._roundAt = Date.now()
+      this._hintT = setInterval(() => {
+        if (this.answered || this.reviewMode) { clearInterval(this._hintT); return }
+        if (this.overlayOpen) { this._roundAt = Date.now(); return }
+        const s = (Date.now() - this._roundAt) / 1000
+        const sched = hintScheduleFor(this.maxLives)
+        if (s >= sched.age) revealHint(this, 'age')
+        if (s >= sched.shirt) { revealHint(this, 'shirt'); clearInterval(this._hintT) }
+      }, 500)
     },
     blurb() { return gameSummaryBlurb('who-is') },
     backPath() { if (this.isGuest) return '/'; return this.mode === 'free' ? '/play/free' : '/play/points' },
@@ -122,6 +141,7 @@ export default {
         this.afterRoundResult('win')
       } else {
         this.$refs.search?.shake()
+        if (this._repeatGuess) { pushInfoToast(`Ya probaste con ${player.name}: no te descuenta vida`, 2500); return }
         if (this.lives <= 0) this.afterRoundResult('loss')
       }
     },
