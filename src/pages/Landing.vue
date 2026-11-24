@@ -3,9 +3,8 @@ import { onMounted, onUnmounted, reactive, computed, ref, defineAsyncComponent }
 import { RouterLink, useRouter } from 'vue-router'
 import { supabase } from '../services/supabase'
 import { getAuthUser } from '../services/auth'
-import { fetchGames, gameRouteForSlug } from '../services/games'
-import { LEAGUES, getUpcomingMatches } from '../services/fotmob'
-import { getDailyChallenges } from '../services/rewards'
+import { fetchGames, gameRouteForSlug, friendlyNameForSlug, friendlyDescForSlug } from '../services/games'
+import { getDailyChallenges, getDailyReward } from '../services/rewards'
 import { getUserLevel, getLeaderboard, getUserRank, computeProgressPercentSync, fetchLevelThresholds } from '../services/xp'
 import { getUserAchievements, getAchievementsCatalog } from '../services/achievements'
 import { getEquippedCosmetics } from '../services/cosmetics'
@@ -17,6 +16,9 @@ import GameCard from '../components/game/GameCard.vue'
 import MatchTicker from '../components/home/MatchTicker.vue'
 import TopJugadorCard from '../components/home/TopJugadorCard.vue'
 import TodayMatchesGrid from '../components/home/TodayMatchesGrid.vue'
+import QuickPlayHero from '../components/home/QuickPlayHero.vue'
+import { useUpcomingMatches } from '../components/home/useUpcomingMatches'
+import { tapHaptic } from '../components/shell/shell-state'
 
 // Video de fondo del hero (local, optimizado — ver public/videoshero/).
 // Vacío = se usa el fondo con degradé en vez de video.
@@ -28,7 +30,6 @@ const MonthlyPass = defineAsyncComponent(() => import('../components/rewards/Mon
 const PlanCard = defineAsyncComponent(() => import('../components/pricing/PlanCard.vue'))
 const LevelProgressionModal = defineAsyncComponent(() => import('../components/profile/LevelProgressionModal.vue'))
 const showProgression = ref(false)
-
 const router = useRouter()
 
 const state = reactive({
@@ -38,9 +39,33 @@ const state = reactive({
   totalGames: 0,
   availability: {},   // por slug: estado del desafío de hoy (win/loss/available) — igual que el índice
   streaks: {},        // por slug: racha de victorias diarias
-  loadingTicker: false,
-  tickerRaw: [],       // partidos crudos de TODAS las ligas, para el ticker de arriba
+  allGames: [],       // todos los juegos con ruta real (para invitado: cuáles se juegan sin cuenta)
 })
+
+// Sobre del día (teaser en la home logueada): solo el estado, se abre en /rewards.
+const envelope = reactive({ loading: true, available: false })
+
+// Juegos que se pueden jugar SIN cuenta: se deriva del router (rutas /games/*
+// sin requiresAuth), no de una lista a mano → si mañana se abre otro juego a
+// invitados, la home lo muestra sola.
+const guestSlugs = new Set(
+  router.getRoutes()
+    .filter(r => /^\/games\/[a-z0-9-]+$/.test(r.path) && !r.meta?.requiresAuth)
+    .map(r => r.path.replace('/games/', ''))
+)
+// Si el catálogo no llegó (red caída), igual se muestran con nombre local: un
+// invitado nunca tiene que ver la sección vacía.
+const guestGames = computed(() => {
+  const fromDb = state.allGames.filter(g => guestSlugs.has(g.slug))
+  if (fromDb.length) return fromDb
+  return [...guestSlugs].map(slug => ({ id: slug, slug, name: friendlyNameForSlug(slug), description: friendlyDescForSlug(slug), cover_url: null }))
+})
+const lockedForGuest = computed(() => Math.max(0, state.totalGames - guestGames.value.length))
+const guestPlayTo = computed(() => {
+  const first = guestGames.value[0]?.slug || [...guestSlugs][0] || 'guess-player'
+  return `${gameRouteForSlug(first)}?mode=challenge`
+})
+function playAsGuest() { tapHaptic(12); router.push(guestPlayTo.value) }
 
 // Spotlight "Top jugador" (semana/mes) — reemplaza la vieja sección de partidos
 // del Mundial (torneo ya finalizado, esa data quedó vieja) por algo propio de
@@ -104,57 +129,11 @@ function setSpotlightPeriod(p) {
   loadSpotlight()
 }
 
-// Ticker de partidos (arriba de todo, para todos): recorre TODAS las ligas
-// conocidas (no solo ACTIVE_LEAGUES/Mundial) y trae los PRÓXIMOS partidos de
-// cada una — no solo los de hoy, igual que la referencia (Copero también
-// muestra fechas de días siguientes, no exclusivamente "hoy"). Así el ticker
-// siempre tiene contenido aunque hoy no juegue nadie del Mundial.
-async function loadTickerMatches() {
-  state.loadingTicker = true
-  try {
-    const results = await Promise.allSettled(
-      Object.values(LEAGUES).map(l => getUpcomingMatches(l.id, 5).then(matches => ({ league: l, matches })))
-    )
-    state.tickerRaw = results
-      .filter(r => r.status === 'fulfilled')
-      .flatMap(r => r.value.matches.map(m => ({ ...m, league: r.value.league })))
-      .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .slice(0, 24)
-  } catch (e) {
-    console.warn('[Landing] ticker load error', e)
-    state.tickerRaw = []
-  } finally {
-    state.loadingTicker = false
-  }
-}
-
-const tickerMatches = computed(() => state.tickerRaw.map((m, i) => {
-  const parts = (m.status?.score || '').split('-').map(s => s.trim())
-  const [homeScore, awayScore] = parts.length === 2 ? parts : [null, null]
-  const live = !!(m.status?.started && !m.status?.finished)
-  return {
-    id: m.id ?? i,
-    date: m.date,
-    leagueId: m.league.id, leagueName: m.league.name,
-    leagueLogo: `https://images.fotmob.com/image_resources/logo/leaguelogo/${m.league.id}.png`,
-    homeId: m.homeTeamId, homeName: m.homeTeam,
-    awayId: m.awayTeamId, awayName: m.awayTeam,
-    homeScore, awayScore,
-    isLive: live,
-    finished: !!m.status?.finished,
-    statusText: m.status?.finished ? 'FIN' : new Date(m.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }),
-    pageUrl: m.pageUrl || null,
-  }
-}))
-
-// "Partidos de hoy" (sección grande, debajo de Top jugador): mismo dato ya
-// traído para el ticker (sin pedirlo dos veces a FotMob). Sin filtro estricto
-// de "literalmente hoy" — con eso la sección quedaba vacía la mayoría de los
-// días (las ligas seguidas no siempre juegan hoy mismo); mostramos los
-// próximos partidos ya disponibles, en vivo primero.
-const todayMatches = computed(() => (
-  [...tickerMatches.value].sort((a, b) => (b.isLive ? 1 : 0) - (a.isLive ? 1 : 0)).slice(0, 9)
-))
+// Partidos (ticker de arriba + "Partidos de hoy"): misma lógica que Social →
+// Fútbol (useUpcomingMatches). En mobile logueado no se piden: esa sección se
+// mudó a Social → Fútbol y la home arranca directo con JUGAR RÁPIDO.
+const { loading: loadingMatches, load: loadTickerMatches, matches: tickerMatches, todayMatches } = useUpcomingMatches()
+const wantsMatches = () => !state.isAuthenticated || window.matchMedia('(min-width: 1024px)').matches
 
 // Video de fondo del hero: se descarga solo en pantallas grandes y si el
 // usuario no pidió menos movimiento — nunca se pide el archivo en mobile.
@@ -177,6 +156,7 @@ async function load() {
     state.isAuthenticated = !!(getAuthUser()?.id)
     const allGames = await fetchGames()
     const playable = (allGames || []).filter(g => !!g?.slug && gameRouteForSlug(g.slug) !== '/games')
+    state.allGames = playable
     state.featuredGames = playable.slice(-4)
     state.totalGames = playable.length
     if (state.isAuthenticated) loadFeaturedStates()
@@ -273,14 +253,23 @@ async function loadUserHome() {
   }
 }
 
+async function loadEnvelope() {
+  envelope.loading = true
+  try { const r = await getDailyReward(); envelope.available = !!r?.available }
+  catch { envelope.available = false }
+  finally { envelope.loading = false }
+}
+
 let pollTimer = null
 onMounted(() => {
   load()
-  if (state.isAuthenticated) loadUserHome()
-  loadTickerMatches()
+  if (state.isAuthenticated) { loadUserHome(); loadEnvelope() }
   loadSpotlight()
-  // Refrescar el ticker cada 60s (marcador + minuto en vivo)
-  pollTimer = setInterval(() => loadTickerMatches(), 60000)
+  if (wantsMatches()) {
+    loadTickerMatches()
+    // Refrescar el ticker cada 60s (marcador + minuto en vivo)
+    pollTimer = setInterval(() => loadTickerMatches(), 60000)
+  }
 
   if (HERO_VIDEO_SRC) {
     const wideEnough = window.matchMedia('(min-width: 640px)').matches
@@ -292,15 +281,18 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 </script>
 
 <template>
-  <section class="relative min-h-screen" :class="state.isAuthenticated ? '' : 'bg-[#0b1220]'">
+  <section class="relative min-h-dvh" :class="state.isAuthenticated ? '' : 'bg-[#0b1220]'">
 
     <!-- ══════════════════ Ticker de partidos (arriba de todo, para todos) ══════════════════ -->
-    <MatchTicker :matches="tickerMatches" :loading="state.loadingTicker" />
+    <!-- En mobile se oculta: la home tiene que arrancar con el CTA de juego. -->
+    <div class="hidden lg:block">
+      <MatchTicker :matches="tickerMatches" :loading="loadingMatches" />
+    </div>
 
     <!-- ══════════════════ INVITADO: una sola columna, sin cambios de fondo ══════════════════ -->
     <template v-if="!state.isAuthenticated">
       <!-- Hero inmersivo full-bleed (video de fondo secundario + degradé) -->
-      <div class="relative overflow-hidden hero-fullbleed mb-20 min-h-[520px] sm:min-h-[600px] flex items-center justify-center">
+      <div class="relative overflow-hidden hero-fullbleed -mt-6 lg:mt-0 mb-12 lg:mb-20 min-h-[460px] sm:min-h-[600px] flex items-center justify-center">
         <div class="absolute inset-0 hero-aurora"></div>
         <video
           v-if="HERO_VIDEO_SRC && showHeroVideo"
@@ -322,16 +314,43 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
           <p class="text-slate-300 max-w-md mx-auto text-base sm:text-lg leading-relaxed mt-6">
             FULVO es una app de micro-juegos de fútbol para entrenar tu conocimiento: adiviná jugadores, armá rachas, sumá logros y competí en el ranking.
           </p>
-          <div class="flex flex-wrap gap-3 justify-center pt-8">
-            <RouterLink to="/register" class="group rounded-xl bg-white px-7 py-3.5 font-semibold text-slate-900 text-sm transition-all hover:shadow-lg hover:shadow-white/20 hover:scale-105 active:scale-95">
+          <div class="flex flex-col sm:flex-row flex-wrap gap-3 justify-center items-stretch sm:items-center pt-8">
+            <!-- CTA principal: jugar YA, sin registro (el resultado se reclama al crear la cuenta) -->
+            <button type="button" class="guest-play-btn" @click="playAsGuest">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 001.5.86l12.5-7.5a1 1 0 000-1.72L8.5 3.64A1 1 0 007 4.5z"/></svg>
+              Jugar sin cuenta
+            </button>
+            <RouterLink to="/register" class="group rounded-xl bg-white px-7 py-3.5 font-semibold text-slate-900 text-sm text-center transition-all hover:shadow-lg hover:shadow-white/20 hover:scale-105 active:scale-95">
               Crear cuenta gratis
               <span class="inline-block ml-1 transition-transform group-hover:translate-x-0.5">→</span>
             </RouterLink>
-            <RouterLink to="/login" class="rounded-xl border border-white/20 px-6 py-3.5 font-semibold text-slate-100 text-sm transition-all hover:border-white/35 hover:bg-white/10 active:scale-95">
-              Iniciar sesión
+            <RouterLink to="/login" class="rounded-xl px-6 py-3 font-semibold text-slate-300 text-sm text-center transition-all hover:text-white active:scale-95">
+              Ya tengo cuenta
             </RouterLink>
           </div>
         </div>
+      </div>
+
+      <!-- Juegos que se juegan SIN cuenta (antes salían como "Bloqueado") -->
+      <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 mb-16 lg:mb-20">
+        <h2 class="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight">Jugá gratis, sin cuenta</h2>
+        <p class="text-slate-400 text-sm mt-1 mb-6">Tocá y jugá. Si creás tu cuenta después, el resultado se te guarda.</p>
+        <div v-if="!state.loading" class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 stagger-grid">
+          <GameCard v-for="g in guestGames" :key="g.slug" :game="g" :unlocked="true" :to="`${gameRouteForSlug(g.slug)}?mode=challenge`" />
+          <!-- Modo Carrera: también público -->
+          <RouterLink to="/carrera" class="career-card group relative flex flex-col justify-end overflow-hidden rounded-2xl border border-amber-400/30 p-4 min-h-[184px] active:scale-[.98] transition">
+            <span class="absolute top-3 left-3 rounded-full bg-amber-400 text-slate-900 text-[10px] font-extrabold px-2 py-0.5 tracking-wide">CARRERA</span>
+            <span class="font-display font-bold text-white text-lg leading-tight">Modo Carrera</span>
+            <span class="text-xs text-amber-100/80 mt-1">Encadená aciertos sin fallar</span>
+          </RouterLink>
+        </div>
+        <div v-else class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div v-for="i in 4" :key="i" class="rounded-2xl border border-white/10 bg-slate-900/50 h-[184px] animate-pulse"></div>
+        </div>
+        <RouterLink v-if="lockedForGuest > 0" to="/register" class="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 min-h-[56px] text-sm hover:border-white/20 transition">
+          <span class="text-slate-300"><span class="font-bold text-white">+{{ lockedForGuest }} modos más</span> con tu cuenta gratis</span>
+          <span class="text-amber-300 font-bold">Crear cuenta →</span>
+        </RouterLink>
       </div>
 
       <!-- Top jugador -->
@@ -341,53 +360,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 
       <!-- Partidos de hoy -->
       <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 mb-20">
-        <TodayMatchesGrid :matches="todayMatches" :loading="state.loadingTicker" />
-      </div>
-
-      <!-- Juegos destacados bloqueados (panel de conversión) -->
-      <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 mb-20">
-        <h2 class="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight mb-6">Jugá</h2>
-
-        <div class="relative">
-          <div v-if="!state.loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 stagger-grid">
-            <div
-              v-for="game in state.featuredGames"
-              :key="game.slug"
-              class="relative group flex flex-col overflow-hidden rounded-2xl border border-red-500/30 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-sm transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
-            >
-              <div class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/90 backdrop-blur-sm">
-                <svg class="w-10 h-10 text-red-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <p class="text-sm font-semibold text-red-400 mb-1">Bloqueado</p>
-                <p class="text-xs text-slate-400 text-center px-4">Iniciá sesión para jugar</p>
-                <RouterLink to="/login" class="mt-3 rounded-lg bg-red-500/20 border border-red-400/30 px-4 py-1.5 text-xs font-semibold text-red-400 transition hover:bg-red-500/30 active:scale-95">
-                  Iniciar sesión
-                </RouterLink>
-              </div>
-              <div class="flex flex-col flex-1 pointer-events-none">
-                <div class="relative h-36 bg-gradient-to-br from-slate-800/60 to-slate-900 flex items-center justify-center overflow-hidden">
-                  <img v-if="game.cover_url" :src="game.cover_url" :alt="game.name" width="80" height="80" loading="lazy" decoding="async" class="relative z-10 w-20 h-20 object-contain" />
-                  <svg v-else class="relative z-10 w-16 h-16 text-violet-400/80" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-                  </svg>
-                </div>
-                <div class="p-4 flex flex-col flex-1">
-                  <h3 class="text-base font-bold text-white mb-1 line-clamp-1">{{ game.name }}</h3>
-                  <p class="text-xs text-slate-400 line-clamp-2">{{ game.description || 'Desafío diario disponible' }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div v-for="i in 4" :key="i" class="rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm p-4 animate-pulse">
-              <div class="h-32 bg-slate-700/50 rounded-lg mb-4"></div>
-              <div class="h-4 bg-slate-700/50 rounded mb-2"></div>
-              <div class="h-3 bg-slate-700/30 rounded"></div>
-            </div>
-          </div>
-        </div>
+        <TodayMatchesGrid :matches="todayMatches" :loading="loadingMatches" />
       </div>
 
       <!-- ¿Cómo funciona? -->
@@ -402,7 +375,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
           <div>
             <span class="font-display text-sm font-bold text-violet-400/70">02</span>
             <h3 class="text-white font-semibold text-lg mt-2 mb-1.5">Jugá desafíos diarios</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">9 modos de juego únicos. Adivinar jugadores, ordenar por valor, armar formaciones y más.</p>
+            <p class="text-slate-400 text-sm leading-relaxed">{{ state.totalGames ? state.totalGames + ' modos de juego únicos.' : 'Modos de juego únicos.' }} Adivinar jugadores, ordenar por valor, armar formaciones y más.</p>
           </div>
           <div>
             <span class="font-display text-sm font-bold text-violet-400/70">03</span>
@@ -428,12 +401,18 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
          Mismo patrón de 2 columnas que ya usa Profile.vue (360px sticky + resto). En mobile/tablet
          (<lg) colapsa a una sola columna apilada — es el diseño que ya se validó ahí. ══════════════════ -->
     <template v-else>
-      <div class="relative z-10 lg:max-w-6xl lg:mx-auto px-4 sm:px-6 pt-8 sm:pt-12 mb-20 lg:grid lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-6 lg:items-start lg:pt-8">
+      <div class="relative z-10 lg:max-w-6xl lg:mx-auto px-0 sm:px-6 -mt-4 lg:mt-0 pt-0 sm:pt-4 lg:pt-8 mb-10 lg:mb-20 lg:grid lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-6 lg:items-start lg:pt-8">
 
         <!-- Columna izquierda: Hero + Misión de hoy + Pase, sticky en desktop -->
-        <div class="flex flex-col gap-6 lg:sticky lg:top-24">
-          <!-- Hero: anillo de progreso + racha + stats de un vistazo -->
-          <div class="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900/70 to-slate-800/40 p-6 sm:p-8 shadow-xl shadow-black/30">
+        <div class="flex flex-col gap-5 lg:gap-6 lg:sticky lg:top-24">
+          <!-- JUGAR RÁPIDO: primero de todo (mobile y desktop). Espera al nivel
+               real para no ofrecer un juego todavía bloqueado. -->
+          <QuickPlayHero v-if="!home.loading" :level="Number(home.level) || 1" />
+          <div v-else class="h-[236px] rounded-3xl border border-amber-400/20 bg-white/[0.03] animate-pulse"></div>
+
+          <!-- Hero de perfil: solo desktop. En mobile nivel/racha/avatar ya
+               están en la top bar del shell. -->
+          <div class="hidden lg:block relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900/70 to-slate-800/40 p-6 sm:p-8 shadow-xl shadow-black/30">
             <div class="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-20" style="background: radial-gradient(circle, rgba(99,102,241,0.5), transparent 70%);"></div>
             <div class="pointer-events-none absolute -bottom-16 -left-16 w-64 h-64 rounded-full opacity-10" style="background: radial-gradient(circle, rgba(168,85,247,0.45), transparent 70%);"></div>
             <div class="relative flex flex-col items-center text-center">
@@ -489,7 +468,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 
               <RouterLink to="/play/points" class="mt-5 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3.5 font-bold text-white text-base shadow-lg shadow-indigo-500/30 transition-all hover:scale-105 hover:shadow-indigo-500/50 active:scale-95">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
-                Jugar ahora
+                Ver todos los juegos
               </RouterLink>
             </div>
           </div>
@@ -524,6 +503,22 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
             </div>
           </RouterLink>
 
+          <!-- Sobre del día (teaser): se abre en el Centro de recompensas -->
+          <RouterLink to="/rewards#sobre-del-dia" class="envelope-teaser group flex items-center gap-3.5 rounded-2xl border p-4 min-h-[76px] transition active:scale-[.98]"
+            :class="envelope.available ? 'border-amber-400/40 bg-amber-500/[0.08]' : 'border-white/10 bg-white/[0.03]'">
+            <span class="relative w-12 h-12 shrink-0 grid place-items-center rounded-xl" :class="envelope.available ? 'bg-amber-400/20 text-amber-300 env-wiggle' : 'bg-white/5 text-slate-500'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+              <span v-if="envelope.available" class="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-rose-500 ring-2 ring-[#0b1220]"></span>
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="block font-display font-bold text-white text-[15px]">Sobre del día</span>
+              <span class="block text-[12px]" :class="envelope.available ? 'text-amber-200/90' : 'text-slate-400'">
+                {{ envelope.loading ? 'Revisando…' : (envelope.available ? '¡Listo para abrir! Tocá para reclamarlo' : 'Ya lo abriste. Volvé mañana por otro') }}
+              </span>
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-slate-500 group-hover:translate-x-0.5 transition-transform"><path d="M9 6l6 6-6 6"/></svg>
+          </RouterLink>
+
           <!-- Pase de Batalla: card real del pase (teaser + modal + datos propios). min-h reserva espacio (CLS) -->
           <div class="min-h-[200px]">
             <MonthlyPass compact />
@@ -531,7 +526,7 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
         </div>
 
         <!-- Columna derecha: Jugá hoy, Top jugador, Planes -->
-        <div class="flex flex-col gap-12 mt-10 lg:mt-0 min-w-0">
+        <div class="flex flex-col gap-10 lg:gap-12 mt-8 lg:mt-0 min-w-0">
           <!-- Jugá hoy: rail en mobile/tablet, grid en desktop (hay lugar para verlos todos) -->
           <div>
             <div class="flex items-center justify-between gap-3 mb-6">
@@ -565,11 +560,23 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
           <!-- Top jugador -->
           <TopJugadorCard :spotlight="spotlight" :is-authenticated="true" @set-period="setSpotlightPeriod" />
 
-          <!-- Partidos de hoy -->
-          <TodayMatchesGrid :matches="todayMatches" :loading="state.loadingTicker" />
+          <!-- Partidos de hoy: en desktop acá; en mobile se mudó a Social → Fútbol -->
+          <div class="hidden lg:block">
+            <TodayMatchesGrid :matches="todayMatches" :loading="loadingMatches" />
+          </div>
+          <RouterLink to="/social?tab=futbol" class="lg:hidden flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 min-h-[64px]">
+            <span class="w-10 h-10 grid place-items-center rounded-xl bg-emerald-500/15 text-emerald-300">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="w-5 h-5"><circle cx="12" cy="12" r="9"/><path d="M12 7l3 2.2-1.1 3.6h-3.8L9 9.2z"/></svg>
+            </span>
+            <span class="flex-1 min-w-0">
+              <span class="block font-display font-bold text-white text-[15px]">Partidos de hoy</span>
+              <span class="block text-[12px] text-slate-400">Resultados y fixtures en Social → Fútbol</span>
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-slate-500"><path d="M9 6l6 6-6 6"/></svg>
+          </RouterLink>
 
-          <!-- Planes -->
-          <div>
+          <!-- Planes: solo desktop. En mobile están en la hoja de ajustes (Premium · Planes) y la Tienda. -->
+          <div class="hidden lg:block">
             <h2 class="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight mb-6">Mejorá tu plan</h2>
             <div v-if="sortedPlans.length" class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <PlanCard v-for="plan in sortedPlans" :key="plan.slug" :plan="plan" :current-plan="currentPlan" @subscribe="goToPricing" />
@@ -647,7 +654,23 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 .hero-fade-out {
   background: linear-gradient(180deg, transparent 0%, #0b1220 90%);
 }
+/* CTA "Jugar sin cuenta": botón dorado gordo, mismo lenguaje que JUGAR RÁPIDO */
+.guest-play-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 60px; padding: 0 28px; border-radius: 18px;
+  font-family: var(--font-display); font-weight: 900; font-size: 19px; letter-spacing: .02em; color: #1c1206;
+  background: linear-gradient(180deg, #fff3b0 0%, #fcd34d 38%, #f59e0b 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.7), 0 6px 0 #92400e, 0 14px 30px rgba(245,158,11,.4);
+  transition: transform .1s ease, box-shadow .1s ease;
+  animation: guest-pulse 1.9s ease-in-out infinite;
+}
+.guest-play-btn:active { transform: translateY(4px); box-shadow: inset 0 2px 0 rgba(255,255,255,.7), 0 2px 0 #92400e, 0 8px 18px rgba(245,158,11,.35); }
+@keyframes guest-pulse { 50% { transform: scale(1.03); } }
+.career-card { background: radial-gradient(120% 90% at 80% 0%, rgba(251,191,36,.35), transparent 60%), linear-gradient(160deg, #1e293b, #0b1220); }
+.env-wiggle { animation: env-wiggle 2.8s ease-in-out infinite; }
+@keyframes env-wiggle { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-8deg); } 90% { transform: rotate(7deg); } 95% { transform: rotate(-4deg); } }
 @media (prefers-reduced-motion: reduce) {
   .hero-aurora::before, .hero-aurora::after { animation: none; }
+  .guest-play-btn, .env-wiggle { animation: none; }
 }
 </style>

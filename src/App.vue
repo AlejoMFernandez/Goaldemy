@@ -10,6 +10,9 @@ import LevelUpOverlay from './components/rewards/LevelUpOverlay.vue';
 import CosmeticUnlockOverlay from './components/rewards/CosmeticUnlockOverlay.vue';
 import ProWelcomeOverlay from './components/rewards/ProWelcomeOverlay.vue';
 import ClaimNotificationStack from './components/rewards/ClaimNotificationStack.vue';
+import TopBar from './components/shell/TopBar.vue';
+import TabBar from './components/shell/TabBar.vue';
+import SettingsSheet from './components/shell/SettingsSheet.vue';
 import { authReady } from './services/auth';
 import { setSuppressOverlays } from './stores/notifications';
 import { installPresence, setPresenceGame } from './services/presence';
@@ -17,14 +20,28 @@ import { sidebarState } from './stores/sidebar';
 import { captureReferralFromUrl } from './services/referral';
 
 // ── Transiciones entre pantallas (Moodboard 06) ──
-// Pestañas principales en el orden en que aparecen: ir "hacia adelante" entra
-// desde la derecha y volver entra desde la izquierda.
-const TAB_ORDER = ['/', '/play/points', '/rewards', '/tienda', '/leaderboards', '/competiciones', '/teams', '/profile']
+// Pestañas de la tab bar mobile, en el orden en que aparecen (izq → der):
+// ir "hacia adelante" entra desde la derecha y volver entra desde la izquierda.
+const TAB_ORDER = ['/tienda', '/coleccion', '/', '/rewards', '/social']
+// Sub-pantallas que "pertenecen" a una pestaña (misma pestaña activa en la tab bar).
+const TAB_ALIASES = {
+  '/pricing': '/tienda',
+  '/profile-edit': '/coleccion',
+  '/play/points': '/',
+  '/leaderboards': '/social', '/competiciones': '/social', '/leagues': '/social', '/teams': '/social', '/team': '/social',
+}
 function tabIndex(path) {
   if (!path) return -1
-  if (path === '/') return 0
-  for (let i = TAB_ORDER.length - 1; i > 0; i--) if (path === TAB_ORDER[i] || path.startsWith(TAB_ORDER[i] + '/')) return i
+  if (path === '/') return TAB_ORDER.indexOf('/')
+  for (const [prefix, tab] of Object.entries(TAB_ALIASES)) if (path === prefix || path.startsWith(prefix + '/')) return TAB_ORDER.indexOf(tab)
+  for (let i = 0; i < TAB_ORDER.length; i++) if (TAB_ORDER[i] !== '/' && (path === TAB_ORDER[i] || path.startsWith(TAB_ORDER[i] + '/'))) return i
   return -1
+}
+// Rutas donde la tab bar mobile NO se muestra (pantalla completa / foco).
+function hidesTabBar(route) {
+  const p = route?.path || ''
+  if (route?.meta?.immersive || route?.meta?.layout === 'auth') return true
+  return p.startsWith('/admin') || p.startsWith('/carrera') || /^\/messages\/[^/]+/.test(p)
 }
 const isGamePath = (p) => /^\/games\//.test(p || '')
 const SPLASH_SEEN_KEY = 'fulvo:splash_seen'
@@ -55,6 +72,9 @@ export default {
     CosmeticUnlockOverlay,
     ProWelcomeOverlay,
     ClaimNotificationStack,
+    TopBar,
+    TabBar,
+    SettingsSheet,
   },
   data() {
     return {
@@ -91,6 +111,10 @@ export default {
     isImmersive() {
       return !!this.$route?.meta?.immersive
     },
+    // Shell mobile (<lg): tab bar abajo salvo en juegos/auth/admin/chat.
+    showTabBar() {
+      return !hidesTabBar(this.$route)
+    },
     // Reserva el ancho de la sidebar en desktop → el contenido "corta" en la barra
     // y nunca queda por debajo. Sin sesión o en /login no reserva nada.
     hasSidebar() {
@@ -114,12 +138,9 @@ export default {
       // gutter fino (~72px = ancho card + inset) para que el contenido no quede
       // tapado por la card. La lista completa + chat son un drawer desplegable.
       if (this.hasSidebar && this.isLg) return { ...fbVars, paddingRight: '84px' }
-      // Mobile/tablet (<lg): el cluster flotante de amigos (desafíos + bug + amigos,
-      // fixed bottom-5 right-4) mide ~164px de alto real. Reservamos abajo para que
-      // no tape contenido que caiga en la esquina inferior derecha (ej. la última
-      // card del grid de "Jugá hoy" en Home). No aplica en juegos inmersivos: ahí
-      // el shell pide py-0 a propósito (ocupa 100dvh sin scroll).
-      if (this.hasSidebar && !this.isImmersive) return { ...fbVars, paddingBottom: '104px' }
+      // Mobile/tablet (<lg): ya no hay cluster flotante (el viejo hack de 104px
+      // abajo se fue). El alto de la tab bar lo reserva .shell-pad-tabbar en el
+      // contenedor (style.css), solo cuando la tab bar se ve.
       return fbVars
     }
   },
@@ -180,14 +201,12 @@ export default {
     window.addEventListener('pointerdown', this._onTap, { capture: true, passive: true })
     this.$router.beforeEach((to, from) => { this.pickTransition(to, from) })
     loadGameArt()
-    // Mínimo ~2.2s de splash: da tiempo a la secuencia de marca completa (ícono
-    // entra, después el wordmark "FULVO") antes de revelar la app, aunque la
-    // sesión resuelva casi al instante. Debe cubrir la duración de las animaciones
-    // en AppSplash.vue (ícono 0.8s + wordmark delay 1.1s + wordmark 0.7s ≈ 1.8s)
-    // más un pequeño respiro para que se lea el logo completo.
-    // Si ya entró antes, la misma escena comprimida (~0,9 s).
+    // Splash de primera vez: ~1,2 s (antes 2,2 s). En una app de juego el usuario
+    // quiere llegar al botón JUGAR cuanto antes; la primera visita usa la escena
+    // comprimida (la misma que veían los que ya habían entrado) con un respiro
+    // de 300 ms para que se lea el wordmark. Visitas siguientes: ~0,9 s.
     try { this.splashQuick = localStorage.getItem(SPLASH_SEEN_KEY) === '1'; localStorage.setItem(SPLASH_SEEN_KEY, '1') } catch {}
-    setTimeout(() => { this.splashMinDelayDone = true }, this.splashQuick ? 900 : 2200)
+    setTimeout(() => { this.splashMinDelayDone = true }, this.splashQuick ? 900 : 1200)
     setTimeout(() => { if (this.authBooting) this.splashSlow = true }, 2600)
     try { await authReady; } finally { this.authBooting = false }
     import('./services/players').then(m => m.initializePlayers?.()).catch(() => {})
@@ -206,6 +225,8 @@ export default {
     // Modo invitado en juegos reales: cierra el loop de invitado → registro → recompensa real.
     import('./services/guest-play').then(m => m.claimPendingGuestReward?.()).catch(() => {})
     installPresence()
+    // Marca en <body> si la tab bar se ve (los toasts teleportados suben por encima).
+    this.$watch(() => this.showTabBar, (v) => { try { document.body.classList.toggle('has-tabbar', !!v) } catch {} }, { immediate: true })
     this.$watch(() => this.$route?.path, (path) => {
       setSuppressOverlays(false)
       const m = (path || '').match(/^\/games\/([^/?#]+)/)
@@ -216,14 +237,20 @@ export default {
 </script>
 
 <template>
-  <div class="relative min-h-screen text-slate-100" :class="isHubZone ? 'bg-[#0b1220]' : 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800'">
+  <div class="relative min-h-dvh text-slate-100" :class="isHubZone ? 'bg-[#0b1220]' : 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800'">
     <BrandedBackground v-if="!isHubZone" />
     <!-- Shell del contenido: el rail de amigos reserva 60px SOLO en el contenido
          (main + footer), no en el header → el navbar ocupa el 100% del ancho. -->
-    <div class="min-h-screen min-w-0 transition-[padding] duration-300"
-         :class="isAuthLayout ? 'grid grid-rows-[1fr]' : 'grid grid-rows-[auto_1fr_auto]'">
+    <div class="min-h-dvh min-w-0 transition-[padding] duration-300 shell-safe-x"
+         :class="[isAuthLayout ? 'grid grid-rows-[1fr]' : 'grid grid-rows-[auto_auto_1fr_auto]', showTabBar ? 'shell-pad-tabbar' : '']">
+      <TopBar v-if="!isAuthLayout && !isImmersive" />
+      <!-- Juegos en mobile: sin top bar, a pantalla completa. Este espaciador
+           respeta el notch (viewport-fit=cover) y es un <nav> a propósito:
+           GameShell mide el primer <nav> del documento para calcular su alto
+           (100dvh − navbar), así el juego descuenta el safe-area sin tocar GameShell. -->
+      <nav v-if="isImmersive && !isLg && !isAuthLayout" class="shell-safe-top" aria-hidden="true"></nav>
       <AppNavBar v-if="!isAuthLayout" />
-      <main :style="shellStyle" :class="isAuthLayout ? 'relative z-10 min-h-0 lg:min-h-screen min-w-0 grid place-items-center px-4 py-0 lg:py-8' : (isImmersive ? 'relative z-10 w-full min-w-0 max-w-[1600px] mx-auto px-3 sm:px-6 py-0' : 'relative z-10 w-full min-w-0 max-w-[1600px] mx-auto px-6 py-10 lg:py-12')">
+      <main :style="shellStyle" :class="isAuthLayout ? 'shell-auth-safe relative z-10 min-h-0 lg:min-h-dvh min-w-0 grid place-items-center px-4 py-0 lg:py-8' : (isImmersive ? 'relative z-10 w-full min-w-0 max-w-[1600px] mx-auto px-3 sm:px-6 py-0' : 'relative z-10 w-full min-w-0 max-w-[1600px] mx-auto px-6 py-10 lg:py-12')">
         <RouterView v-if="!authBooting" v-slot="{ Component, route }">
           <Transition :name="routeTransition" mode="out-in">
             <!-- w-full lg:w-auto solo en el layout de auth (login/register):
@@ -249,11 +276,13 @@ export default {
     <ProWelcomeOverlay />
     <ClaimNotificationStack />
     <FriendsDock v-if="!isAuthLayout" />
+    <TabBar v-if="showTabBar" />
+    <SettingsSheet />
     <div v-if="curtainKey" :key="curtainKey" class="route-curtain" :style="curtainStyle" aria-hidden="true" @animationend="curtainKey = 0">
       <span v-if="curtainArt" class="route-curtain-art" v-html="curtainArt"></span>
     </div>
     <Transition name="splash-fade">
-      <AppSplash v-if="showSplash" :quick="splashQuick" :slow="splashSlow" />
+      <AppSplash v-if="showSplash" :quick="true" :slow="splashSlow" />
     </Transition>
   </div>
 </template>
