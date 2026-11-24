@@ -3,6 +3,7 @@ import { pushInfoToast } from '../stores/notifications';
 import { subscribeToAuthStateChanges, authReady, getAuthUser } from '../services/auth';
 import { isAdmin } from '../services/admin';
 import { setSeo } from '../services/seo';
+import { ensurePlayersLoaded } from '../services/players';
 
 // La home se importa de forma EAGER: es la ruta de entrada, así el LCP no
 // espera un chunk extra. Todo lo demás es LAZY (code-splitting por ruta):
@@ -146,6 +147,17 @@ router.beforeEach(async (to, from) => {
     if (user.id && (to.path === '/login' || to.path === '/register')) {
         return '/'
     }
+});
+
+// dataGAMES.json se carga lazy (ver services/players.js). main.js ya lo
+// precarga al arrancar; acá lo esperamos antes de entrar a cualquier ruta que
+// pueda leer jugadores/equipos de forma sync (juegos, perfil, auth, equipos…),
+// así un deep link directo a un juego nunca ve listas vacías. Las rutas
+// livianas (home, info, legales, planes) no esperan nada.
+const ROUTES_WITHOUT_PLAYERS = /^\/($|about\/|privacidad|terminos|pricing|verify-email|forgot-password|reset-password|notifications|messages|competiciones|leagues)/;
+router.beforeResolve(async (to) => {
+    if (ROUTES_WITHOUT_PLAYERS.test(to.path)) return;
+    await ensurePlayersLoaded();
 });
 
 // Garantiza el scroll arriba tras cada navegación, inmune al timing de la

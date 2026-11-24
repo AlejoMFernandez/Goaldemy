@@ -7,6 +7,12 @@ import { initLevelUpRealtime } from './services/levelup-realtime.js';
 import { installGlobalErrorHandler } from './services/errors.js';
 import { pushErrorToast, pushSuccessToast, pushInfoToast } from './stores/notifications.js';
 import { installTapOrigin, vPop } from './services/tap-origin.js';
+import { ensurePlayersLoaded } from './services/players.js';
+
+// Precarga de dataGAMES.json (~1 MB) en su propio chunk, en paralelo al primer
+// render: la home no la espera y para cuando el usuario entra a un juego ya
+// está en memoria (ver services/players.js y el beforeResolve del router).
+ensurePlayersLoaded();
 
 // Install global error handlers (toasts)
 try { installGlobalErrorHandler() } catch {}

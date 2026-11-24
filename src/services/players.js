@@ -2,7 +2,8 @@
  * SERVICIO DE JUGADORES
  * 
  * Maneja toda la lógica relacionada con los datos de jugadores y equipos.
- * Los datos se cargan desde dataGAMES.json (archivo estático con 500+ jugadores).
+ * Los datos se cargan desde dataGAMES.json (archivo estático con 500+ jugadores),
+ * en forma LAZY: ver ensurePlayersLoaded() más abajo.
  * 
  * ESTRUCTURA DE DATOS:
  * - dataGAMES.json contiene un array de equipos
@@ -34,7 +35,6 @@
  * - sampleDistinct(): Selecciona N jugadores aleatorios sin repetir
  * - buildOptions(): Crea opciones múltiple choice con la correcta incluida
  */
-import teams from '../dataGAMES.json'
 import fameData from '../data/player-fame.json'
 import { getDifficulty, filterPlayersByDifficulty } from './difficulty';
 
@@ -98,6 +98,37 @@ const EXTRA_FAVORITE_TEAMS = [
   { id: 8639, name: 'Lille' },
   { id: 9831, name: 'OGC Nice' },
 ]
+
+// ─── Carga lazy de dataGAMES.json (~1 MB) ───────────────────────────────────
+// Antes se importaba estático y viajaba en el chunk inicial (index ~991 kB).
+// Ahora es un chunk aparte: main.js lo precarga apenas arranca la app y el
+// router (beforeResolve) lo espera sólo en las rutas que usan jugadores, así
+// que los getters sync de abajo siguen funcionando igual que antes.
+// Antes de que termine la carga, getAllPlayers()/getAllTeams() devuelven [].
+let teams = []
+let _teamsPromise = null
+
+/** true cuando dataGAMES.json ya está en memoria. */
+export function arePlayersLoaded() {
+  return teams.length > 0
+}
+
+/**
+ * Carga dataGAMES.json (una sola vez). Usalo con await en cualquier lugar que
+ * necesite jugadores/equipos sí o sí (ej. código que corre antes del router).
+ */
+export function ensurePlayersLoaded() {
+  if (!_teamsPromise) {
+    _teamsPromise = import('../dataGAMES.json')
+      .then((m) => { teams = Array.isArray(m?.default) ? m.default : []; return teams })
+      .catch((e) => {
+        _teamsPromise = null // permitir reintento (ej. se cortó la red)
+        console.warn('[players] No se pudo cargar dataGAMES.json', e)
+        return teams
+      })
+  }
+  return _teamsPromise
+}
 
 // Módulo-level cache: se llena con datos de FotMob cuando initializePlayers() completa
 let _fotmobCache = null
@@ -195,6 +226,7 @@ export function getAllTeams() {
  * Ideal para usar en mounted() de los juegos para datos siempre frescos.
  */
 export async function getAllPlayersAsync() {
+  await ensurePlayersLoaded()
   if (!(_fotmobCache && _fotmobCache.length > 0)) await initializePlayers()
   return filterPlayersByDifficulty(getAllPlayers(), getDifficulty())
 }
