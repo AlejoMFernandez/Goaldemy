@@ -226,7 +226,7 @@ export async function isChallengeAvailable(slug) {
     // Ordenar: gana solo con todos en su lugar (3, 5 o 7 según dificultad)
     if (['value-order','age-order','height-order'].includes(slugLower)) {
       const ok = Number(m.correctPositions ?? m.corrects ?? NaN)
-      result = Number.isFinite(ok) ? (ok >= orderingTotal(m) ? 'win' : 'loss') : (score >= 50 ? 'win' : 'loss')
+      result = Number.isFinite(ok) ? (ok >= orderingTotal(m) ? 'win' : 'loss') : (score >= orderingTotal(m) * 20 ? 'win' : 'loss')
     } else if (['who-is'].includes(slugLower)) {
       // WhoIs should set result always; keep as null if truly unknown
       if (m.result === 'win' || m.result === 'loss') result = m.result
@@ -261,7 +261,7 @@ export function matchFicha(slug, m = {}, scoreFinal = 0, result = null) {
   const s = (slug || '').toLowerCase()
   const win = result === 'win'
   if (['value-order', 'age-order', 'height-order'].includes(s)) {
-    const ok = Number(m.correctPositions ?? m.corrects ?? Math.round(scoreFinal / 10))
+    const ok = Number(m.correctPositions ?? m.corrects ?? Math.round(scoreFinal / 20))
     return { score: `${Number.isFinite(ok) ? ok : 0}/${orderingTotal(m)}`, stars: win ? 3 : 0 }
   }
   if (Number.isFinite(Number(m.corrects)) && ['guess-player', 'nationality', 'player-position', 'shirt-number', 'stat-challenge'].includes(s)) {

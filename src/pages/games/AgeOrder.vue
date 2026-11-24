@@ -7,7 +7,7 @@ import { getUserLevel, captureLevelSnapshot } from '../../services/xp'
 import { awardXpBatch } from '../../services/game-xp'
 import { createDailyRng } from '../../services/seeded-random'
 import { celebrateGameWin, announceGameLoss, celebrateGameLevelUp } from '../../services/game-celebrations'
-import { getGameMetadata } from '../../services/games'
+import { getGameMetadata, gameSummaryBlurb } from '../../services/games'
 import GamePreviewModal from '../../components/game/GamePreviewModal.vue'
 import GameSummaryPopup from '../../components/game/GameSummaryPopup.vue'
 import OrderLadder from '../../components/game/OrderLadder.vue'
@@ -16,6 +16,8 @@ export default {
   name: 'AgeOrder',
   components: { GameShell, GamePreviewModal, GameSummaryPopup, OrderLadder },
   computed: {
+    // 20 puntos por jugador en su lugar: el máximo depende de cuántos son (3/5/7)
+    maxScore() { return ((this.items?.length || this.difficultyConfig?.itemCount || 5) * 20) },
     gameMetadata() { return getGameMetadata('age-order') }
   },
   data() {
@@ -251,14 +253,14 @@ export default {
     <template #stat>
       <div class="inline-flex items-center gap-2 rounded-lg bg-slate-800/70 border border-white/12 px-2.5 py-1 shadow-lg shadow-black/20">
         <span class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Puntaje</span>
-        <span class="font-display text-white font-bold text-base leading-none">{{ score }}/100</span>
+        <span class="font-display text-white font-bold text-base leading-none">{{ score }}/{{ maxScore }}</span>
       </div>
     </template>
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
       gameName="Ordenar por edad"
       gameType="ordering"
-      gameDescription="Ordená 5 jugadores del más viejo al más joven"
+      gameDescription="Ordená a los jugadores del más viejo al más joven: 3, 5 o 7 según la dificultad"
       :mechanic="gameMetadata.mechanic"
       :videoUrl="gameMetadata.videoUrl"
       :tips="gameMetadata.tips"

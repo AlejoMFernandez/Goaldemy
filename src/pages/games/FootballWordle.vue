@@ -151,7 +151,8 @@ export default {
             this.xpToNextAfter = v.xpToNextAfter ?? null
             this.progressShown = this.afterPercent
           }
-          this.xpEarned = Number(m.xpEarned || 0)
+          // El XP vive en la foto xpView (antes leía m.xpEarned, que no existe → 0)
+          this.xpEarned = Number(v.xpEarned ?? m.xpEarned ?? last.xp_earned ?? 0)
           this.won = !!m.won
           this.score = Number(last.score_final || 0)
           try { this.lifetimeMaxStreak = await mod.fetchLifetimeMaxStreak('football-wordle') || 0 } catch {}
