@@ -1,18 +1,23 @@
 <script setup>
 /**
- * El camino (Moodboard 03)
- * Mapa de los 6 rangos unidos por una ruta: lo recorrido en dorado, tu posición
- * marcada con un pin, lo que falta apagado con candado. Tocás un escudo y abajo
- * se abre su vitrina: "Al llegar ganás" (cartas reales) y "En el camino"
- * (lo que dan los niveles de ese rango). Por defecto se abre en el PRÓXIMO rango,
- * para que siempre se vea lo que viene.
+ * El camino (Moodboard 03 · relanzamiento 1–100)
+ * Mapa de los 11 rangos unidos por una ruta en serpentina (3 filas): lo recorrido
+ * en dorado, tu posición marcada con un pin, lo que falta apagado. Cada nodo es
+ * el escudo real del rango (kit v2, RankCrest). Tocás un escudo y abajo se abre
+ * su vitrina: "Al llegar ganás" (el kit real: ícono de rango, medallón y banner,
+ * + XP del hito) y "En el camino" (lo que dan los niveles de ese rango).
+ * Por defecto se abre en el PRÓXIMO rango, para que siempre se vea lo que viene.
  */
 import { computed, onMounted, onUnmounted, ref, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { TIERS, getTierForLevel } from '../../services/tiers'
+import { TIERS, getTierForLevel, tierGlow, rankKitPrizes } from '../../services/tiers'
 import { MILESTONES } from '../../services/level-rewards'
-import { tierPrizes, prizesForLevelRange, xpPrize } from '../../services/prize-card'
+import { LEVEL_XP } from '../../services/level-curve'
+import { prizesForLevelRange, xpPrize } from '../../services/prize-card'
 import PrizeCard from '../rewards/PrizeCard.vue'
+import RankCrest from '../ranks/RankCrest.vue'
+import RankMedallion from '../ranks/RankMedallion.vue'
+import RankBanner from '../ranks/RankBanner.vue'
 
 const props = defineProps({
   currentLevel: { type: Number, default: 1 },
@@ -20,37 +25,48 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 const router = useRouter()
 
-// XP acumulada para llegar a cada nivel (para "Se alcanza a los X XP").
-const XP_TABLE = [
-  0, 100, 250, 450, 700, 1000, 1350, 1750, 2200, 2700,
-  3300, 4000, 4800, 5700, 6700, 7800, 9000, 10300, 11700, 13200,
-  14850, 16650, 18600, 20700, 22950, 25350, 27900, 30600, 33450, 36450,
-  39600, 42900, 46350, 49950, 53700, 57600, 61650, 65850, 70200, 74700,
-  79400, 84300, 89400, 94700, 100200, 105900, 111800, 117900, 124200, 130700,
-]
-
-const TIER_GLOW = {
-  bronze: '#d97706', silver: '#cbd5e1', gold: '#facc15',
-  emerald: '#34d399', cyan: '#22d3ee', champion: '#fcd34d',
-}
 const lvl = computed(() => Math.max(1, Number(props.currentLevel) || 1))
 const currentTier = computed(() => getTierForLevel(lvl.value))
 const currentIdx = computed(() => Math.max(0, TIERS.findIndex(t => t.key === currentTier.value?.key)))
 
-// ── Mapa: posiciones de los escudos sobre la ruta (viewBox 600×280) ──
+// ── Mapa: 11 escudos en serpentina (viewBox 600×440) ──
+const VB_W = 600, VB_H = 440
 const NODES = [
-  { x: 50, y: 215 }, { x: 160, y: 120 }, { x: 275, y: 205 },
-  { x: 380, y: 100 }, { x: 470, y: 200 }, { x: 555, y: 80 },
+  { x: 60, y: 72 }, { x: 205, y: 58 }, { x: 350, y: 80 }, { x: 510, y: 62 },
+  { x: 545, y: 212 }, { x: 400, y: 226 }, { x: 250, y: 204 }, { x: 95, y: 224 },
+  { x: 110, y: 366 }, { x: 305, y: 380 }, { x: 515, y: 356 },
 ]
-const ROAD = 'M50 215 C 95 215, 110 120, 160 120 S 230 205, 275 205 S 335 100, 380 100 S 430 200, 470 200 S 560 150, 555 80'
-// Avance total sobre la ruta (0..1): cada tramo entre escudos es 1/5
+// Catmull-Rom → Bézier cúbicas: una curva suave que pasa por cada escudo
+const SEGS = NODES.slice(0, -1).map((p1, i) => {
+  const p0 = NODES[i - 1] || p1, p2 = NODES[i + 1], p3 = NODES[i + 2] || p2
+  const k = 0.5 / 3
+  return {
+    p1, p2,
+    c1: { x: p1.x + (p2.x - p0.x) * k, y: p1.y + (p2.y - p0.y) * k },
+    c2: { x: p2.x - (p3.x - p1.x) * k, y: p2.y - (p3.y - p1.y) * k },
+  }
+})
+const ROAD = `M${NODES[0].x} ${NODES[0].y} ` + SEGS.map(s => `C ${s.c1.x} ${s.c1.y}, ${s.c2.x} ${s.c2.y}, ${s.p2.x} ${s.p2.y}`).join(' ')
+// Largo aproximado de cada tramo (para que el avance caiga justo en los escudos)
+function bez(s, t) {
+  const u = 1 - t
+  return {
+    x: u * u * u * s.p1.x + 3 * u * u * t * s.c1.x + 3 * u * t * t * s.c2.x + t * t * t * s.p2.x,
+    y: u * u * u * s.p1.y + 3 * u * u * t * s.c1.y + 3 * u * t * t * s.c2.y + t * t * t * s.p2.y,
+  }
+}
+const SEG_LEN = SEGS.map(s => { let L = 0, prev = s.p1; for (let i = 1; i <= 24; i++) { const q = bez(s, i / 24); L += Math.hypot(q.x - prev.x, q.y - prev.y); prev = q } return L })
+const TOTAL_LEN = SEG_LEN.reduce((a, b) => a + b, 0)
+
+// Avance total sobre la ruta (0..1), proporcional al largo real de cada tramo
 const progress = computed(() => {
   const i = currentIdx.value
   const t = TIERS[i]
   if (!t || i >= TIERS.length - 1) return 1
   const span = Math.max(1, (t.maxLevel || t.minLevel) - t.minLevel + 1)
   const within = Math.min(1, Math.max(0, (lvl.value - t.minLevel) / span))
-  return (i + within) / (TIERS.length - 1)
+  const before = SEG_LEN.slice(0, i).reduce((a, b) => a + b, 0)
+  return (before + within * SEG_LEN[i]) / TOTAL_LEN
 })
 const roadEl = ref(null)
 const pin = ref({ x: NODES[0].x, y: NODES[0].y })
@@ -71,19 +87,16 @@ const show = computed(() => {
   const tier = TIERS[i]
   const st = stateOf(i)
   const ms = MILESTONES.find(m => m.level === tier.minLevel)
-  const arrival = [
-    { kind: 'tier', name: tier.label, rarity: 'legendary', image: tier.image },
-    ...tierPrizes(tier),
-  ]
-  if (ms?.xpBonus) arrival.push(xpPrize(ms.xpBonus))
+  const kit = rankKitPrizes(tier)
+  const extra = ms?.xpBonus ? [xpPrize(ms.xpBonus)] : []
   // "En el camino": lo que dan los niveles del rango (sin repetir lo del ascenso)
   const from = tier.minLevel, to = tier.maxLevel || tier.minLevel
   const road = prizesForLevelRange(from, to).filter(p => !p.fromTier && p.kind !== 'tier')
   const levelsLeft = Math.max(0, tier.minLevel - lvl.value)
-  const xpLeft = Math.max(0, (XP_TABLE[tier.minLevel - 1] ?? 0) - (XP_TABLE[lvl.value - 1] ?? 0))
+  const xpLeft = Math.max(0, (LEVEL_XP[tier.minLevel - 1] ?? 0) - (LEVEL_XP[lvl.value - 1] ?? 0))
   const span = Math.max(1, to - from + 1)
   const pct = st === 'current' ? (i === TIERS.length - 1 ? 100 : Math.round(Math.min(1, (lvl.value - from) / span) * 100)) : 0
-  return { tier, st, arrival, road, levelsLeft, xpLeft, pct, glow: TIER_GLOW[tier.color] || '#fcd34d', next: TIERS[i + 1] || null }
+  return { tier, st, kit, extra, road, levelsLeft, xpLeft, pct, glow: tierGlow(tier), next: TIERS[i + 1] || null }
 })
 function fmtXp(n) { return n >= 1000 ? (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1).replace('.', ',') + 'K' : String(n) }
 
@@ -103,7 +116,7 @@ onMounted(() => {
   nextTick(() => {
     const target = progress.value
     if (reduce) { drawn.value = target; placePin(target); return }
-    const t0 = performance.now(), dur = 700 + target * 900
+    const t0 = performance.now(), dur = 700 + target * 1100
     const step = (t) => {
       const k = Math.min(1, (t - t0 - 250) / dur)
       const e = k <= 0 ? 0 : 1 - Math.pow(1 - k, 3)
@@ -136,34 +149,34 @@ function goPlay() { emit('close'); router.push('/play/points') }
         </header>
 
         <div class="rd-scroll">
-          <!-- Mapa de los 6 escudos -->
+          <!-- Mapa de los 11 escudos -->
           <div class="rd-map">
-            <svg class="rd-road" viewBox="0 0 600 280" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <svg class="rd-road" :viewBox="`0 0 ${VB_W} ${VB_H}`" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
               <path :d="ROAD" class="base" />
               <path ref="roadEl" :d="ROAD" class="done" pathLength="1" :style="{ strokeDashoffset: 1 - drawn }" />
             </svg>
             <button
               v-for="(t, i) in TIERS" :key="t.key" type="button"
               class="rd-node" :class="['is-' + stateOf(i), { 'is-sel': selected === i }]"
-              :style="{ left: (NODES[i].x / 6) + '%', top: (NODES[i].y / 2.8) + '%', '--d': (0.15 + i * 0.09) + 's', '--g': TIER_GLOW[t.color] }"
+              :style="{ left: (NODES[i].x / VB_W * 100) + '%', top: (NODES[i].y / VB_H * 100) + '%', '--d': (0.15 + i * 0.06) + 's', '--g': tierGlow(t) }"
               :aria-label="`${t.label}, nivel ${t.minLevel}`" :aria-pressed="selected === i"
               @click="selected = i"
             >
-              <img :src="t.image" alt="" draggable="false" />
+              <RankCrest class="rd-crest" :tier="t" :size="60" :ribbon="false" :locked="stateOf(i) === 'locked'" />
               <span class="lb">{{ t.label }}</span>
-              <span v-if="stateOf(i) === 'locked'" class="lk">🔒 NV {{ t.minLevel }}</span>
+              <span v-if="stateOf(i) === 'locked'" class="lk">NV {{ t.minLevel }}</span>
             </button>
-            <span class="rd-pin" :style="{ left: (pin.x / 6) + '%', top: (pin.y / 2.8) + '%' }" aria-hidden="true"><b>{{ lvl }}</b></span>
+            <span class="rd-pin" :style="{ left: (pin.x / VB_W * 100) + '%', top: (pin.y / VB_H * 100) + '%' }" aria-hidden="true"><b>{{ lvl }}</b></span>
           </div>
 
           <!-- Vitrina del rango elegido -->
           <Transition name="rd-case" mode="out-in">
             <div :key="show.tier.key" class="rd-case" :style="{ '--g': show.glow }">
               <div class="rd-case-top">
-                <img class="rd-shield" :class="{ 'is-off': show.st === 'locked' }" :src="show.tier.image" alt="" />
+                <RankCrest class="rd-shield" :tier="show.tier" :size="84" :ribbon="false" :locked="show.st === 'locked'" />
                 <div class="rd-case-txt">
                   <h3>{{ show.tier.label }}</h3>
-                  <p class="rd-range">Niveles {{ show.tier.minLevel }}<template v-if="show.tier.maxLevel !== show.tier.minLevel">–{{ show.tier.maxLevel }}</template></p>
+                  <p class="rd-range">Niveles {{ show.tier.minLevel }}<template v-if="show.tier.maxLevel !== show.tier.minLevel">–{{ show.tier.maxLevel }}</template> · Colección <b>{{ show.tier.collection }}</b></p>
                   <p v-if="show.st === 'done'" class="rd-state ok">✓ Ya es tuyo</p>
                   <template v-else-if="show.st === 'current'">
                     <div class="rd-bar"><i :style="{ width: show.pct + '%' }"></i></div>
@@ -174,9 +187,17 @@ function goPlay() { emit('close'); router.push('/play/points') }
               </div>
 
               <h4>{{ show.st === 'done' ? 'Ganaste al llegar' : 'Al llegar ganás' }}</h4>
-              <div class="rd-row">
-                <div v-for="(p, k) in show.arrival" :key="'a' + k" class="rd-card" :style="{ '--k': k }">
-                  <PrizeCard :prize="p" :size="104" :state="show.st === 'locked' ? 'locked' : ''" :lock-level="show.tier.minLevel" />
+              <div class="rd-kit" :class="{ 'is-off': show.st === 'locked' }">
+                <figure v-for="(p, k) in show.kit" :key="'k' + k" class="rd-kit-item" :class="'is-' + p.part" :style="{ '--k': k }">
+                  <RankCrest v-if="p.part === 'crest'" :tier="show.tier" size="m" :locked="show.st === 'locked'" />
+                  <RankMedallion v-else-if="p.part === 'medallion'" :tier="show.tier" :size="88" :locked="show.st === 'locked'" />
+                  <RankBanner v-else :tier="show.tier" fluid :locked="show.st === 'locked'" />
+                  <figcaption>{{ p.name }}</figcaption>
+                </figure>
+              </div>
+              <div v-if="show.extra.length" class="rd-row">
+                <div v-for="(p, k) in show.extra" :key="'x' + k" class="rd-card" :style="{ '--k': k }">
+                  <PrizeCard :prize="p" :size="88" :state="show.st === 'locked' ? 'locked' : ''" :lock-level="show.tier.minLevel" />
                 </div>
               </div>
 
@@ -218,22 +239,22 @@ function goPlay() { emit('close'); router.push('/play/points') }
 .rd-scroll { flex: 1; overflow-y: auto; padding: 0 16px 12px; overscroll-behavior: contain; }
 
 /* Mapa */
-.rd-map { position: relative; aspect-ratio: 600 / 280; margin: 4px 0 8px; }
+.rd-map { position: relative; aspect-ratio: 600 / 440; margin: 4px 0 8px; }
 .rd-road { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .rd-road path { fill: none; stroke-linecap: round; }
 .rd-road .base { stroke: rgba(255, 255, 255, .14); stroke-width: 6; stroke-dasharray: 2 12; }
 .rd-road .done { stroke: #fcd34d; stroke-width: 6; stroke-dasharray: 1; filter: drop-shadow(0 0 6px rgba(252, 211, 77, .6)); }
-.rd-node { position: absolute; width: clamp(40px, 10vw, 62px); transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 2px; padding: 0; border: 0; background: none; cursor: pointer; color: #fff;
+.rd-node { position: absolute; width: clamp(36px, 9vw, 56px); transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 2px; padding: 0; border: 0; background: none; cursor: pointer; color: #fff;
   animation: rd-node-in .45s cubic-bezier(.34, 1.56, .64, 1) var(--d) both; z-index: 1; }
 @keyframes rd-node-in { from { opacity: 0; transform: translate(-50%, -30%) scale(.5); } }
-.rd-node img { width: 100%; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), filter .25s; }
+.rd-node .rd-crest { width: 100%; height: auto; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), filter .25s; }
 .rd-node .lb { font-family: var(--font-bug, sans-serif); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; font-size: clamp(9px, 2.2vw, 12px); white-space: nowrap; text-shadow: 0 1px 2px #000; }
 .rd-node .lk { margin-top: -1px; font-family: var(--font-bug, sans-serif); font-weight: 800; font-size: 10px; white-space: nowrap; padding: 1px 6px; border-radius: 999px; background: #0b1024; border: 1px solid rgba(255, 255, 255, .15); color: #94a3b8; }
-.rd-node.is-locked img { filter: grayscale(1) brightness(.55) drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); }
+.rd-node.is-locked .rd-crest { opacity: .8; }
 .rd-node.is-locked .lb { color: #64748b; }
-.rd-node.is-current img { filter: drop-shadow(0 0 14px var(--g)) drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); animation: rd-glow 2.2s ease-in-out infinite; }
+.rd-node.is-current .rd-crest { filter: drop-shadow(0 0 14px var(--g)) drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); animation: rd-glow 2.2s ease-in-out infinite; }
 @keyframes rd-glow { 50% { transform: scale(1.06); } }
-.rd-node.is-sel img { transform: scale(1.14); }
+.rd-node.is-sel .rd-crest { transform: scale(1.14); }
 .rd-node.is-sel .lb { color: #fcd34d; }
 .rd-node:focus-visible { outline: 2px solid #fcd34d; outline-offset: 4px; border-radius: 12px; }
 .rd-pin { position: absolute; z-index: 2; transform: translate(-50%, -100%); pointer-events: none; }
@@ -245,8 +266,14 @@ function goPlay() { emit('close'); router.push('/play/points') }
 /* Vitrina */
 .rd-case { --g: #fcd34d; border-radius: 16px; padding: 14px; background: radial-gradient(90% 60% at 20% 0%, color-mix(in srgb, var(--g) 18%, transparent), transparent 70%), rgba(255, 255, 255, .03); border: 1px solid color-mix(in srgb, var(--g) 30%, rgba(255, 255, 255, .08)); }
 .rd-case-top { display: flex; align-items: center; gap: 14px; }
-.rd-shield { flex: none; width: 84px; height: 84px; object-fit: contain; filter: drop-shadow(0 0 18px color-mix(in srgb, var(--g) 70%, transparent)); animation: rd-shield-in .5s cubic-bezier(.34, 1.56, .64, 1) both; }
-.rd-shield.is-off { filter: grayscale(.85) brightness(.7); }
+.rd-shield { flex: none; width: 84px; height: auto; filter: drop-shadow(0 0 18px color-mix(in srgb, var(--g) 70%, transparent)); animation: rd-shield-in .5s cubic-bezier(.34, 1.56, .64, 1) both; }
+.rd-range b { color: #e2e8f0; font-weight: 600; }
+.rd-kit { display: grid; grid-template-columns: auto auto 1fr; align-items: end; gap: 12px; padding: 4px 2px 10px; }
+.rd-kit-item { margin: 0; display: grid; justify-items: center; gap: 6px; animation: rd-card-in .4s cubic-bezier(.34, 1.56, .64, 1) calc(.08s * var(--k)) both; }
+.rd-kit-item.is-banner { justify-items: stretch; min-width: 0; }
+.rd-kit-item figcaption { font-family: var(--font-bug, sans-serif); font-weight: 800; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: #cbd5e1; text-align: center; }
+.rd-kit.is-off figcaption { color: #64748b; }
+@media (max-width: 520px) { .rd-kit { grid-template-columns: auto auto; } .rd-kit-item.is-banner { grid-column: 1 / -1; } }
 @keyframes rd-shield-in { from { transform: scale(.6) rotate(-8deg); opacity: 0; } }
 .rd-case-txt { min-width: 0; flex: 1; display: grid; gap: 3px; }
 .rd-case-txt h3 { margin: 0; font-family: var(--font-shout, 'Barlow Condensed', sans-serif); font-weight: 800; font-style: italic; text-transform: uppercase; font-size: 28px; line-height: 1; color: var(--g); }
@@ -274,6 +301,6 @@ function goPlay() { emit('close'); router.push('/play/points') }
 .rd-play:active { transform: scale(.98); }
 
 @media (prefers-reduced-motion: reduce) {
-  .rd-back, .rd, .rd-node, .rd-node.is-current img, .rd-shield, .rd-card { animation: none !important; }
+  .rd-back, .rd, .rd-node, .rd-node.is-current .rd-crest, .rd-shield, .rd-card, .rd-kit-item { animation: none !important; }
 }
 </style>
