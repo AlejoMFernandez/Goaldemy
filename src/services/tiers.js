@@ -128,3 +128,20 @@ export function tierColorClasses(colorKey) {
     default: return 'border-white/20 text-slate-200'
   }
 }
+
+/**
+ * Kit que trae cada rango al llegar, con el copy acordado
+ * ("Ícono de rango Ícono" para 80–89). Formato compatible con PrizeCard
+ * (kind/name/rarity/styleKey) + `tierKey` para dibujarlo con RankCrest/RankMedallion/RankBanner.
+ * TODO (prize-card.js, otro dueño): tierPrizes() debería delegar acá.
+ */
+export function rankKitPrizes(tier) {
+  const t = typeof tier === 'string' ? getTierByKey(tier) : tier
+  const tu = t && TIER_UNLOCKS[t.key]
+  if (!tu) return []
+  return [
+    { kind: 'icon', part: 'crest', name: `Ícono de rango ${t.label}`, rarity: 'legendary', styleKey: tu.icon, tierKey: t.key },
+    { kind: 'frame', part: 'medallion', name: `Medallón ${t.label}`, rarity: 'epic', styleKey: tu.frame, tierKey: t.key },
+    { kind: 'banner', part: 'banner', name: `Banner ${t.label}`, rarity: 'epic', styleKey: tu.banner, tierKey: t.key },
+  ]
+}
