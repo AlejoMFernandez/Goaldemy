@@ -270,6 +270,11 @@
     -- ============================
 
     -- Create a view that always exposes user_id, username, display_name, email, avatar_url and optional fields
+    -- NOTA (2026-11-24): este archivo tenía marcadores de conflicto de git sin resolver
+    -- (HEAD vs d0aeee3 "Opciones en Registro..."). Se eligió el lado d0aeee3 en los 5
+    -- bloques porque es el consistente con migraciones posteriores: patch-fix-profiles.sql
+    -- recrea v_user_profiles con nationality_code/favorite_team/favorite_player y el
+    -- cliente usa is_public y las URLs sociales. Ver supabase/pendientes/README.md.
     do $$
     declare
     v_id_col text;
@@ -295,13 +300,6 @@
     else
         select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='username') into has_username;
         select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='display_name') into has_display_name;
-<<<<<<< HEAD
-    select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='avatar_url') into has_avatar_url;
-    -- optional email column support
-    select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='email') into has_email;
-
-        v_sql := 'create or replace view public.v_user_profiles as select '
-=======
         select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='avatar_url') into has_avatar_url;
     -- optional email column support
         select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='email') into has_email;
@@ -310,21 +308,15 @@
         select exists(select 1 from information_schema.columns where table_schema='public' and table_name='user_profiles' and column_name='favorite_player') into has_fav_player;
 
     v_sql := 'create or replace view public.v_user_profiles as select '
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
         || quote_ident(v_id_col) || ' as user_id, '
         || case when has_username then 'username' else 'NULL::text' end || ' as username, '
         || case when has_display_name then 'display_name' else 'NULL::text' end || ' as display_name, '
         || case when has_email then 'email' else 'NULL::text' end || ' as email, '
-<<<<<<< HEAD
-        || case when has_avatar_url then 'avatar_url' else 'NULL::text' end || ' as avatar_url '
-        || 'from public.user_profiles';
-=======
     || case when has_avatar_url then 'avatar_url' else 'NULL::text' end || ' as avatar_url, '
     || case when has_nationality then 'nationality_code' else 'NULL::text' end || ' as nationality_code, '
     || case when has_fav_team then 'favorite_team' else 'NULL::text' end || ' as favorite_team, '
     || case when has_fav_player then 'favorite_player' else 'NULL::text' end || ' as favorite_player '
     || 'from public.user_profiles';
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
 
     execute v_sql;
     end if;
@@ -370,9 +362,6 @@
     end if;
     end $$;
 
-<<<<<<< HEAD
-    -- Profiles
-=======
         -- Profiles: ensure optional columns exist (idempotent)
         do $$
         begin
@@ -392,7 +381,6 @@
         end $$;
 
         -- Profiles
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
     alter table public.user_profiles enable row level security;
     do $$ begin
     if not exists (
@@ -417,11 +405,7 @@
     if v_col is null then
         raise notice 'Skipping owner policies for public.user_profiles: no user id column (user_id or id) found.';
     else
-<<<<<<< HEAD
-        if not exists (
-=======
     if not exists (
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
         select 1 from pg_policies where schemaname = 'public' and tablename = 'user_profiles' and policyname = 'Insert own profile'
         ) then
         execute format('create policy "Insert own profile" on public.user_profiles for insert to authenticated with check (%I = auth.uid())', v_col);
@@ -441,8 +425,6 @@
     end if;
     end $$;
 
-<<<<<<< HEAD
-=======
         -- Public read policy (optional): allow anonymous to read profiles marked as public
         do $$ begin
             if not exists (
@@ -453,7 +435,6 @@
             end if;
         end $$;
 
->>>>>>> d0aeee3 (Opciones en Registro, agregado de logros y fix de XP)
     -- XP events
     alter table public.xp_events enable row level security;
     do $$ begin
