@@ -1,4 +1,5 @@
 <script setup>
+import { tap as hapticTap } from '../../services/haptics'
 /**
  * OrderLadder — tablero único de los juegos de ORDENAR (Moodboard 04)
  *
@@ -65,7 +66,7 @@ const picked = ref(null) // posición seleccionada
 const cardEls = ref({})  // idx → elemento
 const boardEl = ref(null)
 
-function vibrate() { try { navigator.vibrate?.(8) } catch {} }
+function vibrate() { hapticTap() }
 function commit(newOrder) {
   emit('update:order', newOrder)
   shown.value = [...newOrder]

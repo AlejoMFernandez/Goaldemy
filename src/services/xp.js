@@ -28,6 +28,7 @@ import { supabase } from './supabase'
 import { pushAchievementToast, pushLevelUpToast } from '../stores/notifications'
 import { setKnownLevel as _setKnownLevelRealtime } from './levelup-realtime'
 import { getXpMultiplier } from './premium'
+import { LEVEL_THRESHOLDS } from './level-curve'
 
 // Economía en el servidor (supabase/pendientes/2026-11-24-04-xp-servidor.sql).
 // OFF por defecto: con '1' la XP de juego va por award_game_xp, que aplica el
@@ -147,25 +148,8 @@ export async function getUserRank(userId) {
   return { rank: idx >= 0 ? (top[idx].rank ?? (idx + 1)) : null, error: null }
 }
 
-const FALLBACK_THRESHOLDS = [
-  { level: 1, xp_required: 0 }, { level: 2, xp_required: 100 }, { level: 3, xp_required: 250 },
-  { level: 4, xp_required: 450 }, { level: 5, xp_required: 700 }, { level: 6, xp_required: 1000 },
-  { level: 7, xp_required: 1350 }, { level: 8, xp_required: 1750 }, { level: 9, xp_required: 2200 },
-  { level: 10, xp_required: 2700 }, { level: 11, xp_required: 3300 }, { level: 12, xp_required: 4000 },
-  { level: 13, xp_required: 4800 }, { level: 14, xp_required: 5700 }, { level: 15, xp_required: 6700 },
-  { level: 16, xp_required: 7800 }, { level: 17, xp_required: 9000 }, { level: 18, xp_required: 10300 },
-  { level: 19, xp_required: 11700 }, { level: 20, xp_required: 13200 }, { level: 21, xp_required: 14850 },
-  { level: 22, xp_required: 16650 }, { level: 23, xp_required: 18600 }, { level: 24, xp_required: 20700 },
-  { level: 25, xp_required: 22950 }, { level: 26, xp_required: 25350 }, { level: 27, xp_required: 27900 },
-  { level: 28, xp_required: 30600 }, { level: 29, xp_required: 33450 }, { level: 30, xp_required: 36450 },
-  { level: 31, xp_required: 39600 }, { level: 32, xp_required: 42900 }, { level: 33, xp_required: 46350 },
-  { level: 34, xp_required: 49950 }, { level: 35, xp_required: 53700 }, { level: 36, xp_required: 57600 },
-  { level: 37, xp_required: 61650 }, { level: 38, xp_required: 65850 }, { level: 39, xp_required: 70200 },
-  { level: 40, xp_required: 74700 }, { level: 41, xp_required: 79400 }, { level: 42, xp_required: 84300 },
-  { level: 43, xp_required: 89400 }, { level: 44, xp_required: 94700 }, { level: 45, xp_required: 100200 },
-  { level: 46, xp_required: 105900 }, { level: 47, xp_required: 111800 }, { level: 48, xp_required: 117900 },
-  { level: 49, xp_required: 124200 }, { level: 50, xp_required: 130700 },
-]
+// Curva 1–100 (≈180 días jugando a diario). Fuente única: services/level-curve.js
+const FALLBACK_THRESHOLDS = LEVEL_THRESHOLDS
 
 let _levelThresholdsCache = null
 let _levelThresholdsAt = 0

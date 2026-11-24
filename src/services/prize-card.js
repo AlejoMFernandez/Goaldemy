@@ -77,7 +77,7 @@ export function prizesForLevelRange(oldLevel, newLevel) {
  * "Lo que viene": una carta por nivel para los próximos `count` niveles.
  * Si el nivel no trae nada especial, muestra su XP → ningún nivel queda vacío.
  */
-export function upcomingPrizes(level, count = 8, maxLevel = 60) {
+export function upcomingPrizes(level, count = 8, maxLevel = 100) {
   const out = []
   for (let l = Number(level) + 1; l <= maxLevel && out.length < count; l++) {
     const rewards = getLevelRewards(l)

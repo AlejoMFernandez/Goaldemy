@@ -1,3 +1,4 @@
+import { tap } from '../../services/haptics'
 /**
  * ESTADO COMPARTIDO DEL SHELL MOBILE (top bar + tab bar + hoja de ajustes).
  *
@@ -82,7 +83,7 @@ export function closeSettings() { shellState.settingsOpen = false }
 export function requestBugReport() { shellState.bugRequest++ }
 export function requestChallenges() { shellState.challengesRequest++ }
 
-/** Vibración corta al tocar (Android; iOS Safari la ignora). */
-export function tapHaptic(ms = 8) {
-  try { navigator.vibrate?.(ms) } catch {}
+/** Vibración corta al tocar: nativa en la app (iOS y Android), navigator.vibrate en web. */
+export function tapHaptic() {
+  tap()
 }
