@@ -3,8 +3,10 @@
  * SUBIR DE NIVEL / SUBIR DE RANGO (Moodboard 03 + cartas del 08)
  *
  * Acto RANGO (solo si cambió el rango): ¡GOL! que abre la ceremonia → el escudo
- * viejo tiembla y estalla → se forja el nuevo → "Al llegar ganás" (cartas del
- * rango, boca abajo, se dan vuelta de a una) → próximo rango a la vista.
+ * viejo tiembla y estalla → FORJA: el escudo nuevo (kit v2, RankCrest) se arma pieza
+ * por pieza (aro, campo, medallón con emblema, cinta) y cada una se encastra con un
+ * golpe metálico → "Al llegar ganás" (cartas del rango, boca abajo, se dan vuelta de
+ * a una) → próximo rango a la vista. Con reduced-motion el escudo aparece entero.
  *
  * Acto NIVEL: la barra se llena y desborda una vez por cada nivel (con
  * contador ×2, ×3 si subiste varios), cada desborde es un ¡PUM! (corto en los
@@ -18,14 +20,15 @@
  */
 import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { notificationsState, shiftLevelUpQueue, setLevelUpActive } from '@/stores/notifications'
-import { getTierForLevel, getNextTier } from '@/services/tiers'
-import { prizesForLevelRange, upcomingPrizes, tierPrizes } from '@/services/prize-card'
+import { getTierForLevel, getNextTier, rankKitPrizes, tierGlow } from '@/services/tiers'
+import { prizesForLevelRange, upcomingPrizes } from '@/services/prize-card'
 import { revealPrizes } from '@/services/prize-reveal'
 import { soundManager } from '@/services/sounds'
 import { sparks, center, fxOnTop, reducedMotion } from '@/services/game-fx'
 import PrizeCard from './PrizeCard.vue'
 import PowerupIcon from './PowerupIcon.vue'
 import RarityReveal from './RarityReveal.vue'
+import RankCrest from '@/components/ranks/RankCrest.vue'
 
 const current = ref(null)
 const stage = ref('level')      // 'rank' | 'level'
@@ -62,7 +65,8 @@ const prizes = computed(() => {
   const all = prizesForLevelRange(current.value.oldLevel, current.value.newLevel)
   return tierChanged.value ? all.filter(p => p.kind !== 'tier' && !p.fromTier) : all
 })
-const rankCards = computed(() => tierChanged.value ? tierPrizes(newTier.value) : [])
+// Kit del rango con el copy acordado ("Ícono de rango Ícono"); tierPrizes() queda para compat.
+const rankCards = computed(() => tierChanged.value ? rankKitPrizes(newTier.value) : [])
 // Cartas = solo recompensas reales (cosméticos, rango, juegos). XP y ayudas van como fichas.
 const cardPrizes = computed(() => prizes.value.filter(p => p.kind !== 'xp' && p.kind !== 'powerup'))
 const xpTotal = computed(() => prizes.value.filter(p => p.kind === 'xp').reduce((a, p) => a + (Number(p.amount) || 0), 0))
@@ -86,12 +90,12 @@ function runRank() {
     T(() => { rp.value = 1; flash(); soundManager.playBig('goal') }, 150)        // ¡GOL!
     T(() => { rp.value = 2 }, 1300)                                              // escudo viejo
     T(() => { rp.value = 3 }, 1750)                                              // tiembla
-    T(() => {                                                                    // estalla y se forja
-      rp.value = 4; flash(); soundManager.playBig('forge')
-      const el = badgeEl.value
-      if (el) { const c = center(el); sparks(c.x, c.y, 40, ['#fcd34d', '#fff', '#f59e0b'], 140) }
+    T(() => {                                                                    // estalla → arranca la FORJA
+      rp.value = 4; flash()
+      if (reducedMotion) soundManager.playBig('forge')
     }, 2400)
-    T(() => { rp.value = 5 }, 2900)                                              // nombre del rango
+    // La Forja dura ~1,6 s (RankCrest emite hit por pieza y forged al final)
+    T(() => { rp.value = 5 }, reducedMotion ? 2500 : 4050)                      // nombre del rango
     T(() => {                                                                    // "Al llegar ganás"
       rp.value = 6
       nextTick(() => {
@@ -100,8 +104,25 @@ function runRank() {
           onDone: () => { rp.value = 7 },
         })
       })
-    }, 3300)
+    }, reducedMotion ? 2600 : 4450)
   })
+}
+
+// Cada pieza del escudo nuevo que se encastra: golpe metálico + chispas del color del rango.
+// El medallón central es el golpe fuerte (suena la forja); el resto, golpes cortos.
+function onForgeHit(part) {
+  const el = badgeEl.value
+  const glow = tierGlow(newTier.value)
+  if (part === 'roundel') {
+    soundManager.playBig('forge'); flash()
+    if (el) { const c = center(el); sparks(c.x, c.y, 40, [glow, '#fff', '#fcd34d'], 150) }
+    el?.animate?.([
+      { transform: 'translate(0,0)' }, { transform: 'translate(-4px,3px)' }, { transform: 'translate(3px,-2px)' }, { transform: 'translate(0,0)' },
+    ], { duration: 260, easing: 'ease-out' })
+  } else {
+    soundManager.play('stamp')
+    if (el) { const c = center(el); sparks(c.x, c.y, 12, [glow, '#fff'], 70) }
+  }
 }
 
 // ─── Acto NIVEL ─────────────────────────────────────────────
@@ -265,11 +286,11 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
 
           <template v-if="rp >= 2">
             <p class="lvo-kick" :class="{ in: rp >= 5 }">¡Ascendiste de rango!</p>
-            <div ref="badgeEl" class="lvo-badge">
-              <img v-if="rp < 4 && oldTier?.image" :src="oldTier.image" class="old" :class="{ shake: rp === 3 }" :alt="oldTier.label" />
-              <template v-else-if="rp >= 4">
+            <div ref="badgeEl" class="lvo-badge" :style="{ '--rk-glow': tierGlow(newTier) }">
+              <RankCrest v-if="rp < 4 && oldTier" :tier="oldTier" :size="180" class="old" :class="{ shake: rp === 3 }" />
+              <template v-else-if="rp >= 4 && newTier">
                 <span class="ring" aria-hidden="true"></span>
-                <img v-if="newTier?.image" :src="newTier.image" class="new" :alt="newTier.label" />
+                <RankCrest :tier="newTier" :size="180" class="new" forge @hit="onForgeHit" />
               </template>
             </div>
             <h2 class="lvo-tier" :class="{ in: rp >= 5 }">{{ newTier?.label }}</h2>
@@ -288,10 +309,10 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
 
             <div v-if="rp >= 7" class="lvo-next">
               <template v-if="nextTier">
-                <img :src="nextTier.image" alt="" />
+                <RankCrest :tier="nextTier" :size="36" :ribbon="false" locked />
                 <span>Próximo rango: <b>{{ nextTier.label }}</b> en el nivel {{ nextTier.minLevel }}</span>
               </template>
-              <span v-else>Llegaste al rango máximo. ¡Leyenda!</span>
+              <span v-else>Llegaste al rango máximo. ¡Sos el GOAT!</span>
             </div>
             <button v-if="rp >= 7" type="button" class="lvo-btn" @click="goToLevel">Seguir</button>
           </template>
@@ -411,18 +432,19 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
 @keyframes lvo-stretch { 0% { letter-spacing: -.08em; } 60% { letter-spacing: .06em; } 100% { letter-spacing: .03em; } }
 
 /* escudo */
-.lvo-badge { position: relative; width: clamp(130px, 32vw, 180px); aspect-ratio: 1; display: grid; place-items: center; }
-.lvo-badge img { width: 100%; height: 100%; object-fit: contain; }
+.lvo-badge { position: relative; width: clamp(130px, 32vw, 180px); aspect-ratio: 120 / 140; display: grid; place-items: center; }
+.lvo-badge :deep(svg) { width: 100%; height: auto; }
 .lvo-badge .old { filter: grayscale(.5) brightness(.8); animation: lvo-in .4s ease both; }
 .lvo-badge .old.shake { animation: lvo-shake .6s ease-in-out infinite; filter: brightness(1.4) saturate(1.3); }
 @keyframes lvo-shake { 10%, 90% { transform: translate(-1px, 1px); } 20%, 80% { transform: translate(3px, -2px) rotate(2deg); } 30%, 50%, 70% { transform: translate(-5px, 3px) rotate(-3deg); } 40%, 60% { transform: translate(5px, -3px) rotate(3deg); } }
-.lvo-badge .new { animation: lvo-forge .9s cubic-bezier(.34, 1.56, .64, 1) both; filter: drop-shadow(0 0 26px rgba(252, 211, 77, .55)); }
-@keyframes lvo-forge { 0% { transform: scale(.1) rotate(-30deg); opacity: 0; filter: brightness(3) drop-shadow(0 0 40px #fff); } 60% { transform: scale(1.12) rotate(4deg); opacity: 1; } 100% { transform: none; filter: drop-shadow(0 0 26px rgba(252, 211, 77, .55)); } }
-.lvo-badge .ring { position: absolute; inset: 10%; border-radius: 50%; border: 4px solid #fcd34d; animation: lvo-shock .8s ease-out both; }
+/* El escudo nuevo se arma por piezas (RankCrest forge); acá solo el resplandor del rango al final */
+.lvo-badge .new { animation: lvo-forge-glow .5s ease-out 1.6s both; }
+@keyframes lvo-forge-glow { from { filter: none; } to { filter: drop-shadow(0 0 26px color-mix(in srgb, var(--rk-glow, #fcd34d) 60%, transparent)); } }
+.lvo-badge .ring { position: absolute; inset: 10%; border-radius: 50%; border: 4px solid var(--rk-glow, #fcd34d); animation: lvo-shock .8s ease-out 1.18s both; }
 .lvo-tier { margin: 0; font-family: var(--font-shout); font-weight: 800; font-style: italic; text-transform: uppercase; font-size: clamp(40px, 9vw, 64px); line-height: .95; color: #fff; opacity: 0; transform: scale(.8); transition: opacity .4s, transform .5s cubic-bezier(.34, 1.56, .64, 1); }
 .lvo-tier.in { opacity: 1; transform: none; }
 .lvo-next { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #cbd5e1; animation: lvo-in .4s ease both; }
-.lvo-next img { width: 40px; height: 40px; object-fit: contain; filter: grayscale(.4) brightness(.8); }
+.lvo-next :deep(svg) { flex: none; }
 .lvo-next b { color: #fcd34d; }
 
 .lvo-fade-enter-active { transition: opacity .3s ease; }

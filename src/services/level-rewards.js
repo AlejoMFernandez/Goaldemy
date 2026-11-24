@@ -1,4 +1,4 @@
-import { TIERS } from './tiers'
+import { TIERS } from './tiers.js'
 
 export const GAME_UNLOCK_LEVELS = {
   'guess-player': 1,
@@ -44,68 +44,37 @@ export function getLevelUpXpBonus(level) {
   return 400
 }
 
-export const MILESTONES = [
-  {
-    level: 10,
-    tier: 'Juvenil',
-    color: 'amber',
-    xpBonus: 150,
-    title: '¡Rango Juvenil!',
-    description: 'Has demostrado conocimiento real del fútbol',
+// Hitos de rango (relanzamiento 1–100): XP bonus al ascender de categoría.
+// El bonus crece con el rango; se suma al modelo de XP/día (docs/relanzamiento/PROGRESION.md).
+const MILESTONE_COPY = {
+  juvenil:     { xpBonus: 150,  description: 'Saliste del potrero: ahora jugás en las inferiores' },
+  amateur:     { xpBonus: 300,  description: 'Primera de ascenso: barro, lluvia y reflectores' },
+  reserva:     { xpBonus: 500,  description: 'Ya entendés la pizarra: el DT te tiene en cuenta' },
+  profesional: { xpBonus: 750,  description: 'Día de partido: túnel, silbato y cámaras' },
+  crack:       { xpBonus: 1000, description: 'Te toca jugar el clásico' },
+  figura:      { xpBonus: 1250, description: 'Noches de Copa: se prenden las luces' },
+  idolo:       { xpBonus: 1500, description: 'La hinchada canta tu nombre' },
+  icono:       { xpBonus: 1750, description: 'Ganaste el Balón de Oro: sos un Ícono' },
+  leyenda:     { xpBonus: 2000, description: 'Lo sostuviste años: sos Leyenda' },
+  goat:        { xpBonus: 3000, description: 'Álbum completo. El más grande de todos' },
+}
+
+export const MILESTONES = TIERS.filter(t => MILESTONE_COPY[t.key]).map(t => {
+  const m = MILESTONE_COPY[t.key]
+  return {
+    level: t.minLevel,
+    tier: t.label,
+    tierKey: t.key,
+    color: t.color,
+    xpBonus: m.xpBonus,
+    title: `¡Rango ${t.label}!`,
+    description: m.description,
     rewards: [
-      { type: 'xp', label: '+150 XP bonus' },
-      { type: 'tier', label: 'Rango: Juvenil', image: '/badges/juvenil.svg' },
+      { type: 'xp', label: `+${m.xpBonus} XP bonus` },
+      { type: 'tier', label: `Rango: ${t.label}`, image: t.image },
     ],
-  },
-  {
-    level: 20,
-    tier: 'Amateur',
-    color: 'orange',
-    xpBonus: 300,
-    title: '¡Rango Amateur!',
-    description: 'Tu conocimiento futbolístico es impresionante',
-    rewards: [
-      { type: 'xp', label: '+300 XP bonus' },
-      { type: 'tier', label: 'Rango: Amateur', image: '/badges/amateur.svg' },
-    ],
-  },
-  {
-    level: 30,
-    tier: 'Reserva',
-    color: 'red',
-    xpBonus: 500,
-    title: '¡Rango Reserva!',
-    description: 'Entraste al banco de suplentes del élite',
-    rewards: [
-      { type: 'xp', label: '+500 XP bonus' },
-      { type: 'tier', label: 'Rango: Reserva', image: '/badges/reserva.svg' },
-    ],
-  },
-  {
-    level: 40,
-    tier: 'Profesional',
-    color: 'sky',
-    xpBonus: 750,
-    title: '¡Rango Profesional!',
-    description: 'Jugás en las grandes ligas del conocimiento',
-    rewards: [
-      { type: 'xp', label: '+750 XP bonus' },
-      { type: 'tier', label: 'Rango: Profesional', image: '/badges/profesional.svg' },
-    ],
-  },
-  {
-    level: 50,
-    tier: 'Crack',
-    color: 'violet',
-    xpBonus: 1000,
-    title: '¡Rango Crack!',
-    description: '¡Nivel máximo! Sos una enciclopedia viviente del fútbol',
-    rewards: [
-      { type: 'xp', label: '+1000 XP bonus' },
-      { type: 'tier', label: 'Rango: Crack', image: '/badges/crack.svg' },
-    ],
-  },
-]
+  }
+})
 
 export function getMilestone(level) {
   return MILESTONES.find(m => m.level === Number(level)) || null
@@ -172,7 +141,7 @@ export function getLevelRewards(level) {
 export function getUpcomingRewards(level, count = 3) {
   const lvl = Number(level) || 1
   const out = []
-  for (let l = lvl + 1; l <= 60 && out.length < count; l++) {
+  for (let l = lvl + 1; l <= 100 && out.length < count; l++) {
     const atLevel = getLevelRewards(l).filter(r => r.kind !== 'xp')
     for (const r of atLevel) {
       out.push({ level: l, ...r })
