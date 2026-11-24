@@ -349,8 +349,9 @@ const GAME_METADATA = {
     mechanic: 'Adiviná jugadores sin perder todas las vidas',
     videoUrl: '',
     tips: [
-      'La imagen se va desblurreando con cada error',
-      'Usá las pistas: posición, nacionalidad, equipo',
+      'Con cada error se destapa una pista: primero la edad, después el dorsal',
+      'Si tardás, las pistas se destapan solas (en Difícil es la única forma)',
+      'Repetir un nombre que ya probaste no te saca vida',
       'El buscador te ayuda con sugerencias'
     ]
   },

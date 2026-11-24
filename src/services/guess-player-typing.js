@@ -46,7 +46,20 @@ export function countryFlag(p, width = 32) {
 }
 export function teamLogo(p) { return p?.teamLogo || null }
 
-/** Selecciona el próximo jugador a adivinar (rotando entre posiciones). */
+/** Destapa una pista (idempotente). 'age' | 'shirt' */
+export function revealHint(state, key) {
+  if (!state.hintsShown.includes(key)) state.hintsShown.push(key)
+}
+
+/**
+ * Pistas por tiempo: segundos de ronda para destapar edad y dorsal sin errar.
+ * En Difícil (1 vida) era la ÚNICA forma de ver pistas; en el resto es una red.
+ */
+export function hintScheduleFor(maxLives) {
+  return (maxLives || 3) <= 1 ? { age: 15, shirt: 30 } : { age: 30, shirt: 60 }
+}
+
+/** Selecciona el próximo jugador a adivinar (posición sorteada, ver game-common). */
 export function nextRound(state) {
   if (!state.allPlayers.length) return
   state.current = selectRandomPlayerFromBucket(state)
@@ -85,11 +98,20 @@ export function submitGuess(state, player) {
     state.maxStreak = Math.max(state.maxStreak || 0, nextStreak)
     return true
   }
-  if (!state.tried.some((t) => t.id === player.id)) state.tried.push(player)
+  // Repetir un nombre ya tachado no cuesta otra vida (antes sí).
+  state._repeatGuess = false
+  if (state.tried.some((t) => t.id === player.id)) {
+    state._repeatGuess = true
+    return false
+  }
+  state.tried.push(player)
   state.lives = Math.max(0, state.lives - 1)
   // Primer error → pista de edad; segundo error → pista de dorsal (moodboard 09).
-  if (state.lives === 2 && !state.hintsShown.includes('age')) state.hintsShown.push('age')
-  else if (state.lives === 1 && !state.hintsShown.includes('shirt')) state.hintsShown.push('shirt')
+  // Por cantidad de errores, no por vidas restantes: antes con 5 vidas las pistas
+  // llegaban recién al 3er/4to error y con 1 vida (Difícil) nunca.
+  const errors = state.tried.length
+  if (errors >= 1) revealHint(state, 'age')
+  if (errors >= 2) revealHint(state, 'shirt')
   if (state.lives <= 0) {
     state.answered = true
     state.lit = true
