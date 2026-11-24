@@ -1,0 +1,39 @@
+name: CI
+
+# Corre en cada PR y en cada push a main: si el build se rompe, no se mergea.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # Test de reglas de logros: offline, sin Supabase ni secretos.
+      - name: Test de logros
+        run: npm run test:achievements
+
+      # Valida el formato de los planteles (sin red).
+      - name: Validar dataGAMES.json
+        run: node scripts/validate-planteles.mjs
