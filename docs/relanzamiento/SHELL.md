@@ -78,3 +78,10 @@ avatar → HOJA DE AJUSTES (bottom sheet)
 6. `/social`: probar Ranking, Amigos (abrir un chat) y Fútbol, y el buscador.
 7. Entrar a un juego: no tiene que haber ni top bar ni tab bar, y el juego ocupa toda la pantalla.
 8. Desktop (≥ 1024px): tiene que verse todo como antes.
+
+## v2 (24/11, devolución de Alejo sobre el moodboard 10)
+- Todo con la identidad que ya existía: escudo del rango (`tier.image`), barra de XP verde → cian → violeta (la del menú de usuario), pósters reales de los juegos (`GamePoster`), pelota de FULVO (`BALL_SVG`) en la jornada y en el botón central, monedas con `CurrencyIcon`.
+- Encabezado más limpio, en un solo renglón: escudo + "Nv X" + barra · una pastilla con Fichas y Balones · avatar. Salieron la racha y la campana; las notificaciones quedan como punto rojo en el avatar y como ítem (con contador) en la hoja.
+- Botón JUGAR: círculo perfecto de 56 px (antes 64 y se deformaba), menos brillo, etiqueta "Jugar" alineada con las otras pestañas.
+- Hoja de ajustes: cabecera igual al menú de usuario de siempre (avatar, nombre, "Nivel X · N XP", barra) + escudo del rango.
+- JUGAR RÁPIDO: muestra el póster real del próximo juego; sin rayos de fondo.

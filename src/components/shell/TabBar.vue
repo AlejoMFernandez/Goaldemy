@@ -1,4 +1,5 @@
 <script setup>
+import { BALL_SVG } from '../../services/game-art'
 /**
  * TAB BAR MOBILE (<lg) — 5 pestañas, la central (JUGAR) elevada y más grande,
  * como el botón "Batalla" de Clash Royale.
@@ -44,13 +45,9 @@ function go(tab) {
         <button v-if="t.center" type="button" class="shell-tab-center" :class="{ 'is-active': isActive(t) }"
           :aria-current="isActive(t) ? 'page' : undefined" aria-label="Jugar" @click="go(t)">
           <span class="shell-tab-center-disc">
-            <svg viewBox="0 0 24 24" class="w-8 h-8" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" fill="#fff" stroke="#0f172a" stroke-width="1.4"/>
-              <path d="M12 7.2l3.1 2.3-1.2 3.6h-3.8L8.9 9.5z" fill="#0f172a"/>
-              <path d="M12 7.2V3.5M15.1 9.5l3.4-1.2M13.9 13.1l2.2 3M10.1 13.1l-2.2 3M8.9 9.5L5.5 8.3" stroke="#0f172a" stroke-width="1.2" fill="none"/>
-            </svg>
+            <span class="shell-tab-center-ball" v-html="BALL_SVG" aria-hidden="true"></span>
           </span>
-          <span class="shell-tab-center-label">JUGAR</span>
+          <span class="shell-tab-center-label">Jugar</span>
         </button>
         <button v-else type="button" class="shell-tab" :class="{ 'is-active': isActive(t) }"
           :aria-current="isActive(t) ? 'page' : undefined" @click="go(t)">
@@ -109,30 +106,28 @@ function go(tab) {
   box-shadow: 0 0 0 2px #0b1220; animation: shell-badge-pop .4s cubic-bezier(.34, 1.56, .64, 1);
 }
 
-/* Botón central elevado (estilo "Batalla") */
+/* Botón central: círculo perfecto (aspect-ratio 1 + sin encogerse), apenas elevado */
 .shell-tab-center {
-  position: relative; width: 84px; margin-top: -22px;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  position: relative; width: 72px; min-height: 48px; margin-top: -18px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
   -webkit-tap-highlight-color: transparent;
   transition: transform .25s cubic-bezier(.34, 1.56, .64, 1);
 }
 .shell-tab-center:active { transform: scale(.92); }
 .shell-tab-center-disc {
-  width: 64px; height: 64px; border-radius: 9999px; display: grid; place-items: center;
-  background: radial-gradient(circle at 35% 30%, #fff3b0 0%, #fbbf24 45%, #b45309 100%);
+  flex: none; box-sizing: border-box; width: 56px; height: 56px; aspect-ratio: 1 / 1;
+  border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 32%, #fde68a 0%, #fbbf24 55%, #d97706 100%);
   border: 3px solid #0b1220;
-  box-shadow: 0 0 0 2px rgba(251,191,36,.55), 0 8px 22px rgba(245,158,11,.45), inset 0 -4px 0 rgba(120,53,15,.35);
+  box-shadow: 0 0 0 1.5px rgba(251,191,36,.7), 0 6px 16px rgba(0,0,0,.45);
   transition: box-shadow .3s ease, transform .3s cubic-bezier(.34, 1.56, .64, 1);
 }
-.shell-tab-center-label { font-family: var(--font-display); font-size: 11px; font-weight: 900; letter-spacing: .08em; color: #fde68a; }
+.shell-tab-center-ball { width: 30px; height: 30px; display: block; }
+.shell-tab-center-ball :deep(svg) { width: 100%; height: 100%; display: block; }
+.shell-tab-center-label { font-size: 10.5px; font-weight: 800; letter-spacing: .02em; color: #94a3b8; }
+.shell-tab-center.is-active .shell-tab-center-label { color: #fcd34d; }
 .shell-tab-center.is-active .shell-tab-center-disc {
-  transform: translateY(-2px);
-  box-shadow: 0 0 0 2px rgba(253,230,138,.9), 0 0 26px rgba(251,191,36,.7), 0 8px 22px rgba(245,158,11,.5), inset 0 -4px 0 rgba(120,53,15,.35);
-  animation: shell-center-glow 2.6s ease-in-out infinite;
-}
-@keyframes shell-center-glow {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(253,230,138,.9), 0 0 18px rgba(251,191,36,.55), 0 8px 22px rgba(245,158,11,.45), inset 0 -4px 0 rgba(120,53,15,.35); }
-  50% { box-shadow: 0 0 0 2px rgba(253,230,138,1), 0 0 34px rgba(251,191,36,.85), 0 8px 22px rgba(245,158,11,.55), inset 0 -4px 0 rgba(120,53,15,.35); }
+  box-shadow: 0 0 0 1.5px rgba(253,230,138,.95), 0 0 14px rgba(251,191,36,.45), 0 6px 16px rgba(0,0,0,.45);
 }
 @keyframes shell-badge-pop { from { transform: scale(0); } to { transform: scale(1); } }
 
