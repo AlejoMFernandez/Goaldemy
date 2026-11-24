@@ -1,6 +1,6 @@
 import { onCorrect, onIncorrect } from './scoring'
 import { celebrateCorrect, celebrateIncorrect } from './game-celebrations'
-import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, shuffleArray, getOptionClasses, getBroadPosition } from './game-common'
+import { loadAndClassifyPlayers, loadAndClassifyPlayersAsync, shuffleArray, getOptionClasses, getBroadPosition, nextPositionFromBag } from './game-common'
 
 const POSITIONS = ['GK','DF','MF','FW']
 const POS_LABEL = {
@@ -48,8 +48,17 @@ function buildOptionsForPosition(correctPos, rng) {
 export function nextRound(state) {
   if (!state.allPlayers.length) return
   const rand = state.rng || Math.random
-  const idx = Math.floor(rand() * state.allPlayers.length)
-  state.current = state.allPlayers[idx]
+  // La RESPUESTA sale de una bolsa balanceada (3 de cada posición por vuelta,
+  // mezclada con la semilla del día): antes se sorteaba entre todos los
+  // jugadores y casi siempre era defensor/medio, casi nunca arquero.
+  const want = nextPositionFromBag(state, { GK: 3, DF: 3, MF: 3, FW: 3 })
+  state._usedIds = state._usedIds || new Set()
+  let pool = state.allPlayers.filter(p => getBroadPosition(p) === want && !state._usedIds.has(p.id))
+  if (!pool.length) pool = state.allPlayers.filter(p => getBroadPosition(p) === want)
+  if (!pool.length) pool = state.allPlayers
+  const idx = Math.floor(rand() * pool.length)
+  state.current = pool[idx]
+  if (state.current?.id != null) state._usedIds.add(state.current.id)
   state.options = buildOptionsForPosition(getBroadPosition(state.current), state.rng)
   state.answered = false
   state.selected = null
