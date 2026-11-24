@@ -49,6 +49,9 @@ const Pricing = () => import('../pages/Pricing.vue');
 const Career = () => import('../pages/Career.vue');
 const PrivacyPolicy = () => import('../pages/legal/PrivacyPolicy.vue');
 const TermsOfService = () => import('../pages/legal/TermsOfService.vue');
+// Shell mobile (tab bar): hubs nuevos
+const Social = () => import('../pages/Social.vue');
+const Coleccion = () => import('../pages/Coleccion.vue');
 
 const routes = [
     { path: '/', component: Landing, meta: { zone: 'hub', seo: { description: 'FULVO es una app de micro-juegos de fútbol para entrenar tu conocimiento: adiviná jugadores, armá rachas, sumá logros y competí en el ranking.' } } },
@@ -101,6 +104,9 @@ const routes = [
     { path: '/pricing', component: Pricing, meta: { zone: 'hub', seo: { title: 'Planes y precios', description: 'Conocé los planes PRO de FULVO: cosméticos exclusivos, ayudas y más.' } } },
     // Modo Carrera — funnel público sin login, estilo Copero (viral, sesión corta)
     { path: '/carrera', component: Career, meta: { zone: 'play', seo: { title: 'Modo Carrera', description: 'Encadená aciertos sin fallar en el modo Carrera de FULVO. Jugá gratis, sin cuenta.' } } },
+    // Shell mobile — pestañas Social y Colección de la tab bar
+    { path: '/social', component: Social, meta: { zone: 'hub', seo: { title: 'Social', description: 'Ranking, amigos y fútbol en vivo en FULVO.' } } },
+    { path: '/coleccion', component: Coleccion, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Colección', noindex: true } } },
     // 404 fallback
     { path: '/:pathMatch(.*)*', component: NotFound, meta: { zone: 'hub', seo: { title: 'Página no encontrada', noindex: true } } },
 ]
