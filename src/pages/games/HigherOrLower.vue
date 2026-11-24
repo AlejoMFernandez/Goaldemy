@@ -313,9 +313,13 @@ export default {
         this.gameOver = true
         bug?.breakChain?.()
         announceGameLoss()
-        const breakDelay = 320 + this.chain * 40
+        // La cadena se "rompe" en pantalla (animación a 0), pero el puntaje es la
+        // cadena lograda: se congela ACÁ. Antes finishChallenge leía chain ya en 0
+        // y toda derrota se guardaba con puntaje 0.
+        const finalChain = this.chain
+        const breakDelay = 320 + finalChain * 40
         setTimeout(() => { this.chain = 0 }, breakDelay)
-        setTimeout(() => this.finishChallenge('loss'), breakDelay + 500)
+        setTimeout(() => { this.chain = finalChain; this.finishChallenge('loss', finalChain) }, breakDelay + 500)
       }
     },
 
@@ -356,8 +360,9 @@ export default {
       }
     },
 
-    async finishChallenge(result) {
-      this.score = this.chain * (this.difficultyConfig?.xpPerCorrect || 20)
+    async finishChallenge(result, finalChain = this.chain) {
+      this.chain = finalChain
+      this.score = finalChain * (this.difficultyConfig?.xpPerCorrect || 20)
 
       if (this.isGuest) {
         if (this.xpEarned > 0) {
