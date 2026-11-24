@@ -238,6 +238,17 @@ export default {
     },
 
     // ─── Ayudas ──────────────────────────────────────────────
+    /** ¿La ayuda tiene efecto ahora? PowerupBar lo consulta antes de gastarla. */
+    canUsePowerup(type) {
+      if (this.timeOver || this.answered || this.kickoff || !this.clockRunning) return false
+      if (type === 'fifty_fifty') {
+        const left = (this.options || []).filter(o => !(this.eliminatedOptions || []).includes(o.value))
+        return left.length > 2 && left.filter(o => !this.isCorrectOption(o)).length >= 2
+      }
+      if (type === 'shield') return !this.shieldActive
+      if (type === 'reveal_hint') return !this.hintVisible
+      return true
+    },
     async runPowerup(type, btnEl) {
       const card = this.$refs.card
       const bug = this.$refs.bug

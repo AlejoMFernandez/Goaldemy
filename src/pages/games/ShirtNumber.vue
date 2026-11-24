@@ -352,6 +352,7 @@ export default {
           :hide="overlayOpen || kickoff"
           :disabled-types="answered ? ['fifty_fifty','shield','extra_time','reveal_hint'] : []"
           :active-types="shieldActive ? ['shield'] : []"
+          :can-apply="canUsePowerup"
           @use="handlePowerup"
         />
 
