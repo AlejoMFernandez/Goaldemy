@@ -25,7 +25,12 @@
  * - Solo se ejecuta una vez por día (verifica last_activity_date)
  * 
  * IMPORTANTE:
- * - Usa fechas UTC en formato YYYY-MM-DD para evitar problemas de zona horaria
+ * - Modo legado (sin flag): fechas UTC escritas por el cliente. Tiene dos
+ *   problemas: cualquiera puede escribir su racha (UPDATE directo) y entre las
+ *   21:00 y 24:00 ART "hoy" ya es mañana.
+ * - Con VITE_SERVER_ECONOMY=1 usa la RPC touch_daily_streak (hora Argentina,
+ *   consume protectores de racha). Una vez aplicado el parche 08, el servidor
+ *   ignora las escrituras del cliente en estas columnas.
  * - La racha se pierde si pasan más de 24 horas sin jugar
  */
 import { supabase } from './supabase'
@@ -37,9 +42,48 @@ import { unlockAchievementWithToast } from './xp'
  * Debe llamarse al jugar el primer juego del día
  * @returns {Object} { updated: boolean, streak: number, reason?: string }
  */
+const STREAK_ACHIEVEMENTS = [[3, 'daily_streak_3'], [5, 'daily_streak_5'], [7, 'daily_streak_7'], [14, 'daily_streak_14'], [30, 'daily_streak_30']]
+
+async function unlockStreakAchievements(streak) {
+  try {
+    for (const [n, code] of STREAK_ACHIEVEMENTS) {
+      if (streak >= n) await unlockAchievementWithToast(code)
+    }
+  } catch {}
+}
+
+/**
+ * Versión servidor (VITE_SERVER_ECONOMY=1): la racha la calcula la RPC
+ * touch_daily_streak en hora Argentina y consume protectores de racha.
+ * Ver supabase/pendientes/2026-11-24-08-racha-servidor.sql.
+ */
+async function touchDailyStreakServer() {
+  const { data, error } = await supabase.rpc('touch_daily_streak')
+  if (error || !data?.ok) {
+    if (error) console.error('[daily-streak] touch_daily_streak:', error)
+    return { updated: false, streak: data?.streak || 0, reason: data?.error || data?.reason }
+  }
+  if (data.updated) await unlockStreakAchievements(data.streak)
+  return {
+    updated: !!data.updated,
+    streak: data.streak,
+    previous: data.previous,
+    isBest: !!data.is_best,
+    protectorUsed: data.protector_used || 0,
+    reason: data.reason,
+  }
+}
+
 export async function updateDailyLoginStreak() {
   const { id: userId } = getAuthUser() || {}
   if (!userId) return { updated: false, streak: 0 }
+
+  if (import.meta.env.VITE_SERVER_ECONOMY === '1') {
+    try { return await touchDailyStreakServer() } catch (e) {
+      console.error('[daily-streak] Exception:', e)
+      return { updated: false, streak: 0 }
+    }
+  }
 
   try {
     // Get current profile data
@@ -98,13 +142,7 @@ export async function updateDailyLoginStreak() {
     }
 
     // Unlock achievements based on streak
-    try {
-      if (newStreak >= 3) await unlockAchievementWithToast('daily_streak_3')
-      if (newStreak >= 5) await unlockAchievementWithToast('daily_streak_5')
-      if (newStreak >= 7) await unlockAchievementWithToast('daily_streak_7')
-      if (newStreak >= 14) await unlockAchievementWithToast('daily_streak_14')
-      if (newStreak >= 30) await unlockAchievementWithToast('daily_streak_30')
-    } catch {}
+    await unlockStreakAchievements(newStreak)
 
     return { updated: true, streak: newStreak, previous: currentStreak, isBest: newStreak === newBest && newStreak > bestStreak }
   } catch (e) {

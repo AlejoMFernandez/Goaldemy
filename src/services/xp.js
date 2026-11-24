@@ -29,7 +29,21 @@ import { pushAchievementToast, pushLevelUpToast } from '../stores/notifications'
 import { setKnownLevel as _setKnownLevelRealtime } from './levelup-realtime'
 import { getXpMultiplier } from './premium'
 
+// Economía en el servidor (supabase/pendientes/2026-11-24-04-xp-servidor.sql).
+// OFF por defecto: con '1' la XP de juego va por award_game_xp, que aplica el
+// multiplicador del plan EN EL SERVIDOR (el cliente manda la XP base).
+export const SERVER_ECONOMY = import.meta.env.VITE_SERVER_ECONOMY === '1'
+
 export async function awardXp({ amount, reason = 'correct_answer', gameId = null, sessionId = null, meta = null }) {
+  if (SERVER_ECONOMY && reason === 'correct_answer' && meta?.game) {
+    const { data, error } = await supabase.rpc('award_game_xp', {
+      p_game_slug: meta.game,
+      p_base_amount: Math.max(0, Math.round(Number(amount) || 0)),
+      p_meta: meta,
+    })
+    await detectAndToastLevelUp()
+    return { data, error }
+  }
   const multiplier = await getXpMultiplier()
   const boostedAmount = Math.round(amount * multiplier)
   const { data, error } = await supabase.rpc('award_xp', {

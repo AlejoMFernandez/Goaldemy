@@ -109,6 +109,14 @@ export function pushClaimNotification({ type, title, xp, emoji }) {
 
 async function _awardBonusXpSilent(amount) {
   try {
+    if (import.meta.env.VITE_SERVER_ECONOMY === '1') {
+      // El servidor calcula y paga los bonus de nivel pendientes (1 vez por
+      // nivel, ver supabase/pendientes/2026-11-24-04-xp-servidor.sql). El
+      // monto local solo se usa para mostrar.
+      await supabase.rpc('claim_level_up_bonus')
+      import('../services/xp').then(m => m.detectAndToastLevelUp?.()).catch(() => {})
+      return
+    }
     await supabase.rpc('award_xp', {
       p_amount: amount,
       p_reason: 'level_up_bonus',
