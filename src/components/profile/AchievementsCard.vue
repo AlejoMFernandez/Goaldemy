@@ -109,10 +109,17 @@ const featuredList = computed(() => {
           <p class="text-[11px] text-slate-400">{{ achievements.length }} de {{ totalCatalog }} desbloqueados</p>
         </div>
       </div>
+      <div class="flex items-center gap-1">
+      <RouterLink v-if="isSelf" to="/logros"
+        class="min-h-[44px] px-2 flex items-center gap-0.5 text-[13px] font-bold text-amber-400 hover:text-amber-200 active:text-amber-200 transition">
+        Ver todos
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" class="h-4 w-4" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+      </RouterLink>
       <button v-if="isSelf && achievements.length > 0" @click="$emit('customize')"
         class="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 grid place-items-center transition-all" title="Personalizar logros destacados">
         <svg viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 text-slate-200"><path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32l8.4-8.4z" /><path d="M5.25 5.25a3 3 0 00-3 3v10.5a3 3 0 003 3h10.5a3 3 0 003-3V13.5a.75.75 0 00-1.5 0v5.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5V8.25a1.5 1.5 0 011.5-1.5h5.25a.75.75 0 000-1.5H5.25z" /></svg>
       </button>
+      </div>
     </div>
 
     <!-- Destacados: SIN XP, énfasis en imagen/título/descripción -->
