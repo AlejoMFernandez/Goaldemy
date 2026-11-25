@@ -6,6 +6,8 @@
 import { ref, computed, watch } from 'vue'
 import PowerupIcon from './PowerupIcon.vue'
 import MonthlyPass from './MonthlyPass.vue'
+import MissionRow from '../missions/MissionRow.vue'
+import { normalizeDaily, normalizeProgressive, sortMissions } from '../missions/missions'
 import { soundManager } from '../../services/sounds'
 import { pushClaimNotification } from '../../stores/notifications'
 import {
@@ -30,6 +32,8 @@ const loaded = ref(false)
 const visibleChallenges = computed(() => challenges.value.filter(c => !c.claimed))
 const allChallengesDone = computed(() => challenges.value.length > 0 && visibleChallenges.value.length === 0)
 const dailyClaimable = computed(() => (dailyReward.value.available ? 1 : 0) + visibleChallenges.value.filter(c => c.progress >= c.target).length)
+const dailyMissions = computed(() => sortMissions(visibleChallenges.value.map(normalizeDaily)))
+const progMissions = computed(() => sortMissions(progressive.value.map(normalizeProgressive)))
 const progClaimable = computed(() => progressive.value.filter(c => c.claimable).length)
 
 const TABS = computed(() => [
@@ -151,25 +155,10 @@ watch(() => props.open, (o) => { if (o && !loaded.value) loadDaily() })
                   <span v-else class="shrink-0 text-emerald-400 text-xs font-semibold">Reclamada</span>
                 </div>
 
-                <!-- Retos diarios -->
-                <div v-for="c in visibleChallenges" :key="c.code" class="rounded-xl border p-3 transition" :class="c.progress >= c.target ? 'border-emerald-500/30 bg-emerald-500/[0.06]' : 'border-white/10 bg-white/[0.03]'">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-lg grid place-items-center text-lg bg-white/5 border border-white/10 shrink-0">{{ c.icon }}</div>
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center justify-between gap-2">
-                        <div class="font-semibold text-white text-sm truncate">{{ c.title }}</div>
-                        <div class="shrink-0 flex items-center gap-1.5 text-xs font-bold">
-                          <span v-if="c.reward_xp > 0" class="text-emerald-400">+{{ c.reward_xp }}</span>
-                          <span v-if="c.reward_powerup" class="inline-flex items-center gap-1 text-amber-300"><PowerupIcon :type="c.reward_powerup" :size="14" />×{{ c.reward_powerup_qty }}</span>
-                        </div>
-                      </div>
-                      <div class="mt-1.5 flex items-center gap-2">
-                        <div class="flex-1 h-1.5 rounded-full bg-black/30 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-500" :style="{ width: Math.min(100, (c.progress / c.target) * 100) + '%' }"></div></div>
-                        <span class="text-[10px] tabular-nums text-slate-400 font-semibold">{{ Math.min(c.progress, c.target) }}/{{ c.target }}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button v-if="c.progress >= c.target" @click="handleClaimChallenge(c)" :disabled="claiming === c.code" class="mt-2.5 w-full rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 hover:brightness-110 active:scale-[0.98] text-white py-1.5 text-xs font-bold transition disabled:opacity-60">Reclamar</button>
+                <!-- Misiones del día (fila V4 compartida con /rewards?tab=misiones) -->
+                <div v-if="dailyMissions.length" class="ch-list">
+                  <MissionRow v-for="m in dailyMissions" :key="m.key" :mission="m" compact
+                    :busy="claiming === m.code" @claim="handleClaimChallenge(m.raw)" />
                 </div>
 
                 <div v-if="allChallengesDone" class="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-6 text-center">
@@ -184,22 +173,9 @@ watch(() => props.open, (o) => { if (o && !loaded.value) loadDaily() })
             <div v-show="activeTab === 'progresos'" class="space-y-2.5">
               <div v-if="loading" class="space-y-2"><div v-for="i in 3" :key="i" class="h-20 rounded-xl bg-white/5 animate-pulse"></div></div>
               <template v-else>
-                <div v-for="c in progressive" :key="c.code" class="rounded-xl border p-3 transition" :class="c.claimable ? 'border-amber-500/40 bg-amber-500/[0.07]' : 'border-white/10 bg-white/[0.03]'">
-                  <div class="flex items-stretch gap-3">
-                    <div class="w-10 h-10 rounded-lg grid place-items-center text-lg bg-white/5 border border-white/10 shrink-0 self-start">{{ c.icon }}</div>
-                    <div class="flex-1 min-w-0">
-                      <div class="font-semibold text-white text-sm flex items-center gap-2">{{ c.title }}<span class="shrink-0 rounded-full bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">Nivel {{ c.tier }}</span></div>
-                      <div class="mt-1.5 flex items-center gap-2">
-                        <div class="flex-1 h-1.5 rounded-full bg-black/30 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-500" :style="{ width: Math.min(100, (c.progress / c.target) * 100) + '%' }"></div></div>
-                        <span class="text-[10px] tabular-nums text-slate-400 font-semibold">{{ Math.min(c.progress, c.target) }}/{{ c.target }}</span>
-                      </div>
-                    </div>
-                    <div class="shrink-0 w-[76px] rounded-lg border p-1.5 flex flex-col items-center justify-center text-center" :class="c.claimable ? 'border-amber-400/40 bg-amber-500/10' : 'border-white/10 bg-black/20'">
-                      <div v-if="c.reward_powerup && c.reward_powerup_qty > 0" class="flex flex-col items-center"><PowerupIcon :type="c.reward_powerup" :size="30" /><div class="text-[10px] font-bold text-amber-300">×{{ c.reward_powerup_qty }}</div></div>
-                      <div v-if="c.reward_xp > 0"><span class="font-display font-extrabold text-sm text-emerald-300">+{{ c.reward_xp }}</span><span class="text-[8px] text-slate-400 uppercase ml-0.5">XP</span></div>
-                    </div>
-                  </div>
-                  <button v-if="c.claimable" @click="handleClaimProgressive(c)" :disabled="claiming === 'prog_' + c.code" class="mt-2.5 w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 active:scale-[0.98] text-black py-1.5 text-xs font-bold transition disabled:opacity-60">Reclamar y subir</button>
+                <div v-if="progMissions.length" class="ch-list">
+                  <MissionRow v-for="m in progMissions" :key="m.key" :mission="m" compact
+                    :busy="claiming === 'prog_' + m.code" @claim="handleClaimProgressive(m.raw)" />
                 </div>
                 <div v-if="!progressive.length" class="rounded-xl border border-white/10 bg-white/[0.03] p-6 text-center text-sm text-slate-400">Todavía no tenés retos progresivos activos.</div>
               </template>
@@ -219,6 +195,7 @@ watch(() => props.open, (o) => { if (o && !loaded.value) loadDaily() })
 <style scoped>
 .ch-fade-enter-active, .ch-fade-leave-active { transition: opacity .2s ease; }
 .ch-fade-enter-from, .ch-fade-leave-to { opacity: 0; }
+.ch-list { border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; background: rgba(255,255,255,0.015); }
 .rail-scroll::-webkit-scrollbar { width: 6px; }
 .rail-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 9999px; }
 .rail-scroll::-webkit-scrollbar-track { background: transparent; }
