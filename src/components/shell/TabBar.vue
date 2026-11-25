@@ -1,5 +1,4 @@
 <script setup>
-import { BALL_SVG } from '../../services/game-art'
 /**
  * TAB BAR MOBILE (<lg) — 5 pestañas, la central (JUGAR) elevada y más grande,
  * como el botón "Batalla" de Clash Royale.
@@ -45,7 +44,7 @@ function go(tab) {
         <button v-if="t.center" type="button" class="shell-tab-center" :class="{ 'is-active': isActive(t) }"
           :aria-current="isActive(t) ? 'page' : undefined" aria-label="Jugar" @click="go(t)">
           <span class="shell-tab-center-disc">
-            <span class="shell-tab-center-ball" v-html="BALL_SVG" aria-hidden="true"></span>
+            <img class="shell-tab-center-logo" src="/iconclaro.png" alt="" aria-hidden="true" width="27" height="36" />
           </span>
           <span class="shell-tab-center-label">Jugar</span>
         </button>
@@ -115,19 +114,19 @@ function go(tab) {
 }
 .shell-tab-center:active { transform: scale(.92); }
 .shell-tab-center-disc {
-  flex: none; box-sizing: border-box; width: 56px; height: 56px; aspect-ratio: 1 / 1;
+  flex: none; box-sizing: border-box; width: 58px; height: 58px; aspect-ratio: 1 / 1;
   border-radius: 50%; display: grid; place-items: center;
-  background: radial-gradient(circle at 50% 32%, #fde68a 0%, #fbbf24 55%, #d97706 100%);
-  border: 3px solid #0b1220;
-  box-shadow: 0 0 0 1.5px rgba(251,191,36,.7), 0 6px 16px rgba(0,0,0,.45);
+  /* Escudo de FULVO sobre círculo oscuro con aro dorado: la marca en todas las pantallas */
+  background: radial-gradient(circle at 50% 30%, #1e3a5f 0%, #0b1220 75%);
+  border: 2px solid #fbbf24;
+  box-shadow: 0 0 0 3px #0b1220, 0 0 16px rgba(251,191,36,.3), 0 6px 16px rgba(0,0,0,.45);
   transition: box-shadow .3s ease, transform .3s cubic-bezier(.34, 1.56, .64, 1);
 }
-.shell-tab-center-ball { width: 30px; height: 30px; display: block; }
-.shell-tab-center-ball :deep(svg) { width: 100%; height: 100%; display: block; }
+.shell-tab-center-logo { height: 36px; width: auto; display: block; margin-top: -2px; }
 .shell-tab-center-label { font-size: 10.5px; font-weight: 800; letter-spacing: .02em; color: #94a3b8; }
 .shell-tab-center.is-active .shell-tab-center-label { color: #fcd34d; }
 .shell-tab-center.is-active .shell-tab-center-disc {
-  box-shadow: 0 0 0 1.5px rgba(253,230,138,.95), 0 0 14px rgba(251,191,36,.45), 0 6px 16px rgba(0,0,0,.45);
+  box-shadow: 0 0 0 3px #0b1220, 0 0 22px rgba(251,191,36,.55), 0 6px 16px rgba(0,0,0,.45);
 }
 @keyframes shell-badge-pop { from { transform: scale(0); } to { transform: scale(1); } }
 
