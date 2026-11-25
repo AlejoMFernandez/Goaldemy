@@ -444,10 +444,10 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
                   :icon-bg="home.iconBg"
                   :frame-premium="home.framePremium"
                 />
-                <div v-if="home.dailyStreak > 0" class="absolute -top-2 -right-2 flex items-center gap-0.5 rounded-full bg-slate-950 ring-2 ring-amber-400/60 px-2 py-1 shadow-lg">
+                <RouterLink v-if="home.dailyStreak > 0" to="/racha" :aria-label="`Racha de ${home.dailyStreak} días: ver tu racha`" class="absolute -top-2 -right-2 flex items-center gap-0.5 rounded-full bg-slate-950 ring-2 ring-amber-400/60 px-2 py-1 shadow-lg hover:ring-amber-300 transition">
                   <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 23c-3.6 0-8-3.1-8-8.5C4 9 8 4 11.5 1c.2-.1.4-.1.5 0 .2.1.2.3.1.5C11 4 14 6 14 6s1-1.5 1.5-4c0-.2.2-.3.4-.3s.3.1.4.3C18 5 20 9 20 14.5 20 19.9 15.6 23 12 23z"/></svg>
                   <span class="text-amber-300 font-extrabold text-xs leading-none">{{ home.dailyStreak }}</span>
-                </div>
+                </RouterLink>
               </div>
 
               <div class="mt-2.5 flex flex-col items-center gap-1.5">
