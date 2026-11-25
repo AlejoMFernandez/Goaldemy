@@ -36,6 +36,7 @@ const AboutFulvo = () => import('../pages/info/AboutFulvo.vue');
 const AboutObjective = () => import('../pages/info/AboutObjective.vue');
 const NotFound = () => import('../pages/NotFound.vue');
 const PlayPoints = () => import('../pages/PlayPoints.vue');
+const Racha = () => import('../pages/Racha.vue');
 const RewardCenter = () => import('../pages/RewardCenter.vue');
 const Tienda = () => import('../pages/Tienda.vue');
 const Notifications = () => import('../pages/social/Notifications.vue');
@@ -100,6 +101,7 @@ const routes = [
     { path: '/play/points', component: PlayPoints, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Jugar', noindex: true } } },
     // /play/free (Juego Libre) retirado en MEJORAS12: redirige al índice por puntos
     { path: '/play/free', redirect: '/play/points' },
+    { path: '/racha', component: Racha, meta: { requiresAuth: true, zone: 'play', seo: { title: 'Racha', noindex: true } } },
     { path: '/rewards', component: RewardCenter, meta: { requiresAuth: true, zone: 'play', seo: { title: 'Recompensas', noindex: true } } },
     { path: '/tienda', component: Tienda, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Tienda', noindex: true } } },
     { path: '/pricing', component: Pricing, meta: { zone: 'hub', seo: { title: 'Planes y precios', description: 'Conocé los planes PRO de FULVO: cosméticos exclusivos, ayudas y más.' } } },

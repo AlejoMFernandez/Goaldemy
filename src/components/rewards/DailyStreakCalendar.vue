@@ -1,207 +1,178 @@
-<script>
+<script setup>
+/**
+ * DailyStreakCalendar — "escalera" de los 7 sobres de la semana (diseño V4Sobre).
+ *
+ * Lunes a domingo (hora Argentina). Cada día es un mini sobre igual al grande:
+ *  - cobrado: verde con tilde (user_daily_claims de esta semana)
+ *  - hoy: índigo con sello dorado que late (o verde si ya lo abriste)
+ *  - pasado sin cobrar: apagado
+ *  - futuro: gris, con lo que trae
+ *  - domingo: sobre DORADO, más grande
+ * Lo que trae cada día sale de la regla del servidor (get_daily_reward):
+ * lunes a viernes +100 XP, sábado y domingo una ayuda.
+ *
+ * API sin cambios: props currentStreak/bestStreak/playedToday/todayOpened,
+ * emite `open-today` al tocar el sobre de hoy (y `claim`, que queda por compatibilidad).
+ */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { soundManager } from '@/services/sounds'
-import { getAuthUser } from '@/services/auth'
+import { RouterLink } from 'vue-router'
+import { appToday, msUntilAppMidnight } from '@/services/app-date'
+import { addDaysKey, weekMondayKey, getWeekDailyClaims } from '@/services/streak-calendar'
+import { tap } from '@/services/haptics'
 
-export default {
-  name: 'DailyStreakCalendar',
-  props: {
-    currentStreak: { type: Number, default: 0 },
-    bestStreak: { type: Number, default: 0 },
-    playedToday: { type: Boolean, default: false },
-    // El sobre del día (DailyEnvelope) es la recompensa real: el calendario solo lo refleja
-    todayOpened: { type: Boolean, default: false },
-  },
-  emits: ['claim', 'open-today'],
-  setup(props, { emit }) {
-    const claimedToday = ref(false)
-    const chestOpening = ref(-1)
-    const timeLeft = ref('')
-    let timer = null
+const props = defineProps({
+  currentStreak: { type: Number, default: 0 },
+  bestStreak: { type: Number, default: 0 },
+  playedToday: { type: Boolean, default: false },
+  // El sobre del día (DailyEnvelope) es la recompensa real: el calendario solo lo refleja
+  todayOpened: { type: Boolean, default: false },
+})
+const emit = defineEmits(['claim', 'open-today'])
 
-    const dayLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+const WEEKDAY = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+const WIDTHS = [34, 36, 38, 40, 42, 43, 64]
 
-    const xpRewards = [10, 15, 20, 25, 30, 35, 50]
+const todayKey = ref(appToday())
+const claims = ref(new Set())
+const left = ref('')
+let timer = null
 
-    const days = computed(() => {
-      const today = new Date().getDay()
-      const mondayOffset = today === 0 ? 6 : today - 1
-      const streakInWeek = Math.min(props.currentStreak, 7)
+function tick() {
+  const ms = msUntilAppMidnight()
+  const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000), s = Math.floor((ms % 60000) / 1000)
+  left.value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  const k = appToday()
+  if (k !== todayKey.value) { todayKey.value = k; loadClaims() }
+}
+async function loadClaims() { claims.value = await getWeekDailyClaims() }
 
-      return dayLabels.map((label, i) => {
-        const isPast = i < mondayOffset
-        const isToday = i === mondayOffset
-        const isFuture = i > mondayOffset
-        const played = isPast && i >= (mondayOffset - streakInWeek)
-        const canClaim = isToday && !props.todayOpened
-        const claimed = isToday && props.todayOpened
-        const isSpecial = i === 6
+onMounted(() => { tick(); timer = setInterval(tick, 1000); loadClaims() })
+onUnmounted(() => clearInterval(timer))
 
-        return { label, isPast, isToday, isFuture, played, canClaim, claimed, isSpecial, xp: xpRewards[i] }
-      })
-    })
+const monday = computed(() => weekMondayKey(todayKey.value))
+const todayIdx = computed(() => WEEKDAY.findIndex((_, i) => addDaysKey(monday.value, i) === todayKey.value))
 
-    const streakEmoji = computed(() => {
-      if (props.currentStreak >= 30) return '👑'
-      if (props.currentStreak >= 14) return '💎'
-      if (props.currentStreak >= 7) return '⭐'
-      if (props.currentStreak >= 3) return '🔥'
-      return '✨'
-    })
+const PAL = {
+  done: { body: '#15803d', pocket: '#22c55e', flap: '#4ade80', ring: '#4ade80' },
+  today: { body: '#312e81', pocket: '#4338ca', flap: '#818cf8', ring: '#fbbf24' },
+  gold: { body: '#b45309', pocket: '#f59e0b', flap: '#fde68a', ring: '#fff7d6' },
+  off: { body: '#1e293b', pocket: '#273449', flap: '#334155', ring: 'rgba(255,255,255,0.12)' },
+}
 
-    function claimToday(dayIndex) {
-      if (claimedToday.value) return
-      chestOpening.value = dayIndex
-      soundManager.play('claim')
-      setTimeout(() => {
-        claimedToday.value = true
-        chestOpening.value = -1
-        emit('claim', xpRewards[dayIndex])
-      }, 600)
-    }
-
-    function updateCountdown() {
-      const now = new Date()
-      const midnight = new Date()
-      midnight.setHours(24, 0, 0, 0)
-      const diff = midnight - now
-      const h = Math.floor(diff / 3600000)
-      const m = Math.floor((diff % 3600000) / 60000)
-      const s = Math.floor((diff % 60000) / 1000)
-      timeLeft.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-    }
-
-    // Scopeado por usuario (sin scope, una cuenta veía el "reclamado hoy" de otra).
-    function streakKey() {
-      const { id } = getAuthUser() || {}
-      return id ? `gl:streak_claimed:${id}:${new Date().toDateString()}` : null
-    }
-
-    onMounted(() => {
-      try {
-        const key = streakKey()
-        if (key && localStorage.getItem(key)) claimedToday.value = true
-      } catch {}
-      updateCountdown()
-      timer = setInterval(updateCountdown, 1000)
-    })
-
-    onUnmounted(() => { if (timer) clearInterval(timer) })
-
-    function persistClaim() {
-      try { const key = streakKey(); if (key) localStorage.setItem(key, '1') } catch {}
-    }
-
-    return { days, streakEmoji, claimedToday, chestOpening, timeLeft, claimToday, persistClaim, emit }
+const days = computed(() => WIDTHS.map((w, i) => {
+  const key = addDaysKey(monday.value, i)
+  const isToday = i === todayIdx.value
+  const past = i < todayIdx.value
+  const gold = i === 6
+  const done = claims.value.has(key) || (isToday && props.todayOpened)
+  const missed = past && !done
+  const state = done ? 'done' : isToday ? 'today' : gold ? 'gold' : 'off'
+  const weekend = i >= 5
+  const seal = gold && !done ? 22 : isToday && !done ? 16 : 12
+  return {
+    key, i, w, h: Math.round(w * 29 / 40), rad: Math.round(w * 4 / 40),
+    isToday, done, gold, missed, state, pal: PAL[state], seal,
+    showLogo: !done && (isToday || gold),
+    canOpen: isToday && !done,
+    tag: isToday ? 'HOY' : gold ? 'DORADO' : '',
+    val: done || missed ? '' : (weekend ? 'Ayuda' : '+100'),
+    unit: done || missed || weekend ? '' : 'XP',
+    label: `Día ${i + 1}`,
+    aria: `${WEEKDAY[i]}, día ${i + 1}: ${done ? 'sobre cobrado' : missed ? 'no se cobró' : isToday ? 'sobre de hoy, sin abrir' : 'trae ' + (weekend ? 'una ayuda' : '100 XP')}${gold ? ', sobre dorado' : ''}`,
   }
+}))
+
+function openToday(d) {
+  if (!d.canOpen) return
+  tap()
+  emit('open-today')
 }
 </script>
 
 <template>
-  <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 via-slate-800/80 to-slate-900/80 overflow-hidden">
-    <!-- Header -->
-    <div class="p-4 border-b border-white/10 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <span class="text-2xl">{{ streakEmoji }}</span>
-        <div>
-          <h3 class="font-display font-bold text-white text-sm">Racha diaria</h3>
-          <p class="text-xs text-slate-400">
-            <span class="text-amber-300 font-semibold">{{ currentStreak }}</span> días consecutivos
-          </p>
-        </div>
-      </div>
-      <div class="flex items-center gap-1.5 text-xs text-slate-400">
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span class="font-mono tabular-nums text-amber-300 font-semibold">{{ timeLeft }}</span>
-      </div>
-    </div>
+  <section class="dsc" aria-label="Sobres de la semana">
+    <header class="dsc-head">
+      <p class="dsc-sub">
+        Día {{ todayIdx + 1 }} de 7 · se renueva en <b class="tabular-nums">{{ left }}</b>
+      </p>
+      <RouterLink to="/racha" class="dsc-streak" :aria-label="`Racha de ${currentStreak} días: ver tu racha`" @click="tap()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 23c-3.6 0-8-3.1-8-8.5C4 9 8 4 11.5 1c.2-.1.4-.1.5 0 .2.1.2.3.1.5C11 4 14 6 14 6s1-1.5 1.5-4c0-.2.2-.3.4-.3s.3.1.4.3C18 5 20 9 20 14.5 20 19.9 15.6 23 12 23z" fill="currentColor" /></svg>
+        <b>{{ currentStreak }}</b>
+        <span class="sr-only">días de racha</span>
+      </RouterLink>
+    </header>
 
-    <!-- 7-day row -->
-    <div class="p-4">
-      <div class="grid grid-cols-7 gap-1.5">
-        <div
-          v-for="(day, i) in days"
-          :key="i"
-          class="flex flex-col items-center gap-1.5"
-        >
-          <!-- Day label -->
-          <span class="text-[10px] uppercase tracking-wider font-semibold" :class="day.isToday ? 'text-amber-300' : 'text-slate-500'">
-            {{ day.label }}
-          </span>
-
-          <!-- Chest -->
-          <button
-            :disabled="!day.canClaim"
-            @click="() => { if (day.canClaim) emit('open-today') }"
-            class="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl grid place-items-center transition-all duration-200"
-            :class="[
-              day.played || day.claimed
-                ? 'bg-emerald-500/15 border border-emerald-500/30'
-                : day.canClaim
-                  ? 'bg-amber-500/20 border-2 border-amber-300/60 hover:scale-105 cursor-pointer'
-                  : day.isFuture
-                    ? 'bg-white/3 border border-white/8'
-                    : 'bg-white/5 border border-white/10',
-              day.canClaim ? 'chest-pulse' : '',
-              chestOpening === i ? 'scale-110' : '',
-            ]"
-          >
-            <!-- Sobres: abierto (jugado / reclamado), cerrado que brilla (hoy), cerrado apagado (futuro) -->
-            <svg class="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 32 26" aria-hidden="true"
-                 :class="day.played || day.claimed ? 'env-open' : day.canClaim ? 'env-today' : 'env-off'"
-                 :data-gold="day.isSpecial ? '' : undefined">
-              <template v-if="day.played || day.claimed">
-                <path d="M2 10 L16 1 L30 10" class="env-flap-open" />
-                <rect x="2" y="10" width="28" height="15" rx="2.5" class="env-body" />
-                <path d="M11 17.5 l3.2 3.2 L21 14" class="env-check" />
-              </template>
-              <template v-else>
-                <rect x="2" y="5" width="28" height="19" rx="2.5" class="env-body" />
-                <path d="M2.5 6 L16 15.5 L29.5 6" class="env-flap" />
-                <circle cx="16" cy="15" r="2.6" class="env-seal" />
-              </template>
+    <ol class="dsc-row">
+      <li v-for="d in days" :key="d.key">
+        <component :is="d.canOpen ? 'button' : 'div'" :type="d.canOpen ? 'button' : undefined"
+                   class="dsc-day" :class="{ open: d.canOpen }" :aria-label="d.aria" @click="openToday(d)">
+          <span class="dsc-tag" :class="{ gold: d.gold && !d.isToday }">{{ d.tag }}</span>
+          <span class="dsc-env" :class="{ today: d.canOpen, glow: d.gold && !d.done, dim: d.missed }"
+                :style="{ width: d.w + 'px', height: d.h + 'px', borderRadius: d.rad + 'px' }">
+            <svg aria-hidden="true" viewBox="0 0 40 29" preserveAspectRatio="none">
+              <rect x="0" y="0" width="40" height="29" rx="4" :fill="d.pal.body" :stroke="d.pal.ring" stroke-width="0.8" />
+              <path d="M0 4.6 L17.6 14.2 Q20 15.8 22.4 14.2 L40 4.6 V25 Q40 29 36 29 H4 Q0 29 0 25 Z" :fill="d.pal.pocket" />
+              <path d="M0 4 Q0 0 4 0 H36 Q40 0 40 4 V4.6 L22.5 15.6 Q20 17.2 17.5 15.6 L0 4.6 Z" :fill="d.pal.flap" />
             </svg>
-
-            <!-- Special day 7 indicator -->
-            <div v-if="day.isSpecial" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-yellow-500 grid place-items-center">
-              <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-              </svg>
-            </div>
-          </button>
-
-          <!-- XP reward -->
-          <span class="text-[9px] font-semibold tabular-nums" :class="day.played || day.claimed ? 'text-emerald-400' : day.canClaim ? 'text-amber-300' : 'text-slate-600'">
-            +{{ day.xp }}
+            <span class="dsc-seal" :class="'s-' + d.state" :style="{ width: d.seal + 'px', height: d.seal + 'px' }">
+              <svg v-if="d.done" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+              <img v-else-if="d.showLogo" src="/iconclaro.png" alt="" :style="{ width: (d.gold ? 14 : 10) + 'px' }">
+            </span>
           </span>
-        </div>
-      </div>
-    </div>
+          <span class="dsc-val" :class="{ gold: d.gold, today: d.isToday }">{{ d.val }}<small v-if="d.unit"> {{ d.unit }}</small></span>
+          <span class="dsc-lbl" :class="{ done: d.done, today: d.isToday && !d.done, gold: d.gold && !d.done && !d.isToday }">{{ d.label }}</span>
+        </component>
+      </li>
+    </ol>
 
-    <!-- Best streak -->
-    <div v-if="bestStreak > 0" class="px-4 pb-3 flex items-center justify-between text-xs">
-      <span class="text-slate-500">Mejor racha</span>
-      <span class="text-amber-400 font-semibold">{{ bestStreak }} días 🏆</span>
-    </div>
-  </div>
+    <p v-if="bestStreak > 0" class="dsc-best">Mejor racha: <b>{{ bestStreak }} días</b></p>
+  </section>
 </template>
 
 <style scoped>
-.env-body { fill: #1e2a5e; stroke: #38bdf8; stroke-opacity: .55; stroke-width: 1.5; }
-.env-flap { fill: none; stroke: #38bdf8; stroke-opacity: .55; stroke-width: 1.5; stroke-linejoin: round; }
-.env-flap-open { fill: #141d45; stroke: #34d399; stroke-opacity: .6; stroke-width: 1.5; stroke-linejoin: round; }
-.env-open .env-body { stroke: #34d399; fill: rgba(16, 185, 129, .18); }
-.env-check { fill: none; stroke: #34d399; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.env-seal { fill: #f59e0b; }
-.env-off { opacity: .45; }
-.env-off .env-seal { fill: #64748b; }
-.env-today { filter: drop-shadow(0 0 6px rgba(252, 211, 77, .7)); }
-.env-today .env-body { stroke: #fcd34d; stroke-opacity: .9; }
-[data-gold] .env-body { fill: #7c4a0a; stroke: #fcd34d; }
-[data-gold] .env-flap { stroke: #fcd34d; }
-.chest-pulse {
-  animation: claim-pulse 2s ease-in-out infinite;
-}
+.dsc { display: grid; gap: 8px; }
+.dsc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dsc-sub { margin: 0; font-size: 12px; font-weight: 700; color: #94a3b8; }
+.dsc-sub b { color: #fde68a; font-weight: 800; }
+.dsc-streak { min-width: 44px; height: 44px; padding: 0 12px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  background: rgba(249, 115, 22, .14); border: 1px solid rgba(249, 115, 22, .45); color: #fb923c; text-decoration: none; }
+.dsc-streak svg { width: 16px; height: 16px; }
+.dsc-streak b { font-family: var(--font-bug); font-weight: 800; font-size: 18px; color: #fed7aa; line-height: 1; }
+.dsc-streak:active { transform: scale(.96); }
+
+.dsc-row { list-style: none; margin: 0; padding: 0; height: 118px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)) minmax(0, 1.55fr); gap: 5px; align-items: end; }
+.dsc-row > li { display: flex; justify-content: center; min-width: 0; }
+.dsc-day { width: 100%; min-height: 44px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: inherit; font: inherit; }
+.dsc-day.open { cursor: pointer; border-radius: 12px; }
+.dsc-day.open:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+.dsc-day.open:active .dsc-env { transform: scale(.94); }
+
+.dsc-tag { min-height: 13px; font-family: var(--font-bug); font-weight: 800; font-size: 11px; letter-spacing: .5px; line-height: 1.2; color: #fde68a; }
+.dsc-tag.gold { color: #fbbf24; }
+.dsc-env { position: relative; display: block; flex-shrink: 0; transition: transform .15s; }
+.dsc-env > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.dsc-env.today { filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .4)); animation: dsc-today 2s ease-in-out infinite; }
+.dsc-env.glow { filter: drop-shadow(0 0 8px rgba(251, 191, 36, .55)); }
+.dsc-env.dim { opacity: .45; }
+@keyframes dsc-today { 0%, 100% { box-shadow: 0 0 0 2px #fbbf24, 0 0 0 0 rgba(251, 191, 36, .5); } 50% { box-shadow: 0 0 0 2px #fde68a, 0 0 0 7px rgba(251, 191, 36, 0); } }
+
+.dsc-seal { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%); border-radius: 50%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(255, 255, 255, .15); background: #475569; }
+.dsc-seal img { height: auto; }
+.s-done { background: #16a34a; border-color: #bbf7d0; }
+.s-today { background: radial-gradient(circle at 38% 32%, #fde68a, #f59e0b 60%, #b45309); border-color: #fff7d6; }
+.s-gold { background: #1c1206; border-color: #fde68a; }
+
+.dsc-val { min-height: 12px; font-family: var(--font-bug); font-weight: 800; font-size: 12px; line-height: 1; color: #64748b; white-space: nowrap; }
+.dsc-val small { font-size: 9px; }
+.dsc-val.today { color: #fde68a; }
+.dsc-val.gold { color: #fbbf24; font-size: 14px; }
+.dsc-lbl { font-size: 10px; font-weight: 700; color: #64748b; white-space: nowrap; }
+.dsc-lbl.done { color: #4ade80; }
+.dsc-lbl.today { color: #fde68a; }
+.dsc-lbl.gold { color: #fbbf24; }
+
+.dsc-best { margin: 0; font-size: 11.5px; color: #94a3b8; }
+.dsc-best b { color: #fbbf24; }
+
+@media (prefers-reduced-motion: reduce) { .dsc-env.today { animation: none; box-shadow: 0 0 0 2px #fbbf24; } .dsc-env { transition: none; } }
 </style>
