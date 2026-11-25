@@ -54,6 +54,7 @@ const TermsOfService = () => import('../pages/legal/TermsOfService.vue');
 // Shell mobile (tab bar): hubs nuevos
 const Social = () => import('../pages/Social.vue');
 const Coleccion = () => import('../pages/Coleccion.vue');
+const Logros = () => import('../pages/Logros.vue');
 
 const routes = [
     { path: '/', component: Landing, meta: { zone: 'hub', seo: { description: 'FULVO es una app de micro-juegos de fútbol para entrenar tu conocimiento: adiviná jugadores, armá rachas, sumá logros y competí en el ranking.' } } },
@@ -102,6 +103,7 @@ const routes = [
     // /play/free (Juego Libre) retirado en MEJORAS12: redirige al índice por puntos
     { path: '/play/free', redirect: '/play/points' },
     { path: '/racha', component: Racha, meta: { requiresAuth: true, zone: 'play', seo: { title: 'Racha', noindex: true } } },
+    { path: '/logros', component: Logros, meta: { requiresAuth: true, zone: 'play', seo: { title: 'Logros', noindex: true } } },
     { path: '/rewards', component: RewardCenter, meta: { requiresAuth: true, zone: 'play', seo: { title: 'Recompensas', noindex: true } } },
     { path: '/tienda', component: Tienda, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Tienda', noindex: true } } },
     { path: '/pricing', component: Pricing, meta: { zone: 'hub', seo: { title: 'Planes y precios', description: 'Conocé los planes PRO de FULVO: cosméticos exclusivos, ayudas y más.' } } },
