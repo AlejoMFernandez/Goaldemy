@@ -86,6 +86,7 @@ function onCta() {
 let y0 = 0, moved = false
 function onDown(e) {
   if (state.value !== 'sealed' || props.busy) return
+  e.preventDefault()
   dragging.value = true
   moved = false
   y0 = e.clientY
@@ -169,7 +170,7 @@ const footnote = computed(() => weekDay === 7
             <path d="M0 218 L92 150 M236 218 L144 150" fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="1.5" stroke-linecap="round" />
           </svg>
           <div class="front-txt">
-            <img src="/iconclaro.png" alt="" class="front-logo">
+            <img src="/iconclaro.png" alt="" class="front-logo" draggable="false">
             <span class="front-title" :style="{ color: pal.ink }">{{ gold ? 'SOBRE DORADO' : 'SOBRE DEL DÍA' }}</span>
             <span class="front-day">DÍA {{ weekDay }} · FULVO</span>
           </div>
@@ -183,7 +184,7 @@ const footnote = computed(() => weekDay === 7
             <path d="M0 18 Q0 0 18 0 H218 Q236 0 236 18 V22 L132 104 Q118 115 104 104 L0 22 Z" :fill="`url(#${uid}f)`" />
             <path d="M2 20 Q2 2 18 2 H218 Q234 2 234 20" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" />
           </svg>
-          <span class="seal" aria-hidden="true"><span><img src="/iconclaro.png" alt=""></span></span>
+          <span class="seal" aria-hidden="true"><span><img src="/iconclaro.png" alt="" draggable="false"></span></span>
         </button>
 
         <span v-if="state === 'sealed' && !dragging && angle === 0" class="nudge" aria-hidden="true">
@@ -223,10 +224,11 @@ const footnote = computed(() => weekDay === 7
 </template>
 
 <style scoped>
+.dse img { -webkit-user-drag: none; }
 .dse { display: flex; flex-direction: column; align-items: center; gap: 10px; user-select: none; -webkit-user-select: none; }
 
 /* Escenario: el sobre (236) + lugar arriba para que salga la carta */
-.stage { position: relative; width: 100%; max-width: 340px; height: 330px; }
+.stage { position: relative; width: 100%; max-width: 340px; height: 366px; }
 .rays { position: absolute; left: 50%; top: 4px; width: 320px; height: 320px; margin-left: -160px; border-radius: 50%; pointer-events: none;
   background: repeating-conic-gradient(rgba(96, 165, 250, .22) 0 10deg, transparent 10deg 24deg);
   -webkit-mask-image: radial-gradient(circle, #000 30%, transparent 70%); mask-image: radial-gradient(circle, #000 30%, transparent 70%);
@@ -269,6 +271,7 @@ const footnote = computed(() => weekDay === 7
 .flap:focus-visible { outline: none; }
 .flap:focus-visible .seal { box-shadow: 0 0 0 3px #fde68a, 0 4px 10px rgba(0, 0, 0, .45); }
 .dragging .flap { transition: none; cursor: grabbing; }
+.flap > svg, .seal { pointer-events: none; }
 .flap > svg { position: absolute; left: 0; top: 0; overflow: visible; filter: drop-shadow(0 5px 6px rgba(0, 0, 0, .35)); }
 .seal { position: absolute; left: 50%; top: 84px; margin-left: -24px; width: 48px; height: 48px; box-sizing: border-box; border-radius: 50%;
   background: radial-gradient(circle at 38% 32%, #fde68a, #f59e0b 58%, #b45309); border: 2px solid #fff7d6;
