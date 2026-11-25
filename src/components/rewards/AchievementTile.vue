@@ -15,6 +15,11 @@ const props = defineProps({
   rarity: { type: String, default: 'common' },
   locked: { type: Boolean, default: false },
   size: { type: Number, default: 64 },
+  // bare: solo el pictograma (sin cuadrado de fondo ni glow), para meterlo
+  // dentro de otro marco (ej. la medalla hexagonal de /logros).
+  bare: { type: Boolean, default: false },
+  // color: fuerza el color del pictograma (por defecto blanco / gris si locked).
+  color: { type: String, default: '' },
 })
 
 const uid = 'at' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
@@ -34,10 +39,10 @@ const LOCKED_BG = '#141924'
 const LOCKED_BORDER = '#232b38'
 const LOCKED_GLYPH = '#2b3341'
 
-const glyphColor = computed(() => (props.locked ? LOCKED_GLYPH : '#ffffff'))
+const glyphColor = computed(() => props.color || (props.locked ? LOCKED_GLYPH : '#ffffff'))
 
 const wrapStyle = computed(() => {
-  if (props.locked) return {}
+  if (props.locked || props.bare) return {}
   return { filter: `drop-shadow(0 0 ${Math.round(props.size * 0.12)}px ${tier.value.glow})` }
 })
 
@@ -55,7 +60,7 @@ const gaugeAngle = computed(() => GAUGE_ANGLE[props.rarity] ?? GAUGE_ANGLE.commo
         </linearGradient>
       </defs>
 
-      <rect x="2" y="2" width="96" height="96" rx="20"
+      <rect v-if="!bare" x="2" y="2" width="96" height="96" rx="20"
         :fill="locked ? LOCKED_BG : `url(#${gid('bg')})`"
         :stroke="locked ? LOCKED_BORDER : 'rgba(255,255,255,0.28)'" stroke-width="2"/>
 
