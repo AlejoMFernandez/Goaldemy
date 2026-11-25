@@ -41,55 +41,61 @@ export default {
       const days = Math.floor(hrs / 24)
       return `hace ${days}d`
     },
-    borderColor() {
-      const c = this.icon.color
+    iconBg() {
       return {
-        emerald: 'border-emerald-500/30 hover:border-emerald-500/50',
-        yellow: 'border-yellow-500/30 hover:border-yellow-500/50',
-        amber: 'border-amber-500/30 hover:border-amber-500/50',
-        orange: 'border-orange-500/30 hover:border-orange-500/50',
-        red: 'border-red-500/30 hover:border-red-500/50',
-        cyan: 'border-cyan-500/30 hover:border-cyan-500/50',
-      }[c] || 'border-white/15'
-    }
+        emerald: 'linear-gradient(160deg,#10b981,#064e3b)',
+        yellow: 'linear-gradient(160deg,#facc15,#713f12)',
+        amber: 'linear-gradient(160deg,#f59e0b,#78350f)',
+        orange: 'linear-gradient(160deg,#fb923c,#7c2d12)',
+        red: 'linear-gradient(160deg,#ef4444,#450a0a)',
+        cyan: 'linear-gradient(160deg,#38bdf8,#0369a1)',
+      }[this.icon.color] || 'linear-gradient(160deg,#64748b,#1e293b)'
+    },
   }
 }
 </script>
 
 <template>
-  <div
-    :data-reward-id="reward.id"
-    class="rounded-xl border p-3 flex items-center gap-3 transition-all duration-200"
-    :class="[borderColor, reward.claimed ? 'opacity-50 bg-white/2' : 'bg-white/5']"
-  >
-    <div class="shrink-0 w-11 h-11 rounded-xl grid place-items-center text-xl ring-1 ring-white/10"
-      :class="{
-        'bg-emerald-500/15': icon.color === 'emerald',
-        'bg-yellow-500/15': icon.color === 'yellow',
-        'bg-amber-500/15': icon.color === 'amber',
-        'bg-orange-500/15': icon.color === 'orange',
-        'bg-red-500/15': icon.color === 'red',
-        'bg-cyan-500/15': icon.color === 'cyan',
-      }"
-    >
-      {{ icon.emoji }}
-    </div>
+  <!-- Fila estilo V4 (misma familia que MissionRow): va dentro de una lista con borde -->
+  <div :data-reward-id="reward.id" class="rcard" :class="{ 'is-claimed': reward.claimed, 'is-pending': !reward.claimed }">
+    <span class="rcard-ic" :style="{ background: iconBg }" aria-hidden="true">{{ icon.emoji }}</span>
 
-    <div class="min-w-0 flex-1">
-      <p class="text-sm font-semibold text-white truncate">{{ title }}</p>
-      <p class="text-[11px] text-slate-400">{{ subtitle }}<span v-if="timeAgo" class="text-slate-500"> · {{ timeAgo }}</span></p>
-    </div>
+    <span class="rcard-body">
+      <span class="rcard-title">{{ title }}</span>
+      <span class="rcard-sub">{{ subtitle }}<template v-if="timeAgo"> · {{ timeAgo }}</template></span>
+    </span>
 
-    <div v-if="!reward.claimed" class="shrink-0">
-      <button
-        @click="$emit('claim', reward.id, $event.currentTarget)"
-        class="rounded-lg px-3 py-1.5 text-xs font-display font-bold text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 transition-all"
-      >
-        +{{ points }} XP
-      </button>
-    </div>
-    <div v-else class="shrink-0">
-      <span class="text-xs text-slate-500 font-medium">Reclamado</span>
-    </div>
+    <button v-if="!reward.claimed" type="button" class="rcard-claim"
+            :aria-label="`Cobrar ${points} XP de ${title}`" @click="$emit('claim', reward.id, $event.currentTarget)">
+      +{{ points }} XP
+    </button>
+    <span v-else class="rcard-done">Cobrado</span>
   </div>
 </template>
+
+<style scoped>
+.rcard {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.rcard:last-child { border-bottom: 0; }
+.rcard.is-pending { background: rgba(34,197,94,0.07); }
+.rcard-ic {
+  width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px; display: grid; place-items: center;
+  font-size: 22px; line-height: 1; box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+}
+.is-claimed .rcard-ic { filter: grayscale(.85) brightness(.7); }
+.rcard-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rcard-title { font-weight: 700; font-size: 14px; color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.is-claimed .rcard-title { color: #64748b; text-decoration: line-through; }
+.rcard-sub { font-size: 12px; color: #94a3b8; }
+.rcard-claim {
+  min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: #22c55e; box-shadow: 0 4px 0 #15803d;
+  color: #fff; font-family: var(--font-bug); font-weight: 800; font-size: 16px; white-space: nowrap; cursor: pointer;
+  transform: translateY(-2px); transition: transform .08s ease, box-shadow .08s ease;
+}
+.rcard-claim:active { transform: translateY(2px); box-shadow: 0 0 0 #15803d; }
+.rcard-claim:focus-visible { outline: 2px solid #bbf7d0; outline-offset: 2px; }
+.rcard-done { font-family: var(--font-bug); font-weight: 800; font-size: 13px; color: #64748b; text-transform: uppercase; }
+@media (prefers-reduced-motion: reduce) { .rcard-claim { transition: none; } }
+</style>
