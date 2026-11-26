@@ -11,8 +11,8 @@
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { TIERS, getTierForLevel, tierGlow } from '../services/tiers'
-import { getCollectionForTier, TIER_RARITY } from '../data/collections'
+import { TIERS, getTierForLevel, tierGlow, TIER_RARITY } from '../services/tiers'
+import { getCollectionForTier } from '../data/collections'
 import { tierPrizes } from '../services/prize-card'
 import { RARITY, rarityOf } from '../services/rarity'
 import { shellState, loadShellStats } from '../components/shell/shell-state'
@@ -75,7 +75,39 @@ const curPct = computed(() => {
   return Math.round(Math.min(1, Math.max(0, (level.value - t.minLevel) / span)) * 100)
 })
 const levelsLeft = computed(() => nextTier.value ? Math.max(0, nextTier.value.minLevel - level.value) : 0)
-const curCardLeft = computed(() => XS[cur.value] < 195)
+// Tarjeta del rango actual: se busca un lugar libre (sin pisar escudos, rótulos,
+// el pin ni el escudo propio). Coordenadas del plano (W×H); tamaño fijo de la tarjeta.
+const CARD_W = 198, CARD_H = 88
+function hit(a, b) {
+  const w = Math.min(a.x2, b.x2) - Math.max(a.x1, b.x1), h = Math.min(a.y2, b.y2) - Math.max(a.y1, b.y1)
+  return w > 0 && h > 0 ? w * h : 0
+}
+const cardPos = computed(() => {
+  const i = cur.value, cx = XS[i], cy = YS[i]
+  const obs = [
+    { x1: cx - 48, x2: cx + 48, y1: cy - 48, y2: cy + 48 },          // tu escudo (88px + aro)
+    cy < 80 ? { x1: cx - 52, x2: cx + 52, y1: cy + 42, y2: cy + 78 } : { x1: cx - 52, x2: cx + 52, y1: cy - 78, y2: cy - 42 }, // "ESTÁS ACÁ"
+  ]
+  for (const n of nodes.value) {
+    if (n.isCur) continue
+    const r = n.w / 2 + 6
+    obs.push({ x1: n.x - r, x2: n.x + r, y1: n.y - r - 4, y2: n.y + r + 4 })
+    const lx = n.right ? n.x + n.w / 2 + 8 : n.x - n.w / 2 - 8 - 108
+    obs.push({ x1: lx, x2: lx + 108, y1: n.y - 17, y2: n.y + 19 })
+  }
+  // Barrido del plano: el lugar libre más cercano a tu escudo. Si no hay ninguno,
+  // la tarjeta baja abajo del mapa (en el flujo), así nunca tapa nada.
+  let best = null
+  for (let y = 4; y <= H - 4 - CARD_H; y += 4) {
+    for (let x = 6; x <= W - 6 - CARD_W; x += 4) {
+      const r = { x1: x, x2: x + CARD_W, y1: y, y2: y + CARD_H }
+      if (obs.some(o => hit(r, o))) continue
+      const d = Math.hypot(x + CARD_W / 2 - cx, y + CARD_H / 2 - cy)
+      if (d < 190 && (!best || d < best.d)) best = { x, y, d }
+    }
+  }
+  return best
+})
 const pct = (v, total) => (v / total * 100) + '%'
 
 // ── Tarjeta de premios (por defecto: el próximo rango) ──
@@ -159,14 +191,14 @@ onMounted(() => { loadShellStats().catch(() => {}) })
       </template>
 
       <!-- Estás acá -->
-      <div class="cm-pin" :style="{ left: pct(XS[cur], W), top: `calc(${pct(YS[cur], H)} - 73px)` }" aria-hidden="true">
+      <div class="cm-pin" :class="{ 'is-below': YS[cur] < 80 }" :style="{ left: pct(XS[cur], W), top: YS[cur] < 80 ? `calc(${pct(YS[cur], H)} + 46px)` : `calc(${pct(YS[cur], H)} - 73px)` }" aria-hidden="true">
         <span class="cm-pin-tag">ESTÁS ACÁ</span>
         <span class="cm-pin-tip"></span>
       </div>
       <button type="button" class="cm-here" :style="{ left: pct(XS[cur], W), top: pct(YS[cur], H) }" :aria-label="`Tu rango actual: ${curTier.label}, nivel ${level}`" @click="pick(cur)">
         <span class="cm-here-in"><img :src="curTier.image" alt="" width="54" height="63" class="w-[54px] h-auto drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]" /></span>
       </button>
-      <div class="cm-card" :class="curCardLeft ? 'is-right' : 'is-left'" :style="{ top: `calc(${pct(YS[cur], H)} - 35px)`, left: curCardLeft ? `calc(${pct(XS[cur], W)} + 56px)` : 'auto', right: curCardLeft ? 'auto' : `calc(${pct(W - XS[cur], W)} + 56px)` }">
+      <div v-if="cardPos" class="cm-card" :style="{ top: pct(cardPos.y, H), left: pct(cardPos.x, W), width: pct(CARD_W, W) }">
         <span class="flex items-baseline justify-between gap-2">
           <span class="font-bug font-extrabold text-xl leading-none tracking-[0.4px] text-amber-200 uppercase truncate">{{ curTier.label }}</span>
           <span class="font-bug font-bold text-[13px] text-slate-400 whitespace-nowrap">{{ range(curTier) }}</span>
@@ -181,6 +213,21 @@ onMounted(() => { loadShellStats().catch(() => {}) })
         </span>
       </div>
     </section>
+    <!-- Sin lugar libre en el mapa: la tarjeta va abajo, sin tapar nada -->
+    <div v-if="!cardPos" class="cm-card is-flow relative mx-3 mb-4">
+      <span class="flex items-baseline justify-between gap-2">
+        <span class="font-bug font-extrabold text-xl leading-none tracking-[0.4px] text-amber-200 uppercase truncate">{{ curTier.label }}</span>
+        <span class="font-bug font-bold text-[13px] text-slate-400 whitespace-nowrap">{{ range(curTier) }}</span>
+      </span>
+      <span class="relative h-3.5 rounded-full bg-white/[0.08] overflow-hidden block" role="progressbar" :aria-valuenow="curPct" aria-valuemin="0" aria-valuemax="100" :aria-label="`Avance en ${curTier.label}`">
+        <span class="cm-fill block h-full rounded-full" :style="{ width: curPct + '%' }"></span>
+      </span>
+      <span class="flex justify-between gap-1 text-[11.5px] font-bold">
+        <span class="text-slate-200">Nv {{ level }}</span>
+        <span v-if="nextTier" class="text-slate-400 text-right">{{ levelsLeft }} {{ levelsLeft === 1 ? 'nivel' : 'niveles' }} a <span class="text-teal-300">{{ nextTier.label }}</span></span>
+        <span v-else class="text-pink-200">¡Llegaste a la cima!</span>
+      </span>
+    </div>
 
     <!-- Premios del rango elegido -->
     <section :aria-label="`Premios de ${sel.label}`" class="cm-prizes relative mx-3 -mt-2 flex flex-col gap-2.5" aria-live="polite">
@@ -239,6 +286,8 @@ onMounted(() => { loadShellStats().catch(() => {}) })
   padding: 3px 10px; border-radius: 8px; background: linear-gradient(180deg, #fcd34d, #f59e0b); border-bottom: 2px solid #b45309;
   font-family: var(--font-bug); font-weight: 800; font-style: italic; font-size: 14px; letter-spacing: 0.5px; color: #1c1206; white-space: nowrap;
 }
+.cm-pin.is-below { flex-direction: column-reverse; }
+.cm-pin.is-below .cm-pin-tip { transform: rotate(180deg); }
 .cm-pin-tip { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 7px solid #f59e0b; display: block; }
 @keyframes cmbob { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -5px); } }
 .cm-here {
@@ -247,8 +296,9 @@ onMounted(() => { loadShellStats().catch(() => {}) })
 }
 .cm-here-in { width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 50% 38%, #3b2a10, #140d05 80%); display: flex; align-items: center; justify-content: center; }
 @keyframes cmhere { 0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.45); } 50% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); } }
+.cm-card.is-flow { position: relative; }
 .cm-card {
-  position: absolute; width: 198px; max-width: calc(100% - 140px); box-sizing: border-box; border-radius: 16px; padding: 10px 12px;
+  position: absolute; box-sizing: border-box; border-radius: 16px; padding: 10px 12px;
   background: rgba(17, 26, 46, 0.92); border: 1px solid rgba(251, 191, 36, 0.4); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
   display: flex; flex-direction: column; gap: 6px;
 }
