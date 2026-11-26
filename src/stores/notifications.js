@@ -14,7 +14,25 @@ const state = reactive({
   cosmeticActive: false,  // hay un carrusel de cosméticos en pantalla → la subida de nivel espera a que termine
   proWelcome: null,       // { plan, planName } → popup de bienvenida PRO (gatea los desbloqueables hasta cerrarlo)
   claimNotifications: [],
+  pendingChecks: 0,       // chequeos de logros/cosméticos en curso (el resumen espera antes de navegar)
+  albumNew: [],           // códigos desbloqueados sin ver en la Colección (badge NUEVO; services/cosmetics.js)
+  claimShown: null,       // el ÚNICO aviso chico en pantalla (arriba, nunca apilados ni sobre botones)
 })
+
+// ── Deduplicación por sesión ──
+// Un mismo logro o cosmético se anuncia UNA sola vez por sesión aunque llegue dos veces
+// (Realtime duplicado al reconectar el celu, chequeos que se pisan, etc.).
+const _achAnnounced = new Set()
+const _cosAnnounced = new Set()
+// Niveles cuya escena de subida ya se encoló en esta sesión: sus cosméticos se ven en el
+// "Desbloqueaste" de esa escena y no se repiten como carta aparte.
+const _levelScenes = new Set()
+export function isLevelCovered(level) { return _levelScenes.has(Number(level)) }
+
+// Después de un logro o una subida de nivel puede haber cosméticos nuevos: se revisan solos.
+function _scheduleCosmeticCheck(ms = 1200) {
+  import('../services/cosmetics').then(m => m.scheduleCosmeticCheck?.(ms)).catch(() => {})
+}
 
 const _lastLevelToastAt = new Map()
 const LEVEL_TOAST_DEDUPE_MS = 8000
@@ -39,6 +57,10 @@ function push(item, ttlMs = 5000) {
 // ── Achievement overlay queue ──
 
 export function queueAchievementOverlay({ code = '', title, iconUrl, earnedAt, points = 0, description = '', unlockPercent = null }) {
+  const key = code || title
+  if (key && _achAnnounced.has(key)) return null
+  if (key) _achAnnounced.add(key)
+  _scheduleCosmeticCheck()
   const id = _genId()
   state.achievementQueue.push({ id, code, title, iconUrl, earnedAt, points, description, unlockPercent })
   addPendingReward('achievement', { title, iconUrl, points, description, id })
@@ -56,6 +78,8 @@ export function queueLevelUpOverlay({ oldLevel, newLevel }) {
   const lastAt = _lastLevelToastAt.get(newLevel) || 0
   if (now - lastAt < LEVEL_TOAST_DEDUPE_MS) return null
   _lastLevelToastAt.set(newLevel, now)
+  for (let l = Number(oldLevel) + 1; l <= Number(newLevel); l++) _levelScenes.add(l)
+  _scheduleCosmeticCheck()
 
   const xpBonus = getLevelUpXpBonus(newLevel)
   const milestone = getMilestone(newLevel)
@@ -84,11 +108,17 @@ export function shiftLevelUpQueue() {
 // ── Cosmetic unlock overlay queue ──
 // Escena premium (estilo logro/Forager) SOLO para cosméticos EXCLUSIVOS al reclamarlos.
 // Los cosméticos default (por nivel) NO usan esto: solo la notificación apilada chica.
-export function queueCosmeticOverlay({ code, name, type, rarity, styleKey, reason }) {
+// `level`: cosmético por nivel que no se vio en ninguna escena de subida (ej. subiste en otro
+// dispositivo). Si cuando le toca mostrarse esa escena ya existe, se descarta (no se repite).
+export function queueCosmeticOverlay({ code, name, type, rarity, styleKey, reason, level = null }) {
+  if (code && _cosAnnounced.has(code)) return null
+  if (code) _cosAnnounced.add(code)
   const id = _genId()
-  state.cosmeticQueue.push({ id, code, name, type, rarity: rarity || 'epic', styleKey: styleKey || '', reason: reason || '' })
+  state.cosmeticQueue.push({ id, code, name, type, rarity: rarity || 'common', styleKey: styleKey || '', reason: reason || '', level })
   return id
 }
+/** Marca un cosmético como ya anunciado en esta sesión (lo mostró otra escena). */
+export function markCosmeticAnnounced(code) { if (code) _cosAnnounced.add(code) }
 
 export function shiftCosmeticQueue() {
   return state.cosmeticQueue.shift()
@@ -96,13 +126,56 @@ export function shiftCosmeticQueue() {
 
 // ── Claim notifications (bottom-right stack) ──
 
-export function pushClaimNotification({ type, title, xp, emoji }) {
+// Un aviso por vez, arriba (ClaimNotificationStack). Mientras hay una escena o el resumen
+// de partida en pantalla, esperan: nunca se apilan sobre botones.
+const CLAIM_SUB = { cosmetic: 'Ya está en tu Vestuario', powerup: 'Se sumó a tus ayudas', xp: 'Sumado a tu nivel', achievement: 'Logro cobrado', levelUp: 'Bonus de nivel cobrado', milestone: 'Premio de rango cobrado' }
+let _claimTimer = null
+function _overlayBusy() {
+  return state.suppressOverlays || state.levelUpActive || state.achievementActive || state.cosmeticActive || !!state.proWelcome
+    || state.achievementQueue.length > 0 || state.levelUpQueue.length > 0 || state.cosmeticQueue.length > 0
+}
+function _pumpClaims() {
+  if (state.claimShown || _claimTimer) return
+  if (!state.claimNotifications.length) return
+  if (_overlayBusy()) { _claimTimer = setTimeout(() => { _claimTimer = null; _pumpClaims() }, 700); return }
+  state.claimShown = state.claimNotifications.shift()
+  _claimTimer = setTimeout(() => {
+    state.claimShown = null
+    _claimTimer = setTimeout(() => { _claimTimer = null; _pumpClaims() }, 250)
+  }, 2600)
+}
+export function pushClaimNotification({ type, title, xp, emoji, sub }) {
   const id = _genId()
-  state.claimNotifications.push({ id, type, title, xp: xp || 0, emoji: emoji || '🎁' })
-  setTimeout(() => {
-    const idx = state.claimNotifications.findIndex(n => n.id === id)
-    if (idx !== -1) state.claimNotifications.splice(idx, 1)
-  }, 3500)
+  state.claimNotifications.push({ id, type, title, xp: xp || 0, emoji: emoji || '🎁', sub: sub || CLAIM_SUB[type] || '' })
+  // como mucho 3 esperando: los más viejos se descartan (son respaldo de algo que ya se vio)
+  while (state.claimNotifications.length > 3) state.claimNotifications.shift()
+  _pumpClaims()
+}
+
+/**
+ * Se resuelve cuando no queda ninguna escena en pantalla ni en cola (logros → nivel →
+ * cosméticos), después de `settleMs` sin novedades (los logros llegan por Realtime con
+ * un poco de demora). Lo usa el resumen para navegar al próximo juego recién al final.
+ */
+export function beginPendingCheck() { state.pendingChecks++ }
+export function endPendingCheck() { state.pendingChecks = Math.max(0, state.pendingChecks - 1) }
+
+export function whenOverlaysIdle({ settleMs = 900, maxMs = 120000 } = {}) {
+  return new Promise((resolve) => {
+    const t0 = Date.now()
+    let quietSince = null
+    const tick = () => {
+      // Los chequeos en curso cuentan solo los primeros 10 s (si una red lenta los traba, no bloquean)
+      const checking = state.pendingChecks > 0 && Date.now() - t0 < 10000
+      const busy = checking || state.levelUpActive || state.achievementActive || state.cosmeticActive || !!state.proWelcome
+        || state.achievementQueue.length > 0 || state.levelUpQueue.length > 0 || state.cosmeticQueue.length > 0
+      if (busy) quietSince = null
+      else if (quietSince == null) quietSince = Date.now()
+      if ((quietSince != null && Date.now() - quietSince >= settleMs) || Date.now() - t0 > maxMs) return resolve()
+      setTimeout(tick, 150)
+    }
+    tick()
+  })
 }
 
 // ── Silent XP award (no level-up detection to prevent cascade) ──
@@ -170,6 +243,8 @@ supabase.auth.getUser().then(({ data }) => _setRewardsUser(data?.user?.id || nul
 supabase.auth.onAuthStateChange((_evt, session) => _setRewardsUser(session?.user?.id || null))
 
 export function addPendingReward(type, data) {
+  // Un logro aparece una sola vez en la Bandeja aunque se anuncie dos veces
+  if (type === 'achievement' && data?.title && state.pendingRewards.some(r => r.type === 'achievement' && r.data?.title === data.title)) return null
   const id = _genId()
   state.pendingRewards.push({ id, type, data, claimed: false, createdAt: Date.now() })
   _saveRewards()
