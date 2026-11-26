@@ -10,6 +10,7 @@
  *    contador rojo del segmento Pase; mismas reglas que MonthlyPass.vue).
  */
 import { APP_TZ } from '../../services/app-date'
+import { stubState } from '../pass/pass-rewards'
 
 // Fondos de ícono del diseño V4 (se reparten por posición, estables por código).
 export const ICON_BGS = [
@@ -111,13 +112,7 @@ export function appMonthName(date = new Date()) {
 /** Niveles del pase con premio sin cobrar (mismas reglas que MonthlyPass.canClaim). */
 export function passClaimableCount(pass) {
   const tiers = Array.isArray(pass?.tiers) ? pass.tiers : []
-  const has = (t, tr) => tr === 'free'
-    ? (!!t.free_cosmetic || !!t.free_powerup || t.free_xp > 0)
-    : (!!t.premium_cosmetic || !!t.premium_powerup || t.premium_xp > 0)
-  const can = (t, tr) => {
-    if (!t.unlocked) return false
-    if (tr === 'premium' && !pass.is_premium) return false
-    return has(t, tr) && !(tr === 'free' ? t.free_claimed : t.premium_claimed)
-  }
-  return tiers.filter(t => can(t, 'free') || can(t, 'premium')).length
+  // Mismas reglas que el Abono (incluye nivel 0 y talones de Fichas)
+  const ready = (t, tr) => stubState(t, tr, !!pass.is_premium) === 'ready'
+  return tiers.filter(t => ready(t, 'free') || ready(t, 'premium')).length
 }
