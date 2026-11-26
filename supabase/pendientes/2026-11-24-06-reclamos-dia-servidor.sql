@@ -30,6 +30,18 @@
 --   • La carrera sigue confiando en el GRADO que manda el cliente (la
 --     simulación es 100% cliente). Ahora el máximo es 200 XP + 80 F por día.
 --
+--  AJUSTES 2026-11-26 (esquema real de prod): las firmas coinciden con prod
+--      (claim_reto_reward(int,int,text), claim_guest_game_reward(text,int,int,int,text),
+--      claim_career_reward(text,text), report_game_result(text,bool)). Los cuerpos
+--      son los de reto-claim.sql / guest-game-claim.sql / career-claim.sql /
+--      mejoras11-currency-shop.sql con los mismos montos; solo cambia el día y la
+--      idempotencia. game_result_reports NO existe en prod: se crea con RLS.
+--      Clientes: main y v4 llaman report_game_result DESPUÉS del UPDATE que
+--      cierra la sesión (game-modes.js completeChallengeSession) → la partida
+--      terminada ya está cuando llega el reporte. Main lo llama 2 veces por
+--      partida: ahora la 2.ª no suma (antes duplicaba pase/retos/Fichas).
+--      La racha (_touch_daily_streak) queda como no-op: el parche 08 es para después.
+--
 --  ROLLBACK: correr de nuevo supabase/reto-claim.sql, guest-game-claim.sql,
 --      career-claim.sql y el bloque report_game_result de
 --      mejoras11-currency-shop.sql. La tabla game_result_reports puede quedar.
@@ -261,3 +273,11 @@ REVOKE ALL ON FUNCTION public.report_game_result(TEXT, BOOLEAN) FROM PUBLIC, ano
 GRANT EXECUTE ON FUNCTION public.report_game_result(TEXT, BOOLEAN) TO authenticated;
 
 COMMIT;
+
+-- Verificación: las 4 funciones usan el día del servidor / la tabla de idempotencia.
+SELECT to_regclass('public.game_result_reports') IS NOT NULL
+   AND (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.game_result_reports'::regclass)
+   AND pg_get_functiondef('public.report_game_result(text, boolean)'::regprocedure) LIKE '%game_result_reports%'
+   AND pg_get_functiondef('public.claim_reto_reward(integer, integer, text)'::regprocedure) LIKE '%p_day_key se ignora%'
+   AND pg_get_functiondef('public.claim_guest_game_reward(text, integer, integer, integer, text)'::regprocedure) LIKE '%p_day_key se ignora%'
+   AND pg_get_functiondef('public.claim_career_reward(text, text)'::regprocedure) LIKE '%p_day_key se ignora%' AS ok;

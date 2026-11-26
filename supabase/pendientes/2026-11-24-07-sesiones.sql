@@ -1,10 +1,13 @@
 -- ════════════════════════════════════════════════════════════════════
 --  2026-11-24-07 — game_sessions: SIN BORRAR, RESULTADO CONGELADO AL TERMINAR
 -- ════════════════════════════════════════════════════════════════════
+--  (ajustado al esquema REAL de producción leído el 2026-11-26: las políticas
+--   se llaman "Users can insert/update/view own sessions" y NO hay política de
+--   DELETE, así que el hueco "borrar para rejugar" no existe en prod.)
 --  QUÉ:
---   1) Borra "Delete own sessions" (borrar la partida de hoy = volver a jugar
---      el desafío y cobrar de nuevo). Solo admins pueden borrar.
---   2) "Update own sessions" se recrea con WITH CHECK (antes sin check: se
+--   1) Política "Delete sessions (admin)": solo admins borran (lo usa el helper
+--      de desarrollo resetTodaySessionsForCurrentUser).
+--   2) "Users can update own sessions" se recrea con WITH CHECK (sin check se
 --      podía cambiar user_id de una fila propia).
 --   3) Trigger BEFORE INSERT/UPDATE que SOLO actúa cuando escribe el cliente
 --      (current_user anon/authenticated; las funciones del servidor no se tocan):
@@ -39,7 +42,7 @@
 --      BEGIN;
 --      DROP TRIGGER IF EXISTS game_sessions_guard ON public.game_sessions;
 --      DROP POLICY IF EXISTS "Delete sessions (admin)" ON public.game_sessions;
---      CREATE POLICY "Delete own sessions" ON public.game_sessions FOR DELETE TO authenticated USING (user_id = auth.uid());
+--      -- la política UPDATE original está en backup_20261126 (pg_policies)
 --      COMMIT;
 -- ════════════════════════════════════════════════════════════════════
 
@@ -52,7 +55,8 @@ CREATE POLICY "Delete sessions (admin)" ON public.game_sessions
   USING (EXISTS (SELECT 1 FROM public.user_profiles p WHERE p.id = auth.uid() AND p.role = 'admin'));
 
 DROP POLICY IF EXISTS "Update own sessions" ON public.game_sessions;
-CREATE POLICY "Update own sessions" ON public.game_sessions
+DROP POLICY IF EXISTS "Users can update own sessions" ON public.game_sessions;
+CREATE POLICY "Users can update own sessions" ON public.game_sessions
   FOR UPDATE TO authenticated
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
@@ -114,4 +118,13 @@ CREATE TRIGGER game_sessions_guard
   BEFORE INSERT OR UPDATE ON public.game_sessions
   FOR EACH ROW EXECUTE FUNCTION public.tg_game_sessions_guard();
 
+REVOKE ALL ON FUNCTION public.tg_game_sessions_guard() FROM PUBLIC, anon, authenticated;
+
 COMMIT;
+
+-- Verificación: trigger activo, UPDATE con WITH CHECK y DELETE solo admin.
+SELECT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'game_sessions_guard' AND tgrelid = 'public.game_sessions'::regclass)
+   AND EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'game_sessions'
+               AND policyname = 'Users can update own sessions' AND with_check IS NOT NULL)
+   AND NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'game_sessions'
+               AND cmd IN ('DELETE', 'ALL') AND policyname <> 'Delete sessions (admin)') AS ok;
