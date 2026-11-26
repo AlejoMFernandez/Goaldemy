@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { pushAchievementToast } from '../stores/notifications'
+import { fixAchievementCopy } from './achievements'
 
 let channel = null
 let currentUserId = null
@@ -17,17 +18,18 @@ export function initAchievementsRealtime() {
         .channel('user_achievements_inserts')
         .on(
           'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'user_achievements' },
+          { event: 'INSERT', schema: 'public', table: 'user_achievements', filter: `user_id=eq.${currentUserId}` },
           async payload => {
             const row = payload?.new
             if (!row) return
             if (!currentUserId || row.user_id !== currentUserId) return
-            const { data: achievement, error } = await supabase
+            let { data: achievement, error } = await supabase
               .from('achievements')
               .select('code, name, description, icon_url, points')
               .eq('id', row.achievement_id)
               .single()
             if (!error && achievement) {
+              achievement = fixAchievementCopy(achievement)
               // Stagger slightly when multiple achievements arrive at the exact same time.
               // El sonido lo decide quien lo muestra (escena grande / toast / tarjeta
               // agrupada en AchievementUnlockOverlay.vue), no acá — evita duplicar sonidos.

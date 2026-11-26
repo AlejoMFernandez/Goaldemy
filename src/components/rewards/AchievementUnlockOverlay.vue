@@ -25,16 +25,21 @@ export default {
     let phaseTimers = []
 
     function isEasy(item) { return (achievementIcon(item?.code)?.rarity || 'common') === 'common' }
+    // De a uno: si llegan varios fáciles juntos, se muestran en fila (nunca apilados).
+    let easyTimer = null
+    function pumpEasy() {
+      if (easyTimer || !toasts.value.length) return
+      soundManager.play('notify')
+      easyTimer = setTimeout(() => { toasts.value = toasts.value.slice(1); easyTimer = null; setTimeout(pumpEasy, 200) }, 2800)
+    }
     function drainEasy() {
       const q = notificationsState.achievementQueue
-      for (let i = q.length - 1; i >= 0; i--) {
-        if (!isEasy(q[i])) continue
+      for (let i = 0; i < q.length;) {
+        if (!isEasy(q[i])) { i++; continue }
         const [item] = q.splice(i, 1)
-        const id = item.id || Math.random().toString(36).slice(2)
-        toasts.value.push({ ...item, id })
-        soundManager.play('notify')
-        setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id) }, 3600)
+        toasts.value.push({ ...item, id: item.id || Math.random().toString(36).slice(2) })
       }
+      pumpEasy()
     }
 
     // Cola de escena grande (rara+): como mucho 2 por tanda (los de mayor
@@ -97,6 +102,7 @@ export default {
     const descOn = ref(false)
     const pctOn = ref(false)
     const pctShown = ref(100)
+    const pctTarget = ref(null) // el dato real: hasta que carga no se muestra la línea
     const xpOn = ref(false)
     const medalRef = ref(null)
     let pctCache = null
@@ -120,7 +126,7 @@ export default {
     }
     function resetScene() {
       dimOp.value = 0; spotOn.value = false; raysOn.value = false; medalState.value = 'hide'
-      shoutOn.value = false; ribbonOn.value = false; descOn.value = false; pctOn.value = false; xpOn.value = false; pctShown.value = 100
+      shoutOn.value = false; ribbonOn.value = false; descOn.value = false; pctOn.value = false; xpOn.value = false; pctShown.value = 100; pctTarget.value = null
     }
     function runScene(item) {
       const rr = achievementIcon(item.code)?.rarity
@@ -152,13 +158,18 @@ export default {
       P(async () => {
         const v = await pctP
         if (v == null || !Number.isFinite(v)) return
-        pctOn.value = true; countPct(Math.max(0.1, Math.min(100, v)), sc.pd)
+        const tgt = Math.max(0.1, Math.min(100, v))
+        pctTarget.value = tgt
+        pctOn.value = true; countPct(tgt, sc.pd)
       }, t + 1000)
       P(() => { xpOn.value = true; soundManager.play('coin') }, t + 1100 + sc.pd)
       P(() => { phase.value = 4; medalState.value = 'idle' }, t + 1500 + sc.pd)
     }
 
     function showNext() {
+      // Varias vías llaman a showNext (fin del resumen, fin del nivel, cola nueva): si ya hay
+      // una escena en pantalla no se pisa (antes cortaba la actual y se salteaba o repetía).
+      if (current.value) return
       clearTimers()
       if (notificationsState.suppressOverlays) return
       // Si hay una escena de nivel en pantalla, el logro espera a que termine (no la corta)
@@ -298,7 +309,7 @@ export default {
     function iconOf(item) { return achievementIcon(item?.code) }
 
     return { current, phase, claimed, particles, flying, flightStyle, iconWrapRef, claim, rarityLabel, iconOf, toasts, legendary,
-      scene, dimOp, spotOn, raysOn, medalState, ringKey, flashKey, shoutOn, ribbonOn, descOn, pctOn, pctShown, fmtPct, xpOn, medalRef,
+      scene, dimOp, spotOn, raysOn, medalState, ringKey, flashKey, shoutOn, ribbonOn, descOn, pctOn, pctShown, pctTarget, fmtPct, xpOn, medalRef,
       grouped, groupExpanded }
   }
 }
@@ -309,7 +320,7 @@ export default {
   <Teleport to="body">
     <div class="ach-toasts" aria-live="polite">
       <TransitionGroup name="ach-t">
-        <div v-for="t in toasts" :key="t.id" class="ach-toast">
+        <div v-for="t in toasts.slice(0, 1)" :key="t.id" class="ach-toast">
           <AchievementTile :icon-key="iconOf(t).icon" :rarity="iconOf(t).rarity" :size="40" />
           <div class="tx"><span class="k">Logro</span><b>{{ t.title }}</b></div>
           <span v-if="t.points" class="xp">+{{ t.points }} XP</span>
@@ -356,7 +367,8 @@ export default {
 
           <div class="ach-ribbon" :class="{ on: ribbonOn }">{{ current.title }}</div>
           <p class="ach-desc" :class="{ on: descOn }">{{ current.description }}</p>
-          <p class="ach-pct" :class="{ on: pctOn }">Solo el <b>{{ fmtPct(pctShown) }}</b> de los jugadores lo tiene</p>
+          <!-- Solo con el dato cargado; "Solo el" solo si de verdad es raro (menos del 10 %) -->
+          <p v-if="pctTarget != null" class="ach-pct" :class="{ on: pctOn }"><template v-if="pctTarget < 10">Solo el <b>{{ fmtPct(pctShown) }}</b> de los jugadores lo tiene</template><template v-else>Lo tiene el <b>{{ fmtPct(pctShown) }}</b> de los jugadores</template></p>
           <span class="ach-xp" :class="{ on: xpOn }">+{{ current.points || 0 }} XP</span>
 
           <button type="button" class="ach-claim" :class="{ on: phase >= 4 && !flying, done: claimed }" :disabled="claimed" @click.stop="claim">
@@ -369,7 +381,7 @@ export default {
 </template>
 
 <style scoped>
-.ach-toasts { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 66; display: grid; gap: 8px; pointer-events: none; width: min(92vw, 360px); }
+.ach-toasts { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 12px); left: 50%; transform: translateX(-50%); z-index: 66; display: grid; gap: 8px; pointer-events: none; width: min(92vw, 360px); }
 .ach-toast { display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 8px; border-radius: 14px; background: rgba(11, 16, 36, .94); border: 1px solid rgba(16, 185, 129, .45); box-shadow: 0 12px 30px rgba(0, 0, 0, .5), 0 0 18px rgba(16, 185, 129, .2); backdrop-filter: blur(6px); }
 .ach-toast .tx { flex: 1; min-width: 0; display: grid; line-height: 1.15; }
 .ach-toast .k { font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .12em; font-size: 11px; color: #34d399; }

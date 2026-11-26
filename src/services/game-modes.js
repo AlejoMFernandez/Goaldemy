@@ -124,6 +124,12 @@ export async function getPlayableGameCount() {
  * @param {Object} metadata - Metadata del juego (score, corrects, etc.)
  */
 export async function checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
+  // El resumen espera a que esto termine (y a sus escenas) antes de ir al juego siguiente
+  const notif = await import('../stores/notifications').catch(() => null)
+  notif?.beginPendingCheck?.()
+  try { await _checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) } finally { notif?.endPendingCheck?.() }
+}
+async function _checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
   try {
     // FUENTE DE VERDAD: la sesión recién terminada. Antes los juegos llamaban
     // sin `won`/`metadata` (quedaban en true/{}), por lo que perfectionist/comeback/
@@ -141,7 +147,12 @@ export async function checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
 
     // Solo verificar logros de victoria si el usuario ganó. Los logros nuevos
     // (achievements-new-1) también miran derrotas (Fuego azul, Enciclopedia).
-    if (!won) { await checkNewAchievements(slugJustPlayed); return }
+    if (!won) {
+      await checkNewAchievements(slugJustPlayed)
+      // Perder también puede dar un logro con cosmético (Fuego azul, Enciclopedia…)
+      try { (await import('./cosmetics')).scheduleCosmeticCheck(600) } catch {}
+      return
+    }
 
     const wins = await countTodayDailyWins()           // juegos distintos ganados hoy
     const totalGames = await getPlayableGameCount()    // todos los juegos jugables (dinámico)

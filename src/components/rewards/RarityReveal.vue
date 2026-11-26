@@ -47,9 +47,16 @@ const riseOn = ref(false)
 const tilt = ref({ x: 0, y: 0 })
 const fxEl = ref(null)
 const cardEl = ref(null)
+// Ancho de la carta = ancho de la PrizeCard de adentro (antes la carta medía 190 px en el celu
+// y la PrizeCard seguía en 220: el nombre quedaba cortado abajo y el banner se salía por la
+// derecha). Se adapta al ancho y al alto de la pantalla (iPhone con la barra de Safari: ~660 px).
+const vw = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
+const vh = ref(typeof window !== 'undefined' ? window.innerHeight : 900)
+function onResize() { vw.value = window.innerWidth; vh.value = window.innerHeight }
+const cardW = computed(() => Math.round(Math.max(140, Math.min(220, vw.value * 0.52, (Math.min(420, vh.value * 0.62) - 70) / 1.4))))
 let timers = []
 function T(fn, ms) { timers.push(setTimeout(fn, reducedMotion ? Math.min(ms, 40) : ms)) }
-onBeforeUnmount(() => timers.forEach(clearTimeout))
+onBeforeUnmount(() => { timers.forEach(clearTimeout); window.removeEventListener('resize', onResize) })
 
 function cardCenter() {
   const c = cardEl.value?.getBoundingClientRect(), f = fxEl.value?.getBoundingClientRect()
@@ -119,7 +126,7 @@ function play() {
   T(() => emit('ready-to-advance'), t + r.value.minHold)
 }
 defineExpose({ play })
-onMounted(() => { if (props.autoplay) play() })
+onMounted(() => { window.addEventListener('resize', onResize); if (props.autoplay) play() })
 
 // Holográfica: se inclina con el puntero
 function onMove(e) {
@@ -141,10 +148,10 @@ const cardStyle = computed(() => revealed.value
     <div :key="'fl' + flashKey" class="rr-flash" :class="{ go: flashKey > 0 }" aria-hidden="true"></div>
 
     <div class="rr-scene" :class="{ rise: riseOn }">
-      <div ref="cardEl" class="rr-card" :class="{ flip: flipped, shake: shaking }" :style="[{ '--sd': r.shake + 'ms' }, cardStyle]">
+      <div ref="cardEl" class="rr-card" :class="{ flip: flipped, shake: shaking }" :style="[{ '--sd': r.shake + 'ms', width: cardW + 'px' }, cardStyle]">
         <div class="rr-face back" aria-hidden="true"><span>F</span></div>
         <div class="rr-face front">
-          <PrizeCard :prize="prize" :size="220" />
+          <PrizeCard :prize="prize" :size="cardW" />
           <span class="rr-sweep" :class="{ on: riseOn }" aria-hidden="true"></span>
           <span class="rr-holo" aria-hidden="true"></span>
         </div>
@@ -202,6 +209,6 @@ const cardStyle = computed(() => revealed.value
 @keyframes rr-stamp { 0% { opacity: 0; transform: translateX(-50%) scale(2.4) rotate(-8deg); } 100% { opacity: 1; transform: translateX(-50%) scale(1) rotate(-4deg); } }
 .rr-fx { position: absolute; inset: 0; z-index: 7; pointer-events: none; overflow: visible; }
 .rr-fx :deep(.rr-spark) { position: absolute; left: 0; top: 0; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; }
-@media (max-width: 420px) { .rr-card { width: 190px; } .rr-face.back span { font-size: 90px; } }
+@media (max-width: 420px) { .rr-face.back span { font-size: 90px; } }
 @media (prefers-reduced-motion: reduce) { .rr-rays.on, .rr-card.shake, .rr-scene.rise, .rr-sweep.on { animation: none; } }
 </style>

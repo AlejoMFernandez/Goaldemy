@@ -21,12 +21,12 @@ import * as fx from '../../services/game-fx'
 // Alejo. goals/assists/appearances son de temporada — necesitan stats.season
 // == temporada actual (services/season.js), igual que Duelo de Stats.
 const CATEGORIES = [
-  { key: 'goals', label: 'Goles', field: (p) => p.stats?.goals ?? 0, seasonal: true, unit: '' },
-  { key: 'height', label: 'Altura', field: (p) => p.height ?? 0, seasonal: false, unit: 'cm' },
-  { key: 'assists', label: 'Asistencias', field: (p) => p.stats?.assists ?? 0, seasonal: true, unit: '' },
-  { key: 'appearances', label: 'Partidos', field: (p) => p.stats?.appearances ?? 0, seasonal: true, unit: '' },
-  { key: 'transferValue', label: 'Valor', field: (p) => Math.round((p.transferValue ?? 0) / 1_000_000), seasonal: false, unit: 'M€' },
-  { key: 'age', label: 'Edad', field: (p) => p.age ?? 0, seasonal: false, unit: 'años' },
+  { key: 'goals', label: 'Goles', field: (p) => p?.stats?.goals ?? 0, seasonal: true, unit: '' },
+  { key: 'height', label: 'Altura', field: (p) => p?.height ?? 0, seasonal: false, unit: 'cm' },
+  { key: 'assists', label: 'Asistencias', field: (p) => p?.stats?.assists ?? 0, seasonal: true, unit: '' },
+  { key: 'appearances', label: 'Partidos', field: (p) => p?.stats?.appearances ?? 0, seasonal: true, unit: '' },
+  { key: 'transferValue', label: 'Valor', field: (p) => Math.round((p?.transferValue ?? 0) / 1_000_000), seasonal: false, unit: 'M€' },
+  { key: 'age', label: 'Edad', field: (p) => p?.age ?? 0, seasonal: false, unit: 'años' },
 ]
 
 // Cuenta el número del lado derecho al revelar (moodboard: 650ms, con "tics").
@@ -158,7 +158,9 @@ export default {
     surname,
 
     async load() {
+      // Sin jugadores nulos (players-extra puede traer huecos): field() nunca recibe null
       const all = (await getAllPlayersAsync()).filter((p) => {
+        if (!p || !p.id) return false
         if (p.age == null && p.height == null) return false
         const apps = p.stats?.appearances ?? 0
         const goals = p.stats?.goals ?? 0
@@ -250,6 +252,7 @@ export default {
 
     guess(higher) {
       if (this.revealed || this.gameOver || this.animating) return
+      if (!this.leftPlayer || !this.rightPlayer) return
       this.revealed = true
       this.animating = true
 
@@ -451,7 +454,7 @@ export default {
                 <img :src="leftPlayer.teamLogo" :alt="leftPlayer.teamName" />
                 <span>{{ leftPlayer.teamName }}</span>
               </span>
-              <span class="hl-val">{{ statDisplay(currentCategory.field(leftPlayer), currentCategory.unit) }}</span>
+              <span v-if="leftPlayer" class="hl-val">{{ statDisplay(currentCategory.field(leftPlayer), currentCategory.unit) }}</span>
             </div>
 
             <div ref="rightCard" class="hl-side hl-side-r" :class="resultClass">

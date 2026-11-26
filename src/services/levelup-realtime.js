@@ -24,15 +24,20 @@ export function initLevelUpRealtime() {
   if (initialized) return channel
   initialized = true
 
+  // `subscribing`: onAuthStateChange y getUser() llaman casi juntos; sin esto los dos pasaban
+  // el chequeo de `channel` durante el await y el canal quedaba con el listener DOBLE.
+  let subscribing = false
   const ensureSubscribed = async () => {
-    if (!currentUserId || channel) return
-    lastKnownLevel = await fetchLevel(currentUserId)
+    if (!currentUserId || channel || subscribing) return
+    subscribing = true
+    try { lastKnownLevel = await fetchLevel(currentUserId) } finally { subscribing = false }
+    if (channel) return
     try { if (lastKnownLevel != null) localStorage.setItem(storageKeyForUser(currentUserId), String(lastKnownLevel)) } catch {}
     channel = supabase
       .channel('xp_events_levelup')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'xp_events' },
+        { event: 'INSERT', schema: 'public', table: 'xp_events', filter: `user_id=eq.${currentUserId}` },
         async payload => {
           if (!currentUserId) return
           const row = payload?.new

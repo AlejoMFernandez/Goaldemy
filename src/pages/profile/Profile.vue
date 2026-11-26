@@ -7,7 +7,7 @@
  * destacados · Su juego. Sin Fichas/Balones ni "últimos jugados".
  * Sirve para /profile (el tuyo) y /u/:id (el de otro).
  */
-import { subscribeToAuthStateChanges } from '../../services/auth';
+import { subscribeToAuthStateChanges, displayNameFor } from '../../services/auth';
 import { getUserLevel, fetchLevelThresholds, resolveLevelProgress, getUserMaxStreakByGame } from '../../services/xp';
 import { getUserAchievements, getAchievementsCatalog } from '../../services/achievements';
 import { getUserXpByGame, friendlyNameForSlug } from '../../services/games';
@@ -83,10 +83,11 @@ export default {
   computed: {
     titleCls() { return titleClass(this.equippedTitleRarity, this.equippedTitlePremium) },
     avatarInitial() {
-      const n = (this.user?.display_name || this.user?.email || '').trim()
+      const n = displayNameFor(this.user).trim()
       return n ? n[0].toUpperCase() : '?'
     },
-    displayName() { return this.user?.display_name || (this.user?.email ? this.user.email.split('@')[0] : '') || '—' },
+    // Mismo criterio en Perfil, TopBar y Ajustes (services/auth → displayNameFor): nunca vacío ni "—"
+    displayName() { return displayNameFor(this.user) },
     isSelf() { return (this.$route.params.id || this.currentAuthId) === this.currentAuthId },
     canConnect() { return !this.isSelf && !!this.currentAuthId && !!this.user?.id },
     level() { return Number(this.levelInfo?.level) || 1 },
@@ -320,7 +321,8 @@ export default {
   <div class="pf relative -mx-6 -mt-10 lg:mx-auto lg:mt-0 lg:max-w-xl pb-6">
     <!-- Banner equipado -->
     <BannerScene role="region" aria-label="Banner equipado" class="h-[168px] lg:rounded-b-3xl" :style-key="equippedBannerKey" :premium="equippedBannerPremium" contain :top-reserve="58">
-      <div class="absolute top-3.5 left-3.5 right-3.5 flex justify-end gap-2">
+      <!-- Botones en la zona libre de la izquierda: el dibujo de todos los banners (y el escudo de los de rango) va a la derecha -->
+      <div class="absolute top-3.5 left-3.5 right-3.5 flex justify-start gap-2">
         <template v-if="isSelf">
           <RouterLink to="/coleccion" class="pf-chip min-h-[44px] px-3.5 rounded-full flex items-center gap-1.5 text-[13px] font-bold text-white" @click="haptic">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" /></svg>Vestuario

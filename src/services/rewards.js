@@ -8,6 +8,8 @@ import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { invalidatePlanCache } from './premium'
 import { detectAndToastLevelUp } from './xp'
+// Sobre del día, misiones y bonus pueden dar un cosmético: que tenga su carta.
+function recheckCosmetics() { import('./cosmetics').then(m => m.scheduleCosmeticCheck?.(800)).catch(() => {}) }
 
 /** Retos diarios de hoy con progreso. */
 export async function getDailyChallenges() {
@@ -37,7 +39,7 @@ export async function claimDailyChallenge(code) {
   const { data, error } = await supabase.rpc('claim_daily_challenge', { p_code: code })
   if (error) return { ok: false, error: error.message }
   if (data?.reward_powerup) invalidatePlanCache()
-  if (data?.ok) detectAndToastLevelUp()
+  if (data?.ok) { detectAndToastLevelUp(); recheckCosmetics() }
   return data || { ok: false }
 }
 
@@ -59,7 +61,7 @@ export async function claimDailyReward() {
   if (error) return { ok: false, error: error.message }
   if (data?.reward_kind === 'powerup') invalidatePlanCache()
   if (data?.ok) {
-    detectAndToastLevelUp()
+    detectAndToastLevelUp(); recheckCosmetics()
     // Coleccionista: 7 sobres del día abiertos (achievements-new-1)
     import('./achievement-triggers').then(m => m.checkCollectorAchievement()).catch(() => {})
   }
@@ -83,7 +85,7 @@ export async function claimPassTier(tier, track) {
   const { data, error } = await supabase.rpc('claim_pass_tier', { p_tier: tier, p_track: track })
   if (error) return { ok: false, error: error.message }
   if (data?.powerup) invalidatePlanCache()
-  if (data?.ok) detectAndToastLevelUp()
+  if (data?.ok) { detectAndToastLevelUp(); recheckCosmetics() }
   return data || { ok: false }
 }
 
@@ -117,7 +119,7 @@ export async function claimProgressive(code) {
   const { data, error } = await supabase.rpc('claim_progressive', { p_code: code })
   if (error) return { ok: false, error: error.message }
   if (data?.powerup) invalidatePlanCache()
-  if (data?.ok) detectAndToastLevelUp()
+  if (data?.ok) { detectAndToastLevelUp(); recheckCosmetics() }
   return data || { ok: false }
 }
 

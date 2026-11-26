@@ -16,7 +16,8 @@
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { soundManager } from '@/services/sounds'
-import { setSuppressOverlays } from '@/stores/notifications'
+import { setSuppressOverlays, whenOverlaysIdle } from '@/stores/notifications'
+import { useRouter } from 'vue-router'
 import { friendlyNameForSlug } from '@/services/games'
 import { buildShareText, shareOrCopy } from '@/services/share'
 import { getAuthUser } from '@/services/auth'
@@ -122,10 +123,18 @@ export default {
     const subLine = computed(() => [displayName.value, difficultyLabel.value, props.winThreshold ? `${Math.min(props.corrects, props.winThreshold)}/${props.winThreshold}` : ''].filter(Boolean).join(' · '))
 
     // XP real (con PRO) = delta del total; si no hay snapshot, el XP base del juego
+    // El delta del total también trae la XP de los logros de la partida: no es todo "PRO".
+    // El bonus solo existe con plan pago (multiplicador > 1) y nunca pasa de base × (mult − 1).
+    // (Antes una cuenta GRATIS veía "Bonus PRO +40" en Ordenar por edad: era la XP de un logro.)
+    const xpMult = ref(1)
+    import('@/services/premium').then(m => m.getXpMultiplier()).then(v => { xpMult.value = Number(v) || 1 }).catch(() => {})
     const xpGained = computed(() => Math.max(0, (props.xpAfterTotal - props.xpBeforeTotal) || 0))
     const baseXp = computed(() => Math.max(0, props.xpEarned || 0))
-    const totalXp = computed(() => xpGained.value > 0 ? xpGained.value : baseXp.value)
-    const bonusXp = computed(() => (xpGained.value > 0 && baseXp.value > 0) ? Math.max(0, xpGained.value - baseXp.value) : 0)
+    const bonusXp = computed(() => {
+      if (xpMult.value <= 1 || !(xpGained.value > 0 && baseXp.value > 0)) return 0
+      return Math.min(Math.max(0, xpGained.value - baseXp.value), Math.round(baseXp.value * (xpMult.value - 1)))
+    })
+    const totalXp = computed(() => baseXp.value > 0 ? baseXp.value + bonusXp.value : xpGained.value)
     const chips = computed(() => {
       const rows = (props.xpBreakdown || []).filter(r => r && r.xp > 0)
       const list = rows.length ? [...rows] : (baseXp.value > 0 ? [{ kind: 'ball', label: `${props.corrects} aciertos`, xp: baseXp.value }] : [])
@@ -336,7 +345,23 @@ export default {
     const nextPrizeSoon = computed(() => !!(nextPrize.value && nextPrize.value.level === levelNow.value + 1))
     const DOT = { ball: '#34d399', clock: '#22d3ee', flag: '#4ade80', pro: '#fbbf24' }
     const rows = computed(() => chips.value.map((c, i) => ({ ...c, dot: DOT[c.kind] || '#818cf8', delay: (0.1 + i * 0.1) + 's' })))
-    function goNext() { tap(); onContinue() }
+    // Cola (moodboard 03/07): resumen → logros → nivel/ascenso → sobres y RECIÉN después se
+    // navega. Antes SIGUIENTE JUEGO navegaba al toque y las escenas salían encima de la
+    // previa del juego nuevo. Mientras se muestran, el resumen queda abajo.
+    const router = useRouter()
+    const leaving = ref(false)
+    async function leaveTo(to) {
+      if (leaving.value) return
+      tap()
+      leaving.value = true
+      setSuppressOverlays(false)
+      try { await whenOverlaysIdle() } catch { /* seguimos igual */ }
+      leaving.value = false
+      emit('close')
+      if (to) router.push(to).catch(() => {})
+    }
+    function goNext() { leaveTo(nextHref.value) }
+    function goBack() { leaveTo(props.guest ? '/' : props.backPath) }
     watch(phase, (p) => { if (p === 1 && won.value) success() })
 
     return { barCombo, barEl,
@@ -345,7 +370,7 @@ export default {
       subLine, totalXp, chips, didLevelUp, nextPrize, nextPrizeTypeLabel, perCorrect,
       streakBefore, streakAfter, rkPhase, showStreak, flamesShown, FLAME_PATH,
       shared, onShare, onContinue, nextHref, nextIsGame, cardEl, starEls, flameNewEl, flamesEl,
-      nextName, nextLeft, meta, miniArt, headLine, xpLabel, basePct, levelNow, nextPrizeSoon, rows, goNext, fmt, CONFETTI,
+      nextName, nextLeft, meta, miniArt, headLine, xpLabel, basePct, levelNow, nextPrizeSoon, rows, goNext, goBack, leaving, fmt, CONFETTI,
     }
   },
 }
@@ -430,13 +455,14 @@ export default {
                 <span class="nx">{{ (levelShown || 0) + 1 }}</span>
               </div>
               <div v-if="nextPrize" class="prz">
-                <PrizePeek :prize="nextPrize.prize" :size="40" />
+                <PrizePeek class="prz-card" :prize="nextPrize.prize" :size="56" />
                 <span class="pt">
                   <span class="k">PRÓXIMO PREMIO · NV {{ nextPrize.level }}</span>
                   <span class="n">{{ nextPrizeTypeLabel ? nextPrizeTypeLabel.charAt(0).toUpperCase() + nextPrizeTypeLabel.slice(1) + ' ' : '' }}{{ nextPrize.prize.name }}</span>
                 </span>
-                <span v-if="nextPrizeSoon && xpToNextAfter != null" class="lf">faltan<br>{{ fmt(xpToNextAfter) }} XP</span>
-                <span v-else class="lf">en {{ nextPrize.level - levelNow }}<br>niveles</span>
+                <!-- Lo que falta en XP ya está escrito en la barra: acá solo cuántos niveles -->
+                <span v-if="nextPrizeSoon" class="lf">en el<br>próximo</span>
+                <span v-else class="lf">en {{ nextPrize.level - levelNow }}<br>{{ nextPrize.level - levelNow === 1 ? 'nivel' : 'niveles' }}</span>
               </div>
             </section>
 
@@ -461,21 +487,21 @@ export default {
 
           <!-- 4 · acciones -->
           <div class="sm-go" :class="{ in: phase >= 6 }">
-            <router-link v-if="!guest" :to="nextHref" class="next" @click="goNext">
+            <button v-if="!guest" type="button" class="next" :disabled="leaving" @click="goNext">
               <span class="t">
                 <span class="a">{{ nextIsGame ? 'SIGUIENTE JUEGO' : 'VER JUEGOS DEL DÍA' }}</span>
                 <span v-if="nextIsGame && nextName" class="b">{{ nextName }}<template v-if="nextLeft != null"> · te {{ nextLeft === 1 ? 'queda' : 'quedan' }} {{ nextLeft }}</template></span>
               </span>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z" /></svg>
-            </router-link>
+            </button>
             <button v-else-if="!claimGate" type="button" class="next claim" @click="claimGate = true"><span class="t"><span class="a">RECLAMAR MIS PREMIOS</span></span></button>
             <div class="two">
               <button type="button" class="ghost" @click="onShare">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6" /></svg>{{ shared ? '¡Copiado!' : 'Compartir' }}
               </button>
-              <router-link :to="guest ? '/' : backPath" class="ghost" @click="onContinue">
+              <button type="button" class="ghost" :disabled="leaving" @click="goBack">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7M5 10v10h14V10" /></svg>Volver
-              </router-link>
+              </button>
             </div>
           </div>
         </div>
@@ -502,6 +528,11 @@ export default {
 .sm-pill .mi :deep(svg) { width: 20px; height: auto; display: block; }
 
 .sm-body { position: relative; flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 20px; }
+/* Pantallas altas: contenido + botones van juntos y centrados debajo de la píldora (antes
+   quedaba un vacío enorme entre el próximo premio y los botones). Si no entra, el cuerpo
+   scrollea y los botones quedan abajo, como siempre. */
+.sm-body { flex: 0 1 auto; margin-top: auto; }
+.sm-go { margin-bottom: auto; }
 
 /* resultado */
 .res { display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -567,6 +598,7 @@ export default {
 /* ×2, ×3: cada vuelta de la barra estampa el contador (se re-monta por :key) */
 @keyframes sm-combo { from { transform: rotate(-8deg) scale(2.2); opacity: 0; } to { transform: rotate(-8deg); opacity: 1; } }
 .lr .nx { font-family: var(--font-bug); font-weight: 800; font-size: 16px; color: #64748b; }
+.prz-card { flex: none; }
 .prz { min-height: 52px; box-sizing: border-box; border-radius: 14px; padding: 6px 12px 6px 8px; background: linear-gradient(90deg, rgba(129, 140, 248, .18), rgba(129, 140, 248, .03)); border: 1px solid rgba(129, 140, 248, .35); display: flex; align-items: center; gap: 10px; }
 .prz .pt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .prz .pt .k { font-size: 11px; font-weight: 700; color: #a5b4fc; }

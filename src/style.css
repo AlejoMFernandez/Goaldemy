@@ -435,6 +435,13 @@ option:disabled { color: #64748b; }
 .bnr-tier-leyenda { background: #0b1220 url('/cosmetics/rank/banner-leyenda.svg') left center / cover no-repeat; }
 .bnr-tier-goat { background: #0b1220 url('/cosmetics/rank/banner-goat.svg') left center / cover no-repeat; }
 .bnr-tier-crack { background: #0b1220 url('/cosmetics/rank/banner-crack.svg') left center / cover no-repeat; }
+/* El dibujo de rango es 360x100 con su escudo y su marco a la derecha. En cajas de otra
+   proporción (perfil 390x168, ajustes 356x58) el "cover" anclado a la izquierda lo cortaba:
+   se salía la pelota por la derecha y el marco dorado quedaba a medias. Se repinta encima
+   (::before, debajo del contenido) anclado arriba a la derecha y 7 px más grande por lado:
+   el escudo queda entero y el marco queda afuera en vez de cortado. La carta (PrizeCard)
+   tiene su propio encuadre. */
+.bs[class*="bnr-tier-"]:not(.pc-banner)::before { content: ""; position: absolute; inset: -7px; z-index: -1; pointer-events: none; background: inherit; background-size: cover; background-position: right top; }
 /* Kit de rango: el SVG del borde (120×124) hace de marco; el avatar va en el círculo central r=34 (56 % del lado): se achica con scale para no depender del layout. */
 .frm-kit, .frm-kit.anim-pan { background-color: transparent; background-size: 100% 100% !important; background-repeat: no-repeat; border-radius: 0 !important; padding: 0 !important; box-shadow: none !important; animation: none !important; }
 .frm-kit > * { border-radius: 9999px !important; transform: scale(.56); overflow: hidden; }
