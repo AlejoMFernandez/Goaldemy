@@ -13,7 +13,7 @@ import { getUserAchievements, getAchievementsCatalog } from '../../services/achi
 import { getUserXpByGame, friendlyNameForSlug } from '../../services/games';
 import { getPublicProfile, updateFeaturedAchievements, getPublicProfilesByIds } from '../../services/user-profiles';
 import { getStatusWith, sendRequest, disconnectWith, listConnections } from '../../services/connections';
-import { pushErrorToast } from '../../stores/notifications';
+import { pushErrorToast, pushSuccessToast } from '../../stores/notifications';
 import { checkAndUnlockSpecials } from '../../services/special-badges';
 import { findTeamByName, findPlayerByName } from '../../services/players';
 import { getEquippedCosmetics, bannerStyle } from '../../services/cosmetics';
@@ -295,7 +295,6 @@ export default {
         await updateFeaturedAchievements(this.currentAuthId, codes)
         this.featuredAchievements = codes
         this.showFeaturedModal = false
-        const { pushSuccessToast } = await import('../../stores/notifications')
         pushSuccessToast('Logros destacados actualizados')
       } catch (e) {
         console.error('[Profile] save featured:', e)
