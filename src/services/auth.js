@@ -108,17 +108,55 @@ async function loadUserCurrentAuthState() {
  * Carga datos extendidos del perfil del usuario desde la tabla "users"
  * Incluye: display_name, avatar_url, nationality_code, favorite_team, etc.
  */
+// ── Nombre elegido al registrarse ──
+// Antes el signUp no mandaba el nombre en los metadatos: el trigger handle_new_user creaba
+// el perfil con la parte del mail antes de la @ y el insert del cliente fallaba (fila ya
+// existente, o sin sesión hasta confirmar el mail). Resultado: el usuario nuevo no veía su
+// nombre. Ahora va en los metadatos y, además, se guarda acá hasta poder escribirlo.
+const PENDING_NAME_KEY = 'fulvo:pending_profile'
+function savePendingProfile(email, data) {
+    try { localStorage.setItem(PENDING_NAME_KEY, JSON.stringify({ email: String(email || '').toLowerCase(), data })) } catch {}
+}
+function readPendingProfile(email) {
+    try {
+        const raw = JSON.parse(localStorage.getItem(PENDING_NAME_KEY) || 'null')
+        return raw && raw.email === String(email || '').toLowerCase() ? (raw.data || null) : null
+    } catch { return null }
+}
+const emailPrefix = (email) => String(email || '').split('@')[0]
+/** Nombre a mostrar: el del perfil, el de los metadatos del alta o, último recurso, el del mail. */
+export function displayNameFor(u) {
+    const n = String(u?.display_name || '').trim()
+    if (n) return n
+    const meta = String(u?.user_metadata?.display_name || u?.user_metadata?.username || '').trim()
+    return meta || emailPrefix(u?.email) || 'Jugador'
+}
+
 async function loadExtendedProfile() {
     if (user.id === null) return;
     try {
-        const profile = await getUserProfileById(user.id)
+        let metaName = ''
+        try { const { data } = await supabase.auth.getUser(); metaName = String(data?.user?.user_metadata?.display_name || '').trim() } catch {}
+        const pending = readPendingProfile(user.email)
+        const chosen = String(pending?.display_name || metaName || '').trim()
+        let profile = await getUserProfileById(user.id)
         if (!profile || !profile.email) {
             try {
-                await createUserProfile({ id: user.id, email: user.email, display_name: user.email?.split('@')[0] || 'Usuario' })
-                const retry = await getUserProfileById(user.id)
-                if (retry) { setAuthUserState(retry); return }
+                await createUserProfile({ id: user.id, email: user.email, display_name: chosen || emailPrefix(user.email) || 'Usuario', ...(pending ? { ...pending, display_name: chosen || pending.display_name } : {}) })
             } catch {}
+            profile = await getUserProfileById(user.id).catch(() => null)
         }
+        // Perfil creado por el trigger con el nombre del mail (o vacío) y el usuario había
+        // elegido otro: se escribe el elegido (y los datos del alta que falten).
+        if (profile && chosen) {
+            const current = String(profile.display_name || '').trim()
+            if (!current || current === emailPrefix(user.email)) {
+                const patch = { display_name: chosen }
+                for (const k of ['nationality_code', 'favorite_team', 'favorite_player']) if (pending?.[k] && !profile[k]) patch[k] = pending[k]
+                try { await updateUserProfile(user.id, patch); profile = { ...profile, ...patch } } catch {}
+            }
+        }
+        if (profile && chosen && String(profile.display_name || '').trim() === chosen) { try { localStorage.removeItem(PENDING_NAME_KEY) } catch {} }
         if (profile) setAuthUserState(profile)
     } catch (e) {
         console.warn('[auth.js] loadExtendedProfile failed, continuing with base user')
@@ -134,11 +172,17 @@ async function loadExtendedProfile() {
  */
 export async function register(email, password, profileData = {}) {
     try {
+        const allowed = ['display_name','bio','career','avatar_url','nationality_code','favorite_team','favorite_player']
+        const extra = Object.fromEntries(Object.entries(profileData || {}).filter(([k, v]) => allowed.includes(k) && v != null && v !== ''))
+        // El nombre viaja en los metadatos: el trigger handle_new_user lo copia al perfil
+        // (supabase/patch-fix-profiles.sql). Y queda guardado por si hay que escribirlo después.
+        if (extra.display_name) savePendingProfile(email, extra)
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 emailRedirectTo: `${window.location.origin}/login?confirmed=1`,
+                data: extra.display_name ? { display_name: extra.display_name } : undefined,
             }
         });
 
@@ -151,14 +195,10 @@ export async function register(email, password, profileData = {}) {
         // If email confirmation is required, user can be null here
         if (u) {
             setAuthUserState({ id: u.id, email: u.email, email_confirmed_at: u.email_confirmed_at || u.confirmed_at || null }, { replace: true });
-            // Attempt to create extended profile; ignore unknown columns
-            const base = { id: u.id, email: u.email }
-            const allowed = ['display_name','bio','career','avatar_url','nationality_code','favorite_team','favorite_player']
-            const extra = Object.fromEntries(Object.entries(profileData || {}).filter(([k]) => allowed.includes(k)))
-            try { await createUserProfile({ ...base, ...extra }) } catch (e) {
-                // If insertion fails due to unknown column, try minimal
-                try { await createUserProfile(base) } catch {}
-            }
+            // La fila la crea el trigger handle_new_user (SECURITY DEFINER) con el nombre de los
+            // metadatos. Nada de INSERT desde acá: sin sesión (mail sin confirmar) RLS lo rechaza
+            // (42501). Con sesión, UPDATE de lo que el trigger no copia; si no, al primer login.
+            if (data?.session) { try { await updateUserProfile(u.id, extra) } catch {} }
         } else {
             setAuthUserState({ id: null, email: email, email_confirmed_at: null });
         }

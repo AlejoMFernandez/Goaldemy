@@ -11,7 +11,7 @@
  */
 import { ref, computed, watch, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { logout } from '../../services/auth'
+import { logout, displayNameFor } from '../../services/auth'
 import { shellState, closeSettings, requestBugReport, requestChallenges, tapHaptic } from './shell-state'
 import { getTierForLevel } from '../../services/tiers'
 import { resolveLevelProgress } from '../../services/xp'
@@ -25,8 +25,7 @@ import BannerScene from '../common/BannerScene.vue'
 const router = useRouter()
 const route = useRoute()
 const open = computed(() => shellState.settingsOpen)
-const rawName = computed(() => shellState.user?.display_name || shellState.user?.email || 'Jugador')
-const name = computed(() => rawName.value.includes('@') ? rawName.value.split('@')[0] : rawName.value)
+const name = computed(() => displayNameFor(shellState.user))
 const s = computed(() => shellState.stats)
 const tier = computed(() => getTierForLevel(s.value.level))
 const prog = computed(() => {

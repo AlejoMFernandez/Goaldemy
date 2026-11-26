@@ -7,7 +7,7 @@
  * destacados · Su juego. Sin Fichas/Balones ni "últimos jugados".
  * Sirve para /profile (el tuyo) y /u/:id (el de otro).
  */
-import { subscribeToAuthStateChanges } from '../../services/auth';
+import { subscribeToAuthStateChanges, displayNameFor } from '../../services/auth';
 import { getUserLevel, fetchLevelThresholds, resolveLevelProgress, getUserMaxStreakByGame } from '../../services/xp';
 import { getUserAchievements, getAchievementsCatalog } from '../../services/achievements';
 import { getUserXpByGame, friendlyNameForSlug } from '../../services/games';
@@ -83,10 +83,11 @@ export default {
   computed: {
     titleCls() { return titleClass(this.equippedTitleRarity, this.equippedTitlePremium) },
     avatarInitial() {
-      const n = (this.user?.display_name || this.user?.email || '').trim()
+      const n = displayNameFor(this.user).trim()
       return n ? n[0].toUpperCase() : '?'
     },
-    displayName() { return this.user?.display_name || (this.user?.email ? this.user.email.split('@')[0] : '') || '—' },
+    // Mismo criterio en Perfil, TopBar y Ajustes (services/auth → displayNameFor): nunca vacío ni "—"
+    displayName() { return displayNameFor(this.user) },
     isSelf() { return (this.$route.params.id || this.currentAuthId) === this.currentAuthId },
     canConnect() { return !this.isSelf && !!this.currentAuthId && !!this.user?.id },
     level() { return Number(this.levelInfo?.level) || 1 },

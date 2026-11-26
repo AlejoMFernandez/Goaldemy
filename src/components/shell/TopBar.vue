@@ -14,6 +14,7 @@ import { computed, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { shellState, loadShellStats, openSettings, tapHaptic } from './shell-state'
 import { getTierForLevel } from '../../services/tiers'
+import { displayNameFor } from '../../services/auth'
 import UserAvatar from '../common/UserAvatar.vue'
 import CurrencyIcon from '../shop/CurrencyIcon.vue'
 import FulvoLogo from '../FulvoLogo.vue'
@@ -22,7 +23,7 @@ const route = useRoute()
 const logged = computed(() => !!shellState.user?.id)
 const s = computed(() => shellState.stats)
 const tier = computed(() => getTierForLevel(s.value.level))
-const initial = computed(() => ((shellState.user?.display_name || shellState.user?.email || '?').trim()[0] || '?').toUpperCase())
+const initial = computed(() => (displayNameFor(shellState.user).trim()[0] || '?').toUpperCase())
 
 function compact(n) {
   const v = Number(n) || 0
