@@ -460,8 +460,10 @@ export default {
 </script>
 
 <template>
-    <!-- Desktop (lg+): navbar de siempre. En mobile la reemplazan shell/TopBar + shell/TabBar. -->
     <header class="hidden lg:block sticky top-0 z-40">
+        <!-- Desktop (lg+): navbar de siempre. En mobile la reemplazan shell/TopBar + shell/TabBar.
+             El comentario va adentro del header: afuera convierte el componente en fragmento
+             y this.$el deja de ser un elemento (rompía _onDocClick con cada toque). -->
         <div class="border-b border-white/10 bg-slate-900/92">
             <nav class="container mx-auto flex items-center justify-between px-4 py-4 gap-3">
                 <RouterLink to="/" class="flex-none">
