@@ -8,15 +8,14 @@
  */
 import { powerupLabel } from '../../services/rewards'
 import { rarity as rarityInfo } from '../../services/cosmetics'
+import { RARITY } from '../../services/rarity'
 
 // Color de rareza para el borde/glow del premio y la etiqueta.
 // [color, oscuro, glow]
-export const RARITY_COLORS = {
-  common: ['#94a3b8', '#475569', 'rgba(148,163,184,0.5)'],
-  rare: ['#60a5fa', '#1d4ed8', 'rgba(96,165,250,0.6)'],
-  epic: ['#a855f7', '#7e22ce', 'rgba(168,85,247,0.65)'],
-  legendary: ['#fbbf24', '#b45309', 'rgba(251,191,36,0.7)'],
-}
+// Colores de rareza: fuente única en services/rarity.js
+export const RARITY_COLORS = Object.fromEntries(
+  Object.entries(RARITY).map(([k, x]) => [k, [x.c, x.dark, `rgb(${x.rgb} / 0.6)`]])
+)
 export function rarityColors(r) {
   return RARITY_COLORS[r] || RARITY_COLORS.common
 }

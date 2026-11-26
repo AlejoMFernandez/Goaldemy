@@ -6,7 +6,7 @@
  * mínimo; el "cómo se consigue" aparece solo en las bloqueadas. Tocás una pieza
  * tuya y se equipa al instante. Al final, el acceso a las colecciones por rango.
  */
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getCosmetics, equipCosmetic, bannerStyle, hintFor } from '../services/cosmetics'
 import { getShop } from '../services/shop'
@@ -15,6 +15,8 @@ import { getTierForLevel } from '../services/tiers'
 import { shellState, loadShellStats } from '../components/shell/shell-state'
 import { pushErrorToast } from '../stores/notifications'
 import { tap, success } from '../services/haptics'
+import { soundManager } from '../services/sounds'
+import { sparks, center } from '../services/game-fx'
 import UserAvatar from '../components/common/UserAvatar.vue'
 import PiecePreview from '../components/collection/PiecePreview.vue'
 import { pieceRarity, hexA, howToGet } from '../components/collection/piece-style'
@@ -106,6 +108,21 @@ async function load() {
     shopByCode.value = m
   } finally { loading.value = false }
 }
+// Cada tipo se equipa con su animación (como el Vestuario de main): el ícono
+// entra girando, el borde se dibuja con un aro, el banner barre en diagonal y
+// el título se estampa. Sonido + chispas en la vista previa.
+const previewEl = ref(null)
+const bannerEl = ref(null)
+function playEquip(type) {
+  fx.value = { type, n: fx.value.n + 1 }
+  soundManager.play(type === 'title' ? 'stamp' : 'swoosh')
+  nextTick(() => {
+    const target = type === 'banner' ? bannerEl.value : previewEl.value?.querySelector(type === 'title' ? '.col-title' : '.col-av')
+    if (!target) return
+    const c = center(target)
+    setTimeout(() => sparks(c.x, c.y, type === 'banner' ? 16 : 12, ['#fcd34d', '#fff', '#34d399'], type === 'banner' ? 110 : 60), type === 'banner' ? 250 : 180)
+  })
+}
 async function equip(c) {
   if (!c.owned || busy.value) return
   if (c.equipped) { tap(); return }
@@ -114,7 +131,7 @@ async function equip(c) {
   const res = await equipCosmetic(c.code)
   if (res?.ok) {
     items.value = items.value.map(x => x.type === c.type ? { ...x, equipped: x.code === c.code } : x)
-    fx.value = { type: c.type, n: fx.value.n + 1 }
+    playEquip(c.type)
     success()
   } else pushErrorToast('No se pudo equipar')
   busy.value = ''
@@ -162,9 +179,8 @@ onMounted(() => { load(); loadShellStats().catch(() => {}) })
 <template>
   <section class="col relative -mx-6 -mt-10 lg:mx-auto lg:mt-0 lg:max-w-xl pb-6">
     <!-- Banner equipado -->
-    <section :aria-label="`Banner equipado${eqBanner ? ': ' + eqBanner.name : ''}`" class="relative h-[104px] lg:rounded-b-3xl overflow-hidden"
-      :class="[bannerStyle(eqBanner?.style_key || 'default'), eqBanner?.premium_only ? 'anim-pan' : '']">
-      <div :key="'b' + (fx.type === 'banner' ? fx.n : 0)" class="absolute inset-0" :class="fx.type === 'banner' && fx.n ? 'col-flash' : ''"></div>
+    <section ref="bannerEl" :aria-label="`Banner equipado${eqBanner ? ': ' + eqBanner.name : ''}`" class="relative h-[104px] lg:rounded-b-3xl overflow-hidden">
+      <div :key="'b' + (fx.type === 'banner' ? fx.n : 0)" class="absolute inset-0" :class="[bannerStyle(eqBanner?.style_key || 'default'), eqBanner?.premium_only ? 'anim-pan' : '', fx.type === 'banner' && fx.n ? 'eq-fx-banner' : '']"></div>
       <div class="absolute top-3 left-3.5 right-3.5 flex justify-between items-center gap-2">
         <h1 class="m-0 px-3 py-1.5 rounded-full bg-black/50 font-display font-bold text-lg text-white">Tu vestuario</h1>
         <span class="px-2.5 py-1 rounded-full bg-black/50 text-[11px] font-bold text-slate-200 truncate">Tocá una pieza para equiparla</span>
@@ -172,13 +188,14 @@ onMounted(() => { load(); loadShellStats().catch(() => {}) })
     </section>
 
     <!-- Vista previa -->
-    <section aria-label="Vista previa" class="relative -mt-[34px] px-4 flex items-end gap-3">
-      <span :key="'a' + ((fx.type === 'icon' || fx.type === 'frame') ? fx.n : 0)" class="shrink-0 rounded-[22px] shadow-[0_8px_22px_rgba(0,0,0,0.5)]" :class="(fx.type === 'icon' || fx.type === 'frame') && fx.n ? 'col-pop' : ''">
+    <section ref="previewEl" aria-label="Vista previa" class="relative -mt-[34px] px-4 flex items-end gap-3">
+      <span :key="'a' + ((fx.type === 'icon' || fx.type === 'frame') ? fx.n : 0)" class="col-av relative shrink-0 rounded-[22px] shadow-[0_8px_22px_rgba(0,0,0,0.5)]" :class="fx.n && fx.type === 'icon' ? 'eq-fx-icon' : (fx.n && fx.type === 'frame' ? 'eq-fx-frame' : '')">
+        <i v-if="fx.n && fx.type === 'frame'" class="eq-ring" aria-hidden="true"></i>
         <UserAvatar :size="76" :avatar-url="shellState.user?.avatar_url || ''" :initial="initial" :frame-key="eqFrame?.style_key || 'none'" :icon-glyph="eqIconKey" :frame-premium="!!eqFrame?.premium_only" />
       </span>
       <span class="flex-1 min-w-0 pb-0.5 flex flex-col items-start gap-1">
         <span class="font-display font-bold text-xl leading-none truncate max-w-full">{{ name }} <span class="font-bug font-extrabold text-sm text-indigo-300">NV {{ level }}</span></span>
-        <span v-if="eqTitle" :key="'t' + (fx.type === 'title' ? fx.n : 0)" class="col-title" :class="fx.type === 'title' && fx.n ? 'col-pop' : ''">{{ eqTitle.name.toUpperCase() }}</span>
+        <span v-if="eqTitle" :key="'t' + (fx.type === 'title' ? fx.n : 0)" class="col-title" :class="fx.type === 'title' && fx.n ? 'eq-fx-title' : ''">{{ eqTitle.name.toUpperCase() }}</span>
         <span v-else class="text-xs text-slate-500">Sin título</span>
       </span>
     </section>
@@ -209,7 +226,7 @@ onMounted(() => { load(); loadShellStats().catch(() => {}) })
       <p v-else-if="!cards.length" class="col-span-full py-10 text-center text-sm text-slate-400">Todavía no hay piezas en esta página.</p>
       <template v-else>
       <button v-for="c in cards" :key="c.code" type="button" :aria-label="aria(c)" :aria-disabled="!c.owned"
-        class="col-card" :class="[c.owned ? 'is-owned' : 'is-locked', busy === c.code ? 'is-busy' : '']" :style="cardStyle(c)" @click="equip(c)">
+        class="col-card" :class="[c.owned ? 'is-owned' : 'is-locked', busy === c.code ? 'is-busy' : '', isNew(c) ? 'col-stick' : '']" :style="cardStyle(c)" @click="equip(c)">
         <span class="col-num" :class="c.owned ? 'text-slate-200/55' : 'text-slate-700'" aria-hidden="true">{{ albumNo[c.code] }}</span>
         <span class="flex items-center justify-center shrink-0" :style="{ height: tab === 'banner' ? '66px' : tab === 'title' ? '64px' : '84px' }">
           <PiecePreview :cos="c" :size="tab === 'banner' ? 82 : 80" :inner-icon="eqIconKey" :initial="initial" :locked="!c.owned" />
@@ -282,8 +299,25 @@ onMounted(() => { load(); loadShellStats().catch(() => {}) })
 @keyframes colpop { 0% { transform: scale(0.82); } 100% { transform: scale(1); } }
 .col-flash { animation: colflash 0.6s ease-out; }
 @keyframes colflash { 0% { background: rgba(255, 255, 255, 0.35); } 100% { background: transparent; } }
+/* Lo nuevo se "pega" en el álbum: entra girado y cae en su lugar con un brillo (como main) */
+.col-stick { animation: col-stick .7s cubic-bezier(.34, 1.56, .64, 1) both; }
+.col-stick::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, .55) 50%, transparent 65%) -150% 0 / 250% 100% no-repeat; animation: col-shine .9s ease .5s both; }
+@keyframes col-stick { 0% { transform: rotate(-10deg) scale(1.25) translateY(-8px); opacity: 0; box-shadow: 0 18px 30px rgba(0, 0, 0, .5); } 70% { opacity: 1; } 100% { transform: none; } }
+@keyframes col-shine { to { background-position: 150% 0; } }
+/* Equipar, por tipo */
+.eq-fx-icon { animation: eq-icon .55s cubic-bezier(.34, 1.56, .64, 1) both; }
+@keyframes eq-icon { 0% { transform: scale(.6) rotate(-12deg); filter: brightness(2); } 60% { transform: scale(1.08) rotate(3deg); } 100% { transform: none; filter: none; } }
+.eq-fx-frame { animation: eq-frame .6s cubic-bezier(.34, 1.3, .64, 1) both; }
+@keyframes eq-frame { 0% { transform: rotate(-120deg) scale(.85); filter: brightness(1.8) saturate(1.4); } 100% { transform: none; filter: none; } }
+.eq-ring { position: absolute; inset: -8px; border-radius: 26px; border: 3px solid #fcd34d; pointer-events: none; animation: eq-ring .7s ease-out forwards; }
+@keyframes eq-ring { from { transform: scale(.8); opacity: 1; } to { transform: scale(1.35); opacity: 0; } }
+.eq-fx-banner { animation: eq-banner .6s cubic-bezier(.65, 0, .35, 1) both; }
+@keyframes eq-banner { from { clip-path: polygon(0 0, 0 0, -30% 100%, 0 100%); filter: brightness(1.6); } to { clip-path: polygon(0 0, 130% 0, 100% 100%, 0 100%); filter: none; } }
+.eq-fx-title { animation: eq-title .45s cubic-bezier(.34, 1.56, .64, 1) both; }
+@keyframes eq-title { 0% { transform: scale(1.8); opacity: 0; letter-spacing: .3em; } 100% { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
-  .col-new, .col-pop, .col-flash { animation: none; }
+  .col-new, .col-pop, .col-flash, .col-stick, .col-stick::after, .eq-fx-icon, .eq-fx-frame, .eq-ring, .eq-fx-banner, .eq-fx-title { animation: none; }
   .col-fill, .col-card { transition: none; }
 }
 </style>

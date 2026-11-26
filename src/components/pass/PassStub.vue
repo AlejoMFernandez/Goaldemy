@@ -5,6 +5,12 @@
 //  pro-lock → toda la mitad lleva a /pricing (candado PRO)
 //  claimed  → sello "COBRADO" en la esquina
 //  locked   → gris
+//
+// Gestos del abono (artifact "Abono de temporada"):
+//  · Cortar el talón: tocar o ARRASTRAR la mitad lista hacia afuera de la
+//    entrada. Al cobrarse queda con borde dentado del lado del troquel.
+//  · Se prende la Platea: `lights` la enciende como un reflector (con
+//    `fxDelay` para ir de arriba abajo) y `drop` hace caer el premio ganado.
 import { computed, ref } from 'vue'
 import PassPrize from './PassPrize.vue'
 import { rarityColors } from './pass-rewards'
@@ -18,6 +24,10 @@ const props = defineProps({
   topRight: { type: String, default: '' },
   busy: { type: Boolean, default: false },
   justClaimed: { type: Boolean, default: false },
+  lights: { type: Boolean, default: false },
+  drop: { type: Boolean, default: false },
+  fxDelay: { type: Number, default: 0 }, // ms
+  note: { type: String, default: '' },   // texto en lugar del premio (fila 0 de Popular)
 })
 const emit = defineEmits(['claim', 'upgrade'])
 const root = ref(null)
@@ -60,7 +70,45 @@ const aria = computed(() => {
   return undefined
 })
 
+// ── Cortar el talón arrastrando (hacia afuera de la entrada) ──
+const CUT_AT = 38 // px
+const dragX = ref(0)
+let drag = null
+let swallowClick = false
+const outward = (dx) => (isPla.value ? dx : -dx) // positivo = alejándose del troquel
+function onDown(e) {
+  if (!ready.value || props.busy || e.button > 0) return
+  drag = { x: e.clientX, y: e.clientY, id: e.pointerId, on: false }
+}
+function onMove(e) {
+  if (!drag || e.pointerId !== drag.id) return
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y
+  if (!drag.on) {
+    if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) return
+    drag.on = true
+    try { root.value?.setPointerCapture?.(e.pointerId) } catch { /* noop */ }
+  }
+  dragX.value = Math.max(0, Math.min(56, outward(dx)))
+  if (dragX.value >= CUT_AT) {
+    drag = null
+    swallowClick = true
+    emit('claim', root.value)
+    setTimeout(() => { dragX.value = 0 }, 60)
+  }
+}
+function onUp() {
+  if (drag?.on) swallowClick = true
+  drag = null
+  dragX.value = 0
+}
+const dragStyle = computed(() => {
+  if (!dragX.value) return null
+  const d = isPla.value ? dragX.value : -dragX.value
+  return { transform: `translateX(${d * 0.6}px) rotate(${d * 0.08}deg)`, transition: 'none' }
+})
+
 function onTap() {
+  if (swallowClick) { swallowClick = false; return }
   if (props.busy) return
   if (ready.value) emit('claim', root.value)
   else if (proLock.value) emit('upgrade')
@@ -76,18 +124,21 @@ defineExpose({ el: root })
     :aria-label="aria"
     :aria-busy="busy ? 'true' : undefined"
     class="stub"
-    :class="[isPla ? 'stub--pla' : 'stub--pop', { 'stub--ready': ready, 'stub--tap': interactive }]"
-    :style="{ background: paper, color: ink }"
+    :class="[isPla ? 'stub--pla' : 'stub--pop', { 'stub--ready': ready, 'stub--tap': interactive, 'stub--cut': claimed, 'stub--tearing': justClaimed, 'stub--lights': lights }]"
+    :style="[{ background: paper, color: ink, '--fx-d': fxDelay + 'ms' }, dragStyle]"
     @click="onTap"
+    @pointerdown="onDown" @pointermove="onMove" @pointerup="onUp" @pointercancel="onUp"
   >
     <span class="stub-rule" aria-hidden="true" :style="{ borderColor: rule }"></span>
 
     <span class="stub-top" aria-hidden="true"><span>{{ topLeft }}</span><span>{{ topRight }}</span></span>
 
-    <span class="stub-prize" :class="{ 'pass-bob': ready }" :style="{ filter: prizeFilter }">
+    <span v-if="note && !reward" class="stub-note">{{ note }}</span>
+    <span v-else class="stub-prize" :class="{ 'pass-bob': ready && !drop, 'stub-drop': drop }" :style="{ filter: prizeFilter }">
       <PassPrize v-if="reward" :reward="reward" :muted="locked" />
       <span v-else class="stub-empty" aria-hidden="true">—</span>
     </span>
+    <span v-if="lights" class="stub-beam" aria-hidden="true"></span>
 
     <span v-if="reward" class="stub-foot">
       <span class="stub-tag" :style="tagStyle">{{ reward.tag }}</span>
@@ -113,7 +164,30 @@ defineExpose({ el: root })
 .stub--tap { cursor: pointer; }
 .stub--tap:active { transform: scale(0.97); }
 .stub--tap:focus-visible { outline: 3px solid #fde68a; outline-offset: -3px; }
-.stub--ready { box-shadow: inset 0 0 0 2px #fbbf24, inset 0 0 18px rgba(251,191,36,0.55); }
+.stub--ready { box-shadow: inset 0 0 0 2px #fbbf24, inset 0 0 18px rgba(251,191,36,0.55); touch-action: pan-y; }
+
+/* Talón cortado: borde dentado del lado del troquel */
+.stub--pop.stub--cut { clip-path: polygon(0 0, 100% 0, 96% 8%, 100% 17%, 96% 25%, 100% 33%, 96% 42%, 100% 50%, 96% 58%, 100% 67%, 96% 75%, 100% 83%, 96% 92%, 100% 100%, 0 100%); }
+.stub--pla.stub--cut { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 4% 92%, 0 83%, 4% 75%, 0 67%, 4% 58%, 0 50%, 4% 42%, 0 33%, 4% 25%, 0 17%, 4% 8%); }
+.stub--pop.stub--tearing { animation: stub-tear-l .45s cubic-bezier(.3,.7,.4,1); }
+.stub--pla.stub--tearing { animation: stub-tear-r .45s cubic-bezier(.3,.7,.4,1); }
+@keyframes stub-tear-l { 40% { transform: translateX(-12px) rotate(-4deg); } 100% { transform: none; } }
+@keyframes stub-tear-r { 40% { transform: translateX(12px) rotate(4deg); } 100% { transform: none; } }
+
+/* Se prende la Platea: reflector de arriba abajo y el premio cae */
+.stub--lights { animation: stub-lights .62s ease-out var(--fx-d, 0ms) both; }
+@keyframes stub-lights { 0% { filter: brightness(.35) saturate(.6); } 45% { filter: brightness(1.7) saturate(1.2); } 100% { filter: none; } }
+.stub-beam {
+  position: absolute; inset: -20% 10% 30%; pointer-events: none; opacity: 0;
+  background: radial-gradient(60% 80% at 50% 0%, rgba(255,247,214,.85), rgba(253,230,138,.25) 55%, transparent 75%);
+  animation: stub-beam .9s ease-out var(--fx-d, 0ms) both;
+}
+@keyframes stub-beam { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+.stub-drop { animation: stub-drop .55s cubic-bezier(.3,1.5,.5,1) calc(var(--fx-d, 0ms) + 380ms) both; }
+@keyframes stub-drop { 0% { transform: translateY(-46px) scale(.8); opacity: 0; } 60% { opacity: 1; } 100% { transform: none; opacity: 1; } }
+.stub-note {
+  position: relative; margin: auto 0; max-width: 130px; font-size: 11px; font-weight: 700; line-height: 1.25; opacity: .75;
+}
 
 .stub-rule { position: absolute; border: 1px solid; pointer-events: none; }
 .stub--pop .stub-rule { inset: 4px 0 4px 4px; border-right: 0; border-radius: 9px 0 0 9px; }
@@ -155,7 +229,8 @@ defineExpose({ el: root })
 @keyframes pass-bob { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.06); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .pass-bob, .stub-stamp--in { animation: none; }
+  .pass-bob, .stub-stamp--in, .stub--tearing, .stub--lights, .stub-drop { animation: none; }
+  .stub-beam { display: none; }
   .stub--tap:active { transform: none; }
 }
 </style>
