@@ -123,10 +123,18 @@ export default {
     const subLine = computed(() => [displayName.value, difficultyLabel.value, props.winThreshold ? `${Math.min(props.corrects, props.winThreshold)}/${props.winThreshold}` : ''].filter(Boolean).join(' · '))
 
     // XP real (con PRO) = delta del total; si no hay snapshot, el XP base del juego
+    // El delta del total también trae la XP de los logros de la partida: no es todo "PRO".
+    // El bonus solo existe con plan pago (multiplicador > 1) y nunca pasa de base × (mult − 1).
+    // (Antes una cuenta GRATIS veía "Bonus PRO +40" en Ordenar por edad: era la XP de un logro.)
+    const xpMult = ref(1)
+    import('@/services/premium').then(m => m.getXpMultiplier()).then(v => { xpMult.value = Number(v) || 1 }).catch(() => {})
     const xpGained = computed(() => Math.max(0, (props.xpAfterTotal - props.xpBeforeTotal) || 0))
     const baseXp = computed(() => Math.max(0, props.xpEarned || 0))
-    const totalXp = computed(() => xpGained.value > 0 ? xpGained.value : baseXp.value)
-    const bonusXp = computed(() => (xpGained.value > 0 && baseXp.value > 0) ? Math.max(0, xpGained.value - baseXp.value) : 0)
+    const bonusXp = computed(() => {
+      if (xpMult.value <= 1 || !(xpGained.value > 0 && baseXp.value > 0)) return 0
+      return Math.min(Math.max(0, xpGained.value - baseXp.value), Math.round(baseXp.value * (xpMult.value - 1)))
+    })
+    const totalXp = computed(() => baseXp.value > 0 ? baseXp.value + bonusXp.value : xpGained.value)
     const chips = computed(() => {
       const rows = (props.xpBreakdown || []).filter(r => r && r.xp > 0)
       const list = rows.length ? [...rows] : (baseXp.value > 0 ? [{ kind: 'ball', label: `${props.corrects} aciertos`, xp: baseXp.value }] : [])
@@ -520,6 +528,11 @@ export default {
 .sm-pill .mi :deep(svg) { width: 20px; height: auto; display: block; }
 
 .sm-body { position: relative; flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 20px; }
+/* Pantallas altas: contenido + botones van juntos y centrados debajo de la píldora (antes
+   quedaba un vacío enorme entre el próximo premio y los botones). Si no entra, el cuerpo
+   scrollea y los botones quedan abajo, como siempre. */
+.sm-body { flex: 0 1 auto; margin-top: auto; }
+.sm-go { margin-bottom: auto; }
 
 /* resultado */
 .res { display: flex; flex-direction: column; align-items: center; gap: 4px; }
