@@ -24,7 +24,10 @@ const SOUND_FILES = {
   shieldBreak: '/sounds/shield-break.mp3',
   timeAdd: '/sounds/time-add.mp3',           // +15 s
   hint: '/sounds/hint.mp3',
-  stamp: '/sounds/stamp.mp3',                // golpe del título final
+  stamp: '/sounds/stamp.mp3',                // golpe del título final / sello de hito del abono
+  clac: '/sounds/clac.mp3',                  // troquel del abono (acepta { rate } para subir el tono)
+  tear: '/sounds/tear.mp3',                  // papel que se rompe (talón del abono, sobre)
+  tearDone: '/sounds/tear-done.mp3',
   // Recompensas y nivel (moodboards 02/03/08)
   pum: '/sounds/pum.mp3',                    // ¡PUM! de nivel (golpe + brillo)
   pumSmall: '/sounds/pum-small.mp3',         // nivel intermedio cuando subís varios
@@ -106,14 +109,14 @@ class SoundManager {
     const source = ctx.createBufferSource()
     const gain = ctx.createGain()
     source.buffer = buffer
-    source.playbackRate.value = rate
+    if (rate !== 1) source.playbackRate.value = rate
     source.connect(gain)
     gain.connect(ctx.destination)
     gain.gain.value = this.volume * vol
     source.start(0)
   }
 
-  _oscillatorFallback(name) {
+  _oscillatorFallback(name, rate = 1) {
     const ctx = this._getCtx()
 
     const makeOsc = (freq, type = 'sine', vol = 1, dur = 0.15, delay = 0) => {
@@ -228,6 +231,11 @@ class SoundManager {
         break
       case 'stamp':
         thump(130, 40, 1.6, 0.3)
+        break
+      case 'clac':       // troquel: golpe seco y corto + chasquido de metal (rate sube el tono)
+        thump(260 * rate, 90 * rate, 1.1, 0.09)
+        noise(3800 * rate, 3, 0.55, 0.06)
+        makeOsc(1900 * rate, 'square', 0.12, 0.04, 0.01)
         break
       case 'win':
         makeOsc(523.25, 'sine', 0.8, 0.25)
@@ -360,17 +368,19 @@ class SoundManager {
     }
   }
 
-  async play(name) {
+  // opts.rate: velocidad/tono (1 = normal). Lo usa el troquel del abono para
+  // subir el tono cuando agujerea varios niveles seguidos.
+  async play(name, { rate = 1 } = {}) {
     if (!this.enabled) return
     try {
       const buffer = await this._loadFile(name)
       if (buffer) {
-        this._playBuffer(buffer)
+        this._playBuffer(buffer, 1, rate)
       } else {
-        this._oscillatorFallback(name)
+        this._oscillatorFallback(name, rate)
       }
     } catch {
-      try { this._oscillatorFallback(name) } catch {}
+      try { this._oscillatorFallback(name, rate) } catch {}
     }
   }
 

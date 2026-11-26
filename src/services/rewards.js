@@ -87,6 +87,19 @@ export async function claimPassTier(tier, track) {
   return data || { ok: false }
 }
 
+/**
+ * Tiempo de descuento del abono: pasado el nivel 30, cada 30 puntos es un
+ * talón extra de Fichas por pista (tope 10). track: 'free' | 'premium'.
+ * Necesita supabase/pendientes/2026-11-26-abono-temporada.sql; sin eso la RPC
+ * no existe y devuelve { ok: false } (la UI solo muestra el descuento si
+ * get_monthly_pass trae `overtime`).
+ */
+export async function claimPassOvertime(track) {
+  const { data, error } = await supabase.rpc('claim_pass_overtime', { p_track: track })
+  if (error) return { ok: false, error: error.message }
+  return data || { ok: false }
+}
+
 /** Retos progresivos (auto-upgrade) con tier/progreso/objetivo actuales. */
 export async function getProgressiveChallenges() {
   const { id } = getAuthUser() || {}
