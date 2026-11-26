@@ -278,7 +278,8 @@ export default {
                 <span :class="{ on: hintsShown.includes('shirt') }">{{ hintText('shirt') }}</span>
               </div>
             </div>
-            <div class="wi-name" :class="{ on: answered, lost }">{{ current?.name }}</div>
+            <!-- El nombre recién al revelar: antes estaba en el DOM (opacity 0) desde el arranque y se leía inspeccionando o con un lector de pantalla -->
+            <div class="wi-name" :class="{ on: answered, lost }" :aria-hidden="answered ? undefined : 'true'">{{ answered ? current?.name : '' }}</div>
           </div>
         </Transition>
 
