@@ -834,5 +834,6 @@ option:disabled { color: #64748b; }
 .ttl-rare { color: #bae6fd; background: rgba(56,189,248,.12); border: 1px solid rgba(56,189,248,.35); }
 .ttl-rare::before { content: ""; flex: none; width: .45em; height: .45em; background: #38bdf8; transform: rotate(45deg); border-radius: 1px; }
 .ttl-epic { background: linear-gradient(90deg, #f0abfc, #a855f7); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; border: 1px solid rgba(232,121,249,.5); transform: rotate(-2deg); }
+.ttl-premium { border: 1px solid rgba(251,191,36,.6); }
 .ttl-legendary { background: linear-gradient(100deg, #b45309 20%, #fef3c7 40%, #fbbf24 50%, #b45309 70%) 0 0/250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; border: 1px solid rgba(251,191,36,.6); animation: vst-shine 3s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .ttl-legendary { animation: none; } }

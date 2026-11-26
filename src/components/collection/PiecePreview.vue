@@ -1,7 +1,7 @@
 <script setup>
 /**
  * Vista de UNA pieza del vestuario (ícono / borde / banner / título) con su arte
- * real (CosmeticIcon, FRAME_STYLES, BANNER_STYLES). Diseño V4: el cosmético
+ * real (CosmeticIcon, AvatarFrame vía UserAvatar, BannerScene, titleClass). Diseño V4: el cosmético
  * grande, el texto aparte. Si la pieza no tiene arte todavía (colecciones nuevas),
  * se dibuja una silueta apagada con el tipo de pieza.
  *
@@ -13,7 +13,8 @@
  *  locked    → apagado (gris) para lo que todavía no tenés.
  */
 import { computed } from 'vue'
-import { bannerStyle } from '../../services/cosmetics'
+import { titleClass } from '../../services/cosmetics'
+import BannerScene from '../common/BannerScene.vue'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 import UserAvatar from '../common/UserAvatar.vue'
 import { pieceRarity, hexA, hasArt } from './piece-style'
@@ -38,12 +39,8 @@ const glow = computed(() => {
   return 'none'
 })
 const dimStyle = computed(() => (props.locked ? { filter: 'grayscale(1)', opacity: 0.4 } : null))
-const titleStyle = computed(() => ({
-  background: `linear-gradient(90deg, ${hexA(r.value.c, 0.24)}, ${hexA(r.value.c, 0.05)})`,
-  borderColor: hexA(r.value.c, 0.6),
-  color: r.value.t,
-  fontSize: props.titleSize + 'px',
-}))
+// Título: el mismo tratamiento por rareza que cuando está equipado (.ttl-* del moodboard)
+const titleCls = computed(() => titleClass(props.cos?.rarity, !!props.cos?.premium_only))
 </script>
 
 <template>
@@ -68,11 +65,11 @@ const titleStyle = computed(() => ({
     <UserAvatar v-else-if="kind === 'frame'" :size="size" :frame-key="key" :icon-glyph="innerIcon" :initial="initial || '?'" :frame-premium="!!cos.premium_only" />
 
     <!-- Banner -->
-    <span v-else-if="kind === 'banner'" class="piece-banner" :class="[bannerStyle(key), cos.premium_only ? 'anim-pan' : '']"
-      :style="{ height: Math.round(size * 0.8) + 'px' }"></span>
+    <BannerScene v-else-if="kind === 'banner'" class="piece-banner" :style-key="key" :premium="!!cos.premium_only" :animate="!locked"
+      :style="{ height: Math.round(size * 0.8) + 'px' }" />
 
     <!-- Título -->
-    <span v-else class="piece-title" :style="titleStyle">{{ (cos.name || '').toUpperCase() }}</span>
+    <span v-else class="piece-title ttl-sm" :class="titleCls" :style="{ fontSize: titleSize + 'px' }">{{ cos.name || '' }}</span>
   </span>
 </template>
 
@@ -81,11 +78,7 @@ const titleStyle = computed(() => ({
 .piece-icon { display: block; flex-shrink: 0; border: 2px solid; border-radius: 18px; overflow: hidden; box-sizing: border-box; }
 .piece-icon :deep(.cosmetic-icon) { width: 100%; height: 100%; display: block; }
 .piece-banner { display: block; width: 100%; border-radius: 12px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); }
-.piece-title {
-  max-width: 100%; box-sizing: border-box; padding: 6px 10px; border-radius: 999px; border: 1px solid;
-  font-family: var(--font-bug); font-weight: 800; font-style: italic; line-height: 1.05; letter-spacing: 0.3px; text-align: center;
-  overflow-wrap: anywhere;
-}
+.piece-title { max-width: 100%; box-sizing: border-box; line-height: 1.1; }
 .piece-ghost {
   display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-sizing: border-box;
   border-radius: 18px; border: 1.5px dashed rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.03); color: #475569;

@@ -295,7 +295,7 @@ export function bannerHasLightPaper(styleKey) {
 // común liso · rara rombo celeste + marco · épica sello violeta · legendaria Anton dorado con brillo.
 // El título PRO (premium) conserva su shimmer dorado propio.
 export function titleClass(rar, premium = false) {
-  if (premium) return 'title-premium-anim'
+  if (premium) return 'ttl ttl-premium title-premium-anim'
   return 'ttl ttl-' + (RARITY[rar] ? rar : 'common')
 }
 
