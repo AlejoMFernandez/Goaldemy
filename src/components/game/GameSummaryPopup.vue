@@ -137,7 +137,7 @@ export default {
     const totalXp = computed(() => baseXp.value > 0 ? baseXp.value + bonusXp.value : xpGained.value)
     const chips = computed(() => {
       const rows = (props.xpBreakdown || []).filter(r => r && r.xp > 0)
-      const list = rows.length ? [...rows] : (baseXp.value > 0 ? [{ kind: 'ball', label: `${props.corrects} aciertos`, xp: baseXp.value }] : [])
+      const list = rows.length ? [...rows] : (baseXp.value > 0 ? [{ kind: 'ball', label: `${props.corrects} ${props.corrects === 1 ? 'acierto' : 'aciertos'}`, xp: baseXp.value }] : [])
       if (bonusXp.value > 0) list.push({ kind: 'pro', label: 'Bonus PRO', xp: bonusXp.value })
       return list
     })
@@ -461,7 +461,7 @@ export default {
                   <span class="n">{{ nextPrizeTypeLabel ? nextPrizeTypeLabel.charAt(0).toUpperCase() + nextPrizeTypeLabel.slice(1) + ' ' : '' }}{{ nextPrize.prize.name }}</span>
                 </span>
                 <!-- Lo que falta en XP ya está escrito en la barra: acá solo cuántos niveles -->
-                <span v-if="nextPrizeSoon" class="lf">en el<br>próximo</span>
+                <span v-if="nextPrizeSoon" class="lf">en el próximo<br>nivel</span>
                 <span v-else class="lf">en {{ nextPrize.level - levelNow }}<br>{{ nextPrize.level - levelNow === 1 ? 'nivel' : 'niveles' }}</span>
               </div>
             </section>

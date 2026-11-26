@@ -54,7 +54,7 @@ export default {
       const bonus = this.timeBonusInfo?.xp || 0
       const rows = []
       const base = Math.max(0, (this.xpEarned || 0) - bonus)
-      if (base > 0) rows.push({ kind: 'ball', label: `${this.corrects || 0} aciertos`, xp: base })
+      if (base > 0) rows.push({ kind: 'ball', label: `${this.corrects || 0} ${this.corrects === 1 ? 'acierto' : 'aciertos'}`, xp: base })
       if (bonus > 0) rows.push({ kind: 'clock', label: `¡Basta! ${this.timeBonusInfo.secondsLeft} s`, xp: bonus })
       return rows
     },
