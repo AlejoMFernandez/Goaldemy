@@ -28,19 +28,16 @@ const lockPct = computed(() => {
   const need = Number(props.unlockLevel) || 1
   return need > 1 ? Math.round(((Number(props.userLevel) || 1) / need) * 100) : 0
 })
-// "revancha en 7 h" (el día se reinicia a medianoche)
-const revenge = computed(() => {
-  const now = new Date(); const mid = new Date(); mid.setHours(24, 0, 0, 0)
-  const h = Math.floor((mid - now) / 3600000)
-  return h >= 1 ? `revancha en ${h} h` : 'revancha pronto'
-})
+// Perdido hoy → la revancha es en la próxima jornada (diseño V4: "revancha mañana")
+const revenge = 'revancha mañana'
+const ariaLabel = computed(() => props.game.name + (state.value === 'win' ? ', ganado hoy' : state.value === 'loss' ? ', perdido hoy' : ', sin jugar'))
 </script>
 
 <template>
   <div v-if="!unlocked" class="block cursor-not-allowed select-none" :aria-label="`${game.name}: se desbloquea en el nivel ${unlockLevel}`">
     <GamePoster :slug="game.slug" :name="game.name" state="locked" :lock-level="unlockLevel" :miss-levels="missLevels" :lock-pct="lockPct" />
   </div>
-  <RouterLink v-else :to="to" class="block no-underline rounded-[14px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 active:scale-[0.98] transition-transform" :aria-label="game.name">
+  <RouterLink v-else :to="to" class="block no-underline rounded-[14px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 active:scale-[0.98] transition-transform" :aria-label="ariaLabel">
     <GamePoster
       :slug="game.slug"
       :name="game.name"
