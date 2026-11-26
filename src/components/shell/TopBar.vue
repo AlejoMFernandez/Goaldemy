@@ -71,8 +71,9 @@ watch(() => route.path, (to, from) => {
             <span class="inline-flex items-center gap-1"><CurrencyIcon type="fichas" :size="18" /><span class="tabular-nums">{{ s.loaded ? compact(s.fichas) : '–' }}</span></span>
             <span class="inline-flex items-center gap-1 text-amber-200"><CurrencyIcon type="balones" :size="18" /><span class="tabular-nums">{{ s.loaded ? compact(s.balones) : '–' }}</span></span>
           </RouterLink>
-          <!-- Avatar → hoja de ajustes. Las notificaciones viven en la hoja: acá solo un punto rojo. -->
-          <button type="button" class="relative shrink-0 w-11 h-11 grid place-items-center rounded-full active:scale-95 transition"
+          <!-- Avatar → hoja de ajustes. Las notificaciones viven en la hoja: acá solo un punto rojo.
+               data-avatar-anchor: destino de reward-flight (XP/ayudas) y de la medalla de logros en mobile. -->
+          <button type="button" data-avatar-anchor class="relative shrink-0 w-11 h-11 grid place-items-center rounded-full active:scale-95 transition"
             :aria-label="shellState.notifCount > 0 ? `Tu cuenta y ajustes, ${shellState.notifCount} notificaciones nuevas` : 'Tu cuenta y ajustes'" @click="tapHaptic(); openSettings()">
             <UserAvatar :size="36" :glow="false" :avatar-url="shellState.user?.avatar_url || ''" :initial="initial"
               :frame-key="shellState.equipped.frameKey" :icon-glyph="shellState.equipped.iconGlyph" :icon-bg="shellState.equipped.iconBg" :frame-premium="shellState.equipped.framePremium" />
