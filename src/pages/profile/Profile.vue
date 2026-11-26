@@ -16,7 +16,8 @@ import { getStatusWith, sendRequest, disconnectWith, listConnections } from '../
 import { pushErrorToast, pushSuccessToast } from '../../stores/notifications';
 import { checkAndUnlockSpecials } from '../../services/special-badges';
 import { findTeamByName, findPlayerByName } from '../../services/players';
-import { getEquippedCosmetics, bannerStyle } from '../../services/cosmetics';
+import { getEquippedCosmetics, titleClass } from '../../services/cosmetics';
+import BannerScene from '../../components/common/BannerScene.vue';
 import { getPlanBadge } from '../../services/premium';
 import { getTierForLevel, tierGlow } from '../../services/tiers';
 import { achievementIcon } from '../../services/achievement-icons';
@@ -36,7 +37,7 @@ const regionNames = (() => { try { return new Intl.DisplayNames(['es'], { type: 
 
 export default {
   name: 'Profile',
-  components: { AchievementMedal, FeaturedAchievementsModal, ReferralCard, UserAvatar },
+  components: { AchievementMedal, BannerScene, FeaturedAchievementsModal, ReferralCard, UserAvatar },
   data() {
     return {
       user: { id: null, email: null, display_name: null, bio: null },
@@ -50,6 +51,10 @@ export default {
       equippedIconBg: 'emerald',
       equippedFramePremium: false,
       equippedBannerPremium: false,
+      equippedTitleRarity: 'common',
+      equippedTitlePremium: false,
+      equippedDailyStreak: 0,
+      equippedFrameLevel: null,
       viewedPlanSlug: 'free',
       achievements: [],
       achTotal: 0,
@@ -76,7 +81,7 @@ export default {
     };
   },
   computed: {
-    bannerClass() { return bannerStyle(this.equippedBannerKey) },
+    titleCls() { return titleClass(this.equippedTitleRarity, this.equippedTitlePremium) },
     avatarInitial() {
       const n = (this.user?.display_name || this.user?.email || '').trim()
       return n ? n[0].toUpperCase() : '?'
@@ -206,6 +211,10 @@ export default {
           this.equippedIconBg = eq.iconBg
           this.equippedFramePremium = eq.framePremium
           this.equippedBannerPremium = eq.bannerPremium
+          this.equippedTitleRarity = eq.titleRarity || 'common'
+          this.equippedTitlePremium = !!eq.titlePremium
+          this.equippedDailyStreak = eq.dailyStreak || 0
+          this.equippedFrameLevel = eq.frameLevel ?? null
         } catch {}
         try { this.viewedPlanSlug = (await getPlanBadge(userId)).plan || 'free' } catch { this.viewedPlanSlug = 'free' }
       }
@@ -310,7 +319,7 @@ export default {
 <template>
   <div class="pf relative -mx-6 -mt-10 lg:mx-auto lg:mt-0 lg:max-w-xl pb-6">
     <!-- Banner equipado -->
-    <section aria-label="Banner equipado" class="relative h-[168px] overflow-hidden lg:rounded-b-3xl" :class="[bannerClass, equippedBannerPremium ? 'anim-pan' : '']">
+    <BannerScene role="region" aria-label="Banner equipado" class="h-[168px] lg:rounded-b-3xl" :style-key="equippedBannerKey" :premium="equippedBannerPremium" contain :top-reserve="58">
       <div class="absolute top-3.5 left-3.5 right-3.5 flex justify-end gap-2">
         <template v-if="isSelf">
           <RouterLink to="/coleccion" class="pf-chip min-h-[44px] px-3.5 rounded-full flex items-center gap-1.5 text-[13px] font-bold text-white" @click="haptic">
@@ -332,16 +341,17 @@ export default {
           </button>
         </template>
       </div>
-    </section>
+    </BannerScene>
 
     <!-- Identidad: ícono + borde, nombre y título -->
     <section aria-label="Identidad" class="relative -mt-[54px] flex flex-col items-center text-center px-4">
       <span class="relative">
-        <UserAvatar :size="108" :avatar-url="user.avatar_url || ''" :initial="avatarInitial" :frame-key="equippedFrameKey" :icon-glyph="equippedIconGlyph" :icon-bg="equippedIconBg" :frame-premium="equippedFramePremium" class="pf-avatar" />
+        <UserAvatar :size="108" :avatar-url="user.avatar_url || ''" :initial="avatarInitial" :frame-key="equippedFrameKey" :icon-glyph="equippedIconGlyph" :icon-bg="equippedIconBg" :frame-premium="equippedFramePremium"
+          :level="equippedFrameLevel ?? (Number(levelInfo?.level) || null)" :streak="equippedDailyStreak" class="pf-avatar" />
         <span v-if="planBadge" class="pf-plan" :style="{ background: planBadge.bg, color: planBadge.color }">{{ planBadge.label }}</span>
       </span>
       <h1 class="mt-4 font-display font-bold text-2xl leading-[1.1] text-slate-100 max-w-full truncate">{{ displayName }}</h1>
-      <span v-if="equippedTitleText" class="pf-title mt-1.5">{{ equippedTitleText.toUpperCase() }}</span>
+      <span v-if="equippedTitleText" class="pf-title mt-2 text-[17px]" :class="titleCls">{{ equippedTitleText }}</span>
     </section>
 
     <!-- Nivel -->
@@ -478,16 +488,12 @@ export default {
 
 <style scoped>
 .pf-chip { background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(4px); }
-.pf-avatar { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); border-radius: 28px; }
+.pf-avatar { filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5)); }
 .pf-plan {
   position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); min-width: 60px; padding: 2px 8px; border-radius: 6px;
   border: 2px solid #0b1220; font-family: var(--font-bug); font-weight: 800; font-size: 11px; letter-spacing: 1px; text-align: center;
 }
-.pf-title {
-  padding: 4px 14px; border-radius: 999px; background: linear-gradient(90deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.05));
-  border: 1px solid rgba(251, 191, 36, 0.5); font-family: var(--font-bug); font-weight: 800; font-style: italic; font-size: 17px;
-  letter-spacing: 0.5px; color: #fde68a; max-width: 100%;
-}
+.pf-title { max-width: 100%; }
 .pf-lvl {
   height: 30px; padding: 0 10px; border-radius: 8px; background: linear-gradient(180deg, #818cf8, #4f46e5); border: 1.5px solid #c7d2fe;
   display: flex; align-items: center; font-family: var(--font-bug); font-weight: 800; font-size: 18px; white-space: nowrap;

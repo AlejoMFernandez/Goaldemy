@@ -297,7 +297,7 @@ export function pushInfoToast(message, ttlMs = 4000) {
 // Click → abre ese chat en la sidebar (ver stores/sidebar.js requestOpenChat).
 // El ícono/marco equipado (frameKey/iconGlyph/iconBg) ya viene cacheado en FriendsDock
 // (se pidió una vez al cargar la lista de amigos), así que mostrarlo acá no pega a la red.
-export function pushDmToast({ peerId, name, avatarUrl, message, frameKey, iconGlyph, iconBg, initial }, ttlMs = 6000) {
+export function pushDmToast({ peerId, name, avatarUrl, message, frameKey, iconGlyph, iconBg, initial, level, streak }, ttlMs = 6000) {
   return push({
     type: 'dm',
     peerId,
@@ -307,6 +307,8 @@ export function pushDmToast({ peerId, name, avatarUrl, message, frameKey, iconGl
     frameKey: frameKey || 'none',
     iconGlyph: iconGlyph || '',
     iconBg: iconBg || 'emerald',
+    level: level ?? null,
+    streak: streak || 0,
     initial: initial || (name || '?').trim().charAt(0).toUpperCase(),
   }, ttlMs)
 }

@@ -78,9 +78,15 @@ export const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary']
 export const NEW_WINDOW_MS = 48 * 3600 * 1000
 
 /**
- * Progreso medible. `ctx` = { dailyStreak }. Devuelve { done, total } o null.
+ * Progreso medible. `ctx` = { dailyStreak, progressByCode? }. Devuelve { done, total } o null.
  */
 export function progressFor(code, ctx = {}) {
+  // Avance real calculado por services/achievement-progress.js (contadores de sesiones, conexiones…)
+  const ext = ctx.progressByCode?.[code]
+  if (ext && Number(ext.target) > 0) {
+    const total = Number(ext.target)
+    return { done: Math.min(Math.max(0, Number(ext.current) || 0), total), total }
+  }
   const m = /^daily_streak_(\d+)$/.exec(code || '')
   if (m && Number.isFinite(ctx.dailyStreak)) {
     const total = Number(m[1])

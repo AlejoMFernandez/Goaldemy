@@ -8,7 +8,7 @@
  */
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { getCosmetics, equipCosmetic, bannerStyle, hintFor } from '../services/cosmetics'
+import { getCosmetics, equipCosmetic, hintFor, titleClass } from '../services/cosmetics'
 import { getShop } from '../services/shop'
 import { collectionsState } from '../services/collections'
 import { getTierForLevel } from '../services/tiers'
@@ -18,6 +18,7 @@ import { tap, success } from '../services/haptics'
 import { soundManager } from '../services/sounds'
 import { sparks, center } from '../services/game-fx'
 import UserAvatar from '../components/common/UserAvatar.vue'
+import BannerScene from '../components/common/BannerScene.vue'
 import PiecePreview from '../components/collection/PiecePreview.vue'
 import { pieceRarity, hexA, howToGet } from '../components/collection/piece-style'
 
@@ -180,7 +181,7 @@ onMounted(() => { load(); loadShellStats().catch(() => {}) })
   <section class="col relative -mx-6 -mt-10 lg:mx-auto lg:mt-0 lg:max-w-xl pb-6">
     <!-- Banner equipado -->
     <section ref="bannerEl" :aria-label="`Banner equipado${eqBanner ? ': ' + eqBanner.name : ''}`" class="relative h-[104px] lg:rounded-b-3xl overflow-hidden">
-      <div :key="'b' + (fx.type === 'banner' ? fx.n : 0)" class="absolute inset-0" :class="[bannerStyle(eqBanner?.style_key || 'default'), eqBanner?.premium_only ? 'anim-pan' : '', fx.type === 'banner' && fx.n ? 'eq-fx-banner' : '']"></div>
+      <BannerScene :key="'b' + (fx.type === 'banner' ? fx.n : 0)" class="absolute inset-0" :class="fx.type === 'banner' && fx.n ? 'eq-fx-banner' : ''" :style-key="eqBanner?.style_key || 'default'" :premium="!!eqBanner?.premium_only" contain />
       <div class="absolute top-3 left-3.5 right-3.5 flex justify-between items-center gap-2">
         <h1 class="m-0 px-3 py-1.5 rounded-full bg-black/50 font-display font-bold text-lg text-white">Tu vestuario</h1>
         <span class="px-2.5 py-1 rounded-full bg-black/50 text-[11px] font-bold text-slate-200 truncate">Tocá una pieza para equiparla</span>
@@ -189,13 +190,14 @@ onMounted(() => { load(); loadShellStats().catch(() => {}) })
 
     <!-- Vista previa -->
     <section ref="previewEl" aria-label="Vista previa" class="relative -mt-[34px] px-4 flex items-end gap-3">
-      <span :key="'a' + ((fx.type === 'icon' || fx.type === 'frame') ? fx.n : 0)" class="col-av relative shrink-0 rounded-[22px] shadow-[0_8px_22px_rgba(0,0,0,0.5)]" :class="fx.n && fx.type === 'icon' ? 'eq-fx-icon' : (fx.n && fx.type === 'frame' ? 'eq-fx-frame' : '')">
+      <span :key="'a' + ((fx.type === 'icon' || fx.type === 'frame') ? fx.n : 0)" class="col-av relative shrink-0 rounded-full shadow-[0_8px_22px_rgba(0,0,0,0.5)]" :class="fx.n && fx.type === 'icon' ? 'eq-fx-icon' : (fx.n && fx.type === 'frame' ? 'eq-fx-frame' : '')">
         <i v-if="fx.n && fx.type === 'frame'" class="eq-ring" aria-hidden="true"></i>
-        <UserAvatar :size="76" :avatar-url="shellState.user?.avatar_url || ''" :initial="initial" :frame-key="eqFrame?.style_key || 'none'" :icon-glyph="eqIconKey" :frame-premium="!!eqFrame?.premium_only" />
+        <UserAvatar :size="76" :avatar-url="shellState.user?.avatar_url || ''" :initial="initial" :frame-key="eqFrame?.style_key || 'none'" :icon-glyph="eqIconKey" :frame-premium="!!eqFrame?.premium_only"
+          :level="level" :streak="Number(shellState.stats.streak) || 0" />
       </span>
       <span class="flex-1 min-w-0 pb-0.5 flex flex-col items-start gap-1">
         <span class="font-display font-bold text-xl leading-none truncate max-w-full">{{ name }} <span class="font-bug font-extrabold text-sm text-indigo-300">NV {{ level }}</span></span>
-        <span v-if="eqTitle" :key="'t' + (fx.type === 'title' ? fx.n : 0)" class="col-title" :class="fx.type === 'title' && fx.n ? 'eq-fx-title' : ''">{{ eqTitle.name.toUpperCase() }}</span>
+        <span v-if="eqTitle" :key="'t' + (fx.type === 'title' ? fx.n : 0)" class="col-title" :class="[titleClass(eqTitle.rarity, !!eqTitle.premium_only), fx.type === 'title' && fx.n ? 'eq-fx-title' : '']">{{ eqTitle.name }}</span>
         <span v-else class="text-xs text-slate-500">Sin título</span>
       </span>
     </section>
@@ -267,11 +269,7 @@ onMounted(() => { load(); loadShellStats().catch(() => {}) })
 
 <style scoped>
 .font-bug { font-family: var(--font-bug); }
-.col-title {
-  padding: 3px 12px; border-radius: 999px; background: linear-gradient(90deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.05));
-  border: 1px solid rgba(251, 191, 36, 0.5); font-family: var(--font-bug); font-weight: 800; font-style: italic; font-size: 15px;
-  letter-spacing: 0.4px; color: #fde68a; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
+.col-title { font-size: 15px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .col-fill { background: linear-gradient(90deg, #34d399, #22d3ee, #818cf8); transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
 .col-link {
   min-height: 32px; padding: 0 10px; border-radius: 999px; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.35);
@@ -310,7 +308,7 @@ onMounted(() => { load(); loadShellStats().catch(() => {}) })
 @keyframes eq-icon { 0% { transform: scale(.6) rotate(-12deg); filter: brightness(2); } 60% { transform: scale(1.08) rotate(3deg); } 100% { transform: none; filter: none; } }
 .eq-fx-frame { animation: eq-frame .6s cubic-bezier(.34, 1.3, .64, 1) both; }
 @keyframes eq-frame { 0% { transform: rotate(-120deg) scale(.85); filter: brightness(1.8) saturate(1.4); } 100% { transform: none; filter: none; } }
-.eq-ring { position: absolute; inset: -8px; border-radius: 26px; border: 3px solid #fcd34d; pointer-events: none; animation: eq-ring .7s ease-out forwards; }
+.eq-ring { position: absolute; inset: -8px; border-radius: 50%; border: 3px solid #fcd34d; pointer-events: none; animation: eq-ring .7s ease-out forwards; }
 @keyframes eq-ring { from { transform: scale(.8); opacity: 1; } to { transform: scale(1.35); opacity: 0; } }
 .eq-fx-banner { animation: eq-banner .6s cubic-bezier(.65, 0, .35, 1) both; }
 @keyframes eq-banner { from { clip-path: polygon(0 0, 0 0, -30% 100%, 0 100%); filter: brightness(1.6); } to { clip-path: polygon(0 0, 130% 0, 100% 100%, 0 100%); filter: none; } }

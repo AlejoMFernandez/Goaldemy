@@ -85,7 +85,8 @@ export default {
         <RouterLink :to="`/messages/${t.peer_id}`" class="dm-row">
           <span class="relative shrink-0">
             <UserAvatar :size="44" :avatar-url="t.profile?.avatar_url || ''" :initial="initialOf(publicName(t.profile))"
-              :frame-key="cos[t.peer_id]?.frameKey || 'none'" :icon-glyph="cos[t.peer_id]?.iconGlyph || ''" :icon-bg="cos[t.peer_id]?.iconBg || 'emerald'" :glow="false" />
+              :frame-key="cos[t.peer_id]?.frameKey || 'none'" :icon-glyph="cos[t.peer_id]?.iconGlyph || ''" :icon-bg="cos[t.peer_id]?.iconBg || 'emerald'" :glow="false"
+              :level="cos[t.peer_id]?.frameLevel ?? null" :streak="cos[t.peer_id]?.dailyStreak || 0" />
             <span v-if="online(t.peer_id)" class="dm-dot" aria-label="En línea"></span>
           </span>
           <span class="flex-1 min-w-0">

@@ -228,3 +228,59 @@ export function evaluateNewAchievements({ sessions, activeSlugs = [], currentId 
 
   return out
 }
+
+/**
+ * Avance (no todo/nada) de los logros nuevos que tienen un contador natural — para
+ * mostrar "4/10" en los cosméticos bloqueados del vestuario. Mismos datos y las
+ * MISMAS reglas que evaluateNewAchievements (no las duplica, solo no corta en el
+ * umbral); no toca esa función ni su firma para no romper scripts/test-achievement-rules.mjs.
+ * Devuelve solo los códigos con un contador que tiene sentido mostrar (nada para los
+ * logros "de una sola partida": tiempo_descuento, ni_la_mitad, relampago, scout, etc.).
+ * @returns {Object<string,{current:number,target:number}>}
+ */
+export function progressOfNewAchievements({ sessions, activeSlugs = [] }) {
+  const mk = (current, target) => ({ current: Math.max(0, Math.min(current, target)), target })
+  const out = {}
+  const list = [...sessions].sort((a, b) => a.endedAt - b.endedAt || a.startedAt - b.startedAt)
+  const wins = list.filter(isWin)
+
+  out.trotamundos = mk(new Set(wins.map(s => s.slug).filter(Boolean)).size, 7)
+  if (activeSlugs.length) out.todoterreno = mk(activeSlugs.filter(g => wins.some(s => s.slug === g)).length, activeSlugs.length)
+
+  out.semana_primera = mk(longestDayRun(wins.filter(isHard).map(s => s.day)), 7)
+  out.relojero = mk(longestDayRun(wins.filter(s => isClock(s) && s.basta).map(s => s.day)), 3)
+
+  const winDaysBySlug = new Map()
+  for (const s of wins) {
+    if (!s.slug) continue
+    if (!winDaysBySlug.has(s.slug)) winDaysBySlug.set(s.slug, [])
+    winDaysBySlug.get(s.slug).push(s.day)
+  }
+  let bestSpecialista = 0
+  for (const days of winDaysBySlug.values()) bestSpecialista = Math.max(bestSpecialista, longestDayRun(days))
+  out.especialista = mk(bestSpecialista, 14)
+
+  out.doble_jornada = mk(longestDayRun(daysCoveringAllGames(list, activeSlugs, isWin)), 2)
+
+  const decided = list.filter(s => s.result)
+  const invictoRun = longestRun(decided, isWin)
+  out.invicto = mk(invictoRun, 10)
+  out.invicto_temporada = mk(invictoRun, 30)
+  out.sin_red = mk(longestRun(list.filter(isClock), s => isWin(s) && isHard(s) && s.powerups === 0), 5)
+
+  const blueByDay = new Map()
+  for (const s of list) {
+    if (!s.slug || (s.maxStreak ?? 0) < 10) continue
+    if (!blueByDay.has(s.day)) blueByDay.set(s.day, new Set())
+    blueByDay.get(s.day).add(s.slug)
+  }
+  out.fuego_azul = mk(Math.max(0, ...[...blueByDay.values()].map(set => set.size)), 3)
+
+  const hawkDays = new Set(wins.filter(s => s.slug === 'football-wordle' && s.guessCount !== null && s.guessCount >= 1 && s.guessCount <= 3).map(s => s.day))
+  out.cazador_cracks = mk(hawkDays.size, 5)
+
+  const totalCorrects = list.reduce((sum, s) => sum + (s.corrects ?? 0), 0)
+  out.enciclopedia = mk(totalCorrects, 1000)
+
+  return out
+}

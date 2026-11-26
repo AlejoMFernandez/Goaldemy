@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getCosmetics, frameStyle, bannerStyle, iconBgStyle, iconThemeBg, rarity } from '../../services/cosmetics'
+import { getCosmetics, iconBgStyle, iconThemeBg, rarity, titleClass, avatarRadiusClass } from '../../services/cosmetics'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
+import AvatarFrame from '../common/AvatarFrame.vue'
+import BannerScene from '../common/BannerScene.vue'
 
 const props = defineProps({
   frameKey: { type: String, default: 'none' },
@@ -11,6 +13,8 @@ const props = defineProps({
   titleRarity: { type: String, default: 'common' },
   bannerKey: { type: String, default: 'default' },
   framePremium: { type: Boolean, default: false },
+  frameStreak: { type: Number, default: 0 },
+  level: { type: Number, default: null },
   titlePremium: { type: Boolean, default: false },
   bannerPremium: { type: Boolean, default: false },
   isSelf: { type: Boolean, default: false },
@@ -51,9 +55,9 @@ function rarLabel(r) { return RARITY_LABEL[r] || 'Común' }
       <!-- Borde -->
       <div class="flex flex-col items-center text-center gap-2">
         <div class="h-[72px] grid place-items-center">
-          <div class="size-14 rounded-2xl" :class="[frameStyle(frameKey).wrap, frameStyle(frameKey).pad, framePremium ? 'anim-pan' : '']">
+          <AvatarFrame :frame-key="frameKey" :size="56" rounded="rounded-2xl" :premium="framePremium" :streak="frameStreak" :level="level">
             <div class="w-full h-full rounded-[12px] bg-gradient-to-br from-slate-700 to-slate-900"></div>
-          </div>
+          </AvatarFrame>
         </div>
         <div>
           <div class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Borde</div>
@@ -65,10 +69,10 @@ function rarLabel(r) { return RARITY_LABEL[r] || 'Común' }
       <!-- Ícono -->
       <div class="flex flex-col items-center text-center gap-2">
         <div class="h-[72px] grid place-items-center">
-          <div v-if="iconGlyph" class="size-14 rounded-2xl overflow-hidden grid place-items-center shadow-lg shadow-black/30" :class="iconThemeBg(iconGlyph)">
+          <div v-if="iconGlyph" class="size-14 overflow-hidden grid place-items-center shadow-lg shadow-black/30" :class="[avatarRadiusClass('rounded-2xl'), iconThemeBg(iconGlyph)]">
             <CosmeticIcon :iconKey="iconGlyph" :rarity="iconCos?.rarity || 'common'" :size="46" />
           </div>
-          <div v-else class="size-14 rounded-2xl grid place-items-center text-slate-500 text-lg" :class="iconBgStyle(iconBg)">—</div>
+          <div v-else class="size-14 grid place-items-center text-slate-500 text-lg" :class="[avatarRadiusClass('rounded-2xl'), iconBgStyle(iconBg)]">—</div>
         </div>
         <div>
           <div class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Ícono</div>
@@ -80,9 +84,8 @@ function rarLabel(r) { return RARITY_LABEL[r] || 'Común' }
       <!-- Título -->
       <div class="flex flex-col items-center text-center gap-2">
         <div class="h-[72px] grid place-items-center">
-          <div class="px-4 py-2 rounded-full border" :class="titleText ? [rarity(titleRarity).border, rarity(titleRarity).bg] : 'border-white/10 bg-white/5'">
-            <span class="font-display font-bold text-sm" :class="titleText ? (titlePremium ? 'title-premium-anim' : rarity(titleRarity).text) : 'text-slate-500'">{{ titleText || '—' }}</span>
-          </div>
+          <span v-if="titleText" class="text-sm" :class="titleClass(titleRarity, titlePremium)">{{ titleText }}</span>
+          <div v-else class="px-4 py-2 rounded-full border border-white/10 bg-white/5"><span class="font-display font-bold text-sm text-slate-500">—</span></div>
         </div>
         <div>
           <div class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Título</div>
@@ -93,7 +96,7 @@ function rarLabel(r) { return RARITY_LABEL[r] || 'Común' }
       <!-- Banner -->
       <div class="flex flex-col items-center text-center gap-2">
         <div class="h-[72px] grid place-items-center">
-          <div class="w-[88px] h-12 rounded-xl border border-white/15 shadow-lg shadow-black/30" :class="[bannerStyle(bannerKey), bannerPremium ? 'anim-pan' : '']"></div>
+          <BannerScene class="w-[88px] h-12 rounded-xl border border-white/15 shadow-lg shadow-black/30" :style-key="bannerKey" :premium="bannerPremium" :animate="false" />
         </div>
         <div>
           <div class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Banner</div>

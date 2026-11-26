@@ -5,6 +5,8 @@ const RASTER_FAILED = new Set()
 
 <script setup>
 import { computed, useId, ref } from 'vue'
+import { KNOWN_ICON_KEYS, ICON_EMOJI_MAP, RASTER_ICON_KEYS, SVG_ICON_KEYS } from '../../services/cosmetic-icon-keys'
+import { rarityOf } from '../../services/rarity'
 
 const props = defineProps({
   // Acepta clave semántica ('ball') o el emoji legacy ('⚽'); cae al glyph si no matchea.
@@ -22,12 +24,9 @@ const gid = (name) => `${uid}-${name}`
 const silver = `url(#${gid('silver')})`
 const gold = `url(#${gid('gold')})`
 
-// Map emoji legacy (style_key actual de los cosméticos) → clave semántica del set SVG.
-const EMOJI_MAP = {
-  '⚽': 'ball', '👟': 'boot', '🧤': 'gloves', '🏅': 'medal',
-  '🏆': 'trophy', '🐐': 'goat', '👑': 'crown', '⭐': 'star', '🛡️': 'shield', '🛡': 'shield',
-}
-const KNOWN = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel', 'chat', 'butterfly', 'globe', 'comet', 'phoenix', 'rank_bronze', 'rank_silver', 'rank_gold', 'rank_emerald', 'rank_cyan', 'rank_champion', 'rank_figura', 'rank_idolo', 'rank_icono', 'rank_leyenda', 'rank_goat'])
+// Claves conocidas (SVG propio, kit de rango y los 23 raster del vestuario): services/cosmetic-icon-keys.js
+const KNOWN = KNOWN_ICON_KEYS
+const EMOJI_MAP = ICON_EMOJI_MAP
 
 const key = computed(() => {
   const k = (props.iconKey || '').trim()
@@ -40,7 +39,16 @@ const key = computed(() => {
 const RANK_ICON_TIER = { rank_bronze: 'aficionado', rank_silver: 'juvenil', rank_gold: 'amateur', rank_emerald: 'reserva', rank_cyan: 'profesional', rank_champion: 'crack', rank_figura: 'figura', rank_idolo: 'idolo', rank_icono: 'icono', rank_leyenda: 'leyenda', rank_goat: 'goat' }
 const rankSrc = computed(() => (RANK_ICON_TIER[key.value] ? `/cosmetics/rank/icon-${RANK_ICON_TIER[key.value]}.svg` : ''))
 
-const isSvg = computed(() => !!key.value)
+// ¿Hay dibujo SVG propio? Los raster del vestuario no lo tienen: si su .webp falla, va el monograma.
+const SVG_SET = new Set(SVG_ICON_KEYS)
+const isSvg = computed(() => SVG_SET.has(key.value))
+// Respaldo digno (nunca una estrella vacía): emoji legacy tal cual, o la inicial sobre el color de la rareza.
+const rawGlyph = computed(() => {
+  const k = (props.iconKey || '').trim()
+  return k && !/^[\x20-\x7e]+$/.test(k) && [...k].length <= 2 ? k : ''
+})
+const monogram = computed(() => ((props.iconKey || '').replace(/^icon_|^rank_/, '').trim()[0] || 'F').toUpperCase())
+const monoColor = computed(() => rarityOf(props.rarity).c)
 
 // Marco del medallón por rareza (gradiente del aro + disco + glow).
 const FRAME = {
@@ -59,7 +67,7 @@ const accent = computed(() => ACCENT[props.rarity] || ACCENT.common)
 // Arte raster opcional (DROP-IN): si existe /cosmetics/icons/<key>.webp se usa como
 // imagen full-bleed; si el archivo no existe (404) @error cae al SVG. Solo íconos cuadrados
 // (no framed). Para sumar un ícono raster: pegá el .webp y agregá su clave al set.
-const RASTER_ICONS = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'sun', 'clover', 'sword', 'hat', 'laurel', 'bolt', 'flame', 'gem', 'owl', 'broom', 'chat', 'butterfly', 'globe', 'comet', 'phoenix'])
+const RASTER_ICONS = RASTER_ICON_KEYS
 const rasterFailed = ref(false)
 // ¿Hay arte raster para esta clave? (independiente de framed)
 const rasterAvailable = computed(() => RASTER_ICONS.has(key.value) && !RASTER_FAILED.has(key.value) && !rasterFailed.value)
@@ -309,7 +317,11 @@ function onRasterError() { RASTER_FAILED.add(key.value); rasterFailed.value = tr
     </g>
 
     <!-- Fallback: glyph crudo (emoji/letra) si la clave no está en el set -->
-    <text v-if="!isSvg" x="50" :y="framed ? 60 : 68" text-anchor="middle" :font-size="framed ? 42 : 60">{{ iconKey || '★' }}</text>
+    <text v-if="!isSvg && rawGlyph" x="50" :y="framed ? 60 : 68" text-anchor="middle" :font-size="framed ? 42 : 60">{{ rawGlyph }}</text>
+    <g v-else-if="!isSvg && !useRasterFramed">
+      <circle cx="50" cy="50" :r="framed ? 24 : 40" :fill="monoColor" fill-opacity="0.18" :stroke="monoColor" stroke-width="3" />
+      <text x="50" :y="framed ? 59 : 64" text-anchor="middle" :font-size="framed ? 26 : 42" font-weight="800" :fill="monoColor" style="font-family: var(--font-display, sans-serif)">{{ monogram }}</text>
+    </g>
   </svg>
 </template>
 

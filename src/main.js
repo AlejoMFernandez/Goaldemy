@@ -21,6 +21,9 @@ import '@fontsource/barlow-condensed/latin-800.css';
 import '@fontsource/barlow-condensed/latin-ext-800.css';
 import '@fontsource/barlow-condensed/latin-800-italic.css';
 import '@fontsource/barlow-condensed/latin-ext-800-italic.css';
+// Vestuario: títulos equipados (.ttl, --font-title)
+import '@fontsource/saira-semi-condensed/latin-700.css';
+import '@fontsource/saira-semi-condensed/latin-ext-700.css';
 import './style.css';
 import { createApp } from 'vue';
 import router from './router/router.js';

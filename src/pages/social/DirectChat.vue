@@ -263,7 +263,7 @@ export default {
       </button>
       <RouterLink v-if="peer.id" :to="`/u/${peer.id}`" class="flex-1 min-w-0 min-h-[44px] flex items-center gap-2.5" :aria-label="`Ver perfil de ${peerName}`">
         <span class="relative shrink-0">
-          <UserAvatar :size="40" :avatar-url="peer.avatar_url || ''" :initial="initialOf(peerName)" :frame-key="peerCos.frameKey || 'none'" :icon-glyph="peerCos.iconGlyph || ''" :icon-bg="peerCos.iconBg || 'emerald'" :glow="false" />
+          <UserAvatar :size="40" :avatar-url="peer.avatar_url || ''" :initial="initialOf(peerName)" :frame-key="peerCos.frameKey || 'none'" :icon-glyph="peerCos.iconGlyph || ''" :icon-bg="peerCos.iconBg || 'emerald'" :glow="false" :level="peerCos.frameLevel ?? null" :streak="peerCos.dailyStreak || 0" />
           <span class="chat-dot" :class="'st-' + presence.key" aria-hidden="true"></span>
         </span>
         <span class="min-w-0 flex flex-col gap-px">

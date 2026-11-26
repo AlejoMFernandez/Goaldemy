@@ -13,6 +13,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAuthUser } from '../services/auth'
 import { getAchievementsCatalog, getUserAchievements } from '../services/achievements'
+import { getLockedAchievementProgress } from '../services/achievement-progress'
 import { getPublicProfile, updateFeaturedAchievements } from '../services/user-profiles'
 import { pushErrorToast, pushSuccessToast } from '../stores/notifications'
 import { tap, success } from '../services/haptics'
@@ -32,6 +33,7 @@ const featuredCodes = ref([])
 const filter = ref('todos')
 const showFeaturedModal = ref(false)
 const barReady = ref(false)
+const progressByCode = ref({})
 
 async function load() {
   loading.value = true
@@ -48,6 +50,7 @@ async function load() {
     catalog.value = cat || {}
     owned.value = mine?.data || []
     featuredCodes.value = prof?.data?.featured_achievements || []
+    loadProgress()
   } catch (e) {
     console.error('[Logros] load:', e)
     loadError.value = true
@@ -58,8 +61,17 @@ async function load() {
 }
 onMounted(load)
 
+// Avance de los bloqueados (32/50…): solo lectura, después de pintar la lista; si falla, quedan sin barra.
+async function loadProgress() {
+  try {
+    const codes = buildAchievementList(catalog.value, owned.value, {}).filter(i => !i.done && !i.hidden).map(i => i.code)
+    progressByCode.value = await getLockedAchievementProgress(codes)
+  } catch (e) { console.warn('[Logros] progreso:', e) }
+}
+
 const ctx = computed(() => ({
   dailyStreak: shellState.stats.loaded ? Number(shellState.stats.streak) || 0 : NaN,
+  progressByCode: progressByCode.value,
 }))
 const items = computed(() => buildAchievementList(catalog.value, owned.value, ctx.value))
 const total = computed(() => items.value.length)

@@ -86,6 +86,7 @@ export default {
     },
     me() { return shellState.user || {} },
     meEquip() { return shellState.equipped || {} },
+    meStats() { return shellState.stats || {} },
   },
   async mounted() {
     this.meId = getAuthUser()?.id || ''
@@ -242,7 +243,8 @@ export default {
     <div v-if="meBar" class="rk-mebar" role="status">
       <span class="rk-mebar-pos">{{ meBar.rank ? '#' + meBar.rank : '–' }}</span>
       <UserAvatar :size="38" :avatar-url="me.avatar_url || ''" :initial="initialOf(me.display_name || me.email)"
-        :frame-key="meEquip.frameKey" :icon-glyph="meEquip.iconGlyph" :icon-bg="meEquip.iconBg" :glow="false" />
+        :frame-key="meEquip.frameKey" :icon-glyph="meEquip.iconGlyph" :icon-bg="meEquip.iconBg" :glow="false"
+        :level="Number(meStats.level) || null" :streak="Number(meStats.streak) || 0" />
       <span class="flex-1 min-w-0 flex flex-col">
         <strong class="text-sm text-white truncate">Vos<template v-if="meBar.xp != null"> · {{ meBar.xp.toLocaleString('es-AR') }} XP</template></strong>
         <span v-if="meBar.sub" class="text-[11px] leading-tight text-blue-200">{{ meBar.sub }}</span>

@@ -63,7 +63,11 @@ test('Rarezas pedidas', () => {
 })
 test('Íconos: glyph ach_* propio, único, dibujado en AchievementTile, sin repetir cosméticos', () => {
   const tile = read('src/components/rewards/AchievementTile.vue')
-  const cosmeticKeys = new Set([...read('src/components/rewards/CosmeticIcon.vue').match(/const KNOWN = new Set\(\[([^\]]+)\]/)[1].matchAll(/'([a-z_]+)'/g)].map(m => m[1]))
+  // Claves de íconos cosméticos: fuente única en services/cosmetic-icon-keys.js (la usa CosmeticIcon.vue)
+  const keysSrc = read('src/services/cosmetic-icon-keys.js')
+  const cosmeticKeys = new Set(['SVG_ICON_KEYS', 'VESTUARIO_ICONS', 'RANK_ICON_KEYS'].flatMap(n =>
+    [...keysSrc.match(new RegExp(`export const ${n} = \\[([^\\]]+)\\]`))[1].matchAll(/'([a-z_0-9]+)'/g)].map(m => m[1])))
+  assert.ok(cosmeticKeys.size > 50, 'no se leyeron las claves de cosmetic-icon-keys.js')
   const newGlyphs = NEW_ACHIEVEMENT_CODES.map(c => ACHIEVEMENT_ICONS[c].icon)
   assert.equal(new Set(newGlyphs).size, 23, 'glyphs repetidos entre los nuevos')
   const oldGlyphs = new Set(Object.entries(ACHIEVEMENT_ICONS).filter(([c]) => !NEW_ACHIEVEMENT_CODES.includes(c)).map(([, v]) => v.icon))

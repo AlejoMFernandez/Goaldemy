@@ -17,7 +17,10 @@
  * Usar con services/prize-card.js para convertir cualquier recompensa.
  */
 import { computed, ref, watch } from 'vue'
-import { frameStyle, bannerStyle } from '@/services/cosmetics'
+import { titleClass } from '@/services/cosmetics'
+import { shellState } from '@/components/shell/shell-state'
+import AvatarFrame from '@/components/common/AvatarFrame.vue'
+import BannerScene from '@/components/common/BannerScene.vue'
 import { PRIZE_TYPE_LABEL } from '@/services/prize-card'
 import { rarityOf } from '@/services/rarity'
 import CosmeticIcon from './CosmeticIcon.vue'
@@ -43,8 +46,9 @@ const typeLabel = computed(() => PRIZE_TYPE_LABEL[kind.value] || 'Recompensa')
 const longName = computed(() => (props.prize?.name || '').length > 16)
 // Tamaño en px de la ventana (para los componentes que dibujan con `size`)
 const win = computed(() => Math.round(small.value ? width.value * 0.92 : width.value * 0.856))
-const fr = computed(() => frameStyle(props.prize?.styleKey))
-const bnr = computed(() => bannerStyle(props.prize?.styleKey))
+// Chapitas de los bordes vivos (Placa de nivel / Racha): con tus datos reales
+const myLevel = computed(() => Number(shellState.stats?.level) || null)
+const myStreak = computed(() => Number(shellState.stats?.streak) || 0)
 
 const GAME_COLORS = {
   'guess-player': ['#10b981', '#064e3b'], 'nationality': ['#06b6d4', '#083344'], 'player-position': ['#3b82f6', '#172554'],
@@ -99,21 +103,21 @@ function onLeave() { tiltStyle.value = {}; shinePos.value = null }
         </div>
 
         <!-- BORDE: el borde solo, con una silueta gris donde va tu ícono -->
-        <div v-else-if="kind === 'frame'" class="rounded-full" :class="[fr.wrap]"
-             :style="{ width: Math.round(win * 0.66) + 'px', height: Math.round(win * 0.66) + 'px', padding: Math.max(3, Math.round(win * 0.045)) + 'px' }">
+        <!-- (todos los bordes con AvatarFrame; las chapitas de nivel/racha muestran tus datos) -->
+        <AvatarFrame v-else-if="kind === 'frame'" :frame-key="prize.styleKey" :size="Math.round(win * 0.66)" :level="myLevel" :streak="myStreak" :animate="win >= 96">
           <div class="pc-av w-full h-full rounded-full overflow-hidden grid place-items-center"><svg class="pc-sil" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="15" r="7.5" /><path d="M6 38c0-8.5 6.3-13 14-13s14 4.5 14 13z" /></svg></div>
-        </div>
+        </AvatarFrame>
 
         <!-- BANNER: perfil en miniatura (silueta gris en el lugar del ícono) -->
-        <div v-else-if="kind === 'banner'" class="pc-banner" :class="bnr">
+        <BannerScene v-else-if="kind === 'banner'" class="pc-banner" :style-key="prize.styleKey" :animate="win >= 96">
           <span class="pc-bav"><svg class="pc-sil" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="15" r="7.5" /><path d="M6 38c0-8.5 6.3-13 14-13s14 4.5 14 13z" /></svg></span>
           <i class="l1"></i><i class="l2"></i>
-        </div>
+        </BannerScene>
 
         <!-- TÍTULO: tu nombre + la etiqueta -->
         <div v-else-if="kind === 'title'" class="pc-title">
           <span class="who"><i></i>{{ userName }}</span>
-          <span class="tt" :class="{ long: (prize.name || '').length > 18 }">{{ prize.name }}</span>
+          <span class="ttx" :class="[titleClass(rarity), { long: (prize.name || '').length > 18 }]">{{ prize.name }}</span>
         </div>
 
         <!-- RANGO -->
@@ -211,8 +215,9 @@ function onLeave() { tiltStyle.value = {}; shinePos.value = null }
 .pc-title { display: grid; justify-items: center; gap: 3cqw; width: 86%; text-align: center; }
 .pc-title .who { display: flex; align-items: center; gap: 3cqw; font-weight: 700; font-size: 9cqw; }
 .pc-title .who i { width: 13cqw; height: 13cqw; border-radius: 50%; background: #64748b; display: block; }
-.pc-title .tt { font-family: var(--font-bug, 'Barlow Condensed', sans-serif); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; font-size: 9.5cqw; line-height: 1.05; color: var(--rk); padding: 2.2cqw 4cqw; border-radius: 3cqw; background: color-mix(in srgb, var(--rk) 14%, transparent); border: 1px solid color-mix(in srgb, var(--rk) 45%, transparent); text-wrap: balance; }
-.pc-title .tt.long { font-size: 8cqw; }
+/* El título se ve como equipado: tratamiento por rareza (.ttl-* en style.css); acá solo el tamaño */
+.pc-title .ttx { font-size: 9.5cqw; text-wrap: balance; max-width: 100%; justify-content: center; text-align: center; }
+.pc-title .ttx.long { font-size: 8cqw; }
 .pc-game { position: absolute; inset: 0; display: grid; place-items: center; }
 .pc-xp { height: auto; }
 .pc-pu { position: relative; border-radius: 22%; display: grid; place-items: center; color: var(--pc); background: color-mix(in srgb, var(--pc) 20%, #0b1024); border: 2cqw solid var(--pc); box-shadow: 0 0 6cqw color-mix(in srgb, var(--pc) 45%, transparent); }

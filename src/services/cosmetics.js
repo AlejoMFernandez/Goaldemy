@@ -6,6 +6,7 @@
 import { supabase } from './supabase'
 import { getAuthUser } from './auth'
 import { pushClaimNotification, queueCosmeticOverlay } from '../stores/notifications'
+import { achievementSync, preloadAchievementsSync } from './achievements'
 
 /** Catálogo de cosméticos con estado owned/equipped del usuario. */
 export async function getCosmetics() {
@@ -43,7 +44,7 @@ async function catalogByCode() {
  * Resiliente: si el schema de cosméticos no existe todavía, devuelve defaults.
  */
 export async function getEquippedCosmetics(userId) {
-  const out = { frameKey: 'none', titleText: '', titleRarity: 'common', iconGlyph: '', bannerKey: 'default', iconBg: 'emerald', framePremium: false, titlePremium: false, bannerPremium: false }
+  const out = { frameKey: 'none', titleText: '', titleRarity: 'common', iconGlyph: '', bannerKey: 'default', iconBg: 'emerald', framePremium: false, titlePremium: false, bannerPremium: false, dailyStreak: 0, frameLevel: null }
   if (!userId) return out
   let byCode = {}
   try {
@@ -70,7 +71,37 @@ export async function getEquippedCosmetics(userId) {
       if (p2.equipped_icon_bg) out.iconBg = p2.equipped_icon_bg
     }
   } catch { /* sin columnas de fase 4b/4d */ }
+  // Racha diaria actual (solo la usa el borde "Racha encendida")
+  // Chapitas reales de los bordes vivos: nivel (Placa de nivel) y racha (Racha encendida)
+  if (out.frameKey === 'level_plate' || out.frameKey === 'streak') {
+    const st = (await getCosmeticStatsBatch([userId]))[userId]
+    if (st) { out.frameLevel = st.level; out.dailyStreak = st.dailyStreak }
+  }
   return out
+}
+
+/**
+ * Nivel + racha diaria efectiva de VARIOS usuarios en UNA llamada (RPC get_users_cosmetic_stats,
+ * supabase/vestuario-batch-stats.sql). Devuelve { [userId]: { level, dailyStreak } }; {} si falla.
+ */
+export async function getCosmeticStatsBatch(userIds) {
+  const ids = Array.from(new Set((userIds || []).filter(Boolean)))
+  if (!ids.length) return {}
+  try {
+    const { data, error } = await supabase.rpc('get_users_cosmetic_stats', { p_user_ids: ids })
+    if (error || !Array.isArray(data)) return {}
+    return Object.fromEntries(data.map(r => [r.user_id, { level: r.level ?? null, dailyStreak: effectiveStreak(r.daily_streak, r.last_activity_date) }]))
+  } catch { return {} }
+}
+
+/** Racha diaria actual de un usuario (0 si se cortó o no hay columnas). */
+export async function getDailyStreak(userId) {
+  if (!userId) return 0
+  try {
+    const { data } = await supabase
+      .from('user_profiles').select('daily_streak, last_activity_date').eq('id', userId).maybeSingle()
+    return data ? effectiveStreak(data.daily_streak, data.last_activity_date) : 0
+  } catch { return 0 }
 }
 
 /**
@@ -97,6 +128,10 @@ export async function getEquippedCosmeticsBatch(userIds) {
   }
   if (!res.error) profs = res.data
 
+  // Nivel + racha: una sola llamada por lote, solo para quienes llevan un borde vivo.
+  const liveIds = (profs || []).filter(p => ['level_plate', 'streak'].includes(byCode[p.equipped_frame]?.style_key)).map(p => p.id)
+  const stats = await getCosmeticStatsBatch(liveIds)
+
   for (const p of profs || []) {
     const fr = byCode[p.equipped_frame]
     const ic = byCode[p.equipped_icon]
@@ -104,9 +139,30 @@ export async function getEquippedCosmeticsBatch(userIds) {
       frameKey: fr?.style_key || 'none',
       iconGlyph: ic?.style_key || '',
       iconBg: p.equipped_icon_bg || 'emerald',
+      dailyStreak: stats[p.id]?.dailyStreak || 0,
+      frameLevel: stats[p.id]?.level ?? null,
     }
   }
   return out
+}
+
+/**
+ * Racha diaria que se muestra HOY. daily_streak queda guardado hasta la próxima
+ * partida, así que si el último día jugado no es hoy ni ayer (UTC, igual que
+ * services/daily-streak.js) la racha ya se cortó y vale 0.
+ */
+export function effectiveStreak(dailyStreak, lastActivityDate) {
+  const n = Number(dailyStreak) || 0
+  if (n <= 0 || !lastActivityDate) return 0
+  const last = new Date(String(lastActivityDate).slice(0, 10) + 'T00:00:00Z')
+  const today = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z')
+  return Math.round((today - last) / 86400000) <= 1 ? n : 0
+}
+
+// Tope del aro de "Racha encendida": con 30 días seguidos el aro está al 100 %.
+export const STREAK_FULL_DAYS = 30
+export function streakPercent(days) {
+  return Math.max(0, Math.min(100, Math.round(((Number(days) || 0) / STREAK_FULL_DAYS) * 100)))
 }
 
 /** Equipa un cosmético (o desequipa el título pasando ''). */
@@ -114,6 +170,16 @@ export async function equipCosmetic(code) {
   const { data, error } = await supabase.rpc('equip_cosmetic', { p_code: code })
   if (error) return { ok: false, error: error.message }
   return data || { ok: false }
+}
+
+// ── Forma de los avatares ──
+// PRUEBA: todos los avatares redondos. Para volver al cuadrado redondeado de antes,
+// cambiá esta UNA línea a 'square' (los bordes del vestuario nuevo siempre son círculo).
+export const AVATAR_SHAPE = 'round' // 'round' | 'square'
+export const AVATAR_ROUND = AVATAR_SHAPE === 'round'
+/** Clase de radio para un contenedor de avatar: círculo, o el radio de siempre si vuelve el cuadrado. */
+export function avatarRadiusClass(squareClass = 'rounded-2xl') {
+  return AVATAR_ROUND ? 'rounded-full' : squareClass
 }
 
 // ── Estilos de bordes (ring alrededor del avatar) por style_key ──
@@ -141,10 +207,32 @@ export const FRAME_STYLES = {
   medal_icono: { wrap: 'frm-kit frm-kit-icono', pad: '' },
   medal_leyenda: { wrap: 'frm-kit frm-kit-leyenda', pad: '' },
   medal_goat: { wrap: 'frm-kit frm-kit-goat', pad: '' },
+  // ── Vestuario nuevo (moodboard vestuario, 09/2026) ──
+  // Estos NO usan wrap/pad: los dibuja <AvatarFrame> (aro de diseño 108 px escalado + overlay).
+  //   ring   = clase .frm-* del aro (style.css)      padPx = grosor del aro en el diseño de 108 px
+  //   badge  = chapita a tamaño real (level | streak | captain)   fx = pieza extra del overlay
+  //   moves  = tiene animación propia (se congela en avatares chicos)   glow = sombra exterior
+  chalk:       { wrap: '', pad: '', round: true, ring: 'frm-tiza',        padPx: 6, fx: 'chalk' },
+  grass:       { wrap: '', pad: '', round: true, ring: 'frm-cesped',      padPx: 7 },
+  net:         { wrap: '', pad: '', round: true, ring: 'frm-red',         padPx: 7 },
+  level_plate: { wrap: '', pad: '', round: true, ring: 'frm-nivel',       padPx: 7, badge: 'level' },
+  captain:     { wrap: '', pad: '', round: true, ring: 'frm-capitan',     padPx: 7, badge: 'captain' },
+  fence:       { wrap: '', pad: '', round: true, ring: 'frm-alambrado',   padPx: 7 },
+  led:         { wrap: '', pad: '', round: true, ring: 'frm-led',         padPx: 7, moves: true, glow: true },
+  floodlights: { wrap: '', pad: '', round: true, ring: 'frm-reflectores', padPx: 7, moves: true, glow: true },
+  laurel:      { wrap: '', pad: '', round: true, ring: 'frm-laurel',      padPx: 5, fx: 'laurel' },
+  streak:      { wrap: '', pad: '', round: true, ring: 'frm-racha',       padPx: 7, badge: 'streak', glow: true },
+  fire_ring:   { wrap: '', pad: '', round: true, ring: 'frm-fuego',       padPx: 7, moves: true, glow: true },
+  stars:       { wrap: '', pad: '', round: true, ring: 'frm-estrellas',   padPx: 7, fx: 'stars', moves: true, glow: true },
 }
 
 export function frameStyle(styleKey) {
   return FRAME_STYLES[styleKey] || FRAME_STYLES.none
+}
+
+/** true si el borde es del vestuario nuevo (se dibuja con <AvatarFrame>). */
+export function isSceneFrame(styleKey) {
+  return !!FRAME_STYLES[styleKey]?.ring
 }
 
 // ── Estilos de banners (fondo del header) por style_key ──
@@ -169,10 +257,46 @@ export const BANNER_STYLES = {
   tier_icono: 'bnr-tier-icono',
   tier_leyenda: 'bnr-tier-leyenda',
   tier_goat: 'bnr-tier-goat',
+  // Vestuario nuevo (moodboard vestuario, 09/2026): el fondo va en la clase, las capas
+  // (SVG, pelota, reloj, papelitos…) las dibuja <BannerScene>.
+  mowed:       'bnr-mowed',
+  penalty:     'bnr-penalty',
+  leather:     'bnr-leather',
+  scoreboard:  'bnr-scoreboard',
+  away_kit:    'bnr-away-kit',
+  live:        'bnr-live',
+  var:         'bnr-var',
+  tactics:     'bnr-tactics',
+  newspaper:   'bnr-newspaper',
+  rain:        'bnr-rain',
+  heatmap:     'bnr-heatmap',
+  lights:      'bnr-lights',
+  passmap:     'bnr-passmap',
+  commentary:  'bnr-commentary',
+  ticker_tape: 'bnr-ticker-tape',
 }
 
 export function bannerStyle(styleKey) {
   return BANNER_STYLES[styleKey] || BANNER_STYLES.default
+}
+
+// Banners del vestuario nuevo: llevan capas, se dibujan con <BannerScene>.
+export const SCENE_BANNER_KEYS = ['mowed', 'penalty', 'leather', 'scoreboard', 'away_kit', 'live', 'var', 'tactics', 'newspaper', 'rain', 'heatmap', 'lights', 'passmap', 'commentary', 'ticker_tape']
+export function isSceneBanner(styleKey) {
+  return SCENE_BANNER_KEYS.includes(styleKey)
+}
+
+// "Tapa de diario" es papel claro: el texto del usuario que se pone encima va oscuro.
+export function bannerHasLightPaper(styleKey) {
+  return styleKey === 'newspaper'
+}
+
+// ── Títulos: tratamiento visual por rareza (igual que .tt del moodboard) ──
+// común liso · rara rombo celeste + marco · épica sello violeta · legendaria Anton dorado con brillo.
+// El título PRO (premium) conserva su shimmer dorado propio.
+export function titleClass(rar, premium = false) {
+  if (premium) return 'ttl ttl-premium title-premium-anim'
+  return 'ttl ttl-' + (RARITY[rar] ? rar : 'common')
 }
 
 // ── Colores de fondo del ícono/avatar ──
@@ -268,29 +392,32 @@ export function rarity(r) {
   return RARITY[r] || RARITY.common
 }
 
-// ── Pistas de cómo conseguir cosméticos por LOGRO (secretos) ──
-// Clave = código del logro. Se usa para el hover del editor y el "por qué" de la escena de reclamo.
-export const ACHIEVEMENT_HINTS = {
-  streak_15: 'Conseguí 15 aciertos seguidos en un juego',
-  daily_streak_7: 'Jugá 7 días seguidos',
-  daily_streak_30: 'Jugá 30 días seguidos',
-  perfectionist: 'Completá un juego sin ningún error',
-  daily_wins_all: 'Ganá todos los juegos del día',
-  centurion: 'Acumulá 100 victorias totales',
-  guess_master: 'Ganá 20 partidas de "Adiviná el jugador"',
-  comeback_king: 'Ganá un juego que perdiste el día anterior',
-  lucky_first: 'Acertá al primer intento 10 veces',
-  hat_trick: 'Ganá 3 juegos distintos el mismo día',
-  chat_master: 'Enviá 100 mensajes en el chat',
-  social_butterfly: 'Conectá con 10 usuarios',
-  nationality_expert: 'Acertá 50 nacionalidades correctas',
-  grand_slam: 'Ganá todos los juegos en una semana',
+// ── Cómo conseguir un cosmético bloqueado por LOGRO ──
+// El nombre y la descripción salen de la tabla achievements (services/achievements.js),
+// nunca hardcodeados acá: así cubre cualquier logro nuevo sin tener que acordarse de
+// sumarlo a una lista aparte. Requiere haber llamado antes a preloadAchievementsSync()
+// (CosmeticsCollection lo hace al montar); si el catálogo todavía no cargó, o el logro
+// quedó inactivo, cae al texto genérico de siempre.
+export { preloadAchievementsSync }
+/**
+ * @param {object} c  cosmético (con unlock_achievement)
+ * @param {Object<string,{current:number,target:number}>} [progressByCode]  de getLockedAchievementProgress()
+ */
+export function hintFor(c, progressByCode) {
+  const code = c?.unlock_achievement
+  const a = achievementSync(code)
+  if (!a) return 'Conseguí un logro secreto'
+  const base = a.description || a.name
+  const p = progressByCode?.[code]
+  return p && p.target > 0 ? `${base} (${p.current}/${p.target})` : base
 }
-export function hintFor(c) { return ACHIEVEMENT_HINTS[c?.unlock_achievement] || 'Conseguí un logro secreto' }
-// Por qué se desbloqueó un cosmético (para la escena de reclamo).
+// Por qué se desbloqueó un cosmético (para la escena de reclamo: ya lo tiene, sin progreso).
 export function unlockReason(c) {
   if (!c) return ''
-  if (c.unlock_achievement) return ACHIEVEMENT_HINTS[c.unlock_achievement] || 'Conseguiste un logro secreto'
+  if (c.unlock_achievement) {
+    const a = achievementSync(c.unlock_achievement)
+    return a ? (a.description || a.name) : 'Conseguiste un logro secreto'
+  }
   if (c.premium_only) return 'Recompensa Premium'
   if (c.unlock_level > 100) return 'Completar el Pase mensual'
   if (c.unlock_level > 1) return 'Alcanzaste el nivel ' + c.unlock_level
@@ -358,6 +485,9 @@ export async function checkCosmeticUnlocks() {
   if (hadCache) {
     const seenSet = new Set(seen)
     const fresh = items.filter(c => c.owned && !seenSet.has(c.code) && c.code !== 'frame_none' && c.code !== 'icon_none')
+    // unlockReason() lee el catálogo de logros de una caché sincrónica: precargarla acá
+    // (si ya está tibia por los 5 min de TTL, esto no pega a la red).
+    if (fresh.some(c => c.unlock_achievement)) { try { await preloadAchievementsSync() } catch { /* cae al texto genérico */ } }
     for (const c of fresh) {
       // Los cosméticos por NIVEL ya se muestran como cartas en la escena de nivel
       // ("Desbloqueaste", moodboard 03/08): no se repiten en la escena grande.

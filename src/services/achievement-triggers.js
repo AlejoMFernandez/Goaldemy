@@ -435,7 +435,9 @@ const SESSION_SELECT = [
 const SESSION_PAGE = 1000
 const SESSION_MAX_PAGES = 5 // 5000 partidas: de sobra para Enciclopedia (1000 correctas)
 
-async function fetchFinishedChallengeSessions(userId) {
+// Exportadas para achievement-progress.js (progreso de los bloqueados en el vestuario):
+// mismo pool de sesiones que usa checkNewAchievements(), sin repetir la query.
+export async function fetchFinishedChallengeSessions(userId) {
   const rows = []
   for (let page = 0; page < SESSION_MAX_PAGES; page++) {
     const { data, error } = await supabase
@@ -455,7 +457,7 @@ async function fetchFinishedChallengeSessions(userId) {
 
 let _gamesCache = null
 let _gamesCacheAt = 0
-async function getGamesForAchievements() {
+export async function getGamesForAchievements() {
   if (_gamesCache && Date.now() - _gamesCacheAt < 5 * 60 * 1000) return _gamesCache
   const games = await fetchGames()
   const slugById = {}
