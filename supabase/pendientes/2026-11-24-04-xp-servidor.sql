@@ -54,6 +54,8 @@
 --     level_up_bonus_claims usa level_thresholds y con la tabla rota marcaría
 --     niveles equivocados.
 --   • Bonus de nivel alineado con los hitos 60–100 del cliente v4.
+--   • award_xp en prod es RETURNS void con p_meta DEFAULT NULL: se conserva
+--     exactamente (la 1.ª versión devolvía xp_events y fallaba con 42P13).
 --   • Clientes: main y v4 (flag apagado) llaman award_xp solo con
 --     'correct_answer' (game-xp.js) y 'level_up_bonus' (notifications.js) → las
 --     dos rutas siguen andando. Las demás razones vienen de funciones SECURITY
@@ -242,23 +244,24 @@ BEGIN
 END$$;
 REVOKE ALL ON FUNCTION public._award_game_xp_checked(UUID, INTEGER, BOOLEAN, UUID, UUID, JSONB) FROM PUBLIC, anon, authenticated;
 
--- Ruta del cliente para award_xp (misma firma que award_xp)
+-- Ruta del cliente para award_xp (misma firma y retorno que award_xp de prod)
 CREATE OR REPLACE FUNCTION public.award_xp_client(
   p_amount int,
   p_reason text default 'correct_answer',
   p_game_id uuid default null,
   p_session_id uuid default null,
-  p_meta jsonb default '{}'::jsonb
-) RETURNS public.xp_events
+  p_meta jsonb default null
+) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE uid UUID := auth.uid();
 BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
   IF p_reason = 'correct_answer' THEN
-    RETURN public._award_game_xp_checked(uid, p_amount, true, p_game_id, p_session_id, p_meta);
+    PERFORM public._award_game_xp_checked(uid, p_amount, true, p_game_id, p_session_id, p_meta);
+    RETURN;
   ELSIF p_reason = 'level_up_bonus' THEN
     PERFORM public._grant_level_up_bonuses(uid);   -- el monto del cliente se ignora
-    RETURN NULL;
+    RETURN;
   END IF;
   RAISE EXCEPTION 'XP reason not allowed from client: %', p_reason USING ERRCODE = '42501';
 END$$;
@@ -266,34 +269,35 @@ REVOKE ALL ON FUNCTION public.award_xp_client(int, text, uuid, uuid, jsonb) FROM
 GRANT EXECUTE ON FUNCTION public.award_xp_client(int, text, uuid, uuid, jsonb) TO authenticated;
 
 -- award_xp: SECURITY INVOKER + despacho según quién llama.
+-- Misma firma, defaults y RETURNS void que la de prod (CREATE OR REPLACE no
+-- puede cambiar el tipo de retorno; ningún cliente usa el valor devuelto:
+-- xp.js y notifications.js solo miran `error`).
 CREATE OR REPLACE FUNCTION public.award_xp(
   p_amount int,
   p_reason text default 'correct_answer',
   p_game_id uuid default null,
   p_session_id uuid default null,
-  p_meta jsonb default '{}'::jsonb
-) RETURNS public.xp_events
+  p_meta jsonb default null
+) RETURNS void
 LANGUAGE plpgsql
 SECURITY INVOKER
 SET search_path = public
 AS $$
 DECLARE
   v_user_id uuid := auth.uid();
-  v_event public.xp_events;
 BEGIN
   -- Llamada directa desde PostgREST: el rol efectivo es anon/authenticated.
   -- Desde otra función SECURITY DEFINER, current_user es su owner (postgres).
   IF current_user IN ('anon', 'authenticated') THEN
-    RETURN public.award_xp_client(p_amount, p_reason, p_game_id, p_session_id, p_meta);
+    PERFORM public.award_xp_client(p_amount, p_reason, p_game_id, p_session_id, p_meta);
+    RETURN;
   END IF;
 
-  -- Ruta confiable (servidor): mismo comportamiento que antes.
+  -- Ruta confiable (servidor): mismo comportamiento que la de prod.
   IF v_user_id IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
   IF p_amount IS NULL OR p_amount < 0 THEN RAISE EXCEPTION 'Invalid XP amount'; END IF;
   INSERT INTO public.xp_events(user_id, game_id, amount, reason, session_id, meta)
-  VALUES (v_user_id, p_game_id, p_amount, p_reason, p_session_id, coalesce(p_meta, '{}'::jsonb))
-  RETURNING * INTO v_event;
-  RETURN v_event;
+  VALUES (v_user_id, p_game_id, p_amount, p_reason, p_session_id, coalesce(p_meta, '{}'::jsonb));
 END$$;
 REVOKE ALL ON FUNCTION public.award_xp(int, text, uuid, uuid, jsonb) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.award_xp(int, text, uuid, uuid, jsonb) TO authenticated, service_role;
