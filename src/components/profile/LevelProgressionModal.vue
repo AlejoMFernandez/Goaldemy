@@ -3,21 +3,18 @@
  * El camino (Moodboard 03 · relanzamiento 1–100)
  * Mapa de los 11 rangos unidos por una ruta en serpentina (3 filas): lo recorrido
  * en dorado, tu posición marcada con un pin, lo que falta apagado. Cada nodo es
- * el escudo real del rango (kit v2, RankCrest). Tocás un escudo y abajo se abre
- * su vitrina: "Al llegar ganás" (el kit real: ícono de rango, medallón y banner,
+ * el escudo real del rango (public/badges/<rango>.svg). Tocás un escudo y abajo se abre
+ * su vitrina: "Al llegar ganás" (el kit real de public/cosmetics/rank/: ícono, borde y banner,
  * + XP del hito) y "En el camino" (lo que dan los niveles de ese rango).
  * Por defecto se abre en el PRÓXIMO rango, para que siempre se vea lo que viene.
  */
 import { computed, onMounted, onUnmounted, ref, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { TIERS, getTierForLevel, tierGlow, rankKitPrizes } from '../../services/tiers'
+import { TIERS, getTierForLevel, tierGlow } from '../../services/tiers'
 import { MILESTONES } from '../../services/level-rewards'
 import { LEVEL_XP } from '../../services/level-curve'
-import { prizesForLevelRange, xpPrize } from '../../services/prize-card'
+import { prizesForLevelRange, xpPrize, tierPrizes } from '../../services/prize-card'
 import PrizeCard from '../rewards/PrizeCard.vue'
-import RankCrest from '../ranks/RankCrest.vue'
-import RankMedallion from '../ranks/RankMedallion.vue'
-import RankBanner from '../ranks/RankBanner.vue'
 
 const props = defineProps({
   currentLevel: { type: Number, default: 1 },
@@ -87,7 +84,10 @@ const show = computed(() => {
   const tier = TIERS[i]
   const st = stateOf(i)
   const ms = MILESTONES.find(m => m.level === tier.minLevel)
-  const kit = rankKitPrizes(tier)
+  // Kit de rango (arte de rangos-100): ícono, borde y banner
+  const ART = { icon: tier.kit.icon, frame: tier.kit.border, banner: tier.kit.banner }
+  const ORDER = { icon: 0, frame: 1, banner: 2 }
+  const kit = tierPrizes(tier).map(p => ({ ...p, part: p.kind, src: ART[p.kind] })).sort((a, b) => ORDER[a.part] - ORDER[b.part])
   const extra = ms?.xpBonus ? [xpPrize(ms.xpBonus)] : []
   // "En el camino": lo que dan los niveles del rango (sin repetir lo del ascenso)
   const from = tier.minLevel, to = tier.maxLevel || tier.minLevel
@@ -162,7 +162,7 @@ function goPlay() { emit('close'); router.push('/play/points') }
               :aria-label="`${t.label}, nivel ${t.minLevel}`" :aria-pressed="selected === i"
               @click="selected = i"
             >
-              <RankCrest class="rd-crest" :tier="t" :size="60" :ribbon="false" :locked="stateOf(i) === 'locked'" />
+              <img class="rd-crest" :src="t.image" :alt="t.label" width="60" height="70" />
               <span class="lb">{{ t.label }}</span>
               <span v-if="stateOf(i) === 'locked'" class="lk">NV {{ t.minLevel }}</span>
             </button>
@@ -173,7 +173,7 @@ function goPlay() { emit('close'); router.push('/play/points') }
           <Transition name="rd-case" mode="out-in">
             <div :key="show.tier.key" class="rd-case" :style="{ '--g': show.glow }">
               <div class="rd-case-top">
-                <RankCrest class="rd-shield" :tier="show.tier" :size="84" :ribbon="false" :locked="show.st === 'locked'" />
+                <img class="rd-shield" :class="{ 'is-off': show.st === 'locked' }" :src="show.tier.image" :alt="`Escudo ${show.tier.label}`" width="84" height="98" />
                 <div class="rd-case-txt">
                   <h3>{{ show.tier.label }}</h3>
                   <p class="rd-range">Niveles {{ show.tier.minLevel }}<template v-if="show.tier.maxLevel !== show.tier.minLevel">–{{ show.tier.maxLevel }}</template> · Colección <b>{{ show.tier.collection }}</b></p>
@@ -189,9 +189,7 @@ function goPlay() { emit('close'); router.push('/play/points') }
               <h4>{{ show.st === 'done' ? 'Ganaste al llegar' : 'Al llegar ganás' }}</h4>
               <div class="rd-kit" :class="{ 'is-off': show.st === 'locked' }">
                 <figure v-for="(p, k) in show.kit" :key="'k' + k" class="rd-kit-item" :class="'is-' + p.part" :style="{ '--k': k }">
-                  <RankCrest v-if="p.part === 'crest'" :tier="show.tier" size="m" :locked="show.st === 'locked'" />
-                  <RankMedallion v-else-if="p.part === 'medallion'" :tier="show.tier" :size="88" :locked="show.st === 'locked'" />
-                  <RankBanner v-else :tier="show.tier" fluid :locked="show.st === 'locked'" />
+                  <img :src="p.src" :alt="p.name" class="rd-kit-art" :class="'is-' + p.part" />
                   <figcaption>{{ p.name }}</figcaption>
                 </figure>
               </div>
@@ -250,7 +248,7 @@ function goPlay() { emit('close'); router.push('/play/points') }
 .rd-node .rd-crest { width: 100%; height: auto; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), filter .25s; }
 .rd-node .lb { font-family: var(--font-bug, sans-serif); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; font-size: clamp(9px, 2.2vw, 12px); white-space: nowrap; text-shadow: 0 1px 2px #000; }
 .rd-node .lk { margin-top: -1px; font-family: var(--font-bug, sans-serif); font-weight: 800; font-size: 10px; white-space: nowrap; padding: 1px 6px; border-radius: 999px; background: #0b1024; border: 1px solid rgba(255, 255, 255, .15); color: #94a3b8; }
-.rd-node.is-locked .rd-crest { opacity: .8; }
+.rd-node.is-locked .rd-crest { opacity: .8; filter: grayscale(.7) brightness(.7) drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); }
 .rd-node.is-locked .lb { color: #64748b; }
 .rd-node.is-current .rd-crest { filter: drop-shadow(0 0 14px var(--g)) drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); animation: rd-glow 2.2s ease-in-out infinite; }
 @keyframes rd-glow { 50% { transform: scale(1.06); } }
@@ -273,6 +271,11 @@ function goPlay() { emit('close'); router.push('/play/points') }
 .rd-kit-item.is-banner { justify-items: stretch; min-width: 0; }
 .rd-kit-item figcaption { font-family: var(--font-bug, sans-serif); font-weight: 800; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: #cbd5e1; text-align: center; }
 .rd-kit.is-off figcaption { color: #64748b; }
+.rd-kit-art { display: block; height: auto; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .45)); }
+.rd-kit-art.is-icon { width: 76px; }
+.rd-kit-art.is-frame { width: 84px; }
+.rd-kit-art.is-banner { width: 100%; max-width: 360px; border-radius: 10px; }
+.rd-kit.is-off .rd-kit-art, .rd-shield.is-off { filter: grayscale(.85) brightness(.6); }
 @media (max-width: 520px) { .rd-kit { grid-template-columns: auto auto; } .rd-kit-item.is-banner { grid-column: 1 / -1; } }
 @keyframes rd-shield-in { from { transform: scale(.6) rotate(-8deg); opacity: 0; } }
 .rd-case-txt { min-width: 0; flex: 1; display: grid; gap: 3px; }

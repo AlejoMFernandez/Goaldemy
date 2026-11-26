@@ -4,19 +4,19 @@
  * Los 11 rangos de abajo (Aficionado) hacia arriba (GOAT) unidos por una ruta:
  * lo recorrido en dorado, dónde estás con un pin, lo que viene apagado.
  * Abajo, qué ganás al llegar al rango elegido (por defecto, el próximo):
- * el kit real del rango (escudo, medallón, banner) + el título del camino de su colección.
+ * el kit real del rango (ícono, borde y banner de public/cosmetics/rank/) + el título del
+ * camino de su colección. Escudos: public/badges/<rango>.svg (rangos-100).
  * Tocás cualquier escudo y la tarjeta de abajo cambia a ese rango.
  * Nivel: del shell (shellState.stats). Invitado → nivel 1.
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { TIERS, getTierForLevel, rankKitPrizes } from '../services/tiers'
-import { getCollectionForTier } from '../data/collections'
+import { TIERS, getTierForLevel, tierGlow } from '../services/tiers'
+import { getCollectionForTier, TIER_RARITY } from '../data/collections'
+import { tierPrizes } from '../services/prize-card'
+import { RARITY, rarityOf } from '../services/rarity'
 import { shellState, loadShellStats } from '../components/shell/shell-state'
 import { tap } from '../services/haptics'
-import RankCrest from '../components/ranks/RankCrest.vue'
-import RankMedallion from '../components/ranks/RankMedallion.vue'
-import RankBanner from '../components/ranks/RankBanner.vue'
 import { pieceRarity, hexA } from '../components/collection/piece-style'
 
 const router = useRouter()
@@ -25,11 +25,8 @@ const router = useRouter()
 const W = 390, H = 624
 const XS = [150, 250, 120, 255, 135, 260, 125, 255, 130, 250, 195]
 const YS = [590, 525, 425, 322, 278, 236, 196, 158, 120, 80, 34]
-const METALS = { bronce: { c: '#cd7f32', label: 'bronce' }, plata: { c: '#e2e8f0', label: 'plata' }, oro: { c: '#fbbf24', label: 'oro' }, diamante: { c: '#67e8f9', label: 'diamante' }, holo: { c: '#f0abfc', label: 'holográfico' } }
-const LEGEND = [
-  { label: 'Bronce', color: '#cd7f32' }, { label: 'Plata', color: '#e2e8f0' }, { label: 'Oro', color: '#fbbf24' },
-  { label: 'Diamante', color: '#67e8f9' }, { label: 'Holo', color: '#f0abfc' },
-]
+// Leyenda: la rareza de las piezas sube con la carrera (Camino 1–100)
+const LEGEND = ['common', 'rare', 'epic', 'legendary'].map(k => ({ label: RARITY[k].label, color: RARITY[k].c }))
 
 const level = computed(() => Math.max(1, Number(shellState.stats.level) || 1))
 const cur = computed(() => Math.max(0, TIERS.findIndex(t => t.key === getTierForLevel(level.value)?.key)))
@@ -45,11 +42,11 @@ const nodes = computed(() => TIERS.map((t, i) => {
   const goat = i === TIERS.length - 1
   const w = goat ? 42 : (next ? 38 : 34)
   const right = XS[i] >= 195
-  const m = METALS[t.kit.metal] || METALS.bronce
+  const rar = rarityOf(TIER_RARITY[t.key])
   return {
     i, t, done, isCur, next, goat, w, right,
     x: XS[i], y: YS[i],
-    sub: done ? `${range(t)} · listo` : `Nv ${t.minLevel} · ${m.label}`,
+    sub: done ? `${range(t)} · listo` : `Nv ${t.minLevel} · ${rar.label.toLowerCase()}`,
     nameColor: done ? '#e2e8f0' : next ? '#5eead4' : goat ? '#f5d0fe' : '#64748b',
     subColor: done ? '#4ade80' : next ? '#99f6e4' : '#475569',
     aria: `${t.label}, ${done ? 'completado' : isCur ? 'tu rango actual' : 'se desbloquea en nivel ' + t.minLevel}`,
@@ -89,7 +86,10 @@ const sel = computed(() => TIERS[selIdx.value])
 const selState = computed(() => selIdx.value < cur.value ? 'done' : selIdx.value === cur.value ? 'current' : 'locked')
 const prizes = computed(() => {
   const t = sel.value
-  const kit = rankKitPrizes(t).map(p => ({ ...p, rar: pieceRarity(p.rarity) }))
+  // Kit de rango (arte de rangos-100): ícono, borde y banner
+  const ART = { icon: t.kit.icon, frame: t.kit.border, banner: t.kit.banner }
+  const ORDER = { icon: 0, frame: 1, banner: 2 }
+  const kit = tierPrizes(t).map(p => ({ ...p, part: p.kind, src: ART[p.kind], rar: pieceRarity(p.rarity) })).sort((a, b) => ORDER[a.part] - ORDER[b.part])
   const col = getCollectionForTier(t.key)
   const title = (col?.pieces || []).find(p => p.route === 'camino' && p.kind === 'title')
   if (title) kit.push({ kind: 'title', part: 'title', name: title.name, rarity: title.rarity, rar: pieceRarity(title.rarity), label: 'Título' })
@@ -100,11 +100,11 @@ const selHeading = computed(() => {
   if (selState.value === 'current') return `Ganaste al llegar a ${sel.value.label}`
   return `Al llegar a ${sel.value.label} ganás`
 })
-const selColor = computed(() => (METALS[sel.value.kit.metal] || METALS.bronce).c)
+const selColor = computed(() => tierGlow(sel.value))
 function pick(i) { tap(); selected.value = i }
 function shortName(p) {
-  if (p.part === 'crest') return `Escudo ${sel.value.label}`
-  if (p.part === 'medallion') return `Medallón ${sel.value.label}`
+  if (p.part === 'icon') return `Ícono de rango`
+  if (p.part === 'frame') return `Borde ${sel.value.label}`
   if (p.part === 'banner') return `Banner ${sel.value.label}`
   return p.name
 }
@@ -145,7 +145,7 @@ onMounted(() => { loadShellStats().catch(() => {}) })
             :style="{ left: pct(n.x, W), top: pct(n.y, H), width: n.w + 'px' }" @click="pick(n.i)">
             <span v-if="n.goat" class="cm-goat" aria-hidden="true"></span>
             <span v-if="n.next" class="cm-next" aria-hidden="true"></span>
-            <RankCrest :tier="n.t" :size="n.w" :ribbon="false" :locked="!n.done" class="relative block" :class="n.done ? 'drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]' : 'opacity-80'" />
+            <img :src="n.t.image" alt="" :width="n.w" :height="Math.round(n.w * 140 / 120)" class="relative block h-auto" :style="{ width: n.w + 'px' }" :class="n.done ? 'drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]' : 'cm-off'" />
             <span class="cm-badge" :class="n.done ? 'is-done' : ''" aria-hidden="true">
               <svg v-if="n.done" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
               <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /></svg>
@@ -191,9 +191,7 @@ onMounted(() => { loadShellStats().catch(() => {}) })
       <div class="grid grid-cols-4 gap-2">
         <div v-for="p in prizes" :key="p.part" class="cm-prize" :class="selState === 'locked' ? 'is-locked' : ''">
           <span class="h-10 w-full flex items-center justify-center overflow-hidden">
-            <RankCrest v-if="p.part === 'crest'" :tier="sel" :size="32" :ribbon="false" :locked="selState === 'locked'" />
-            <RankMedallion v-else-if="p.part === 'medallion'" :tier="sel" :size="38" :locked="selState === 'locked'" />
-            <RankBanner v-else-if="p.part === 'banner'" :tier="sel" :size="62" :locked="selState === 'locked'" />
+            <img v-if="p.src" :src="p.src" :alt="p.name" class="cm-art" :class="'is-' + p.part" />
             <span v-else class="cm-title" :style="{ background: hexA(p.rar.c, 0.18), borderColor: hexA(p.rar.c, 0.6), color: p.rar.t }">{{ p.name.toUpperCase() }}</span>
           </span>
           <span class="text-[11px] font-bold text-center leading-[1.15]">{{ shortName(p) }}</span>
@@ -228,6 +226,10 @@ onMounted(() => { loadShellStats().catch(() => {}) })
   background: #1e293b; border: 2px solid #0b1220; display: flex; align-items: center; justify-content: center;
 }
 .cm-badge.is-done { background: #22c55e; }
+.cm-off { opacity: .8; filter: grayscale(.7) brightness(.75); }
+.cm-art { display: block; height: 40px; width: auto; max-width: 100%; object-fit: contain; }
+.cm-art.is-banner { height: auto; width: 100%; border-radius: 6px; }
+.cm-prize.is-locked .cm-art { filter: grayscale(.85) brightness(.6); }
 .cm-label { position: absolute; width: 104px; display: flex; flex-direction: column; gap: 1px; pointer-events: none; }
 .cm-label.is-left { transform: translateX(-100%); text-align: right; }
 .cm-name { font-family: var(--font-bug); font-weight: 800; font-size: 15px; line-height: 1; text-transform: uppercase; letter-spacing: 0.4px; }

@@ -5,7 +5,7 @@
  * 
  * CONCEPTO:
  * - Los usuarios ganan XP por respuestas correctas, rachas, logros, etc.
- * - El XP acumulado determina el nivel del usuario (1-30)
+ * - El XP acumulado determina el nivel del usuario (1-100)
  * - Los niveles tienen umbrales definidos en la tabla "level_thresholds"
  * 
  * AWARD_XP RPC:
@@ -148,8 +148,8 @@ export async function getUserRank(userId) {
   return { rank: idx >= 0 ? (top[idx].rank ?? (idx + 1)) : null, error: null }
 }
 
-// Curva 1–100 (≈180 días jugando a diario). Fuente única: services/level-curve.js
-const FALLBACK_THRESHOLDS = LEVEL_THRESHOLDS
+// Curva 1–100. Fuente única: services/level-curve.js
+export const FALLBACK_THRESHOLDS = LEVEL_THRESHOLDS
 
 let _levelThresholdsCache = null
 let _levelThresholdsAt = 0

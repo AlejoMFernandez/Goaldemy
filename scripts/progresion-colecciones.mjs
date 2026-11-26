@@ -8,18 +8,17 @@
 import { writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { COLLECTIONS } from '../src/data/collections.js'
+import { COLLECTIONS, TIER_RARITY } from '../src/data/collections.js'
 import { TIERS, TIER_UNLOCKS } from '../src/services/tiers.js'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const q = (v) => v == null ? 'NULL' : `'${String(v).replace(/'/g, "''")}'`
-const RARITY_BY_METAL = { bronce: 'common', plata: 'rare', oro: 'epic', diamante: 'legendary', holo: 'legendary' }
 
 // ── Kit por rango (11) ─────────────────────────────────────
 const kitRows = []
 TIERS.forEach((t, i) => {
   const tu = TIER_UNLOCKS[t.key]
-  const r = RARITY_BY_METAL[t.kit.metal]
+  const r = TIER_RARITY[t.key]
   const col = COLLECTIONS.find(c => c.tierKey === t.key).key
   kitRows.push(`  (${q(`icon_rank_${t.key}`)}, 'icon', ${q(`Ícono de rango ${t.label}`)}, ${q(r)}, ${q(tu.icon)}, ${t.minLevel}, false, ${60 + i}, ${q(col)}, 'kit', true)`)
   kitRows.push(`  (${q(`frame_rank_${t.key}`)}, 'frame', ${q(`Medallón ${t.label}`)}, ${q(r)}, ${q(tu.frame)}, ${t.minLevel}, false, ${50 + i}, ${q(col)}, 'kit', true)`)
@@ -49,12 +48,14 @@ const sql = `-- ============================================================
 --      collection_route ('kit' | 'camino' | 'logro' | 'premio' | 'legado' = ya existía y conserva su desbloqueo).
 --   2. Kit por rango para los 11 rangos (ícono de rango, medallón, banner) con el
 --      copy nuevo ("Ícono de rango Ícono"…). Upsert: los 6 que ya existían cambian
---      nombre y rareza por metal (bronce=common, plata=rare, oro=epic, diamante/holo=legendary).
+--      nombre y rareza por tramo (Aficionado–Juvenil común, Amateur–Profesional raro,
+--      Crack–Ídolo épico, Ícono–GOAT legendario: artifact "El camino 1–100").
 --   3. Piezas de las 11 colecciones (src/data/collections.js). Sin arte todavía:
 --      íconos/banners/bordes quedan active=false; los TÍTULOS del camino y de premio
 --      quedan activos (no necesitan arte). Las piezas 'logro' apuntan a un
 --      unlock_achievement PROPUESTO (los logros hay que crearlos).
---   4. Cosméticos existentes mapeados por nombre (Fuego, Laurel, GOAT).
+--   4. Cosméticos existentes mapeados por nombre (Fuego, GOAT). La cabra (icon_goat)
+--      se muda del nivel 55 al 100: antes se le regala a quien ya tiene nivel ≥ 55.
 --   5. grant_cosmetic(): si el usuario YA tenía el cosmético, lo convierte en
 --      Fichas (raro 250 · épico 600 · legendario 1250; común 0).
 --      + REVOKE de EXECUTE para public/anon/authenticated (antes se podía llamar
@@ -100,6 +101,14 @@ ON CONFLICT (code) DO UPDATE SET
 
 -- 4) Cosméticos existentes que entran a una colección (no se tocan sus reglas de desbloqueo)
 ${legacy.map(l => `UPDATE public.cosmetics SET collection = ${q(l.col)}, collection_route = 'legado' WHERE code = ${q(l.code)};  -- ${l.name}`).join('\n')}
+
+-- 4b) La cabra (GOAT) pasa del nivel 55 al 100. Quien ya la tenía por nivel la conserva:
+--     se la deja como fila explícita en user_cosmetics ANTES de subir el unlock_level.
+INSERT INTO public.user_cosmetics (user_id, cosmetic_code)
+SELECT u.id, 'icon_goat' FROM auth.users u
+WHERE public.owns_cosmetic(u.id, 'icon_goat')
+ON CONFLICT DO NOTHING;
+UPDATE public.cosmetics SET unlock_level = 100 WHERE code = 'icon_goat';
 
 -- 5) grant_cosmetic: duplicado → Fichas por rareza
 CREATE OR REPLACE FUNCTION public.grant_cosmetic(p_user_id UUID, p_code TEXT)

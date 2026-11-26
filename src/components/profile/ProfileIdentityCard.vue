@@ -150,10 +150,10 @@ const showProgression = ref(false)
         </div>
         <div class="flex-1 self-start pt-4">
           <div class="h-3 rounded-full bg-black/40 overflow-hidden ring-1 ring-white/5">
-            <div class="h-full rounded-full bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 transition-all duration-700" :style="{ width: (level >= 50 ? 100 : tierProgress) + '%' }"></div>
+            <div class="h-full rounded-full bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 transition-all duration-700" :style="{ width: (!nextTier ? 100 : tierProgress) + '%' }"></div>
           </div>
           <p class="mt-2 text-[10px] text-center text-slate-400 leading-snug">
-            <template v-if="level >= 50">¡Rango máximo! 👑</template>
+            <template v-if="!nextTier">¡Rango máximo! 👑</template>
             <template v-else>Faltan <span class="font-bold text-white">{{ levelsToNextTier }}</span> {{ levelsToNextTier === 1 ? 'nivel' : 'niveles' }}</template>
           </p>
         </div>
