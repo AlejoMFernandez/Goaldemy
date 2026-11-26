@@ -19,15 +19,15 @@ export function hexA(hex, a) {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`
 }
 
-// Íconos que CosmeticIcon sabe dibujar (SVG propio o .webp en public/cosmetics/icons).
-const ICON_KEYS = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel', 'chat', 'butterfly', 'globe', 'comet', 'phoenix', 'rank_bronze', 'rank_silver', 'rank_gold', 'rank_emerald', 'rank_cyan', 'rank_champion', 'rank_figura', 'rank_idolo', 'rank_icono', 'rank_leyenda', 'rank_goat', '⚽', '👟', '🧤', '🏅', '🏆', '🐐', '👑', '⭐', '🛡️', '🛡'])
 
 /** ¿La pieza tiene arte real para dibujarse? (type + style_key del catálogo) */
 export function hasArt(c) {
   if (!c) return false
   const k = c.style_key || c.styleKey || ''
   if (c.type === 'title') return true
-  if (c.type === 'icon') return ICON_KEYS.has(k)
+  // Íconos: siempre hay arte. CosmeticIcon dibuja el .webp/SVG y, si la clave es nueva
+  // y todavía no tiene archivo, un monograma en el color de la rareza (nunca la estrella vacía).
+  if (c.type === 'icon') return !!k
   if (c.type === 'frame') return !!k && k !== 'none' && !!FRAME_STYLES[k]
   if (c.type === 'banner') return !!k && !!BANNER_STYLES[k]
   return false
