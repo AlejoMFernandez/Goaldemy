@@ -1,16 +1,15 @@
 <script>
 /**
- * POPUP FINAL = EL RESUMEN (Moodboard 07 v2)
+ * EL RESUMEN DE PARTIDA (diseño V4 aprobado: V4Resumen)
  *
- * Limpio y en orden, como una transmisión:
- *  1. ¡VICTORIA! / DERROTA solo (sin zócalo arriba) + juego · dificultad.
- *  2. Estrellas por PRECISIÓN (3 = sin errores, 2 = hasta 2, 1 = más) o, si
- *     perdiste, las pelotas que faltaron.
- *  3. El XP en grande y, debajo, de dónde salió (aciertos, ¡Basta!, PRO…).
- *  4. Barra de nivel + próximo premio (cuánto falta, contado en aciertos).
- *  5. Racha del juego con escena: se enciende una llama nueva o se apaga
- *     con humo y el número se tacha.
- *  6. Compartir / Continuar.
+ * Pantalla completa, en orden de transmisión:
+ *  1. Juego · dificultad arriba; estrellas por PRECISIÓN (3 = sin errores,
+ *     2 = hasta 2, 1 = más) y ¡GANASTE! / PERDISTE con el marcador.
+ *  2. Desglose del XP en filas (aciertos, ¡Basta!, PRO…) + la racha del juego
+ *     (se enciende o se corta) y el TOTAL.
+ *  3. Barra de nivel (lo ganado en dorado) + el próximo premio real.
+ *  4. SIGUIENTE JUEGO (el próximo de la jornada, con cuántos te quedan),
+ *     Compartir y Volver.
  * Los logros medios y difíciles NO se listan acá: aparecen con su escena al
  * cerrar (cola: resumen → logros → ¡PUM! → cosméticos). Los fáciles ya
  * salieron como cartel durante el partido.
@@ -23,10 +22,18 @@ import { buildShareText, shareOrCopy } from '@/services/share'
 import { getAuthUser } from '@/services/auth'
 import { computeGuestRewards, getPendingGuestSummary } from '@/services/guest-play'
 import { fetchDailyWinStreak, findNextDailyGame } from '@/services/game-modes'
-import { upcomingPrizes, nextRealPrize, PRIZE_TYPE_LABEL } from '@/services/prize-card'
+import { nextRealPrize, PRIZE_TYPE_LABEL } from '@/services/prize-card'
+import { GAME_ART, GAME_POSTER_META } from '@/services/game-art'
+import { tap, success } from '@/services/haptics'
 import { sparks, center, smoke, reducedMotion } from '@/services/game-fx'
 import PrizePeek from '@/components/rewards/PrizePeek.vue'
 
+const CONFETTI_COLORS = ['#fbbf24', '#34d399', '#22d3ee', '#818cf8', '#f472b6', '#ffffff']
+const CONFETTI = Array.from({ length: 14 }, (_, i) => ({
+  x: ((i * 29 + 11) % 370) / 3.9 + '%', y: ((i * 17) % 90) + 'px',
+  w: (i % 3 === 0 ? 10 : 6) + 'px', h: (i % 2 === 0 ? 4 : 9) + 'px',
+  c: CONFETTI_COLORS[i % CONFETTI_COLORS.length], d: (i * 0.09).toFixed(2) + 's',
+}))
 const FLAME_PATH = 'M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67z'
 
 export default {
@@ -151,6 +158,8 @@ export default {
       if (before == null && after != null) before = won.value ? Math.max(0, after - 1) : null
       if (after == null && before != null) after = won.value ? before + 1 : 0
       if (!won.value) after = 0
+      // Ganaste: la racha nueva nunca puede ser menor a la de antes + 1 (por si el server todavía no la actualizó)
+      else if (before != null) after = Math.max(Number(after) || 0, before + 1)
       streakBefore.value = before
       streakAfter.value = after
     }
@@ -264,7 +273,7 @@ export default {
             const el = flameNewEl.value
             if (el) { const c = center(el); sparks(c.x, c.y, 16, ['#fcd34d', '#fb923c', '#fff'], 44) }
           } else {
-            if (flamesEl.value) { smoke(flamesEl.value); setTimeout(() => flamesEl.value && smoke(flamesEl.value), 350) }
+            if (flameNewEl.value) { smoke(flameNewEl.value); setTimeout(() => flameNewEl.value && smoke(flameNewEl.value), 350) }
           }
         }, 450)
         T(() => { rkPhase.value = 3 }, won.value ? 950 : 1600)
@@ -289,17 +298,45 @@ export default {
     function onContinue() { emit('close'); setSuppressOverlays(false) }
 
     // ── Siguiente juego del día: el CTA principal del relanzamiento ──
-    // Busca el próximo desafío disponible (intentos + nivel); sin ninguno → índice.
+    // El próximo de la jornada (mismo orden que JUGAR RÁPIDO) + cuántos te quedan.
+    // Sin ninguno → índice de juegos. Si falla, el buscador de siempre.
     const nextHref = ref('/play/points')
     const nextIsGame = ref(false)
+    const nextName = ref('')
+    const nextLeft = ref(null)
     async function resolveNext() {
       if (props.guest) return
-      const href = await findNextDailyGame(slug.value)
-      nextHref.value = href || '/play/points'
-      nextIsGame.value = !!href
+      try {
+        const { getNextQuickPlay } = await import('@/services/quick-play')
+        const r = await getNextQuickPlay({ level: props.levelAfter || props.levelBefore || 1 })
+        const n = r?.next && r.next.slug !== slug.value ? r.next : null
+        nextHref.value = n ? n.to : '/play/points'
+        nextIsGame.value = !!n
+        nextName.value = n?.name || ''
+        nextLeft.value = r ? Math.max(0, r.total - r.played) : null
+      } catch {
+        const href = await findNextDailyGame(slug.value)
+        nextHref.value = href || '/play/points'
+        nextIsGame.value = !!href
+      }
     }
     watch(() => props.show, (val) => { if (val) resolveNext() })
     onMounted(() => { if (props.show) resolveNext() })
+
+    // ── Datos de la cabecera y la barra (V4) ──
+    const meta = computed(() => GAME_POSTER_META[slug.value] || { c1: '#475569', c2: '#0f172a' })
+    const miniArt = computed(() => (GAME_ART[slug.value] || '').replace(/id="(cp[a-z])"/g, 'id="sm$1"').replace(/url\(#(cp[a-z])\)/g, 'url(#sm$1)'))
+    const headLine = computed(() => [displayName.value, difficultyLabel.value].filter(Boolean).join(' · ').toUpperCase())
+    const fmt = (n) => Number(n || 0).toLocaleString('es-AR')
+    const xpLabel = computed(() => (props.xpAfterTotal > 0 && props.xpToNextAfter != null) ? `${fmt(props.xpAfterTotal)} / ${fmt(props.xpAfterTotal + props.xpToNextAfter)} XP` : '')
+    // Parte "vieja" de la barra (verde→violeta) y lo ganado hoy (dorado, animado)
+    const basePct = computed(() => didLevelUp.value ? 0 : Math.min(props.beforePercent || 0, xpBarWidth.value))
+    const levelNow = computed(() => props.levelAfter || props.levelBefore || 0)
+    const nextPrizeSoon = computed(() => !!(nextPrize.value && nextPrize.value.level === levelNow.value + 1))
+    const DOT = { ball: '#34d399', clock: '#22d3ee', flag: '#4ade80', pro: '#fbbf24' }
+    const rows = computed(() => chips.value.map((c, i) => ({ ...c, dot: DOT[c.kind] || '#818cf8', delay: (0.1 + i * 0.1) + 's' })))
+    function goNext() { tap(); onContinue() }
+    watch(phase, (p) => { if (p === 1 && won.value) success() })
 
     return { barCombo, barEl,
       phase, won, animatedXp, starsRevealed, starCount, accuracy, precisionLine, missing, ballsTotal, xpBarWidth,
@@ -307,111 +344,137 @@ export default {
       subLine, totalXp, chips, didLevelUp, nextPrize, nextPrizeTypeLabel, perCorrect,
       streakBefore, streakAfter, rkPhase, showStreak, flamesShown, FLAME_PATH,
       shared, onShare, onContinue, nextHref, nextIsGame, cardEl, starEls, flameNewEl, flamesEl,
+      nextName, nextLeft, meta, miniArt, headLine, xpLabel, basePct, levelNow, nextPrizeSoon, rows, goNext, fmt, CONFETTI,
     }
   },
 }
 </script>
 
+
 <template>
   <Teleport to="body">
     <Transition name="sm-fade">
       <div v-if="show" class="sm-wrap">
-        <div ref="cardEl" class="sm" :class="won ? 'is-win' : 'is-loss'" role="dialog" aria-modal="true" :aria-label="won ? 'Victoria' : 'Derrota'">
-          <!-- 1 · resultado -->
-          <div class="sm-top">
-            <h2 class="big" :class="{ in: phase >= 1 }">{{ won ? '¡Victoria!' : 'Derrota' }}</h2>
-            <p class="sub" :class="{ in: phase >= 1 }">{{ subLine }}</p>
+        <div ref="cardEl" class="sm" :class="won ? 'is-win' : 'is-loss'" role="dialog" aria-modal="true" :aria-label="won ? `Resumen: ganaste ${headLine}` : `Resumen: perdiste ${headLine}`">
+          <!-- Papelitos (solo al ganar) -->
+          <div v-if="won" class="sm-conf" aria-hidden="true">
+            <i v-for="(c, i) in CONFETTI" :key="i" :style="{ left: c.x, top: c.y, width: c.w, height: c.h, background: c.c, animationDelay: c.d }"></i>
+          </div>
 
-            <!-- 2 · estrellas por precisión / pelotas que faltaron -->
-            <div v-if="won" class="stars" :aria-label="`${starCount} de 3 estrellas`">
-              <svg v-for="i in 3" :key="i" :ref="el => { starEls[i - 1] = el }" viewBox="0 0 24 24"
-                   :class="{ in: starsRevealed >= i && i <= starCount, off: starsRevealed >= i && i > starCount }">
-                <path d="M12 2l3 6.9 7.5.7-5.7 5 1.7 7.4L12 18.3 5.5 22l1.7-7.4-5.7-5 7.5-.7z" fill="#fcd34d" stroke="#b45309" stroke-width="1.2" />
-              </svg>
-            </div>
-            <div v-else class="short" :class="{ in: phase >= 2 }">
-              <i v-for="i in ballsTotal" :key="i" :class="{ no: i > corrects }"></i>
-            </div>
-            <p class="prec" :class="{ in: phase >= 2 }">
-              <template v-if="won && errors != null">Precisión <b>{{ accuracy }} %</b><template v-if="precisionLine"> · {{ precisionLine }}</template></template>
-              <template v-else-if="!won && missing > 0">Te faltaron <b>{{ missing }}</b></template>
-            </p>
+          <div class="sm-top">
+            <span class="sm-pill">
+              <span v-if="miniArt" class="mi" :style="{ background: `linear-gradient(160deg, ${meta.c1}, ${meta.c2})` }" aria-hidden="true" v-html="miniArt"></span>
+              {{ headLine }}
+            </span>
           </div>
 
           <div class="sm-body">
-            <!-- 3 · el XP en grande -->
-            <div v-if="!guest" class="gain" :class="{ in: phase >= 3 }">
-              <div class="xp"><span>+{{ animatedXp }}</span><small>XP</small></div>
-              <div v-if="chips.length" class="chips">
-                <span v-for="(c, i) in chips" :key="i" class="chip" :style="{ transitionDelay: (0.1 + i * 0.12) + 's' }">
-                  <svg v-if="c.kind === 'clock'" viewBox="0 0 24 24" fill="none" stroke="#fcd34d" stroke-width="2.6" stroke-linecap="round"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l3 2M9 2h6" /></svg>
-                  <svg v-else-if="c.kind === 'pro'" viewBox="0 0 20 20" fill="#fcd34d"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.07 3.29a1 1 0 00.95.69h3.46c.97 0 1.37 1.24.59 1.81l-2.8 2.03a1 1 0 00-.36 1.12l1.07 3.3c.3.92-.76 1.68-1.54 1.11l-2.8-2.03a1 1 0 00-1.18 0l-2.8 2.03c-.78.57-1.84-.2-1.54-1.11l1.07-3.3a1 1 0 00-.36-1.12L2.98 8.72c-.78-.57-.38-1.81.59-1.81h3.46a1 1 0 00.95-.69z" /></svg>
-                  <svg v-else-if="c.kind === 'flag'" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>
-                  <svg v-else viewBox="-50 -50 100 100" aria-hidden="true"><defs><clipPath id="fulvo-ball-clip"><circle r="47"/></clipPath><radialGradient id="fulvo-ball-sh" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff"/><stop offset=".7" stop-color="#e2e8f0"/><stop offset="1" stop-color="#94a3b8"/></radialGradient></defs><circle r="47" fill="url(#fulvo-ball-sh)"/><g clip-path="url(#fulvo-ball-clip)"><g fill="#111827"><polygon points="0.0,-16.0 15.2,-4.9 9.4,12.9 -9.4,12.9 -15.2,-4.9"/><polygon points="0.0,-29.0 -16.2,-40.7 -10.0,-59.8 10.0,-59.8 16.2,-40.7"/><polygon points="27.6,-9.0 33.8,-28.0 53.7,-28.0 59.9,-9.0 43.7,2.8"/><polygon points="17.0,23.5 37.0,23.5 43.2,42.5 27.0,54.2 10.9,42.5"/><polygon points="-17.0,23.5 -10.9,42.5 -27.0,54.2 -43.2,42.5 -37.0,23.5"/><polygon points="-27.6,-9.0 -43.7,2.8 -59.9,-9.0 -53.7,-28.0 -33.8,-28.0"/></g><path d="M0.0 -16.0L0.0 -29.0M15.2 -4.9L27.6 -9.0M9.4 12.9L17.0 23.5M-9.4 12.9L-17.0 23.5M-15.2 -4.9L-27.6 -9.0M-16.2 -40.7L23.5 -32.4M16.2 -40.7L-23.5 -32.4M33.8 -28.0L38.0 12.4M43.7 2.8L23.5 -32.4M37.0 23.5L0.0 40.0M10.9 42.5L38.0 12.4M-10.9 42.5L-38.0 12.4M-37.0 23.5L0.0 40.0M-43.7 2.8L-23.5 -32.4M-33.8 -28.0L-38.0 12.4" stroke="#111827" stroke-width="2.6" fill="none" stroke-linecap="round"/></g><circle r="47" fill="none" stroke="#111827" stroke-width="2.5"/></svg>
-                  {{ c.label }} <b>+{{ c.xp }}</b>
+            <!-- 1 · resultado -->
+            <section class="res" :aria-label="won ? `Ganaste con ${starCount} de 3 estrellas` : 'Perdiste'">
+              <div v-if="won" class="stars" aria-hidden="true">
+                <svg v-for="i in 3" :key="i" :ref="el => { starEls[i - 1] = el }" viewBox="0 0 24 24"
+                     :class="{ mid: i === 2, in: starsRevealed >= i && i <= starCount, off: starsRevealed >= i && i > starCount }">
+                  <path d="M12 2.2l2.95 6.1 6.7.9-4.9 4.65 1.2 6.65L12 17.3l-5.95 3.2 1.2-6.65L2.35 9.2l6.7-.9z" stroke-width="1.4" stroke-linejoin="round" />
+                </svg>
+              </div>
+              <div v-else class="short" :class="{ in: phase >= 2 }" aria-hidden="true">
+                <i v-for="i in ballsTotal" :key="i" :class="{ no: i > corrects }"></i>
+              </div>
+              <h2 class="big" :class="{ in: phase >= 1 }">{{ won ? '¡GANASTE!' : 'PERDISTE' }}</h2>
+              <div class="score" :class="{ in: phase >= 2 }">
+                <span class="n">{{ Math.min(corrects, winThreshold) }}<span>/{{ winThreshold }}</span></span>
+                <span class="sep"></span>
+                <span class="tx">
+                  <span>aciertos<template v-if="won && errors != null"> · precisión <strong>{{ accuracy }} %</strong></template></span>
+                  <span v-if="won && precisionLine">{{ precisionLine }}</span>
+                  <span v-else-if="!won && missing > 0">te faltaron <strong>{{ missing }}</strong></span>
+                  <span v-else-if="won && starCount === 3">¡partido perfecto!</span>
                 </span>
               </div>
-            </div>
+            </section>
 
-            <!-- 4 · barra de nivel + próximo premio -->
-            <template v-if="!guest && levelShown != null">
-              <div class="lvl" :class="{ in: phase >= 4 }">
+            <!-- 2 · XP ganada -->
+            <section v-if="!guest" class="tbl" :class="{ in: phase >= 3 }" aria-label="XP ganada">
+              <div v-for="(r, i) in rows" :key="i" class="row" :style="{ animationDelay: r.delay }">
+                <span class="dot" :style="{ background: r.dot }"></span>
+                <span class="lb">{{ r.label }}</span>
+                <span class="v">+{{ fmt(r.xp) }}</span>
+              </div>
+              <div v-if="showStreak" class="row rk" :class="{ cut: !won && rkPhase >= 2 }">
+                <span class="dot" style="background:#fb923c"></span>
+                <span class="lb">{{ won ? 'Racha del juego' : 'Racha cortada' }}</span>
+                <span class="v fl">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" :class="{ lit: won && rkPhase >= 2, out: !won && rkPhase >= 2 }" ref="flameNewEl"><path :d="FLAME_PATH" fill="currentColor" /></svg>
+                  <span v-if="!(rkPhase >= 3)" class="old">×{{ streakBefore }}</span>
+                  <span v-else class="nw">×{{ won ? streakAfter : 0 }}</span>
+                </span>
+              </div>
+              <div class="tot">
+                <span class="k">TOTAL</span>
+                <span class="x">+{{ fmt(animatedXp) }} XP</span>
+              </div>
+            </section>
+
+            <!-- 3 · nivel + próximo premio -->
+            <section v-if="!guest && levelShown != null" class="lvl" :class="{ in: phase >= 4 }" :aria-label="xpLabel ? `Tu nivel: ${xpLabel}` : 'Tu nivel'">
+              <div class="lr">
                 <span class="nv" :class="{ pop: levelPop }">NV {{ levelShown }}</span>
-                <div ref="barEl" class="bar">
-                  <i class="cur" :style="{ width: xpBarWidth + '%' }"></i>
+                <span ref="barEl" class="bar">
+                  <i class="gold" :style="{ width: xpBarWidth + '%' }"></i>
+                  <i class="base" :style="{ width: basePct + '%' }"></i>
+                  <span v-if="xpLabel" class="lbl">{{ xpLabel }}</span>
                   <span v-if="levelPop" class="up">¡Nivel {{ levelShown }}!</span>
                   <span v-if="barCombo > 1" :key="'bc' + barCombo" class="combo">×{{ barCombo }}</span>
-                </div>
-                <span class="nv nx">NV {{ (levelShown || 0) + 1 }}</span>
-              </div>
-              <div v-if="nextPrize && xpToNextAfter != null" class="next" :class="{ in: phase >= 4 }">
-                <PrizePeek :prize="nextPrize.prize" :size="46" />
-                <span>
-                  <template v-if="nextPrize.level === (levelAfter || levelBefore) + 1">Te faltan <b>{{ xpToNextAfter }} XP</b> para el {{ nextPrizeTypeLabel }} "<b>{{ nextPrize.prize.name }}</b>"<template v-if="perCorrect"> · ≈ {{ Math.ceil(xpToNextAfter / perCorrect) }} aciertos</template></template>
-                  <template v-else>En el nivel <b>{{ nextPrize.level }}</b> te espera el {{ nextPrizeTypeLabel }} "<b>{{ nextPrize.prize.name }}</b>"</template>
                 </span>
+                <span class="nx">{{ (levelShown || 0) + 1 }}</span>
               </div>
-            </template>
-
-            <!-- 5 · racha del juego -->
-            <div v-if="showStreak" class="rk" :class="{ in: rkPhase >= 1, cut: !won && rkPhase >= 2 }">
-              <span ref="flamesEl" class="fl" :class="{ out: !won && rkPhase >= 2 }">
-                <svg v-for="i in flamesShown" :key="i" viewBox="0 0 24 24" :style="{ '--i': i }"><path :d="FLAME_PATH" fill="currentColor" /></svg>
-                <svg v-if="won" ref="flameNewEl" viewBox="0 0 24 24" class="new" :class="{ lit: rkPhase >= 2 }"><path :d="FLAME_PATH" fill="currentColor" /></svg>
-              </span>
-              <span class="cnt">
-                <span v-if="!(won && rkPhase >= 3)" class="old">×{{ streakBefore }}<svg viewBox="0 0 60 14" preserveAspectRatio="none" aria-hidden="true"><path d="M2 10 L58 4" /></svg></span>
-                <span class="nw" :class="{ in: rkPhase >= 3 }">{{ won ? '×' + streakAfter : '0' }}</span>
-              </span>
-              <span class="lab"><b>{{ won ? 'Racha encendida' : 'Racha cortada' }}</b>{{ won ? 'ganaste otro día seguido' : 'mañana arrancás de nuevo' }}</span>
-            </div>
+              <div v-if="nextPrize" class="prz">
+                <PrizePeek :prize="nextPrize.prize" :size="40" />
+                <span class="pt">
+                  <span class="k">PRÓXIMO PREMIO · NV {{ nextPrize.level }}</span>
+                  <span class="n">{{ nextPrizeTypeLabel ? nextPrizeTypeLabel.charAt(0).toUpperCase() + nextPrizeTypeLabel.slice(1) + ' ' : '' }}{{ nextPrize.prize.name }}</span>
+                </span>
+                <span v-if="nextPrizeSoon && xpToNextAfter != null" class="lf">faltan<br>{{ fmt(xpToNextAfter) }} XP</span>
+                <span v-else class="lf">en {{ nextPrize.level - levelNow }}<br>niveles</span>
+              </div>
+            </section>
 
             <!-- Invitado: lo que se lleva al registrarse -->
-            <div v-if="guest" class="guest" :class="{ in: phase >= 3 }">
+            <section v-if="guest" class="guest" :class="{ in: phase >= 3 }">
               <p class="note">Estás jugando <b>como invitado</b>: esta XP todavía no está guardada.</p>
               <div class="gxp">
                 <div><small>XP a reclamar</small><b class="x">+{{ guestPreview.xp }}</b></div>
                 <div><small>Fichas a reclamar</small><b class="f">+{{ guestPreview.fichas }}</b></div>
               </div>
               <p v-if="guestShowsAccumulated" class="note c">Ya llevás <b>{{ guestSummary.count }} juegos</b> probados: <b>{{ guestSummary.xp }} XP</b> y <b>{{ guestSummary.fichas }} Fichas</b> acumuladas.</p>
-              <p v-if="guestTotalXp >= guestPreview.xpForLevel2" class="note y">⚡ Esa XP alcanza para pasar a Nivel 2 apenas te registrés.</p>
-              <p v-if="guestPreview.perfect" class="note y">🏆 Un resultado perfecto como este desbloquea logros al crear tu cuenta.</p>
-            </div>
+              <p v-if="guestTotalXp >= guestPreview.xpForLevel2" class="note y">Esa XP alcanza para pasar a Nivel 2 apenas te registrés.</p>
+              <p v-if="guestPreview.perfect" class="note y">Un resultado perfecto como este desbloquea logros al crear tu cuenta.</p>
+              <div v-if="claimGate" class="gate">
+                <h3>Tus recompensas te esperan</h3>
+                <p>Creá tu cuenta gratis y guardá <b>+{{ guestTotalXp }} XP</b><span v-if="guestShowsAccumulated"> de {{ guestSummary.count }} juegos</span> para siempre.</p>
+                <router-link to="/register" class="main">Crear cuenta gratis y reclamar</router-link>
+                <router-link to="/login" class="link">Ya tengo cuenta</router-link>
+              </div>
+            </section>
+          </div>
 
-            <!-- 6 · acciones -->
-            <router-link v-if="!guest" :to="nextHref" class="cta-next" :class="{ in: phase >= 6 }" @click="onContinue">
-              {{ nextIsGame ? 'Siguiente juego del día' : 'Ver juegos del día' }} <span aria-hidden="true">→</span>
+          <!-- 4 · acciones -->
+          <div class="sm-go" :class="{ in: phase >= 6 }">
+            <router-link v-if="!guest" :to="nextHref" class="next" @click="goNext">
+              <span class="t">
+                <span class="a">{{ nextIsGame ? 'SIGUIENTE JUEGO' : 'VER JUEGOS DEL DÍA' }}</span>
+                <span v-if="nextIsGame && nextName" class="b">{{ nextName }}<template v-if="nextLeft != null"> · te {{ nextLeft === 1 ? 'queda' : 'quedan' }} {{ nextLeft }}</template></span>
+              </span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z" /></svg>
             </router-link>
-            <div class="cta" :class="{ in: phase >= 6 }">
-              <button type="button" class="ghost" @click="onShare">{{ shared ? '¡Copiado!' : 'Compartir' }}</button>
-              <router-link v-if="!guest" :to="backPath" class="ghost" @click="onContinue">Continuar</router-link>
-              <button v-else-if="!claimGate" type="button" class="main claim" @click="claimGate = true">Reclamar mis recompensas</button>
-            </div>
-            <div v-if="guest && claimGate" class="gate">
-              <h3>Tus recompensas te esperan</h3>
-              <p>Creá tu cuenta gratis y guardá <b>+{{ guestTotalXp }} XP</b><span v-if="guestShowsAccumulated"> de {{ guestSummary.count }} juegos</span> para siempre.</p>
-              <router-link to="/register" class="main">Crear cuenta gratis y reclamar</router-link>
-              <router-link to="/login" class="link">Ya tengo cuenta</router-link>
+            <button v-else-if="!claimGate" type="button" class="next claim" @click="claimGate = true"><span class="t"><span class="a">RECLAMAR MIS PREMIOS</span></span></button>
+            <div class="two">
+              <button type="button" class="ghost" @click="onShare">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6" /></svg>{{ shared ? '¡Copiado!' : 'Compartir' }}
+              </button>
+              <router-link :to="guest ? '/' : backPath" class="ghost" @click="onContinue">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7M5 10v10h14V10" /></svg>Volver
+              </router-link>
             </div>
           </div>
         </div>
@@ -421,80 +484,91 @@ export default {
 </template>
 
 <style scoped>
-.sm-wrap { position: fixed; inset: 0; z-index: 55; overflow-y: auto; display: grid; place-items: center; padding: 16px; background: rgba(3, 5, 14, .88); }
-.sm { position: relative; width: min(100%, 460px); max-height: calc(100dvh - 32px); overflow: hidden auto; border-radius: 18px; background: #0b1024; border: 1px solid rgba(255, 255, 255, .12); box-shadow: 0 30px 80px rgba(0, 0, 0, .6); animation: sm-pop .45s cubic-bezier(.34, 1.3, .64, 1) both; }
-@keyframes sm-pop { from { opacity: 0; transform: scale(.92) translateY(14px); } to { opacity: 1; transform: none; } }
-.sm-top { position: relative; padding: 28px 16px 12px; display: grid; gap: 8px; justify-items: center; text-align: center; }
-.sm-top::before { content: ""; position: absolute; inset: 0; background: radial-gradient(70% 100% at 50% 0%, rgba(252, 211, 77, .22), transparent 70%); pointer-events: none; }
-.is-loss .sm-top::before { background: radial-gradient(70% 100% at 50% 0%, rgba(239, 68, 68, .16), transparent 70%); }
-.sm-top > * { position: relative; }
-.big { margin: 0; font-family: var(--font-shout); font-weight: 800; font-style: italic; text-transform: uppercase; font-size: clamp(50px, 14vw, 76px); line-height: .9; opacity: 0; }
-.big.in { animation: sm-slam .55s cubic-bezier(.16, 1, .3, 1) forwards; }
-@keyframes sm-slam { 0% { opacity: 0; transform: scale(3); filter: blur(10px); } 100% { opacity: 1; transform: none; filter: none; } }
-.is-win .big { color: #fff; text-shadow: 0 0 34px rgba(252, 211, 77, .5); }
-.is-loss .big { color: #fecaca; }
-.sub { margin: 0; font-size: 13px; color: #8b93b8; opacity: 0; transition: opacity .4s .3s; }
-.sub.in { opacity: 1; }
-.stars { display: flex; gap: 8px; align-items: flex-end; margin-top: 6px; }
-.stars svg { width: 44px; height: auto; opacity: 0; transform: scale(2.4) rotate(-20deg); }
-.stars svg:nth-child(2) { width: 58px; }
-.stars svg.in { animation: sm-star .45s cubic-bezier(.34, 1.56, .64, 1) forwards; }
+.sm-wrap { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; background: rgba(3, 5, 14, .88); }
+.sm { position: relative; width: min(100%, 430px); height: min(100dvh, 900px); display: flex; flex-direction: column; overflow: hidden; color: #f1f5f9; background: radial-gradient(90% 38% at 50% 8%, rgba(34, 197, 94, .32), transparent 70%), #0b1220; animation: sm-pop .4s cubic-bezier(.16, 1, .3, 1) both; }
+.sm.is-loss { background: radial-gradient(90% 38% at 50% 8%, rgba(239, 68, 68, .22), transparent 70%), #0b1220; }
+@media (min-width: 560px) { .sm { border-radius: 24px; border: 1px solid rgba(255, 255, 255, .1); box-shadow: 0 30px 80px rgba(0, 0, 0, .6); height: min(calc(100dvh - 32px), 860px); } }
+@keyframes sm-pop { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.sm-conf { position: absolute; inset: 0 0 auto 0; height: 260px; pointer-events: none; overflow: hidden; }
+.sm-conf i { position: absolute; display: block; border-radius: 2px; animation: sm-fall 2.6s ease-in both; }
+@keyframes sm-fall { 0% { transform: translateY(-30px) rotate(0); } 100% { transform: translateY(240px) rotate(260deg); opacity: 0; } }
+
+.sm-top { position: relative; flex: none; height: 52px; box-sizing: content-box; padding: env(safe-area-inset-top, 0px) 16px 0; display: flex; align-items: center; justify-content: center; }
+.sm-pill { display: flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1); font-family: var(--font-bug); font-weight: 800; font-size: 13px; letter-spacing: 1px; color: #a7f3d0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.is-loss .sm-pill { color: #fecaca; }
+.sm-pill .mi { width: 18px; height: 18px; flex: none; border-radius: 5px; overflow: hidden; display: grid; place-items: center; }
+.sm-pill .mi :deep(svg) { width: 20px; height: auto; display: block; }
+
+.sm-body { position: relative; flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 20px; }
+
+/* resultado */
+.res { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.stars { display: flex; align-items: flex-end; gap: 6px; height: 64px; }
+.stars svg { width: 48px; height: 48px; fill: #1e293b; stroke: #475569; opacity: 0; transform: scale(0) rotate(-30deg); }
+.stars svg.mid { width: 62px; height: 62px; margin-bottom: 8px; }
+.stars svg.in { fill: #fbbf24; stroke: #fff7d6; filter: drop-shadow(0 0 10px rgba(251, 191, 36, .6)); animation: sm-star .5s cubic-bezier(.2, .9, .3, 1.3) forwards; }
 .stars svg.off { animation: sm-staroff .35s ease forwards; }
-@keyframes sm-star { to { opacity: 1; transform: none; } }
-@keyframes sm-staroff { to { opacity: .2; transform: none; filter: grayscale(1); } }
-.short { display: flex; gap: 3px; justify-content: center; opacity: 0; transition: opacity .3s; margin-top: 4px; }
+@keyframes sm-star { 0% { transform: scale(0) rotate(-30deg); opacity: 0; } 70% { transform: scale(1.18) rotate(6deg); opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes sm-staroff { to { opacity: 1; transform: none; } }
+.short { display: flex; gap: 3px; justify-content: center; height: 30px; align-items: center; opacity: 0; transition: opacity .3s; }
 .short.in { opacity: 1; }
-.short i { width: 16px; height: 16px; border-radius: 50%; display: block; background: radial-gradient(circle at 35% 30%, #fff, #e2e8f0 60%, #94a3b8); box-shadow: inset -2px -2px 2px rgba(15, 23, 42, .35); }
+.short i { width: 16px; height: 16px; border-radius: 50%; display: block; background: radial-gradient(circle at 35% 30%, #fff, #e2e8f0 60%, #94a3b8); }
 .short i.no { background: none; border: 1.5px dashed #f87171; }
-.prec { margin: 0; min-height: 18px; font-size: 12.5px; color: #8b93b8; opacity: 0; transition: opacity .4s; }
-.prec.in { opacity: 1; }
-.prec b { color: #dfe4ff; }
-.sm-body { padding: 4px 16px 16px; display: grid; gap: 14px; }
-.gain { display: grid; justify-items: center; gap: 6px; opacity: 0; transition: opacity .3s; }
-.gain.in { opacity: 1; }
-.gain .xp { font-family: var(--font-bug); font-weight: 800; font-size: clamp(48px, 13vw, 64px); line-height: .95; color: #fcd34d; font-variant-numeric: tabular-nums; text-shadow: 0 0 26px rgba(252, 211, 77, .35); }
-.gain .xp small { font-size: .42em; margin-left: 4px; color: #fde68a; }
-.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 5px; border-radius: 999px; background: rgba(255, 255, 255, .05); font-size: 12.5px; color: #c5cbe8; opacity: 0; transform: translateY(6px); transition: opacity .25s, transform .35s cubic-bezier(.16, 1, .3, 1); }
-.gain.in .chip { opacity: 1; transform: none; }
-.chip svg { width: 16px; height: 16px; }
-.chip b { color: #fcd34d; font-weight: 700; }
-.lvl { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; opacity: 0; transition: opacity .3s; }
+.big { margin: 0; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 62px; line-height: .95; letter-spacing: 1px; opacity: 0;
+  background: linear-gradient(180deg, #ffffff 0%, #bbf7d0 45%, #22c55e 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 0 rgba(5, 46, 22, .9)); }
+.is-loss .big { background: linear-gradient(180deg, #ffffff 0%, #fecaca 45%, #ef4444 100%); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 3px 0 rgba(69, 10, 10, .9)); }
+.big.in { animation: sm-title .45s cubic-bezier(.2, .9, .3, 1.2) forwards; }
+@keyframes sm-title { 0% { transform: scale(1.4); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.score { display: flex; align-items: center; gap: 12px; margin-top: 2px; opacity: 0; transition: opacity .4s; }
+.score.in { opacity: 1; }
+.score .n { font-family: var(--font-bug); font-weight: 800; font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+.score .n span { color: #475569; }
+.score .sep { width: 1px; height: 22px; background: rgba(255, 255, 255, .15); }
+.score .tx { display: flex; flex-direction: column; font-size: 11.5px; color: #94a3b8; line-height: 1.3; }
+.score strong { color: #e2e8f0; }
+
+/* tabla de XP */
+.tbl { border-radius: 18px; background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .08); overflow: hidden; opacity: 0; transition: opacity .3s; }
+.tbl.in { opacity: 1; }
+.row { min-height: 36px; padding: 0 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255, 255, 255, .06); }
+.tbl.in .row { animation: sm-row .3s ease-out both; }
+@keyframes sm-row { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+.row .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.row .lb { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .v { font-family: var(--font-bug); font-weight: 800; font-size: 18px; font-variant-numeric: tabular-nums; }
+.row .fl { display: flex; align-items: center; gap: 4px; color: #fcd34d; }
+.row .fl svg { width: 18px; height: 18px; color: #fb923c; transition: transform .4s, color .4s; }
+.row .fl svg.lit { color: #fcd34d; transform: scale(1.25); filter: drop-shadow(0 0 8px #fbbf24); }
+.row .fl svg.out { color: #475569; }
+.row.cut .lb, .row.cut .fl { color: #fca5a5; }
+.row .fl .nw { animation: sm-row .3s ease-out both; }
+.tot { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; background: rgba(251, 191, 36, .08); }
+.tot .k { font-family: var(--font-bug); font-weight: 800; font-size: 16px; letter-spacing: 1px; color: #fde68a; }
+.tot .x { font-family: var(--font-bug); font-weight: 800; font-size: 26px; line-height: 1; color: #fde68a; font-variant-numeric: tabular-nums; }
+
+/* nivel */
+.lvl { display: flex; flex-direction: column; gap: 6px; opacity: 0; transition: opacity .3s; }
 .lvl.in { opacity: 1; }
-.lvl .nv { font-family: var(--font-bug); font-weight: 800; font-size: 15px; color: #c5cbe8; }
-.lvl .nv.nx { color: #fcd34d; }
-.lvl .nv.pop { color: #fde68a; animation: sm-nvpop .5s cubic-bezier(.34, 1.56, .64, 1); }
-@keyframes sm-nvpop { 0% { transform: scale(1.8); } 100% { transform: none; } }
-.lvl .bar { position: relative; height: 10px; border-radius: 8px; background: rgba(255, 255, 255, .08); }
-.lvl .bar .cur { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px; background: linear-gradient(90deg, #f59e0b, #fcd34d); }
-.lvl .bar .up { position: absolute; left: 50%; top: -8px; transform: translate(-50%, -100%); font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; font-size: 16px; color: #fcd34d; white-space: nowrap; text-shadow: 0 0 14px rgba(252, 211, 77, .8); animation: sm-up 2s ease forwards; }
-@keyframes sm-up { 0% { opacity: 0; transform: translate(-50%, -60%) scale(.5); } 20% { opacity: 1; transform: translate(-50%, -100%) scale(1.12); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -130%); } }
-.next { display: flex; align-items: center; gap: 10px; justify-content: center; font-size: 13px; color: #c5cbe8; opacity: 0; transition: opacity .4s .5s; }
-.next.in { opacity: 1; }
-.next b { color: #fcd34d; }
-/* racha del juego */
-.rk { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; padding: 12px; border-radius: 14px; background: #10163a; opacity: 0; transition: opacity .3s; }
-.rk.in { opacity: 1; }
-.rk .fl { display: flex; gap: 2px; align-items: flex-end; }
-.rk .fl svg { width: 24px; height: 24px; color: #fbbf24; filter: drop-shadow(0 0 6px rgba(251, 191, 36, .5)); }
-.rk .fl svg.new { transform: scale(0); }
-.rk .fl svg.new.lit { animation: sm-ignite .7s cubic-bezier(.34, 1.56, .64, 1) forwards; }
-@keyframes sm-ignite { 0% { transform: scale(0) translateY(6px); color: #fff; } 50% { transform: scale(1.5); color: #fff7ed; } 100% { transform: scale(1.2); color: #fcd34d; filter: drop-shadow(0 0 12px #fbbf24); } }
-.rk .fl.out svg { animation: sm-flick .9s ease forwards; animation-delay: calc(var(--i) * .08s); }
-@keyframes sm-flick { 0% { color: #fbbf24; } 20% { color: #fde68a; transform: scale(1.1); } 40% { color: #f97316; transform: scale(.9); } 60% { color: #fbbf24; transform: scale(1); } 100% { color: #334155; filter: none; transform: scale(.85) translateY(2px); } }
-.rk .cnt { font-family: var(--font-bug); font-weight: 800; font-size: 30px; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 8px; }
-.rk .cnt .old { position: relative; }
-.rk .cnt .old svg { position: absolute; left: -10%; top: 40%; width: 120%; height: 14px; overflow: visible; }
-.rk .cnt .old svg path { stroke: #ef4444; stroke-width: 4; fill: none; stroke-linecap: round; stroke-dasharray: 60; stroke-dashoffset: 60; }
-.rk.cut .cnt .old { color: #64748b; transition: color .4s .3s; }
-.rk.cut .cnt .old svg path { animation: sm-dash .45s ease forwards; }
-@keyframes sm-dash { to { stroke-dashoffset: 0; } }
-.rk .cnt .nw { color: #fcd34d; opacity: 0; transform: translateY(10px); transition: opacity .4s, transform .4s cubic-bezier(.34, 1.56, .64, 1); }
-.rk .cnt .nw.in { opacity: 1; transform: none; }
-.rk.cut .cnt .nw { color: #fca5a5; }
-.rk .lab { font-size: 12px; color: #8b93b8; text-align: left; line-height: 1.3; }
-.rk .lab b { display: block; font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; font-size: 14px; color: #fff; }
-.rk.cut .lab b { color: #fca5a5; }
+.lr { display: flex; align-items: center; gap: 8px; }
+.lr .nv { height: 28px; padding: 0 9px; border-radius: 8px; background: linear-gradient(180deg, #818cf8, #4f46e5); border: 1.5px solid #c7d2fe; display: flex; align-items: center; font-family: var(--font-bug); font-weight: 800; font-size: 16px; white-space: nowrap; }
+.lr .nv.pop { animation: sm-nvpop .5s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes sm-nvpop { 0% { transform: scale(1.6); } 100% { transform: none; } }
+.lr .bar { position: relative; flex: 1; height: 18px; border-radius: 999px; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .1); overflow: visible; display: block; }
+.lr .bar i { position: absolute; left: 0; top: 0; bottom: 0; display: block; border-radius: 999px; }
+.lr .bar .gold { background: linear-gradient(90deg, #fde68a, #fbbf24); }
+.lr .bar .base { background: linear-gradient(90deg, #34d399, #22d3ee, #818cf8); }
+.lr .bar .lbl { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-bug); font-weight: 800; font-size: 13px; text-shadow: 0 1px 2px #000; white-space: nowrap; }
+.lr .bar .up { position: absolute; left: 50%; top: -6px; transform: translate(-50%, -100%); font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; font-size: 15px; color: #fcd34d; white-space: nowrap; text-shadow: 0 0 14px rgba(252, 211, 77, .8); animation: sm-up 2s ease forwards; }
+@keyframes sm-up { 0% { opacity: 0; } 20%, 80% { opacity: 1; } 100% { opacity: 0; } }
+.lr .bar .combo { position: absolute; right: -6px; top: -26px; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 22px; line-height: 1; color: #fde68a; text-shadow: 0 2px 0 #b45309; transform: rotate(-8deg); }
+.lr .nx { font-family: var(--font-bug); font-weight: 800; font-size: 16px; color: #64748b; }
+.prz { min-height: 52px; box-sizing: border-box; border-radius: 14px; padding: 6px 12px 6px 8px; background: linear-gradient(90deg, rgba(129, 140, 248, .18), rgba(129, 140, 248, .03)); border: 1px solid rgba(129, 140, 248, .35); display: flex; align-items: center; gap: 10px; }
+.prz .pt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.prz .pt .k { font-size: 11px; font-weight: 700; color: #a5b4fc; }
+.prz .pt .n { font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prz .lf { font-family: var(--font-bug); font-weight: 800; font-size: 14px; color: #c7d2fe; text-align: right; line-height: 1.05; white-space: nowrap; }
+
 /* invitado */
 .guest { display: grid; gap: 8px; opacity: 0; transition: opacity .4s; }
 .guest.in { opacity: 1; }
@@ -507,30 +581,29 @@ export default {
 .guest .gxp small { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: #8b93b8; }
 .guest .gxp b { font-family: var(--font-bug); font-weight: 800; font-size: 26px; }
 .guest .gxp .x { color: #4ade80; } .guest .gxp .f { color: #fcd34d; }
-/* acciones */
-.cta { display: flex; gap: 8px; opacity: 0; transform: translateY(8px); transition: opacity .35s, transform .35s; }
-.cta.in { opacity: 1; transform: none; }
-.cta .ghost, .cta .main { flex: 1; display: grid; place-items: center; border-radius: 12px; padding: 12px; font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; font-size: 16px; cursor: pointer; text-decoration: none; }
-.cta .ghost { background: #141a38; color: #eef1ff; border: 1px solid rgba(255, 255, 255, .1); }
-.cta .main { border: 0; color: #141005; background: linear-gradient(180deg, #fde68a, #f59e0b); box-shadow: 0 8px 22px rgba(245, 158, 11, .3); }
-.cta .main.claim { animation: sm-claim 1.8s ease-in-out infinite; }
-.cta-next { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; margin-top: 14px; border-radius: 12px; padding: 12px; font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; font-size: 16px; text-decoration: none; color: #141005; background: linear-gradient(180deg, #fde68a, #f59e0b); box-shadow: 0 8px 22px rgba(245, 158, 11, .3); opacity: 0; transform: translateY(8px); transition: opacity .3s ease, transform .3s ease; }
-.cta-next.in { opacity: 1; transform: none; }
-.cta-next + .cta { margin-top: 8px; }
-@keyframes sm-claim { 0%, 100% { box-shadow: 0 8px 24px rgba(245, 158, 11, .3); } 50% { box-shadow: 0 8px 34px rgba(245, 158, 11, .55); } }
-.gate { display: grid; gap: 8px; text-align: center; padding: 14px; border-radius: 14px; border: 1px solid rgba(252, 211, 77, .3); background: rgba(252, 211, 77, .06); animation: sm-gate .35s cubic-bezier(.16, 1, .3, 1) both; }
-@keyframes sm-gate { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.gate { display: grid; gap: 8px; text-align: center; padding: 14px; border-radius: 14px; border: 1px solid rgba(252, 211, 77, .3); background: rgba(252, 211, 77, .06); }
 .gate h3 { margin: 0; font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; font-size: 18px; color: #fff; }
 .gate p { margin: 0; font-size: 12.5px; color: #c5cbe8; }
 .gate p b { color: #4ade80; }
-.gate .main { display: block; border-radius: 10px; padding: 11px; font-weight: 800; color: #141005; background: linear-gradient(180deg, #fde68a, #f59e0b); text-decoration: none; }
-.gate .link { font-size: 12px; color: #8b93b8; text-decoration: none; }
+.gate .main { display: grid; place-items: center; min-height: 48px; border-radius: 12px; font-weight: 800; color: #141005; background: linear-gradient(180deg, #fde68a, #f59e0b); text-decoration: none; }
+.gate .link { min-height: 44px; display: grid; place-items: center; font-size: 13px; color: #8b93b8; text-decoration: none; }
+
+/* acciones */
+.sm-go { flex: none; padding: 8px 16px calc(20px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 10px; opacity: 0; transform: translateY(8px); transition: opacity .35s, transform .35s; }
+.sm-go.in { opacity: 1; transform: none; }
+.next { width: 100%; min-height: 60px; box-sizing: border-box; border: 0; border-radius: 16px; background: linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%); border-bottom: 4px solid #b45309; color: #1c1206; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.next:active { transform: translateY(2px); border-bottom-width: 2px; }
+.next .t { display: flex; flex-direction: column; align-items: center; line-height: 1; min-width: 0; }
+.next .a { font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 26px; letter-spacing: 1px; }
+.next .b { font-size: 11.5px; font-weight: 700; color: #78350f; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.ghost { min-height: 48px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .05); color: #e2e8f0; font: inherit; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; text-decoration: none; }
+
 .sm-fade-enter-active { transition: opacity .3s ease; }
 .sm-fade-leave-active { transition: opacity .2s ease; }
 .sm-fade-enter-from, .sm-fade-leave-to { opacity: 0; }
 @media (prefers-reduced-motion: reduce) {
-  .sm, .big.in, .stars svg, .rk .fl svg, .lvl .bar .up, .cta .main.claim { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .sm, .big.in, .stars svg.in, .tbl.in .row, .row .fl .nw, .lr .nv.pop, .lr .bar .up { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .sm-conf i { animation: none; opacity: .5; }
 }
-.lvl .bar .combo { position: absolute; right: -6px; top: -26px; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 24px; line-height: 1; color: #fde68a; text-shadow: 0 2px 0 #b45309, 0 0 12px rgba(252, 211, 77, .7); transform: rotate(-8deg); animation: sm-combo .4s cubic-bezier(.34, 1.56, .64, 1) both; pointer-events: none; }
-@keyframes sm-combo { from { transform: rotate(-8deg) scale(2.2); opacity: 0; } to { transform: rotate(-8deg); opacity: 1; } }
 </style>
