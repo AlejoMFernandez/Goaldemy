@@ -28,9 +28,16 @@ BEGIN;
 -- Los niveles son una PROPUESTA: se pueden mover sin tocar el front.
 -- ============================================================
 
+ALTER TABLE public.cosmetics ADD COLUMN IF NOT EXISTS unlock_achievement TEXT;
+
+-- AJUSTE 2026-11-26: solo se insertan las piezas por nivel y las de logros que
+-- EXISTEN y están activos (una pieza atada a un logro inexistente no se podría
+-- ganar nunca). Si después se crea el logro, volver a correr este archivo la suma.
+-- ON CONFLICT sin columna: tampoco frena si choca otra restricción única.
 INSERT INTO public.cosmetics
   (code, type, name, rarity, style_key, unlock_level, premium_only, unlock_achievement, sort_order)
-VALUES
+SELECT v.code, v.type, v.name, v.rarity, v.style_key, v.unlock_level, v.premium_only, v.unlock_achievement, v.sort_order
+FROM (VALUES
   -- ── BORDES ────────────────────────────────────────────────
   ('frame_chalk',       'frame', 'Tiza',                 'common',    'chalk',       2,   false, NULL,               100),
   ('frame_grass',       'frame', 'Césped cortado',       'common',    'grass',       4,   false, NULL,               101),
@@ -98,7 +105,11 @@ VALUES
   ('title_dueno_pelota', 'title', 'Dueño de la pelota',   'legendary', NULL, 999, false, 'grand_slam',         341),
   ('title_campeon_inv',  'title', 'Campeón invicto',      'legendary', NULL, 999, false, 'invicto_temporada',  342),
   ('title_abonado',      'title', 'Abonado de por vida',  'legendary', NULL, 999, false, 'daily_streak_30',    343)
-ON CONFLICT (code) DO NOTHING;
+) AS v(code, type, name, rarity, style_key, unlock_level, premium_only, unlock_achievement, sort_order)
+WHERE v.unlock_achievement IS NULL
+   OR EXISTS (SELECT 1 FROM public.achievements a
+              WHERE a.code = v.unlock_achievement AND COALESCE((to_jsonb(a)->>'active')::boolean, true))
+ON CONFLICT DO NOTHING;
 
 -- Chequeo: todos los logros referenciados tienen que existir y estar activos.
 -- SELECT c.code, c.unlock_achievement FROM public.cosmetics c
@@ -107,3 +118,8 @@ ON CONFLICT (code) DO NOTHING;
 --   AND (a.id IS NULL OR a.active = false);
 
 COMMIT;
+
+-- Verificación: cuántas piezas del rango de sort_order 100–399 quedaron en el catálogo
+-- y cuántas se saltearon por logro inexistente/inactivo (se suman al crear el logro).
+SELECT count(*) > 0 AS ok, count(*) AS piezas_en_catalogo
+FROM public.cosmetics WHERE sort_order BETWEEN 100 AND 399;

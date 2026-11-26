@@ -13,6 +13,8 @@
 -- Idempotente: se puede correr más de una vez. NO APLICAR sin OK de Alejo.
 -- ============================================================
 
+BEGIN;
+
 CREATE OR REPLACE FUNCTION public.get_friends_leaderboard(
   p_period  text DEFAULT 'weekly',
   p_game_id uuid DEFAULT NULL
@@ -92,3 +94,9 @@ END$$;
 
 REVOKE ALL ON FUNCTION public.get_friends_leaderboard(text, uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_friends_leaderboard(text, uuid) TO authenticated;
+
+COMMIT;
+
+-- Verificación: existe, la ejecuta authenticated y no anon.
+SELECT has_function_privilege('authenticated', 'public.get_friends_leaderboard(text, uuid)'::regprocedure, 'EXECUTE')
+   AND NOT has_function_privilege('anon', 'public.get_friends_leaderboard(text, uuid)'::regprocedure, 'EXECUTE') AS ok;

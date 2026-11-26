@@ -21,9 +21,16 @@ BEGIN;
 -- Idempotente. Chequear antes: que no choquen code/style_key/sort_order y que los
 -- logros existan y estén activos.
 -- ============================================================
+ALTER TABLE public.cosmetics ADD COLUMN IF NOT EXISTS unlock_achievement TEXT;
+
+-- AJUSTE 2026-11-26: solo se insertan las piezas por nivel y las de logros que
+-- EXISTEN y están activos (una pieza atada a un logro inexistente no se podría
+-- ganar nunca). Si después se crea el logro, volver a correr este archivo la suma.
+-- ON CONFLICT sin columna: tampoco frena si choca otra restricción única.
 INSERT INTO public.cosmetics
   (code, type, name, rarity, style_key, unlock_level, premium_only, unlock_achievement, sort_order)
-VALUES
+SELECT v.code, v.type, v.name, v.rarity, v.style_key, v.unlock_level, v.premium_only, v.unlock_achievement, v.sort_order
+FROM (VALUES
   -- comunes (nivel)
   ('icon_bufanda',      'icon', 'Bufanda',            'common',    'bufanda',      3,   false, NULL,                400),
   ('icon_silbato',      'icon', 'Silbato',            'common',    'silbato',      5,   false, NULL,                401),
@@ -51,6 +58,15 @@ VALUES
   ('icon_pelota_oro',   'icon', 'Pelota de oro',      'legendary', 'pelota_oro',   50,  false, NULL,                430),
   ('icon_dragon',       'icon', 'Dragón',             'legendary', 'dragon',       999, false, 'invicto_temporada', 431),
   ('icon_camiseta_10',  'icon', 'La 10',              'legendary', 'camiseta_10',  999, false, 'daily_wins_10',     432)
-ON CONFLICT (code) DO NOTHING;
+) AS v(code, type, name, rarity, style_key, unlock_level, premium_only, unlock_achievement, sort_order)
+WHERE v.unlock_achievement IS NULL
+   OR EXISTS (SELECT 1 FROM public.achievements a
+              WHERE a.code = v.unlock_achievement AND COALESCE((to_jsonb(a)->>'active')::boolean, true))
+ON CONFLICT DO NOTHING;
 
 COMMIT;
+
+-- Verificación: cuántas piezas del rango de sort_order 400–432 quedaron en el catálogo
+-- y cuántas se saltearon por logro inexistente/inactivo (se suman al crear el logro).
+SELECT count(*) > 0 AS ok, count(*) AS piezas_en_catalogo
+FROM public.cosmetics WHERE sort_order BETWEEN 400 AND 432;

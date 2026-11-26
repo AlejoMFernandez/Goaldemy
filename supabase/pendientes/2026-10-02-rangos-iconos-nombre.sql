@@ -5,9 +5,17 @@
 -- El front ya usa este texto en las cartas de ascenso (prize-card.js); esto alinea la colección/tienda.
 -- Idempotente. Correr cuando quieras, no depende de otro SQL.
 -- ============================================================
+BEGIN;
 UPDATE public.cosmetics SET name = 'Ícono de rango Aficionado'  WHERE code = 'icon_rank_aficionado';
 UPDATE public.cosmetics SET name = 'Ícono de rango Juvenil'     WHERE code = 'icon_rank_juvenil';
 UPDATE public.cosmetics SET name = 'Ícono de rango Amateur'     WHERE code = 'icon_rank_amateur';
 UPDATE public.cosmetics SET name = 'Ícono de rango Reserva'     WHERE code = 'icon_rank_reserva';
 UPDATE public.cosmetics SET name = 'Ícono de rango Profesional' WHERE code = 'icon_rank_profesional';
 UPDATE public.cosmetics SET name = 'Ícono de rango Crack'       WHERE code = 'icon_rank_crack';
+COMMIT;
+
+-- Verificación: los ícono de rango que existan tienen el nombre nuevo.
+SELECT count(*) FILTER (WHERE name NOT LIKE 'Ícono de rango %') = 0 AS ok,
+       count(*) AS iconos_de_rango
+FROM public.cosmetics
+WHERE code IN ('icon_rank_aficionado','icon_rank_juvenil','icon_rank_amateur','icon_rank_reserva','icon_rank_profesional','icon_rank_crack');
