@@ -1,96 +1,102 @@
 <script setup>
-import { computed } from 'vue'
+/**
+ * LISTA DEL RANKING (v4) — una sola lista, sin podio ni medallas infantiles:
+ * los 3 primeros van más altos, con el número en degradé metálico (oro,
+ * plata, bronce) y una franja de color a la izquierda. Del 4.º para abajo,
+ * filas comunes. Tu fila se resalta en azul.
+ *
+ * rows: [{ rank, user_id, display_name, avatar_url, level, tier, total_xp, cos? }]
+ * compact: versión chica para el hub Social (sin nivel/rango debajo del nombre).
+ */
 import { RouterLink } from 'vue-router'
-import { frameStyle, iconBgStyle, iconThemeBg } from '../../services/cosmetics'
-import CosmeticIcon from '../rewards/CosmeticIcon.vue'
+import UserAvatar from '../common/UserAvatar.vue'
+import { initialOf } from '../../services/social-hub'
 
-const props = defineProps({
-  rows: { type: Array, default: () => [] }, // [{rank, user_id, display_name, total_xp, level?, frameKey?, iconGlyph?, iconBg?, avatar_url?}]
+defineProps({
+  rows: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
-  podium: { type: Boolean, default: false }, // mostrar podio del top 3 (solo página 0)
-  meId: { type: String, default: '' },       // resaltar mi fila
+  meId: { type: String, default: '' },
+  compact: { type: Boolean, default: false },
+  skeleton: { type: Number, default: 8 },
+  emptyText: { type: String, default: 'Todavía no hay nadie en este ranking' },
 })
 
-const showPodium = computed(() => props.podium && props.rows.length >= 3)
-// Orden visual del podio: 2° (izq) · 1° (centro) · 3° (der)
-const podiumCells = computed(() => showPodium.value
-  ? [{ r: props.rows[1], rank: 2 }, { r: props.rows[0], rank: 1 }, { r: props.rows[2], rank: 3 }]
-  : [])
-const ladderRows = computed(() => showPodium.value ? props.rows.slice(3) : props.rows)
-
-const MEDAL = {
-  1: { ring: 'ring-amber-400',  glow: 'shadow-[0_0_26px_rgba(251,191,36,0.45)]',  text: 'text-amber-300',  ped: 'from-amber-500/25 to-transparent border-amber-400/50' },
-  2: { ring: 'ring-slate-300',  glow: 'shadow-[0_0_20px_rgba(203,213,225,0.35)]', text: 'text-slate-200',  ped: 'from-slate-300/20 to-transparent border-slate-300/40' },
-  3: { ring: 'ring-orange-400', glow: 'shadow-[0_0_20px_rgba(251,146,60,0.35)]',  text: 'text-orange-300', ped: 'from-orange-500/20 to-transparent border-orange-400/40' },
+const MED = {
+  1: { cls: 'med-1', ring: '#fbbf24' },
+  2: { cls: 'med-2', ring: '#e2e8f0' },
+  3: { cls: 'med-3', ring: '#fb923c' },
 }
-
-function name(r) { return r?.display_name || r?.email || r?.user_id?.slice(0, 8) || '—' }
-function initial(r) { return (name(r)[0] || '?').toUpperCase() }
-function levelClass(lvl) {
-  if (lvl == null) return 'border-white/10 text-slate-400'
-  if (lvl >= 30) return 'border-red-500/50 bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-200'
-  if (lvl >= 20) return 'border-orange-500/50 bg-gradient-to-r from-orange-500/20 to-amber-500/20 text-orange-200'
-  if (lvl >= 10) return 'border-amber-500/50 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-200'
-  return 'border-emerald-500/50 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-200'
-}
+const fmt = (n) => (Number(n) || 0).toLocaleString('es-AR')
 </script>
 
 <template>
   <div>
-    <!-- Loading -->
-    <div v-if="loading" class="space-y-2">
-      <div class="h-40 rounded-2xl bg-white/5 animate-pulse mb-4"></div>
-      <div v-for="i in 6" :key="i" class="h-12 rounded-xl bg-white/5 animate-pulse"></div>
+    <div v-if="loading" class="flex flex-col gap-2" aria-busy="true" aria-label="Cargando ranking">
+      <div v-for="i in skeleton" :key="i" class="rk-skel" :class="i <= 3 ? 'h-16' : 'h-[52px]'"></div>
     </div>
 
-    <div v-else-if="!rows.length" class="rounded-2xl border border-white/10 bg-white/[0.02] py-14 text-center text-slate-400">Sin resultados</div>
+    <div v-else-if="!rows.length" class="rounded-2xl border border-white/10 bg-white/[0.03] py-10 px-6 text-center text-sm text-slate-400">{{ emptyText }}</div>
 
-    <template v-else>
-      <!-- PODIO (top 3) -->
-      <div v-if="showPodium" class="grid grid-cols-3 gap-2 sm:gap-5 items-end mb-6">
-        <div v-for="c in podiumCells" :key="c.rank" class="flex flex-col items-center"
-             :class="c.rank === 1 ? 'order-2' : (c.rank === 2 ? 'order-1' : 'order-3')">
-          <RouterLink :to="'/u/' + c.r.user_id" class="relative block group">
-            <div class="rounded-2xl ring-2 transition-transform group-hover:scale-105" :class="[MEDAL[c.rank].ring, MEDAL[c.rank].glow]">
-              <div :class="[frameStyle(c.r.frameKey).wrap, frameStyle(c.r.frameKey).pad, 'rounded-2xl']">
-                <div :class="['rounded-xl overflow-hidden grid place-items-center text-white font-extrabold', c.rank === 1 ? 'size-20 sm:size-24 text-3xl' : 'size-16 sm:size-20 text-2xl', c.r.iconGlyph ? iconThemeBg(c.r.iconGlyph) : iconBgStyle(c.r.iconBg)]">
-                  <img v-if="c.r.avatar_url" :src="c.r.avatar_url" alt="" class="w-full h-full object-cover" />
-                  <CosmeticIcon v-else-if="c.r.iconGlyph" :iconKey="c.r.iconGlyph" :size="c.rank === 1 ? 72 : 56" />
-                  <span v-else>{{ initial(c.r) }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="absolute -top-2.5 -right-2.5 size-7 rounded-full grid place-items-center font-display font-bold text-sm bg-slate-950 border-2 border-slate-900 shadow-lg" :class="MEDAL[c.rank].text">{{ c.rank }}</div>
-          </RouterLink>
-          <div class="mt-2.5 text-center min-w-0 w-full px-1">
-            <div class="font-bold text-white text-xs sm:text-sm truncate">{{ name(c.r) }}</div>
-            <div class="text-[11px] font-semibold" :class="MEDAL[c.rank].text">Nivel {{ c.r.level ?? '—' }}</div>
-            <div class="font-display font-bold text-white tabular-nums text-sm">{{ (c.r.total_xp || 0).toLocaleString() }}<span class="text-[9px] text-slate-500 ml-0.5">XP</span></div>
-          </div>
-          <div class="w-full mt-2 rounded-t-lg bg-gradient-to-b border-t-2" :class="[MEDAL[c.rank].ped, c.rank === 1 ? 'h-12' : (c.rank === 2 ? 'h-8' : 'h-5')]"></div>
-        </div>
-      </div>
+    <ol v-else class="flex flex-col gap-2" role="list">
+      <li v-for="(r, i) in rows" :key="r.user_id" class="rk-in" :style="{ animationDelay: Math.min(i, 10) * 30 + 'ms' }">
+        <RouterLink :to="'/u/' + r.user_id"
+          class="rk-row"
+          :class="[MED[r.rank] ? ['rk-medal', MED[r.rank].cls] : 'rk-plain', r.user_id === meId ? 'rk-me' : '']"
+          :aria-label="`Puesto ${r.rank}: ${r.user_id === meId ? 'vos' : r.display_name}, ${fmt(r.total_xp)} XP`">
+          <template v-if="MED[r.rank]">
+            <span class="rk-stripe" aria-hidden="true"></span>
+            <span class="rk-pos-metal" aria-hidden="true">{{ r.rank }}</span>
+          </template>
+          <span v-else class="rk-pos" aria-hidden="true">{{ r.rank }}</span>
 
-      <!-- LADDER (resto) -->
-      <div class="space-y-1.5">
-        <RouterLink v-for="r in ladderRows" :key="r.user_id" :to="'/u/' + r.user_id"
-          class="flex items-center gap-2.5 sm:gap-3 rounded-xl border px-2.5 sm:px-3 py-2 transition"
-          :class="r.user_id === meId ? 'border-blue-400/50 bg-blue-500/[0.12]' : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.05]'">
-          <span class="w-6 sm:w-7 text-center font-display font-bold text-slate-400 tabular-nums shrink-0">{{ r.rank }}</span>
-          <div :class="[frameStyle(r.frameKey).wrap, frameStyle(r.frameKey).pad, 'rounded-lg shrink-0']">
-            <div :class="['size-8 sm:size-9 rounded-md overflow-hidden grid place-items-center text-xs font-bold text-white', r.iconGlyph ? iconThemeBg(r.iconGlyph) : iconBgStyle(r.iconBg)]">
-              <img v-if="r.avatar_url" :src="r.avatar_url" alt="" class="w-full h-full object-cover" />
-              <CosmeticIcon v-else-if="r.iconGlyph" :iconKey="r.iconGlyph" :size="24" />
-              <span v-else>{{ initial(r) }}</span>
-            </div>
-          </div>
-          <span class="flex-1 min-w-0 truncate text-sm text-white font-medium">
-            {{ name(r) }}<span v-if="r.user_id === meId" class="text-[10px] text-blue-300 ml-1 font-bold">(vos)</span>
+          <span class="rk-av" :style="MED[r.rank] && (!r.cos?.frameKey || r.cos.frameKey === 'none') ? { boxShadow: `0 0 0 2px ${MED[r.rank].ring}` } : null">
+            <UserAvatar :size="MED[r.rank] && !compact ? 42 : 36" :avatar-url="r.avatar_url || ''" :initial="initialOf(r.display_name)"
+              :frame-key="r.cos?.frameKey || 'none'" :icon-glyph="r.cos?.iconGlyph || ''" :icon-bg="r.cos?.iconBg || 'emerald'" :glow="false" />
           </span>
-          <span class="inline-flex items-center rounded-lg px-1.5 py-0.5 text-[10px] sm:text-xs font-bold border shrink-0" :class="levelClass(r.level)">{{ r.level ?? '—' }}</span>
-          <span class="font-display font-bold text-white tabular-nums text-xs sm:text-sm w-14 sm:w-16 text-right shrink-0">{{ (r.total_xp || 0).toLocaleString() }}</span>
+
+          <span class="flex-1 min-w-0 flex flex-col gap-px">
+            <span class="rk-name truncate">{{ r.user_id === meId ? 'Vos' : r.display_name }}</span>
+            <span v-if="!compact && (r.level != null || r.tier)" class="text-[11px] text-slate-400 truncate">
+              <template v-if="r.level != null">Nivel {{ r.level }}</template><template v-if="r.level != null && r.tier"> · </template><template v-if="r.tier">{{ r.tier.label }}</template>
+            </span>
+          </span>
+          <span class="rk-xp tabular-nums">{{ fmt(r.total_xp) }} XP</span>
         </RouterLink>
-      </div>
-    </template>
+      </li>
+    </ol>
   </div>
 </template>
+
+<style scoped>
+.rk-row {
+  display: flex; align-items: center; gap: 12px; box-sizing: border-box; min-height: 52px;
+  padding: 0 12px; border-radius: 16px; color: #fff; text-decoration: none;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  transition: transform .15s ease, background-color .15s ease;
+}
+.rk-row:active { transform: scale(.985); }
+.rk-medal { min-height: 64px; }
+.med-1 { background: linear-gradient(90deg, rgba(251,191,36,0.24), rgba(251,191,36,0.03) 70%); border-color: rgba(251,191,36,0.55); --metal: linear-gradient(180deg,#fff7d6 0%,#fbbf24 50%,#b45309 100%); --accent: linear-gradient(180deg,#fde68a,#d97706); --xp: #fde68a; }
+.med-2 { background: linear-gradient(90deg, rgba(203,213,225,0.2), rgba(203,213,225,0.03) 70%); border-color: rgba(203,213,225,0.45); --metal: linear-gradient(180deg,#ffffff 0%,#cbd5e1 50%,#64748b 100%); --accent: linear-gradient(180deg,#f8fafc,#94a3b8); --xp: #e2e8f0; }
+.med-3 { background: linear-gradient(90deg, rgba(234,88,12,0.22), rgba(234,88,12,0.03) 70%); border-color: rgba(251,146,60,0.5); --metal: linear-gradient(180deg,#ffedd5 0%,#fb923c 50%,#9a3412 100%); --accent: linear-gradient(180deg,#fed7aa,#c2410c); --xp: #fdba74; }
+.rk-me { background: rgba(59,130,246,0.16); border-color: rgba(147,197,253,0.5); }
+.rk-stripe { width: 4px; align-self: stretch; margin: 10px 0; border-radius: 999px; background: var(--accent); flex-shrink: 0; }
+.rk-pos-metal {
+  width: 30px; flex-shrink: 0; text-align: center; font-family: var(--font-shout); font-weight: 800; font-style: italic;
+  font-size: 30px; line-height: 1; background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.rk-pos { width: 38px; flex-shrink: 0; text-align: center; font-family: var(--font-shout); font-weight: 800; font-size: 18px; color: #64748b; }
+.rk-av { display: inline-flex; border-radius: 12px; flex-shrink: 0; }
+.rk-name { font-weight: 700; font-size: 14px; }
+.rk-medal .rk-name { font-size: 15px; }
+.rk-xp { font-family: var(--font-display); font-weight: 700; font-size: 13px; color: #e2e8f0; white-space: nowrap; }
+.rk-medal .rk-xp { font-size: 15px; color: var(--xp); }
+.rk-skel { border-radius: 16px; background: rgba(255,255,255,0.05); animation: rk-pulse 1.4s ease-in-out infinite; }
+@keyframes rk-pulse { 50% { opacity: .5 } }
+.rk-in { animation: rk-in .32s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes rk-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .rk-in, .rk-skel { animation: none; }
+  .rk-row { transition: none; }
+}
+</style>

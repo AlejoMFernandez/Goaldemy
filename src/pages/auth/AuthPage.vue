@@ -2,8 +2,7 @@
 import AppButton from '../../components/common/AppButton.vue';
 import SearchSelect from '../../components/common/SearchSelect.vue';
 import LegalModal from '../../components/legal/LegalModal.vue';
-import FulvoLogo from '../../components/FulvoLogo.vue';
-import GamesFan from '../../components/auth/GamesFan.vue';
+import { getPendingGuestSummary } from '../../services/guest-play';
 import { login, register, continueWithGoogle } from '../../services/auth';
 import { flagUrl } from '../../services/countries';
 import countriesMap from '../../codeCOUNTRYS.json';
@@ -16,8 +15,6 @@ export default {
     AppButton,
     SearchSelect,
     LegalModal,
-    FulvoLogo,
-    GamesFan,
   },
   data() {
     const countryOptions = Object.entries(countriesMap)
@@ -52,12 +49,17 @@ export default {
       teams,
       legalModalOpen: false,
       legalModalType: 'terms',
+      // UI v4 (sin cambios de lógica)
+      showPass: false,
+      profileOpen: false,
+      guestXp: 0,
     };
   },
   created() {
     this.mode = this.$route.path === '/register' ? 'register' : 'login'
   },
   mounted() {
+    try { this.guestXp = getPendingGuestSummary().xp || 0 } catch { this.guestXp = 0 }
     window.addEventListener('pageshow', this.onPageShow)
     // Volviste del link de confirmación de email (?confirmed=1): avisar acá
     // y a cualquier otra pestaña que haya quedado esperando en /verify-email.
@@ -237,289 +239,162 @@ export default {
 </script>
 
 <template>
-  <RouterLink to="/" aria-label="Volver" class="fixed top-4 left-4 z-50 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:text-white transition">
-    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-    </svg>
-  </RouterLink>
-  <!-- Mobile: header con el logo, pegajoso (sticky top-0) — se queda fijo
-       arriba de TODO todo el tiempo, no es una card, ocupa el ancho completo
-       de la pantalla (-mx-4 cancela el padding lateral de <main>). Mismo
-       color sólido (sin gradiente ni borde) que la franja del abanico de
-       abajo, para que se vea como una sola superficie continua y no dos
-       paneles pegados. -->
-  <div ref="mobileHeader" class="lg:hidden sticky top-0 z-30 -mx-4 px-4 py-5 text-center bg-[#0b1220]">
-    <FulvoLogo variant="full" size="md" class="justify-center" />
-  </div>
+  <section class="au">
+    <div class="au-glow" aria-hidden="true"></div>
+    <svg class="au-pitch" width="390" height="200" viewBox="0 0 390 200" aria-hidden="true"><g fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2"><circle cx="195" cy="40" r="96"/><path d="M0 40h390"/></g></svg>
 
-  <!-- Mobile: abanico de portadas — pantalla completa (no card), en flujo
-       normal (no pegajoso): al scrollear se va tapando por el form, que sí
-       es pegajoso y la "pisa" progresivamente hasta asentarse justo debajo
-       del header con el logo. Mismo bg sólido que el header (ver comentario
-       de arriba). SIN overflow-hidden a propósito: para que la aureola de
-       arriba pueda pintar por encima del header (ver z-[100] abajo) en vez
-       de quedar recortada acá mismo. -->
-  <div class="lg:hidden relative -mx-4 px-4 pt-2 pb-28 bg-[#0b1220] text-center">
-    <!-- z-[100]: el glow tiene que pintar POR ENCIMA del header sticky (z-30)
-         para que se difumine de verdad sobre su fondo en vez de que el borde
-         recto del header lo tape de golpe — eso es lo que se veía como el
-         "corte" entre header y abanico. Con el blur pintando arriba, se
-         desvanece solo (blur-3xl) sin ningún borde duro. -->
-    <div aria-hidden="true" class="pointer-events-none absolute -top-10 -left-10 z-[100] h-40 w-40 rounded-full bg-emerald-500/20 blur-3xl"></div>
-    <div aria-hidden="true" class="pointer-events-none absolute -bottom-10 -right-10 z-[100] h-40 w-40 rounded-full bg-cyan-500/20 blur-3xl"></div>
-    <p class="relative z-10 text-slate-300 text-sm max-w-[260px] mx-auto mb-4">Entrená tu conocimiento de fútbol, sumá XP y desbloqueá logros.</p>
-    <GamesFan class="relative z-10 w-full max-w-sm mx-auto" />
-  </div>
-
-  <div class="w-full -mt-16 lg:mt-0 lg:max-w-4xl lg:h-[min(680px,88vh)] lg:grid lg:grid-cols-[1.15fr_1fr] lg:rounded-2xl lg:border lg:border-white/10 lg:overflow-hidden lg:bg-[#0b1220]">
-
-    <!-- Panel visual — solo desktop (≥1024px), mobile no cambia. Altura fija
-         del panel derecho (columna hermana): este NUNCA se estira ni scrollea,
-         solo se centra en su propia altura. -->
-    <div class="hidden lg:flex relative flex-col items-center justify-center gap-8 h-full overflow-hidden border-r border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-800/80 px-10 py-10">
-      <div aria-hidden="true" class="pointer-events-none absolute -top-16 -left-16 h-56 w-56 rounded-full bg-emerald-500/20 blur-3xl"></div>
-      <div aria-hidden="true" class="pointer-events-none absolute -bottom-16 -right-20 h-56 w-56 rounded-full bg-cyan-500/20 blur-3xl"></div>
-
-      <div class="relative z-10 text-center px-4">
-        <FulvoLogo variant="full" size="lg" class="justify-center" />
-        <p class="mt-4 text-slate-300 text-base max-w-[260px] mx-auto">Entrená tu conocimiento de fútbol, sumá XP y desbloqueá logros.</p>
+    <div class="au-in">
+      <!-- Barra: cerrar · logo · ahora no -->
+      <div class="flex items-center justify-between">
+        <RouterLink to="/" class="au-x" aria-label="Cerrar y seguir como invitado">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </RouterLink>
+        <span class="flex items-center gap-2">
+          <img src="/iconclaro.png" alt="" width="29" height="38" class="h-[38px] w-auto drop-shadow-[0_6px_12px_rgba(0,0,0,0.5)]" />
+          <span class="au-brand">FULVO</span>
+        </span>
+        <RouterLink to="/" class="au-later">Ahora no</RouterLink>
       </div>
 
-      <GamesFan class="relative z-10 w-full max-w-sm" />
-    </div>
+      <Transition name="au-txt" mode="out-in">
+        <div :key="mode" class="flex flex-col gap-1">
+          <h1 class="au-h1">{{ mode === 'login' ? 'Volvé a la cancha' : 'Guardá tu progreso' }}</h1>
+          <p class="au-sub">{{ mode === 'login' ? 'Entrá con tu cuenta y seguí donde dejaste: nivel, racha y vestuario.' : 'Creá tu cuenta para no perder tu nivel, tu racha y tus cosméticos en ningún celu.' }}</p>
+        </div>
+      </Transition>
 
-    <!-- Columna del form: única columna que scrollea si el contenido no entra.
-         En mobile es pantalla completa (no card) y pegajosa: arranca pisando
-         el abanico (el margen negativo que logra ese pisado va en el
-         CONTENEDOR de acá arriba, no en este div — si va acá, el margen
-         negativo achica la altura que el propio contenedor le calcula a este
-         hijo sticky, y con eso el sticky se queda sin "recorrido" para
-         mantenerse pegado y se despega enseguida) y al scrollear queda fija
-         justo debajo del header del logo. En desktop es la mitad derecha de
-         la card. -->
-    <div ref="formScroll" class="relative z-20 sticky top-[88px] -mx-4 rounded-t-2xl border-t border-white/10 bg-[#0b1220] px-6 pt-8 pb-10 shadow-2xl shadow-black/50 lg:static lg:z-auto lg:mx-0 lg:rounded-none lg:border-0 lg:max-w-none lg:h-full lg:overflow-y-auto lg:bg-transparent lg:shadow-none lg:px-10 lg:py-10">
-    <div class="lg:my-auto">
-    <!-- Toggle fijo: solo mobile — en desktop se cambia de modo con los links de abajo.
-         mb-8 (no mb-3): en mobile el form ya no tiene el título arriba (está
-         oculto, ver más abajo), así que el toggle quedaba pegado directo al
-         primer input — parecía parte del form en vez de una selección propia. -->
-    <div class="mb-8 flex rounded-full bg-white/5 border border-white/10 p-1 lg:hidden">
-      <button type="button" @click="setMode('login')" :class="tabClass('login')">Iniciar sesión</button>
-      <button type="button" @click="setMode('register')" :class="tabClass('register')">Crear cuenta</button>
-    </div>
+      <!-- Lo ganado como invitado (guest-play.js) -->
+      <div v-if="guestXp > 0" class="au-guest" role="status">
+        <span class="au-guest-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#052e16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6"/></svg></span>
+        <span class="flex-1 text-[12.5px] leading-snug text-emerald-100">Lo que ganaste como invitado se guarda</span>
+        <span class="au-guest-xp">+{{ guestXp.toLocaleString('es-AR') }} XP</span>
+      </div>
 
-    <Transition :name="direction === 1 ? 'auth-forward' : 'auth-back'" mode="out-in">
-      <div :key="mode">
-        <!-- Solo desktop: en mobile ya está el tagline arriba del abanico y
-             el toggle Iniciar sesión/Crear cuenta, este título quedaba de más. -->
-        <div class="hidden lg:block text-center mb-6">
-          <h1 class="text-2xl font-bold">{{ mode === 'login' ? 'Bienvenido de nuevo' : 'Creá tu cuenta en FULVO' }}</h1>
-          <p class="text-slate-300 text-sm">{{ mode === 'login' ? 'Volvé a jugar y seguir sumando XP' : 'Unite para jugar, sumar XP y desbloquear logros' }}</p>
+      <p v-if="notice" class="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{{ notice }}</p>
+
+      <form :aria-label="mode === 'login' ? 'Entrar con email' : 'Crear cuenta con email'" class="flex flex-col gap-3" action="#" @submit.prevent="handleSubmit">
+        <div class="au-tabs" role="tablist" aria-label="Tipo de acceso">
+          <button type="button" role="tab" class="au-tab" :class="mode === 'login' ? 'is-on' : ''" :aria-selected="mode === 'login'" @click="setMode('login')">Entrar</button>
+          <button type="button" role="tab" class="au-tab" :class="mode === 'register' ? 'is-on' : ''" :aria-selected="mode === 'register'" @click="setMode('register')">Crear cuenta</button>
         </div>
 
-        <p v-if="notice" class="mb-3 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{{ notice }}</p>
+        <div v-if="mode === 'register'" class="au-field au-open">
+          <label for="display_name" class="au-label">Nombre de usuario</label>
+          <input id="display_name" v-model="user.display_name" required type="text" class="au-input" placeholder="Cómo te ven los demás" autocomplete="nickname" aria-describedby="au-name-hint"
+            :class="fieldError.name ? 'is-bad' : ''" @input="fieldError.name = false" />
+          <span id="au-name-hint" class="au-hint">Así te ven en el ranking y en Social.</span>
+        </div>
 
-        <!-- LOGIN -->
-        <form v-if="mode === 'login'" action="#" @submit.prevent="handleSubmit" class="space-y-4">
-          <div>
-            <label for="email" class="label">Correo electrónico</label>
-            <input
-              autofocus
-              required
-              type="email"
-              class="input"
-              id="email"
-              autocomplete="email"
-              autocapitalize="none"
-              placeholder="tu@email.com"
-              v-model="user.email"
-              @input="fieldError.email = false"
-              :style="fieldError.email ? { borderColor: '#f87171' } : {}"
-            />
-          </div>
-          <div>
-            <label for="password" class="label">Contraseña</label>
-            <input
-              required
-              type="password"
-              class="input"
-              id="password"
-              autocomplete="current-password"
-              placeholder="••••••••"
-              v-model="user.password"
-              @input="fieldError.password = false"
-              :style="fieldError.password ? { borderColor: '#f87171' } : {}"
-            />
-          </div>
-          <div class="flex justify-end -mt-2">
-            <RouterLink to="/forgot-password" class="text-sm text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline">
-              ¿Olvidaste tu contraseña?
-            </RouterLink>
-          </div>
+        <div class="au-field">
+          <label :for="mode === 'login' ? 'email' : 'reg_email'" class="au-label">Email</label>
+          <input :id="mode === 'login' ? 'email' : 'reg_email'" v-model="user.email" required type="email" inputmode="email" class="au-input" autocomplete="email" autocapitalize="none" placeholder="vos@mail.com"
+            :class="fieldError.email ? 'is-bad' : ''" @input="fieldError.email = false" />
+        </div>
 
-          <div class="pt-2 space-y-4">
-            <AppButton type="submit" class="w-full" :disabled="loading">Acceder</AppButton>
-            <div class="flex items-center gap-3 text-slate-400 text-xs my-5">
-              <div class="h-px flex-1 bg-white/10"></div>
-              <span>o</span>
-              <div class="h-px flex-1 bg-white/10"></div>
-            </div>
-            <button type="button" @click="handleGoogle" :disabled="loading" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-slate-100 hover:bg-white/10 disabled:opacity-60">
-              <img src="/social/google.svg" alt="Google" class="w-5 h-5" />
-              <span>Iniciar sesión con Google</span>
+        <div class="au-field">
+          <label :for="mode === 'login' ? 'password' : 'reg_password'" class="au-label">Contraseña</label>
+          <span class="relative block">
+            <input :id="mode === 'login' ? 'password' : 'reg_password'" v-model="user.password" required :type="showPass ? 'text' : 'password'" class="au-input pr-[52px]"
+              :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" :placeholder="mode === 'login' ? 'Tu contraseña' : 'Mínimo 6 caracteres'"
+              :class="fieldError.password ? 'is-bad' : ''" @input="fieldError.password = false" />
+            <button type="button" class="au-eye" :class="showPass ? 'is-on' : ''" :aria-label="showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'" :aria-pressed="showPass"
+              :aria-controls="mode === 'login' ? 'password' : 'reg_password'" @click="showPass = !showPass">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path v-if="!showPass" d="M4 4l16 16"/></svg>
             </button>
+          </span>
+          <RouterLink v-if="mode === 'login'" to="/forgot-password" class="au-forgot">¿Olvidaste tu contraseña?</RouterLink>
+        </div>
+
+        <div v-if="mode === 'register'" class="au-field au-open">
+          <label for="confirm" class="au-label">Repetí la contraseña</label>
+          <input id="confirm" v-model="user.confirm" required :type="showPass ? 'text' : 'password'" class="au-input" autocomplete="new-password" placeholder="La misma de arriba"
+            :style="confirmBorderColor ? { borderColor: confirmBorderColor } : {}" />
+        </div>
+
+        <!-- Opcional: armá tu perfil -->
+        <div v-if="mode === 'register'" class="au-extra">
+          <button type="button" class="au-extra-btn" :aria-expanded="profileOpen" aria-controls="au-extra-body" @click="profileOpen = !profileOpen">
+            <span class="flex-1 text-left"><strong class="text-white text-sm">Armá tu perfil</strong> <span class="text-xs text-slate-400">(opcional)</span></span>
+            <span v-if="hasAnyProfilePick" class="flex items-center gap-1.5">
+              <img v-if="selectedFlagUrl" :src="selectedFlagUrl" alt="" class="w-6 h-4 rounded-sm object-cover" />
+              <img v-if="selectedTeamImage" :src="selectedTeamImage" alt="" class="w-6 h-6 object-contain" />
+              <img v-if="selectedPlayerImage" :src="selectedPlayerImage" alt="" class="w-6 h-6 rounded-full object-contain" />
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" class="text-slate-400 transition-transform" :class="profileOpen ? 'rotate-180' : ''" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div v-show="profileOpen" id="au-extra-body" class="flex flex-col gap-3 px-3 pb-3">
+            <p class="text-xs text-slate-400">Tu selección, tu club y tu ídolo se ven en tu perfil.</p>
+            <SearchSelect label="Nacionalidad" :show-images="true" :img-size="26" img-shape="flag" v-model="user.nationality_code" :options="countryOptions" placeholder="Escribí 3 letras para buscar tu país" />
+            <SearchSelect label="Equipo favorito" :show-images="true" :img-size="40" img-shape="badge" v-model="user.favorite_team" :options="teams" placeholder="Escribí 3 letras para filtrar" />
+            <SearchSelect label="Jugador favorito" :show-images="true" :img-size="40" v-model="user.favorite_player" :options="players" placeholder="Escribí 3 letras para filtrar" />
           </div>
-        </form>
+        </div>
 
-        <!-- REGISTER -->
-        <form v-else action="#" @submit.prevent="handleSubmit" class="space-y-4">
-          <div class="grid grid-cols-1 gap-3">
-            <div>
-              <label for="display_name" class="label">Nombre</label>
-              <input
-                required
-                type="text"
-                class="input"
-                id="display_name"
-                placeholder="Tu nombre"
-                v-model="user.display_name"
-                autocomplete="name"
-                @input="fieldError.name = false"
-                :style="fieldError.name ? { borderColor: '#f87171' } : {}"
-              />
-            </div>
-            <div>
-              <label for="reg_email" class="label">Correo electrónico</label>
-              <input
-                autofocus
-                required
-                type="email"
-                class="input"
-                id="reg_email"
-                placeholder="tu@email.com"
-                v-model="user.email"
-                autocomplete="email"
-                @input="fieldError.email = false"
-                :style="fieldError.email ? { borderColor: '#f87171' } : {}"
-              />
-            </div>
-            <div>
-              <label for="reg_password" class="label">Contraseña</label>
-              <input
-                required
-                type="password"
-                class="input"
-                id="reg_password"
-                placeholder="••••••••"
-                v-model="user.password"
-                autocomplete="new-password"
-                @input="fieldError.password = false"
-                :style="fieldError.password ? { borderColor: '#f87171' } : {}"
-              />
-            </div>
-            <div>
-              <label for="confirm" class="label">Confirmar contraseña</label>
-              <input
-                required
-                type="password"
-                class="input"
-                id="confirm"
-                placeholder="••••••••"
-                v-model="user.confirm"
-                autocomplete="new-password"
-                :style="confirmBorderColor ? { borderColor: confirmBorderColor } : {}"
-              />
-            </div>
-          </div>
-          <!-- Campos opcionales -->
-          <div class="mt-2 p-4 rounded-2xl border border-white/10 bg-gradient-to-br from-emerald-500/[0.07] via-white/[0.03] to-cyan-500/[0.07]">
-            <div class="flex items-center gap-2 mb-1">
-              <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
-              </svg>
-              <p class="text-sm font-semibold text-white">Armá tu perfil</p>
-              <span class="text-xs text-slate-400">(opcional)</span>
-            </div>
-            <p class="text-xs text-slate-400 mb-3">Elegí tu selección, tu club y tu ídolo — se van a ver en tu perfil.</p>
+        <button type="submit" class="au-submit" :disabled="loading">
+          <template v-if="loading">{{ mode === 'login' ? 'ENTRANDO…' : 'CREANDO…' }}</template>
+          <template v-else>{{ mode === 'login' ? 'ENTRAR' : (guestXp > 0 ? 'CREAR CUENTA Y GUARDAR' : 'CREAR CUENTA') }}</template>
+        </button>
+      </form>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <SearchSelect label="Nacionalidad" :show-images="true" :img-size="26" img-shape="flag" v-model="user.nationality_code" :options="countryOptions" placeholder="Escribe 3 letras para buscar tu país" />
-              </div>
-              <div>
-                <SearchSelect label="Equipo favorito" :show-images="true" :img-size="40" img-shape="badge" v-model="user.favorite_team" :options="teams" placeholder="Escribe 3 letras para filtrar" />
-              </div>
-              <div class="md:col-span-2">
-                <SearchSelect label="Jugador favorito" :show-images="true" :img-size="40" v-model="user.favorite_player" :options="players" placeholder="Escribe 3 letras para filtrar" />
-              </div>
-            </div>
+      <div class="au-or" aria-hidden="true"><span></span>o seguí con<span></span></div>
 
-            <!-- Figurita: tira de lo que ya elegiste -->
-            <div v-if="hasAnyProfilePick" class="mt-4 flex items-center justify-center gap-3 rounded-xl border border-emerald-400/20 bg-gradient-to-r from-emerald-500/10 via-cyan-500/10 to-emerald-500/10 py-3">
-              <template v-if="selectedFlagUrl">
-                <img :src="selectedFlagUrl" alt="" class="w-11 h-8 rounded-sm object-cover" />
-              </template>
-              <span v-if="selectedFlagUrl && (selectedTeamImage || selectedPlayerImage)" class="text-slate-500 text-lg leading-none">+</span>
-              <template v-if="selectedTeamImage">
-                <img :src="selectedTeamImage" alt="" class="w-11 h-11 rounded-md object-contain" />
-              </template>
-              <span v-if="selectedTeamImage && selectedPlayerImage" class="text-slate-500 text-lg leading-none">+</span>
-              <template v-if="selectedPlayerImage">
-                <img :src="selectedPlayerImage" alt="" class="w-11 h-11 rounded-full object-contain" />
-              </template>
-            </div>
-          </div>
+      <button type="button" class="au-google" :disabled="loading" @click="handleGoogle">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continuar con Google
+      </button>
 
-          <div class="pt-2 space-y-4">
-            <AppButton type="submit" class="w-full" :disabled="loading">Crear cuenta</AppButton>
-            <div class="flex items-center gap-3 text-slate-400 text-xs my-5">
-              <div class="h-px flex-1 bg-white/10"></div>
-              <span>o</span>
-              <div class="h-px flex-1 bg-white/10"></div>
-            </div>
-            <button type="button" @click="handleGoogle" :disabled="loading" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-slate-100 hover:bg-white/10 disabled:opacity-60">
-              <img src="/social/google.svg" alt="Google" class="w-5 h-5" />
-              <span>Registrarse con Google</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </Transition>
-
-    <p v-if="mode === 'login'" class="mt-4 text-center text-sm text-slate-300">¿No tenés cuenta? <button type="button" class="text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline" @click="setMode('register')">Creála</button></p>
-    <p v-else class="mt-4 text-center text-sm text-slate-300">¿Ya tenés cuenta? <button type="button" class="text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline" @click="setMode('login')">Accedé</button></p>
-
-    <p v-if="mode === 'register'" class="mt-3 text-center text-xs text-slate-400">
-      Al crear tu cuenta, aceptás nuestros
-      <button type="button" @click="openLegal('terms')" class="text-slate-300 underline-offset-2 hover:underline hover:text-slate-200">Términos y Condiciones</button>
-      y nuestra
-      <button type="button" @click="openLegal('privacy')" class="text-slate-300 underline-offset-2 hover:underline hover:text-slate-200">Política de Privacidad</button>.
-    </p>
-    <p v-else class="mt-3 text-center text-xs text-slate-400">
-      <button type="button" @click="openLegal('terms')" class="underline-offset-2 hover:underline hover:text-slate-200">Términos y Condiciones</button>
-      ·
-      <button type="button" @click="openLegal('privacy')" class="underline-offset-2 hover:underline hover:text-slate-200">Política de Privacidad</button>
-    </p>
+      <p class="au-legal">Al continuar aceptás los <button type="button" @click="openLegal('terms')">Términos</button> y la <button type="button" @click="openLegal('privacy')">Política de privacidad</button> de FULVO.</p>
     </div>
-    <!-- /lg:my-auto -->
-    </div>
-    <!-- /Columna del form -->
-  </div>
 
-  <LegalModal :open="legalModalOpen" :type="legalModalType" @close="legalModalOpen = false" />
+    <LegalModal :open="legalModalOpen" :type="legalModalType" @close="legalModalOpen = false" />
+  </section>
 </template>
 
 <style scoped>
-/* Transición interna entre login/register: crossfade + slide direccional.
-   El wrapper externo (App.vue) no se entera del cambio de ruta porque
-   ambas rutas comparten meta.authGroup, así que este es el único movimiento. */
-.auth-forward-enter-from { opacity: 0; transform: translateX(28px); }
-.auth-forward-enter-active { transition: opacity 260ms ease, transform 260ms cubic-bezier(.22,1,.36,1); }
-.auth-forward-leave-to { opacity: 0; transform: translateX(-28px); }
-.auth-forward-leave-active { transition: opacity 180ms ease, transform 180ms ease; }
-
-.auth-back-enter-from { opacity: 0; transform: translateX(-28px); }
-.auth-back-enter-active { transition: opacity 260ms ease, transform 260ms cubic-bezier(.22,1,.36,1); }
-.auth-back-leave-to { opacity: 0; transform: translateX(28px); }
-.auth-back-leave-active { transition: opacity 180ms ease, transform 180ms ease; }
+.au { position: relative; width: 100%; max-width: 28rem; margin: 0 auto; min-height: 100dvh; color: #f1f5f9; }
+@media (min-width: 1024px) { .au { min-height: 0; border-radius: 24px; border: 1px solid rgba(255,255,255,0.08); background: #0b1220; overflow: hidden; } }
+.au-glow { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(60% 22% at 50% 6%, rgba(16,185,129,0.2), transparent 72%); }
+.au-pitch { position: absolute; left: 50%; top: 0; transform: translateX(-50%); pointer-events: none; }
+.au-in { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 8px 2px calc(18px + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 1024px) { .au-in { padding: 18px 22px 22px; } }
+.au-x { width: 44px; height: 44px; border-radius: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: #fff; display: grid; place-items: center; }
+.au-brand { font-family: Montserrat, var(--font-sans); font-weight: 800; font-size: 22px; letter-spacing: -0.3px; }
+.au-later { min-height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: flex-end; font-size: 13px; font-weight: 700; color: #94a3b8; }
+.au-h1 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 26px; line-height: 1.1; }
+.au-sub { margin: 0; font-size: 13.5px; line-height: 1.4; color: #94a3b8; }
+.au-guest { border-radius: 14px; padding: 8px 12px 8px 8px; display: flex; align-items: center; gap: 10px; background: linear-gradient(110deg, rgba(52,211,153,0.16), rgba(34,211,238,0.08) 70%); border: 1px solid rgba(52,211,153,0.4); }
+.au-guest-ic { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; background: linear-gradient(135deg, #34d399, #22d3ee); display: grid; place-items: center; }
+.au-guest-xp { font-family: var(--font-shout); font-weight: 800; font-size: 22px; color: #6ee7b7; white-space: nowrap; }
+.au-tabs { display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+.au-tab { min-height: 44px; border-radius: 10px; color: #94a3b8; font-family: var(--font-shout); font-weight: 800; font-size: 18px; letter-spacing: .5px; text-transform: uppercase; transition: background .2s ease, color .2s ease, box-shadow .2s ease; }
+.au-tab.is-on { background: linear-gradient(180deg, #1e293b, #172033); box-shadow: inset 0 0 0 1px rgba(251,191,36,0.5), 0 4px 10px rgba(0,0,0,0.3); color: #fde68a; }
+.au-field { display: flex; flex-direction: column; gap: 5px; }
+.au-label { font-size: 12px; font-weight: 700; color: #cbd5e1; }
+.au-input { min-height: 48px; width: 100%; box-sizing: border-box; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: #0b1220; color: #f1f5f9; font-size: 15px; padding: 0 12px; outline: none; transition: border-color .15s ease, box-shadow .15s ease; }
+.au-input::placeholder { color: #475569; }
+.au-input:focus { border-color: #fbbf24; box-shadow: 0 0 0 3px rgba(251,191,36,0.25); }
+.au-input.is-bad { border-color: #f87171; }
+.au-hint { font-size: 11.5px; color: #64748b; }
+.au-eye { position: absolute; right: 2px; top: 2px; width: 44px; height: 44px; border-radius: 10px; color: #94a3b8; display: grid; place-items: center; }
+.au-eye.is-on { color: #fbbf24; }
+.au-forgot { align-self: flex-end; min-height: 32px; display: flex; align-items: center; font-size: 12.5px; font-weight: 700; color: #fbbf24; }
+.au-extra { border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: linear-gradient(135deg, rgba(16,185,129,0.06), rgba(255,255,255,0.02), rgba(34,211,238,0.06)); }
+.au-extra-btn { width: 100%; min-height: 48px; padding: 0 12px; display: flex; align-items: center; gap: 8px; }
+.au-submit { min-height: 54px; border-radius: 14px; border-bottom: 4px solid #b45309; background: linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%); color: #1c1206; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 22px; letter-spacing: 1px; }
+.au-submit:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px; }
+.au-submit:disabled { opacity: .7; }
+.au-or { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 700; color: #64748b; }
+.au-or > span { flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
+.au-google { min-height: 48px; border-radius: 14px; background: #fff; color: #1f2937; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.au-google:disabled { opacity: .6; }
+.au-legal { margin: 4px 0 0; text-align: center; font-size: 11.5px; line-height: 1.5; color: #64748b; }
+.au-legal button { color: #fbbf24; font-weight: 600; min-height: 24px; }
+.au-open { animation: au-open .25s ease-out both; }
+@keyframes au-open { from { opacity: 0; transform: translateY(-6px); } }
+.au-txt-enter-active, .au-txt-leave-active { transition: opacity .16s ease; }
+.au-txt-enter-from, .au-txt-leave-to { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .au-open { animation: none; }
+  .au-tab, .au-input { transition: none; }
+}
 </style>

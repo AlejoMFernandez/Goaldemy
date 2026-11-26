@@ -4,6 +4,7 @@ import { subscribeToAuthStateChanges, authReady, getAuthUser } from '../services
 import { isAdmin } from '../services/admin';
 import { setSeo } from '../services/seo';
 import { ensurePlayersLoaded } from '../services/players';
+import { shouldShowWelcome } from '../services/onboarding';
 
 // La home se importa de forma EAGER: es la ruta de entrada, así el LCP no
 // espera un chunk extra. Todo lo demás es LAZY (code-splitting por ruta):
@@ -11,6 +12,7 @@ import { ensurePlayersLoaded } from '../services/players';
 // inicial no arrastra los 15 juegos + su data de jugadores (dataGAMES.json).
 import Landing from '../pages/Landing.vue';
 const AuthPage = () => import('../pages/auth/AuthPage.vue');
+const Bienvenida = () => import('../pages/Bienvenida.vue');
 const VerifyEmail = () => import('../pages/auth/VerifyEmail.vue');
 const ForgotPassword = () => import('../pages/auth/ForgotPassword.vue');
 const ResetPassword = () => import('../pages/auth/ResetPassword.vue');
@@ -64,6 +66,7 @@ const routes = [
     { path: '/leagues', redirect: '/competiciones' },
     { path: '/leagues/:slug', component: CompetitionPage, meta: { zone: 'data', seo: { title: 'Competición', description: 'Tabla de posiciones, fixture y resultados en vivo.' } } },
     { path: '/team/:teamId', component: TeamPage, meta: { zone: 'data', seo: { title: 'Equipo', description: 'Plantilla, últimos partidos y estadísticas del equipo.' } } },
+    { path: '/bienvenida', component: Bienvenida, meta: { immersive: true, zone: 'hub', seo: { title: 'Bienvenida', noindex: true } } },
     { path: '/login', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth', seo: { title: 'Iniciar sesión', description: 'Ingresá a tu cuenta de FULVO.', noindex: true } } },
     { path: '/register', component: AuthPage, meta: { layout: 'auth', zone: 'hub', authGroup: 'auth', seo: { title: 'Crear cuenta', description: 'Creá tu cuenta gratis en FULVO y empezá a jugar.', noindex: true } } },
     { path: '/verify-email', component: VerifyEmail, meta: { layout: 'auth', zone: 'hub', seo: { title: 'Verificar email', noindex: true } } },
@@ -161,6 +164,12 @@ router.beforeEach(async (to, from) => {
     if (user.id && (to.path === '/login' || to.path === '/register')) {
         return '/'
     }
+});
+
+// Bienvenida: la primera vez que un invitado abre la app (una sola vez, ver onboarding.js).
+router.beforeEach(async (to, from) => {
+    await authReady;
+    if (shouldShowWelcome(to, from, getAuthUser()?.id)) return '/bienvenida';
 });
 
 // dataGAMES.json se carga lazy (ver services/players.js). main.js ya lo
