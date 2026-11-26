@@ -1,10 +1,10 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, computed, ref, defineAsyncComponent } from 'vue'
+import { onMounted, onUnmounted, reactive, computed, ref, watch, defineAsyncComponent } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { supabase } from '../services/supabase'
 import { getAuthUser } from '../services/auth'
-import { fetchGames, gameRouteForSlug, friendlyNameForSlug, friendlyDescForSlug } from '../services/games'
-import { getDailyChallenges, getDailyReward } from '../services/rewards'
+import { fetchGames, gameRouteForSlug, friendlyNameForSlug, friendlyDescForSlug, KNOWN_GAME_SLUGS } from '../services/games'
+import { getDailyChallenges, getDailyReward, getProgressiveChallenges } from '../services/rewards'
 import { getUserLevel, getLeaderboard, getUserRank, computeProgressPercentSync, fetchLevelThresholds } from '../services/xp'
 import { getUserAchievements, getAchievementsCatalog } from '../services/achievements'
 import { getEquippedCosmetics } from '../services/cosmetics'
@@ -18,7 +18,13 @@ import TopJugadorCard from '../components/home/TopJugadorCard.vue'
 import TodayMatchesGrid from '../components/home/TodayMatchesGrid.vue'
 import QuickPlayHero from '../components/home/QuickPlayHero.vue'
 import { useUpcomingMatches } from '../components/home/useUpcomingMatches'
-import { tapHaptic } from '../components/shell/shell-state'
+import { useJornada } from '../components/home/useJornada'
+import HomeDay from '../components/home/HomeDay.vue'
+import HomeTiles from '../components/home/HomeTiles.vue'
+import GamePoster from '../components/game/GamePoster.vue'
+import { pickMonthly } from '../components/missions/missions'
+import { appDayStartIso, appToday } from '../services/app-date'
+import { tap as tapHaptic } from '../services/haptics'
 
 // Video de fondo del hero (local, optimizado — ver public/videoshero/).
 // Vacío = se usa el fondo con degradé en vez de video.
@@ -37,8 +43,6 @@ const state = reactive({
   loading: true,
   featuredGames: [],
   totalGames: 0,
-  availability: {},   // por slug: estado del desafío de hoy (win/loss/available) — igual que el índice
-  streaks: {},        // por slug: racha de victorias diarias
   allGames: [],       // todos los juegos con ruta real (para invitado: cuáles se juegan sin cuenta)
 })
 
@@ -139,6 +143,13 @@ const wantsMatches = () => !state.isAuthenticated || window.matchMedia('(min-wid
 // usuario no pidió menos movimiento — nunca se pide el archivo en mobile.
 const showHeroVideo = ref(false)
 
+// Logueado: mobile (<1024px) usa el Inicio V4; desktop mantiene las 2 columnas.
+// v-if (no solo CSS) para no montar ni pedir datos de la versión que no se ve.
+const desktopMq = typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)') : null
+const isDesktop = ref(!!desktopMq?.matches)
+const onMq = (e) => { isDesktop.value = e.matches }
+watch(isDesktop, (d) => { if (d && state.isAuthenticated && !spotlight.top.length) loadSpotlight() })
+
 // Rango/categoría por nivel (fuente única en tiers.js) para el hero
 const tier = computed(() => getTierForLevel(home.level))
 const tierLabel = computed(() => tier.value?.label || '')
@@ -159,7 +170,6 @@ async function load() {
     state.allGames = playable
     state.featuredGames = playable.slice(-4)
     state.totalGames = playable.length
-    if (state.isAuthenticated) loadFeaturedStates()
   } catch (e) {
     console.error('Landing load error:', e)
   } finally {
@@ -181,45 +191,68 @@ async function loadPlans() {
   }
 }
 
-// Estado de desafío + racha por juego destacado, para renderizar las cards
-// EXACTAMENTE como el índice de juegos (PlayPoints): ✓/✕ de hoy y racha 🔥.
-async function loadFeaturedStates() {
-  try {
-    // Import diferido: game-modes arrastra un grafo pesado (achievement-triggers,
-    // premium…) que no queremos en el chunk inicial de la home.
-    const { isChallengeAvailable, fetchDailyWinStreak } = await import('../services/game-modes')
-    // Todos los juegos: la home mobile muestra la jornada completa (como el índice).
-    const list = state.allGames.length ? state.allGames : state.featuredGames
-    const [av, st] = await Promise.all([
-      Promise.all(list.map(async g => [g.slug, await isChallengeAvailable(g.slug)])),
-      Promise.all(list.map(async g => [g.slug, await fetchDailyWinStreak(g.slug)])),
-    ])
-    state.availability = Object.fromEntries(av)
-    state.streaks = Object.fromEntries(st)
-  } catch (e) {
-    console.warn('[Landing] featured states error', e)
-  }
-}
+// ══ Inicio logueado (diseño V4 · opción A) ══
+// La jornada (juegos, ✓/✕, premios del día) sale de useJornada: mismos datos
+// que el índice /play/points. También alimenta las cards de desktop.
+const j = useJornada()
+const toChallenge = (slug) => j.toChallenge(slug)
 
-// Jornada de hoy (home mobile): mismo orden que el índice → los que te quedan,
-// los jugados y los bloqueados. Así se ve de un vistazo qué falta (✓ / ✕ en el póster).
-const jornadaGames = computed(() => {
-  const lvl = Number(home.level) || 1
-  const rank = (g) => {
-    if (!isGameUnlocked(g.slug, lvl)) return 2
-    return state.availability[g.slug]?.available === false ? 1 : 0
-  }
-  return (state.allGames || []).map((g, i) => ({ g, i })).sort((a, b) => rank(a.g) - rank(b.g) || a.i - b.i).map(x => x.g)
+// "Te faltan hoy": los pendientes en el mismo orden que JUGAR RÁPIDO
+// (primero los clásicos del día, después el resto del catálogo).
+const quickList = computed(() => {
+  const rank = (slug) => { const i = KNOWN_GAME_SLUGS.indexOf(slug); return i === -1 ? KNOWN_GAME_SLUGS.length : i }
+  return [...j.todo.value].sort((a, b) => rank(a.slug) - rank(b.slug))
 })
-const jornadaPlayable = computed(() => jornadaGames.value.filter(g => isGameUnlocked(g.slug, Number(home.level) || 1)).length)
-const jornadaPlayed = computed(() => Object.values(state.availability || {}).filter(a => a?.available === false).length)
-
-// Jugado hoy → review (ver resultado). Sin jugar → arrancar el desafío. (igual que el índice)
-function toChallenge(slug) {
-  const av = state.availability[slug]
-  if (av && av.available === false) return `${gameRouteForSlug(slug)}?mode=review`
-  return `${gameRouteForSlug(slug)}?mode=challenge`
+const quickNext = computed(() => quickList.value[0] || null)
+function playQuick() {
+  if (!quickNext.value) return
+  tapHaptic()
+  router.push(j.toChallenge(quickNext.value.slug))
 }
+
+// XP ganada hoy (suma de xp_events propios desde el inicio del día de la app).
+// Solo lectura; si falla queda en null y la tarjeta muestra "—".
+const xpToday = ref(null)
+async function loadXpToday() {
+  const { id } = getAuthUser() || {}
+  if (!id) return
+  try {
+    const { data, error } = await supabase.from('xp_events').select('amount').eq('user_id', id).gte('created_at', appDayStartIso()).limit(2000)
+    if (error) throw error
+    xpToday.value = (data || []).reduce((a, r) => a + (Number(r.amount) || 0), 0)
+  } catch (e) {
+    console.warn('[Landing] xp de hoy', e)
+    xpToday.value = null
+  }
+}
+
+// Retos progresivos: el "Desafío del mes" (Evento) y los que hay para cobrar
+const progressive = ref([])
+async function loadProgressive() {
+  try { const r = await getProgressiveChallenges(); progressive.value = Array.isArray(r) ? r : [] }
+  catch { progressive.value = [] }
+}
+function daysLeftInMonth() {
+  const [y, m, d] = appToday().split('-').map(Number)
+  if (!y) return 0
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  return Math.max(1, last - d + 1)
+}
+const homeTiles = computed(() => {
+  const monthly = pickMonthly(progressive.value)
+  const dailyClaim = (home.challenges || []).filter(c => !c.claimed && Number(c.progress) >= Number(c.target)).length
+  const progClaim = progressive.value.filter(c => c.claimable).length
+  const claim = dailyClaim + progClaim
+  const days = daysLeftInMonth()
+  return [
+    monthly
+      ? { key: 'evento', to: '/rewards?tab=misiones', title: 'Evento', sub: `${days} ${days === 1 ? 'día' : 'días'} · ${monthly.title}`, badge: monthly.claimable ? '!' : '' }
+      : { key: 'pase', to: '/rewards?tab=pase', title: 'Abono', sub: 'Tu pase de temporada', badge: '' },
+    { key: 'ranking', to: '/social?tab=ranking', title: 'Ranking', sub: home.rank ? `Sos #${home.rank} global` : 'Sumá XP y entrá', badge: '' },
+    { key: 'sobre', to: '/rewards?tab=sobre', title: 'Sobre del día', sub: envelope.loading ? 'Revisando…' : (envelope.available ? 'Listo para abrir' : 'Mañana hay otro'), badge: envelope.available ? '!' : '' },
+    { key: 'misiones', to: '/rewards?tab=misiones', title: 'Misiones', sub: claim > 0 ? `${claim} para cobrar` : (home.challengesTotal ? `${home.challengesDone}/${home.challengesTotal} de hoy` : 'Mirá las de hoy'), badge: claim > 0 ? String(claim) : '' },
+  ]
+})
 
 async function loadUserHome() {
   const { id } = getAuthUser() || {}
@@ -277,8 +310,10 @@ async function loadEnvelope() {
 let pollTimer = null
 onMounted(() => {
   load()
-  if (state.isAuthenticated) { loadUserHome(); loadEnvelope() }
-  loadSpotlight()
+  desktopMq?.addEventListener?.('change', onMq)
+  if (state.isAuthenticated) { loadUserHome(); loadEnvelope(); j.load(); loadXpToday(); loadProgressive() }
+  // El podio "Top jugador" solo se ve en la versión invitado y en desktop
+  if (!state.isAuthenticated || isDesktop.value) loadSpotlight()
   if (wantsMatches()) {
     loadTickerMatches()
     // Refrescar el ticker cada 60s (marcador + minuto en vivo)
@@ -291,7 +326,7 @@ onMounted(() => {
     showHeroVideo.value = wideEnough && !reducedMotion
   }
 })
-onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
+onUnmounted(() => { if (pollTimer) clearInterval(pollTimer); desktopMq?.removeEventListener?.('change', onMq) })
 </script>
 
 <template>
@@ -415,7 +450,59 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
          Mismo patrón de 2 columnas que ya usa Profile.vue (360px sticky + resto). En mobile/tablet
          (<lg) colapsa a una sola columna apilada — es el diseño que ya se validó ahí. ══════════════════ -->
     <template v-else>
-      <div class="relative z-10 lg:max-w-6xl lg:mx-auto px-0 sm:px-6 -mt-4 lg:mt-0 pt-0 sm:pt-4 lg:pt-8 mb-10 lg:mb-20 lg:grid lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-6 lg:items-start lg:pt-8">
+      <!-- ══ MOBILE (diseño V4 · opción A): Tu día → Te faltan hoy + JUGAR RÁPIDO → 4 accesos ══ -->
+      <div v-if="!isDesktop" class="home-v4">
+        <HomeDay
+          :loading="j.state.loading"
+          :played="j.played.value.length"
+          :total="j.total.value"
+          :wins="j.wins.value"
+          :losses="j.losses.value"
+          :xp-today="xpToday"
+          :milestones="j.milestones.value"
+          :next="j.allDone.value ? null : j.nextMilestone.value"
+          :reset-text="j.resetText.value"
+        />
+
+        <!-- Te faltan hoy + JUGAR RÁPIDO. Con la jornada completa queda un cartel chico con la cuenta regresiva. -->
+        <section v-if="j.state.loading" class="hv-quick" aria-busy="true" aria-label="Preparando tu jornada">
+          <div class="hv-head"><span class="hv-h">Te faltan hoy</span></div>
+          <div class="hv-posters"><div v-for="i in 3" :key="i" class="hv-sk"></div></div>
+          <div class="hv-sk hv-sk-btn"></div>
+        </section>
+        <section v-else-if="j.state.error" class="hv-done" role="alert">
+          <span class="min-w-0 flex-1 text-[13px] text-slate-300">No pudimos armar tu jornada.</span>
+          <button type="button" class="hv-retry" @click="j.load()">Reintentar</button>
+        </section>
+        <section v-else-if="j.allDone.value" class="hv-done" aria-label="Jornada completa">
+          <span class="hv-done-ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+          </span>
+          <span class="min-w-0 flex-1">
+            <span class="hv-done-t">Jugaste los {{ j.total.value }} de hoy</span>
+            <span class="hv-done-s">{{ j.wins.value }} {{ j.wins.value === 1 ? 'ganado' : 'ganados' }} · nuevos en <b class="tabular-nums">{{ j.resetText.value }}</b></span>
+          </span>
+          <RouterLink to="/play/points" class="hv-done-l">Ver</RouterLink>
+        </section>
+        <section v-else class="hv-quick" aria-label="Acceso rápido">
+          <div class="hv-head">
+            <h2 class="hv-h">Te faltan hoy</h2>
+            <RouterLink to="/play/points" class="hv-all">Ver los {{ j.state.games.length }} juegos<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></RouterLink>
+          </div>
+          <div class="hv-posters">
+            <RouterLink v-for="g in quickList.slice(0, 3)" :key="g.slug" :to="toChallenge(g.slug)" class="hv-poster" :aria-label="`${g.name}: jugar`">
+              <GamePoster :slug="g.slug" :name="g.name" :streak="j.state.streaks[g.slug] || 0" />
+            </RouterLink>
+          </div>
+          <button type="button" class="hv-play" :aria-label="quickNext ? `Jugar rápido: ${quickNext.name}` : 'Jugar rápido'" @click="playQuick">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>JUGAR RÁPIDO
+          </button>
+        </section>
+
+        <HomeTiles :tiles="homeTiles" :loading="home.loading" />
+      </div>
+
+      <div v-else class="relative z-10 lg:max-w-6xl lg:mx-auto px-0 sm:px-6 -mt-4 lg:mt-0 pt-0 sm:pt-4 lg:pt-8 mb-10 lg:mb-20 lg:grid lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-6 lg:items-start lg:pt-8">
 
         <!-- Columna izquierda: Hero + Misión de hoy + Pase, sticky en desktop -->
         <div class="flex flex-col gap-5 lg:gap-6 lg:sticky lg:top-24">
@@ -541,28 +628,6 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 
         <!-- Columna derecha: Jugá hoy, Top jugador, Planes -->
         <div class="flex flex-col gap-10 lg:gap-12 mt-8 lg:mt-0 min-w-0">
-          <!-- Jornada de hoy (mobile): los 14 pósters marcados ✓ / ✕, como el índice -->
-          <section class="lg:hidden" aria-label="Jornada de hoy">
-            <div class="flex items-baseline justify-between gap-3 mb-3">
-              <h2 class="font-shout font-extrabold text-lg tracking-wide text-white uppercase">Jornada de hoy · <span class="text-emerald-400 tabular-nums">{{ jornadaPlayed }}/{{ jornadaPlayable }}</span></h2>
-              <RouterLink to="/play/points" class="text-xs font-semibold text-slate-400">Ver premios</RouterLink>
-            </div>
-            <div v-if="state.loading" class="grid grid-cols-3 gap-2">
-              <div v-for="i in 9" :key="i" class="rounded-xl bg-white/[0.04] animate-pulse aspect-[4/5]"></div>
-            </div>
-            <div v-else class="grid grid-cols-3 gap-2 stagger-grid">
-              <GameCard v-for="g in jornadaGames" :key="g.slug"
-                :game="g"
-                :unlocked="isGameUnlocked(g.slug, home.level)"
-                :unlock-level="getGameUnlockLevel(g.slug)"
-                :user-level="Number(home.level) || 1"
-                :availability="state.availability[g.slug]"
-                :streak="state.streaks[g.slug] || 0"
-                :to="toChallenge(g.slug)"
-              />
-            </div>
-          </section>
-
           <!-- Jugá hoy: grid en desktop (en mobile lo reemplaza la jornada de arriba) -->
           <div class="hidden lg:block">
             <div class="flex items-center justify-between gap-3 mb-6">
@@ -584,8 +649,8 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
                     :unlocked="isGameUnlocked(g.slug, home.level)"
                     :unlock-level="getGameUnlockLevel(g.slug)"
                     :user-level="Number(home.level) || 1"
-                    :availability="state.availability[g.slug]"
-                    :streak="state.streaks[g.slug] || 0"
+                    :availability="j.state.availability[g.slug]"
+                    :streak="j.state.streaks[g.slug] || 0"
                     :to="toChallenge(g.slug)"
                   />
                 </div>
@@ -600,16 +665,6 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
           <div class="hidden lg:block">
             <TodayMatchesGrid :matches="todayMatches" :loading="loadingMatches" />
           </div>
-          <RouterLink to="/social?tab=futbol" class="lg:hidden flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 min-h-[64px]">
-            <span class="w-10 h-10 grid place-items-center rounded-xl bg-emerald-500/15 text-emerald-300">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="w-5 h-5"><circle cx="12" cy="12" r="9"/><path d="M12 7l3 2.2-1.1 3.6h-3.8L9 9.2z"/></svg>
-            </span>
-            <span class="flex-1 min-w-0">
-              <span class="block font-display font-bold text-white text-[15px]">Partidos de hoy</span>
-              <span class="block text-[12px] text-slate-400">Resultados y fixtures en Social → Fútbol</span>
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-slate-500"><path d="M9 6l6 6-6 6"/></svg>
-          </RouterLink>
 
           <!-- Planes: solo desktop. En mobile están en la hoja de ajustes (Premium · Planes) y la Tienda. -->
           <div class="hidden lg:block">
@@ -705,8 +760,30 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 .career-card { background: radial-gradient(120% 90% at 80% 0%, rgba(251,191,36,.35), transparent 60%), linear-gradient(160deg, #1e293b, #0b1220); }
 .env-wiggle { animation: env-wiggle 2.8s ease-in-out infinite; }
 @keyframes env-wiggle { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-8deg); } 90% { transform: rotate(7deg); } 95% { transform: rotate(-4deg); } }
+/* ══ Inicio V4 (mobile) ══ */
+.home-v4 { display: flex; flex-direction: column; gap: 16px; margin: -28px -10px 0; padding-bottom: 8px; color: #f1f5f9; }
+.hv-quick { display: flex; flex-direction: column; gap: 10px; }
+.hv-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.hv-h { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 18px; color: #fff; }
+.hv-all { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; font-size: 13px; font-weight: 700; color: #fbbf24; text-decoration: none; }
+.hv-posters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.hv-poster { display: block; border-radius: 14px; text-decoration: none; transition: transform .12s ease; }
+.hv-poster:active { transform: scale(.97); }
+.hv-poster:focus-visible { outline: 2px solid #fcd34d; outline-offset: 2px; }
+.hv-play { min-height: 54px; border: 0; border-radius: 16px; background: linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%); border-bottom: 4px solid #b45309; color: #1c1206; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 24px; letter-spacing: 1px; cursor: pointer; animation: hv-pulse 2s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
+.hv-play:active { transform: translateY(2px); border-bottom-width: 2px; }
+@keyframes hv-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, .45); } 50% { box-shadow: 0 0 0 8px rgba(251, 191, 36, 0); } }
+.hv-sk { aspect-ratio: 4 / 5; border-radius: 14px; background: rgba(255, 255, 255, .05); animation: hv-sk 1.4s ease-in-out infinite; }
+.hv-sk-btn { aspect-ratio: auto; height: 54px; border-radius: 16px; }
+@keyframes hv-sk { 50% { opacity: .5; } }
+.hv-done { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 12px; border-radius: 16px; border: 1px solid rgba(52, 211, 153, .3); background: linear-gradient(135deg, rgba(34, 197, 94, .16), #111a2e 60%); }
+.hv-done-ic { width: 40px; height: 40px; flex: none; border-radius: 50%; display: grid; place-items: center; background: #22c55e; color: #fff; }
+.hv-done-t { display: block; font-family: var(--font-shout); font-weight: 800; font-size: 19px; line-height: 1; text-transform: uppercase; color: #fff; }
+.hv-done-s { display: block; margin-top: 3px; font-size: 12px; color: #cbd5e1; }
+.hv-done-s b { color: #fde68a; }
+.hv-done-l, .hv-retry { min-height: 44px; min-width: 44px; padding: 0 12px; display: grid; place-items: center; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .05); color: #e2e8f0; font-weight: 700; font-size: 13px; text-decoration: none; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .hero-aurora::before, .hero-aurora::after { animation: none; }
-  .guest-play-btn, .env-wiggle { animation: none; }
+  .guest-play-btn, .env-wiggle, .hv-play, .hv-sk { animation: none; }
 }
 </style>
