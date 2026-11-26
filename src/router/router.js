@@ -54,6 +54,7 @@ const TermsOfService = () => import('../pages/legal/TermsOfService.vue');
 // Shell mobile (tab bar): hubs nuevos
 const Social = () => import('../pages/Social.vue');
 const Coleccion = () => import('../pages/Coleccion.vue');
+const Camino = () => import('../pages/Camino.vue');
 const Logros = () => import('../pages/Logros.vue');
 
 const routes = [
@@ -112,6 +113,7 @@ const routes = [
     // Shell mobile — pestañas Social y Colección de la tab bar
     { path: '/social', component: Social, meta: { zone: 'hub', seo: { title: 'Social', description: 'Ranking, amigos y fútbol en vivo en FULVO.' } } },
     { path: '/coleccion', component: Coleccion, meta: { requiresAuth: true, zone: 'hub', seo: { title: 'Colección', noindex: true } } },
+    { path: '/camino', component: Camino, meta: { zone: 'hub', seo: { title: 'El camino', description: 'Los 11 rangos de FULVO: dónde estás, qué viene y qué ganás al llegar.' } } },
     // 404 fallback
     { path: '/:pathMatch(.*)*', component: NotFound, meta: { zone: 'hub', seo: { title: 'Página no encontrada', noindex: true } } },
 ]
