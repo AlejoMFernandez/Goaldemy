@@ -37,7 +37,10 @@ export function initLevelUpRealtime() {
       .channel('xp_events_levelup')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'xp_events', filter: `user_id=eq.${currentUserId}` },
+        // Sin filtro de servidor: con `filter: user_id=eq.…` dejaban de llegar los eventos y la
+        // subida por XP de un logro (ej. Nv 9 → 10 con "Ojo de halcón") no se detectaba.
+        // El callback ya descarta lo que no es del usuario.
+        { event: 'INSERT', schema: 'public', table: 'xp_events' },
         async payload => {
           if (!currentUserId) return
           const row = payload?.new

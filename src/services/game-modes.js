@@ -149,6 +149,7 @@ async function _checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
     // (achievements-new-1) también miran derrotas (Fuego azul, Enciclopedia).
     if (!won) {
       await checkNewAchievements(slugJustPlayed)
+      try { const { detectAndToastLevelUp } = await import('./xp'); await detectAndToastLevelUp() } catch {}
       // Perder también puede dar un logro con cosmético (Fuego azul, Enciclopedia…)
       try { (await import('./cosmetics')).scheduleCosmeticCheck(600) } catch {}
       return
@@ -185,6 +186,10 @@ async function _checkAndUnlockDailyWins(slugJustPlayed, wonArg, metaArg) {
 
     // Logros nuevos (achievements-new-1): calculados desde las sesiones guardadas en Supabase
     await checkNewAchievements(slugJustPlayed)
+
+    // La XP de los logros recién desbloqueados puede cruzar un nivel (o un rango): no pasa por
+    // awardXp, así que la subida se detecta acá y no depende solo de Realtime.
+    try { const { detectAndToastLevelUp } = await import('./xp'); await detectAndToastLevelUp() } catch {}
 
     // ESCENA DE COSMÉTICO: los logros recién desbloqueados pueden otorgar cosméticos
     // (get_cosmetics los marca owned al tener el logro). Detectarlos AHORA y encolarlos.
