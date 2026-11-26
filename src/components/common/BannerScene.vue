@@ -29,6 +29,7 @@ const props = defineProps({
 
 // El dibujo escala por alto y no ocupa más de este % del ancho del banner (modo contain).
 const SCENE_MAX_SHARE = 0.6
+const SCENE_WIDE_MIN = 600 // px de ancho desde donde se aplica el tope
 
 const el = ref(null)
 const scene = computed(() => isSceneBanner(props.styleKey))
@@ -61,8 +62,10 @@ function measure() {
     const colRight = pr ? pr.right - padR : r.right
     const edge = vw >= 1024 ? vw - props.edgeGap : vw // lg+: lejos de la barra de amigos
     gap = Math.max(0, r.right - Math.min(colRight, edge))
-    // por alto, sin deformar, y sin pasar del 60 % del ancho del banner
-    scale = Math.min(scale, (r.width * SCENE_MAX_SHARE) / 300)
+    // por alto, sin deformar, y en banners anchos (desktop) sin pasar del 60 % del ancho.
+    // En el celu (banner de ~390 px) el tope achicaba el dibujo y lo dejaba cortado a mitad
+    // de alto: ahí manda el alto, como en el moodboard.
+    if (r.width >= SCENE_WIDE_MIN) scale = Math.min(scale, (r.width * SCENE_MAX_SHARE) / 300)
   }
   k.value = scale
   right.value = gap
