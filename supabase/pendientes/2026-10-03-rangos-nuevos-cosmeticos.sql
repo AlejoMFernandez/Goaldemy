@@ -1,3 +1,4 @@
+-- ⚠ 2026-11-26: NO CORRER. El kit de los 11 rangos lo trae 2026-11-24-11-colecciones.sql.
 -- ============================================================
 -- FULVO — COSMÉTICOS DE LOS 5 RANGOS NUEVOS (feature/rangos-100)
 -- Figura (NV 60) · Ídolo (70) · Ícono (80) · Leyenda (90) · GOAT (100): borde + ícono de rango + banner,

@@ -1,3 +1,4 @@
+-- ⚠ 2026-11-26: diagnóstico ya corrido en prod. Las verificaciones nuevas están en APLICAR-2026-11-26.md.
 -- ════════════════════════════════════════════════════════════════════
 --  2026-11-24-01 — VERIFICAR PERMISOS (SOLO LECTURA)
 -- ════════════════════════════════════════════════════════════════════

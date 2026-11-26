@@ -1,5 +1,11 @@
 # Parches de seguridad pendientes (2026-11-24)
 
+> **2026-11-26 — PLAN VIGENTE: [`APLICAR-2026-11-26.md`](APLICAR-2026-11-26.md).** Orden, archivos
+> corregidos contra el esquema REAL de producción (nombres de políticas, firmas) y una consulta de
+> verificación por archivo. Lo que sigue abajo es el README original de los parches del 24/11
+> (03, 05, 08, 09 quedaron para después; la curva 31–50/51–100 la reemplaza `2026-11-26-curva-niveles-1-100.sql`).
+
+
 Estos archivos **no se aplicaron en ninguna base**. Están para que los revises y los apliques vos, primero en un proyecto de staging. Ninguno se corrió ni se parseó contra Postgres: escribirlos fue revisión manual, así que **probalos en staging antes de producción**.
 
 ## Qué arregla cada uno

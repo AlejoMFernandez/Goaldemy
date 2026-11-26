@@ -1,3 +1,4 @@
+-- ⚠ 2026-11-26: ya está aplicado en producción (get_users_cosmetic_stats existe). Solo para bases nuevas.
 -- ============================================================
 -- PENDIENTE · NO APLICADO · 2026-11-26 (viene de feature/vestuario-nuevo, 28/09)
 -- QUÉ: RPC get_users_cosmetic_stats(uuid[]) → nivel + racha diaria de hasta 200
