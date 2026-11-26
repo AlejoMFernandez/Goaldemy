@@ -1,0 +1,758 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - navigation [ref=e7]:
+      - link "Fulvo FULVO" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e9]:
+          - img "Fulvo" [ref=e10]
+          - generic [ref=e11]: FULVO
+      - list [ref=e12]:
+        - listitem [ref=e13]:
+          - link [ref=e14] [cursor=pointer]:
+            - /url: /games/guess-player?mode=challenge
+        - listitem [ref=e18]:
+          - button "Jugar" [ref=e19] [cursor=pointer]
+        - listitem [ref=e22]:
+          - link "Ranking" [ref=e23] [cursor=pointer]:
+            - /url: /leaderboards
+        - listitem [ref=e24]:
+          - link "Competiciones" [ref=e25] [cursor=pointer]:
+            - /url: /competiciones
+        - listitem [ref=e26]:
+          - button "Información" [ref=e27] [cursor=pointer]
+        - listitem [ref=e30]:
+          - link "Premium" [ref=e31] [cursor=pointer]:
+            - /url: /pricing
+        - listitem [ref=e34]:
+          - button "Buscar" [ref=e35]
+        - listitem [ref=e39]:
+          - link "Acceder" [ref=e40] [cursor=pointer]:
+            - /url: /login
+  - main [ref=e41]:
+    - generic [ref=e43]:
+      - generic [ref=e179]:
+        - button "02-oct Independiente Independiente - Instituto Instituto -" [ref=e180]:
+          - generic [ref=e181]: 02-oct
+          - generic [ref=e183]:
+            - generic [ref=e184]:
+              - img "Independiente" [ref=e185]
+              - generic [ref=e186]: Independiente
+            - generic [ref=e187]: "-"
+          - generic [ref=e188]:
+            - generic [ref=e189]:
+              - img "Instituto" [ref=e190]
+              - generic [ref=e191]: Instituto
+            - generic [ref=e192]: "-"
+        - button "02-oct Boca Juniors Boca Juniors - Unión Unión -" [ref=e194]:
+          - generic [ref=e195]: 02-oct
+          - generic [ref=e197]:
+            - generic [ref=e198]:
+              - img "Boca Juniors" [ref=e199]
+              - generic [ref=e200]: Boca Juniors
+            - generic [ref=e201]: "-"
+          - generic [ref=e202]:
+            - generic [ref=e203]:
+              - img "Unión" [ref=e204]
+              - generic [ref=e205]: Unión
+            - generic [ref=e206]: "-"
+        - button "02-oct Independiente Rivadavia Independiente Rivadavia - Gimnasia LP Gimnasia LP -" [ref=e208]:
+          - generic [ref=e209]: 02-oct
+          - generic [ref=e211]:
+            - generic [ref=e212]:
+              - img "Independiente Rivadavia" [ref=e213]
+              - generic [ref=e214]: Independiente Rivadavia
+            - generic [ref=e215]: "-"
+          - generic [ref=e216]:
+            - generic [ref=e217]:
+              - img "Gimnasia LP" [ref=e218]
+              - generic [ref=e219]: Gimnasia LP
+            - generic [ref=e220]: "-"
+        - button "03-oct Defensa y Justicia Defensa y Justicia - San Lorenzo San Lorenzo -" [ref=e222]:
+          - generic [ref=e223]: 03-oct
+          - generic [ref=e225]:
+            - generic [ref=e226]:
+              - img "Defensa y Justicia" [ref=e227]
+              - generic [ref=e228]: Defensa y Justicia
+            - generic [ref=e229]: "-"
+          - generic [ref=e230]:
+            - generic [ref=e231]:
+              - img "San Lorenzo" [ref=e232]
+              - generic [ref=e233]: San Lorenzo
+            - generic [ref=e234]: "-"
+        - button "03-oct Atlético Tucumán Atlético Tucumán - Barracas Central Barracas Central -" [ref=e236]:
+          - generic [ref=e237]: 03-oct
+          - generic [ref=e239]:
+            - generic [ref=e240]:
+              - img "Atlético Tucumán" [ref=e241]
+              - generic [ref=e242]: Atlético Tucumán
+            - generic [ref=e243]: "-"
+          - generic [ref=e244]:
+            - generic [ref=e245]:
+              - img "Barracas Central" [ref=e246]
+              - generic [ref=e247]: Barracas Central
+            - generic [ref=e248]: "-"
+        - button "09-oct Borussia Dortmund Borussia Dortmund - Werder Bremen Werder Bremen -" [ref=e250]:
+          - generic [ref=e251]: 09-oct
+          - generic [ref=e253]:
+            - generic [ref=e254]:
+              - img "Borussia Dortmund" [ref=e255]
+              - generic [ref=e256]: Borussia Dortmund
+            - generic [ref=e257]: "-"
+          - generic [ref=e258]:
+            - generic [ref=e259]:
+              - img "Werder Bremen" [ref=e260]
+              - generic [ref=e261]: Werder Bremen
+            - generic [ref=e262]: "-"
+        - button "09-oct Lens Lens - Lyon Lyon -" [ref=e264]:
+          - generic [ref=e265]: 09-oct
+          - generic [ref=e267]:
+            - generic [ref=e268]:
+              - img "Lens" [ref=e269]
+              - generic [ref=e270]: Lens
+            - generic [ref=e271]: "-"
+          - generic [ref=e272]:
+            - generic [ref=e273]:
+              - img "Lyon" [ref=e274]
+              - generic [ref=e275]: Lyon
+            - generic [ref=e276]: "-"
+        - button "09-oct Málaga Málaga - Espanyol Espanyol -" [ref=e278]:
+          - generic [ref=e279]: 09-oct
+          - generic [ref=e281]:
+            - generic [ref=e282]:
+              - img "Málaga" [ref=e283]
+              - generic [ref=e284]: Málaga
+            - generic [ref=e285]: "-"
+          - generic [ref=e286]:
+            - generic [ref=e287]:
+              - img "Espanyol" [ref=e288]
+              - generic [ref=e289]: Espanyol
+            - generic [ref=e290]: "-"
+        - button "10-oct Arsenal Arsenal - Leeds United Leeds United -" [ref=e292]:
+          - generic [ref=e293]: 10-oct
+          - generic [ref=e295]:
+            - generic [ref=e296]:
+              - img "Arsenal" [ref=e297]
+              - generic [ref=e298]: Arsenal
+            - generic [ref=e299]: "-"
+          - generic [ref=e300]:
+            - generic [ref=e301]:
+              - img "Leeds United" [ref=e302]
+              - generic [ref=e303]: Leeds United
+            - generic [ref=e304]: "-"
+        - button "10-oct Rayo Vallecano Rayo Vallecano - Athletic Club Athletic Club -" [ref=e306]:
+          - generic [ref=e307]: 10-oct
+          - generic [ref=e309]:
+            - generic [ref=e310]:
+              - img "Rayo Vallecano" [ref=e311]
+              - generic [ref=e312]: Rayo Vallecano
+            - generic [ref=e313]: "-"
+          - generic [ref=e314]:
+            - generic [ref=e315]:
+              - img "Athletic Club" [ref=e316]
+              - generic [ref=e317]: Athletic Club
+            - generic [ref=e318]: "-"
+        - button "10-oct Genoa Genoa - Fiorentina Fiorentina -" [ref=e320]:
+          - generic [ref=e321]: 10-oct
+          - generic [ref=e323]:
+            - generic [ref=e324]:
+              - img "Genoa" [ref=e325]
+              - generic [ref=e326]: Genoa
+            - generic [ref=e327]: "-"
+          - generic [ref=e328]:
+            - generic [ref=e329]:
+              - img "Fiorentina" [ref=e330]
+              - generic [ref=e331]: Fiorentina
+            - generic [ref=e332]: "-"
+        - button "10-oct Augsburg Augsburg - Bayern München Bayern München -" [ref=e334]:
+          - generic [ref=e335]: 10-oct
+          - generic [ref=e337]:
+            - generic [ref=e338]:
+              - img "Augsburg" [ref=e339]
+              - generic [ref=e340]: Augsburg
+            - generic [ref=e341]: "-"
+          - generic [ref=e342]:
+            - generic [ref=e343]:
+              - img "Bayern München" [ref=e344]
+              - generic [ref=e345]: Bayern München
+            - generic [ref=e346]: "-"
+        - button "10-oct Hoffenheim Hoffenheim - Hamburger SV Hamburger SV -" [ref=e348]:
+          - generic [ref=e349]: 10-oct
+          - generic [ref=e351]:
+            - generic [ref=e352]:
+              - img "Hoffenheim" [ref=e353]
+              - generic [ref=e354]: Hoffenheim
+            - generic [ref=e355]: "-"
+          - generic [ref=e356]:
+            - generic [ref=e357]:
+              - img "Hamburger SV" [ref=e358]
+              - generic [ref=e359]: Hamburger SV
+            - generic [ref=e360]: "-"
+        - button "10-oct Mainz 05 Mainz 05 - Bayer Leverkusen Bayer Leverkusen -" [ref=e362]:
+          - generic [ref=e363]: 10-oct
+          - generic [ref=e365]:
+            - generic [ref=e366]:
+              - img "Mainz 05" [ref=e367]
+              - generic [ref=e368]: Mainz 05
+            - generic [ref=e369]: "-"
+          - generic [ref=e370]:
+            - generic [ref=e371]:
+              - img "Bayer Leverkusen" [ref=e372]
+              - generic [ref=e373]: Bayer Leverkusen
+            - generic [ref=e374]: "-"
+        - button "10-oct Paderborn Paderborn - VfB Stuttgart VfB Stuttgart -" [ref=e376]:
+          - generic [ref=e377]: 10-oct
+          - generic [ref=e379]:
+            - generic [ref=e380]:
+              - img "Paderborn" [ref=e381]
+              - generic [ref=e382]: Paderborn
+            - generic [ref=e383]: "-"
+          - generic [ref=e384]:
+            - generic [ref=e385]:
+              - img "VfB Stuttgart" [ref=e386]
+              - generic [ref=e387]: VfB Stuttgart
+            - generic [ref=e388]: "-"
+        - button "10-oct Aston Villa Aston Villa - Brentford Brentford -" [ref=e390]:
+          - generic [ref=e391]: 10-oct
+          - generic [ref=e393]:
+            - generic [ref=e394]:
+              - img "Aston Villa" [ref=e395]
+              - generic [ref=e396]: Aston Villa
+            - generic [ref=e397]: "-"
+          - generic [ref=e398]:
+            - generic [ref=e399]:
+              - img "Brentford" [ref=e400]
+              - generic [ref=e401]: Brentford
+            - generic [ref=e402]: "-"
+        - button "10-oct Chelsea Chelsea - AFC Bournemouth AFC Bournemouth -" [ref=e404]:
+          - generic [ref=e405]: 10-oct
+          - generic [ref=e407]:
+            - generic [ref=e408]:
+              - img "Chelsea" [ref=e409]
+              - generic [ref=e410]: Chelsea
+            - generic [ref=e411]: "-"
+          - generic [ref=e412]:
+            - generic [ref=e413]:
+              - img "AFC Bournemouth" [ref=e414]
+              - generic [ref=e415]: AFC Bournemouth
+            - generic [ref=e416]: "-"
+        - button "10-oct Ipswich Town Ipswich Town - Fulham Fulham -" [ref=e418]:
+          - generic [ref=e419]: 10-oct
+          - generic [ref=e421]:
+            - generic [ref=e422]:
+              - img "Ipswich Town" [ref=e423]
+              - generic [ref=e424]: Ipswich Town
+            - generic [ref=e425]: "-"
+          - generic [ref=e426]:
+            - generic [ref=e427]:
+              - img "Fulham" [ref=e428]
+              - generic [ref=e429]: Fulham
+            - generic [ref=e430]: "-"
+        - button "10-oct Sunderland Sunderland - Brighton & Hove Albion Brighton & Hove Albion -" [ref=e432]:
+          - generic [ref=e433]: 10-oct
+          - generic [ref=e435]:
+            - generic [ref=e436]:
+              - img "Sunderland" [ref=e437]
+              - generic [ref=e438]: Sunderland
+            - generic [ref=e439]: "-"
+          - generic [ref=e440]:
+            - generic [ref=e441]:
+              - img "Brighton & Hove Albion" [ref=e442]
+              - generic [ref=e443]: Brighton & Hove Albion
+            - generic [ref=e444]: "-"
+        - button "10-oct Deportivo Alavés Deportivo Alavés - Atlético Madrid Atlético Madrid -" [ref=e446]:
+          - generic [ref=e447]: 10-oct
+          - generic [ref=e449]:
+            - generic [ref=e450]:
+              - img "Deportivo Alavés" [ref=e451]
+              - generic [ref=e452]: Deportivo Alavés
+            - generic [ref=e453]: "-"
+          - generic [ref=e454]:
+            - generic [ref=e455]:
+              - img "Atlético Madrid" [ref=e456]
+              - generic [ref=e457]: Atlético Madrid
+            - generic [ref=e458]: "-"
+        - button "10-oct Lille Lille - Le Havre Le Havre -" [ref=e460]:
+          - generic [ref=e461]: 10-oct
+          - generic [ref=e463]:
+            - generic [ref=e464]:
+              - img "Lille" [ref=e465]
+              - generic [ref=e466]: Lille
+            - generic [ref=e467]: "-"
+          - generic [ref=e468]:
+            - generic [ref=e469]:
+              - img "Le Havre" [ref=e470]
+              - generic [ref=e471]: Le Havre
+            - generic [ref=e472]: "-"
+        - button "10-oct Inter Inter - Parma Parma -" [ref=e474]:
+          - generic [ref=e475]: 10-oct
+          - generic [ref=e477]:
+            - generic [ref=e478]:
+              - img "Inter" [ref=e479]
+              - generic [ref=e480]: Inter
+            - generic [ref=e481]: "-"
+          - generic [ref=e482]:
+            - generic [ref=e483]:
+              - img "Parma" [ref=e484]
+              - generic [ref=e485]: Parma
+            - generic [ref=e486]: "-"
+        - button "10-oct Barcelona Barcelona - Getafe Getafe -" [ref=e488]:
+          - generic [ref=e489]: 10-oct
+          - generic [ref=e491]:
+            - generic [ref=e492]:
+              - img "Barcelona" [ref=e493]
+              - generic [ref=e494]: Barcelona
+            - generic [ref=e495]: "-"
+          - generic [ref=e496]:
+            - generic [ref=e497]:
+              - img "Getafe" [ref=e498]
+              - generic [ref=e499]: Getafe
+            - generic [ref=e500]: "-"
+        - button "10-oct Napoli Napoli - Frosinone Frosinone -" [ref=e502]:
+          - generic [ref=e503]: 10-oct
+          - generic [ref=e505]:
+            - generic [ref=e506]:
+              - img "Napoli" [ref=e507]
+              - generic [ref=e508]: Napoli
+            - generic [ref=e509]: "-"
+          - generic [ref=e510]:
+            - generic [ref=e511]:
+              - img "Frosinone" [ref=e512]
+              - generic [ref=e513]: Frosinone
+            - generic [ref=e514]: "-"
+      - generic [ref=e59]:
+        - heading "Jugá. Aprendé. Dominá." [level=1] [ref=e60]: Jugá. Aprendé.Dominá.
+        - paragraph [ref=e61]: Micro-desafíos diarios de fútbol.
+        - generic [ref=e62]:
+          - link "Crear cuenta gratis →" [ref=e63] [cursor=pointer]:
+            - /url: /register
+            - text: Crear cuenta gratis
+            - generic [ref=e64]: →
+          - link "Iniciar sesión" [ref=e65] [cursor=pointer]:
+            - /url: /login
+      - generic [ref=e67]:
+        - generic [ref=e68]:
+          - heading "Top jugador" [level=2] [ref=e69]
+          - generic [ref=e70]:
+            - button "Semana" [ref=e71]
+            - button "Mes" [ref=e72]
+        - generic [ref=e515]:
+          - generic [ref=e516]:
+            - generic [ref=e517]:
+              - link "2" [ref=e518] [cursor=pointer]:
+                - /url: /u/6332ba22-1d14-4bb3-ae4d-37b282be0183
+              - generic [ref=e523]:
+                - generic [ref=e524]: Fenane
+                - generic [ref=e525]: Nivel 43
+                - generic [ref=e526]: 510XP
+            - generic [ref=e528]:
+              - link "1" [ref=e529] [cursor=pointer]:
+                - /url: /u/82b0b4ff-4e23-4e00-81ac-7c7234b625bc
+                - img [ref=e533]:
+                  - generic [ref=e534]: banderin
+              - generic [ref=e536]:
+                - generic [ref=e537]: Alejo Fernandez
+                - generic [ref=e538]: Nivel 7
+                - generic [ref=e539]: 1.899XP
+          - link "Ver ranking completo" [ref=e542] [cursor=pointer]:
+            - /url: /leaderboards
+      - generic [ref=e75]:
+        - heading "Partidos de hoy" [level=2] [ref=e76]
+        - generic [ref=e545]:
+          - button "Liga Profesional 02-oct Independiente Independiente - Instituto Instituto -" [ref=e546]:
+            - generic [ref=e547]:
+              - generic [ref=e548]: Liga Profesional
+              - generic [ref=e549]: 02-oct
+            - generic [ref=e550]:
+              - generic [ref=e551]:
+                - img "Independiente" [ref=e552]
+                - generic [ref=e553]: Independiente
+              - generic [ref=e554]: "-"
+            - generic [ref=e555]:
+              - generic [ref=e556]:
+                - img "Instituto" [ref=e557]
+                - generic [ref=e558]: Instituto
+              - generic [ref=e559]: "-"
+          - button "Liga Profesional 02-oct Boca Juniors Boca Juniors - Unión Unión -" [ref=e560]:
+            - generic [ref=e561]:
+              - generic [ref=e562]: Liga Profesional
+              - generic [ref=e563]: 02-oct
+            - generic [ref=e564]:
+              - generic [ref=e565]:
+                - img "Boca Juniors" [ref=e566]
+                - generic [ref=e567]: Boca Juniors
+              - generic [ref=e568]: "-"
+            - generic [ref=e569]:
+              - generic [ref=e570]:
+                - img "Unión" [ref=e571]
+                - generic [ref=e572]: Unión
+              - generic [ref=e573]: "-"
+          - button "Liga Profesional 02-oct Independiente Rivadavia Independiente Rivadavia - Gimnasia LP Gimnasia LP -" [ref=e574]:
+            - generic [ref=e575]:
+              - generic [ref=e576]: Liga Profesional
+              - generic [ref=e577]: 02-oct
+            - generic [ref=e578]:
+              - generic [ref=e579]:
+                - img "Independiente Rivadavia" [ref=e580]
+                - generic [ref=e581]: Independiente Rivadavia
+              - generic [ref=e582]: "-"
+            - generic [ref=e583]:
+              - generic [ref=e584]:
+                - img "Gimnasia LP" [ref=e585]
+                - generic [ref=e586]: Gimnasia LP
+              - generic [ref=e587]: "-"
+          - button "Liga Profesional 03-oct Defensa y Justicia Defensa y Justicia - San Lorenzo San Lorenzo -" [ref=e588]:
+            - generic [ref=e589]:
+              - generic [ref=e590]: Liga Profesional
+              - generic [ref=e591]: 03-oct
+            - generic [ref=e592]:
+              - generic [ref=e593]:
+                - img "Defensa y Justicia" [ref=e594]
+                - generic [ref=e595]: Defensa y Justicia
+              - generic [ref=e596]: "-"
+            - generic [ref=e597]:
+              - generic [ref=e598]:
+                - img "San Lorenzo" [ref=e599]
+                - generic [ref=e600]: San Lorenzo
+              - generic [ref=e601]: "-"
+          - button "Liga Profesional 03-oct Atlético Tucumán Atlético Tucumán - Barracas Central Barracas Central -" [ref=e602]:
+            - generic [ref=e603]:
+              - generic [ref=e604]: Liga Profesional
+              - generic [ref=e605]: 03-oct
+            - generic [ref=e606]:
+              - generic [ref=e607]:
+                - img "Atlético Tucumán" [ref=e608]
+                - generic [ref=e609]: Atlético Tucumán
+              - generic [ref=e610]: "-"
+            - generic [ref=e611]:
+              - generic [ref=e612]:
+                - img "Barracas Central" [ref=e613]
+                - generic [ref=e614]: Barracas Central
+              - generic [ref=e615]: "-"
+          - button "Bundesliga 09-oct Borussia Dortmund Borussia Dortmund - Werder Bremen Werder Bremen -" [ref=e616]:
+            - generic [ref=e617]:
+              - generic [ref=e618]: Bundesliga
+              - generic [ref=e619]: 09-oct
+            - generic [ref=e620]:
+              - generic [ref=e621]:
+                - img "Borussia Dortmund" [ref=e622]
+                - generic [ref=e623]: Borussia Dortmund
+              - generic [ref=e624]: "-"
+            - generic [ref=e625]:
+              - generic [ref=e626]:
+                - img "Werder Bremen" [ref=e627]
+                - generic [ref=e628]: Werder Bremen
+              - generic [ref=e629]: "-"
+          - button "Ligue 1 09-oct Lens Lens - Lyon Lyon -" [ref=e630]:
+            - generic [ref=e631]:
+              - generic [ref=e632]: Ligue 1
+              - generic [ref=e633]: 09-oct
+            - generic [ref=e634]:
+              - generic [ref=e635]:
+                - img "Lens" [ref=e636]
+                - generic [ref=e637]: Lens
+              - generic [ref=e638]: "-"
+            - generic [ref=e639]:
+              - generic [ref=e640]:
+                - img "Lyon" [ref=e641]
+                - generic [ref=e642]: Lyon
+              - generic [ref=e643]: "-"
+          - button "La Liga 09-oct Málaga Málaga - Espanyol Espanyol -" [ref=e644]:
+            - generic [ref=e645]:
+              - generic [ref=e646]: La Liga
+              - generic [ref=e647]: 09-oct
+            - generic [ref=e648]:
+              - generic [ref=e649]:
+                - img "Málaga" [ref=e650]
+                - generic [ref=e651]: Málaga
+              - generic [ref=e652]: "-"
+            - generic [ref=e653]:
+              - generic [ref=e654]:
+                - img "Espanyol" [ref=e655]
+                - generic [ref=e656]: Espanyol
+              - generic [ref=e657]: "-"
+          - button "Premier League 10-oct Arsenal Arsenal - Leeds United Leeds United -" [ref=e658]:
+            - generic [ref=e659]:
+              - generic [ref=e660]: Premier League
+              - generic [ref=e661]: 10-oct
+            - generic [ref=e662]:
+              - generic [ref=e663]:
+                - img "Arsenal" [ref=e664]
+                - generic [ref=e665]: Arsenal
+              - generic [ref=e666]: "-"
+            - generic [ref=e667]:
+              - generic [ref=e668]:
+                - img "Leeds United" [ref=e669]
+                - generic [ref=e670]: Leeds United
+              - generic [ref=e671]: "-"
+      - generic [ref=e84]:
+        - heading "Jugá" [level=2] [ref=e85]
+        - generic [ref=e672]:
+          - generic [ref=e673]:
+            - generic [ref=e674]:
+              - paragraph [ref=e677]: Bloqueado
+              - paragraph [ref=e678]: Iniciá sesión para jugar
+              - link "Iniciar sesión" [ref=e679] [cursor=pointer]:
+                - /url: /login
+            - generic:
+              - generic:
+                - img "Posición correcta"
+              - generic:
+                - heading "Posición correcta" [level=3]
+                - paragraph: Elegí la posición correcta del jugador mostrado
+          - generic [ref=e680]:
+            - generic [ref=e681]:
+              - paragraph [ref=e684]: Bloqueado
+              - paragraph [ref=e685]: Iniciá sesión para jugar
+              - link "Iniciar sesión" [ref=e686] [cursor=pointer]:
+                - /url: /login
+            - generic:
+              - generic:
+                - img "Adivina el jugador"
+              - generic:
+                - heading "Adivina el jugador" [level=3]
+                - paragraph: "El clásico: adiviná el jugador"
+          - generic [ref=e687]:
+            - generic [ref=e688]:
+              - paragraph [ref=e691]: Bloqueado
+              - paragraph [ref=e692]: Iniciá sesión para jugar
+              - link "Iniciar sesión" [ref=e693] [cursor=pointer]:
+                - /url: /login
+            - generic:
+              - generic:
+                - img "¿Quién es?"
+              - generic:
+                - heading "¿Quién es?" [level=3]
+                - paragraph: Escribe el nombre a partir de la foto borrosa y pistas
+          - generic [ref=e694]:
+            - generic [ref=e695]:
+              - paragraph [ref=e698]: Bloqueado
+              - paragraph [ref=e699]: Iniciá sesión para jugar
+              - link "Iniciar sesión" [ref=e700] [cursor=pointer]:
+                - /url: /login
+            - generic:
+              - generic:
+                - img "Valor de mercado"
+              - generic:
+                - heading "Valor de mercado" [level=3]
+                - paragraph: Ordená 5 jugadores de más caro a más barato
+      - generic [ref=e104]:
+        - heading "¿Cómo funciona?" [level=2] [ref=e105]
+        - generic [ref=e106]:
+          - generic [ref=e107]:
+            - text: "01"
+            - heading "Creá tu cuenta" [level=3] [ref=e108]
+            - paragraph [ref=e109]: Registrate gratis y personalizá tu perfil con tu equipo y jugador favorito.
+          - generic [ref=e110]:
+            - text: "02"
+            - heading "Jugá desafíos diarios" [level=3] [ref=e111]
+            - paragraph [ref=e112]: 9 modos de juego únicos. Adivinar jugadores, ordenar por valor, armar formaciones y más.
+          - generic [ref=e113]:
+            - text: "03"
+            - heading "Subí de nivel" [level=3] [ref=e114]
+            - paragraph [ref=e115]: Ganá XP, desbloqueá logros y competí en el ranking global contra otros fanáticos.
+      - generic [ref=e116]:
+        - heading "Elegí tu plan" [level=2] [ref=e117]
+        - generic [ref=e701]:
+          - generic [ref=e702]:
+            - generic [ref=e703]:
+              - generic [ref=e704]: Free
+              - generic [ref=e706]: Gratis
+            - list [ref=e708]:
+              - listitem [ref=e709]:
+                - generic [ref=e712]: 1 power-up por día
+                - generic:
+                  - generic: Tus ayudas en partida
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: 50/50
+                        - generic: Elimina 2 opciones incorrectas
+                    - generic:
+                      - generic:
+                        - generic: Escudo
+                        - generic: Protege de un error sin perder
+                    - generic:
+                      - generic:
+                        - generic: +15 seg
+                        - generic: Suma tiempo al reloj
+                    - generic:
+                      - generic:
+                        - generic: Pista
+                        - generic: Revela una pista extra
+              - listitem [ref=e716]:
+                - generic [ref=e719]: Pase de Batalla — recompensas gratis
+              - listitem [ref=e720]:
+                - generic [ref=e723]: 9 modos, XP y ranking global
+            - generic [ref=e724]: Incluido
+          - generic [ref=e725]:
+            - generic [ref=e726]: Popular
+            - generic [ref=e727]:
+              - generic [ref=e728]: Pro
+              - generic [ref=e730]:
+                - generic [ref=e731]: $11.990
+                - generic [ref=e732]: ARS/mes
+            - list [ref=e733]:
+              - listitem [ref=e734]:
+                - generic [ref=e737]: Bonus de XP +25%
+              - listitem [ref=e738]:
+                - generic [ref=e741]: 5 power-ups por día
+                - generic:
+                  - generic: Tus ayudas en partida
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: 50/50
+                        - generic: Elimina 2 opciones incorrectas
+                    - generic:
+                      - generic:
+                        - generic: Escudo
+                        - generic: Protege de un error sin perder
+                    - generic:
+                      - generic:
+                        - generic: +15 seg
+                        - generic: Suma tiempo al reloj
+                    - generic:
+                      - generic:
+                        - generic: Pista
+                        - generic: Revela una pista extra
+              - listitem [ref=e745]:
+                - generic [ref=e748]: Pase de Batalla PRO — recompensas premium
+              - listitem [ref=e749]:
+                - generic [ref=e752]: Íconos exclusivos
+                - generic:
+                  - generic: Íconos que desbloqueás
+                  - generic:
+                    - generic: Corona
+                    - generic: GOAT
+                    - generic: Trofeo
+                  - generic: y muchos más
+              - listitem [ref=e756]:
+                - generic [ref=e759]: Bordes y banners exclusivos
+                - generic:
+                  - generic: Bordes y banners
+                  - generic:
+                    - generic: Élite
+                    - generic: Campeón
+                    - generic: Oro
+                    - generic: Galaxia
+              - listitem [ref=e763]:
+                - generic [ref=e766]: Badge Pro en perfil
+                - generic:
+                  - generic: Así se ve en tu perfil
+                  - generic: PRO
+            - button "Suscribirme" [ref=e770]
+          - generic [ref=e771]:
+            - generic [ref=e772]:
+              - generic [ref=e773]: Legend
+              - generic [ref=e775]:
+                - generic [ref=e776]: $14.990
+                - generic [ref=e777]: ARS/mes
+            - list [ref=e778]:
+              - listitem [ref=e779]:
+                - generic [ref=e782]: Bonus de XP +50%
+              - listitem [ref=e783]:
+                - generic [ref=e786]: 15 power-ups por día
+                - generic:
+                  - generic: Tus ayudas en partida
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: 50/50
+                        - generic: Elimina 2 opciones incorrectas
+                    - generic:
+                      - generic:
+                        - generic: Escudo
+                        - generic: Protege de un error sin perder
+                    - generic:
+                      - generic:
+                        - generic: +15 seg
+                        - generic: Suma tiempo al reloj
+                    - generic:
+                      - generic:
+                        - generic: Pista
+                        - generic: Revela una pista extra
+              - listitem [ref=e790]:
+                - generic [ref=e793]: Pase de Batalla PRO — recompensas premium
+              - listitem [ref=e794]:
+                - generic [ref=e797]: Íconos exclusivos
+                - generic:
+                  - generic: Íconos que desbloqueás
+                  - generic:
+                    - generic: Corona
+                    - generic: GOAT
+                    - generic: Trofeo
+                  - generic: y muchos más
+              - listitem [ref=e801]:
+                - generic [ref=e804]: Bordes y banners exclusivos
+                - generic:
+                  - generic: Bordes y banners
+                  - generic:
+                    - generic: Élite
+                    - generic: Campeón
+                    - generic: Oro
+                    - generic: Galaxia
+              - listitem [ref=e808]:
+                - generic [ref=e811]: Badge Legend dorado en perfil
+                - generic:
+                  - generic: Así se ve en tu perfil
+                  - generic: LEGEND
+            - button "Suscribirme" [ref=e815]
+  - contentinfo [ref=e122]:
+    - generic [ref=e123]:
+      - generic [ref=e124]:
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - img "Fulvo" [ref=e127]
+            - generic [ref=e128]: FULVO
+          - paragraph [ref=e129]: La plataforma de aprendizaje gamificado de fútbol que transforma tu pasión en progreso.
+          - generic [ref=e130]:
+            - link "Instagram de Fulvo" [ref=e131] [cursor=pointer]:
+              - /url: https://www.instagram.com/fulvoapp/
+            - link "TikTok de Fulvo" [ref=e134] [cursor=pointer]:
+              - /url: https://www.tiktok.com/@fulvoapp
+            - link "YouTube de Fulvo" [ref=e137] [cursor=pointer]:
+              - /url: https://www.youtube.com/@jugafulvo
+        - generic [ref=e140]:
+          - heading "Enlaces rápidos" [level=3] [ref=e141]
+          - list [ref=e142]:
+            - listitem [ref=e143]:
+              - link "Jugar por Puntos" [ref=e144] [cursor=pointer]:
+                - /url: /play/points
+            - listitem [ref=e145]:
+              - link "Jugá gratis" [ref=e146] [cursor=pointer]:
+                - /url: /games/guess-player?mode=challenge
+            - listitem [ref=e147]:
+              - link "Modo Carrera" [ref=e148] [cursor=pointer]:
+                - /url: /carrera
+            - listitem [ref=e149]:
+              - link "Ranking" [ref=e150] [cursor=pointer]:
+                - /url: /leaderboards
+            - listitem [ref=e151]:
+              - link "Mi Perfil" [ref=e152] [cursor=pointer]:
+                - /url: /profile
+        - generic [ref=e153]:
+          - heading "Acerca de" [level=3] [ref=e154]
+          - list [ref=e155]:
+            - listitem [ref=e156]:
+              - link "¿Qué es Fulvo?" [ref=e157] [cursor=pointer]:
+                - /url: /about/fulvo
+            - listitem [ref=e158]:
+              - link "Nuestro Objetivo" [ref=e159] [cursor=pointer]:
+                - /url: /about/objetivo
+            - listitem [ref=e160]:
+              - link "¿Quién soy?" [ref=e161] [cursor=pointer]:
+                - /url: /about/me
+            - listitem [ref=e162]:
+              - link "Contacto" [ref=e163] [cursor=pointer]:
+                - /url: mailto:fernandezmalejo@gmail.com
+      - generic [ref=e164]:
+        - paragraph [ref=e165]: © 2026 FULVO. Todos los derechos reservados.
+        - generic [ref=e166]:
+          - link "Privacidad" [ref=e167] [cursor=pointer]:
+            - /url: /privacidad
+          - link "Términos" [ref=e168] [cursor=pointer]:
+            - /url: /terminos
+          - paragraph [ref=e169]:
+            - text: Desarrollado por
+            - link "Alejo Martin Fernandez" [ref=e170] [cursor=pointer]:
+              - /url: https://alejomfernandez.com.ar
