@@ -319,7 +319,7 @@ export default {
 <template>
   <div class="pf relative -mx-6 -mt-10 lg:mx-auto lg:mt-0 lg:max-w-xl pb-6">
     <!-- Banner equipado -->
-    <BannerScene role="region" aria-label="Banner equipado" class="h-[168px] lg:rounded-b-3xl" :style-key="equippedBannerKey" :premium="equippedBannerPremium" contain>
+    <BannerScene role="region" aria-label="Banner equipado" class="h-[168px] lg:rounded-b-3xl" :style-key="equippedBannerKey" :premium="equippedBannerPremium" contain :top-reserve="58">
       <div class="absolute top-3.5 left-3.5 right-3.5 flex justify-end gap-2">
         <template v-if="isSelf">
           <RouterLink to="/coleccion" class="pf-chip min-h-[44px] px-3.5 rounded-full flex items-center gap-1.5 text-[13px] font-bold text-white" @click="haptic">

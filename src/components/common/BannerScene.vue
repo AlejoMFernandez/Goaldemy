@@ -25,6 +25,9 @@ const props = defineProps({
   // de `edgeGap` px del borde de la ventana (ahí vive la barra de amigos: 58 px + right-5).
   contain: { type: Boolean, default: false },
   edgeGap: { type: Number, default: 96 },
+  // px de arriba que quedan libres para botones encima del banner (perfil: Vestuario/Editar):
+  // el dibujo se escala al alto que queda y se apoya abajo, así nada queda tapado.
+  topReserve: { type: Number, default: 0 },
 })
 
 // El dibujo escala por alto y no ocupa más de este % del ancho del banner (modo contain).
@@ -40,7 +43,8 @@ const onScreen = ref(true)
 const reduced = ref(false)
 const still = computed(() => !props.animate || reduced.value)
 const right = ref(0) // px entre el dibujo y el borde derecho del banner
-const boxStyle = computed(() => scene.value ? { '--k': k.value.toFixed(4), '--bh': bh.value + 'px', '--bs-right': right.value.toFixed(1) + 'px' } : undefined)
+const topPx = ref(0)
+const boxStyle = computed(() => scene.value ? { '--k': k.value.toFixed(4), '--bh': bh.value + 'px', '--bs-right': right.value.toFixed(1) + 'px', '--bs-top': topPx.value + 'px' } : undefined)
 
 let ro = null
 let io = null
@@ -51,7 +55,8 @@ function measure() {
   const h = el.value?.clientHeight || 0
   if (!h) return
   bh.value = h
-  let scale = h / 120
+  const top = Math.max(0, Math.min(props.topReserve, h * 0.5))
+  let scale = (h - top) / 120
   let gap = 0
   if (props.contain) {
     const r = el.value.getBoundingClientRect()
@@ -68,6 +73,7 @@ function measure() {
     if (r.width >= SCENE_WIDE_MIN) scale = Math.min(scale, (r.width * SCENE_MAX_SHARE) / 300)
   }
   k.value = scale
+  topPx.value = top
   right.value = gap
   ready.value = true
 }
