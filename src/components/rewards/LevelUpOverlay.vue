@@ -104,9 +104,12 @@ function collect() { hapticTap(); dismiss() }
 const combo = ref(0)
 
 const vw = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
-function onResize() { vw.value = window.innerWidth }
-const cardSize = computed(() => vw.value < 420 ? 104 : vw.value < 640 ? 120 : 140)
+// Pantallas bajas (iPhone con la barra de Safari ≈ 660 px): todo más compacto para que entre sin scroll
+const vh = ref(typeof window !== 'undefined' ? window.innerHeight : 900)
+function onResize() { vw.value = window.innerWidth; vh.value = window.innerHeight }
+const cardSize = computed(() => vh.value < 760 ? 96 : vw.value < 420 ? 104 : vw.value < 640 ? 120 : 140)
 const upSize = computed(() => vw.value < 420 ? 84 : 96)
+const sideArt = computed(() => sidePrizes.value.length > 1 ? (vh.value < 760 ? 40 : 46) : (vh.value < 760 ? 60 : 72))
 
 function flash() { flashKey.value++ }
 
@@ -351,6 +354,8 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
         <div v-else ref="stageEl" class="lv4" role="dialog" aria-modal="true" :aria-label="`Subiste al nivel ${current.newLevel}`" @click.self="skip">
           <div class="lv4-rays" aria-hidden="true"><div></div></div>
 
+          <!-- Cuerpo con scroll propio: el botón de abajo queda en su franja y nunca tapa nada -->
+          <div class="lv4-body" @click.self="skip">
           <div class="lv4-head" @click="skip">
             <p class="lv4-kick" :class="{ in: lp >= 1 }">{{ levelsUp > 1 ? `¡SUBISTE ${levelsUp} NIVELES!` : '¡SUBISTE DE NIVEL!' }}</p>
             <div ref="numEl" class="lv4-badge" :class="{ big: bigPum }">
@@ -384,26 +389,32 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
                   <span class="shine" aria-hidden="true"></span>
                   <span class="new">NUEVO</span>
                   <span class="art" :class="{ bare: heroPrize.kind !== 'icon' && heroPrize.kind !== 'title' }" :style="{ borderColor: theme(heroPrize).c, boxShadow: `0 0 22px ${theme(heroPrize).ring}, 0 8px 16px rgba(0,0,0,.5)` }">
-                    <CosmeticIcon v-if="heroPrize.kind === 'icon'" :icon-key="heroPrize.styleKey || heroPrize.iconKey || ''" :rarity="heroPrize.rarity" :size="112" />
+                    <CosmeticIcon v-if="heroPrize.kind === 'icon'" :icon-key="heroPrize.styleKey || heroPrize.iconKey || ''" :rarity="heroPrize.rarity" :size="vh < 760 ? 80 : 112" />
                     <span v-else-if="heroPrize.kind === 'title'" class="ttl">{{ heroPrize.name }}</span>
-                    <PrizeCard v-else :prize="heroPrize" :size="94" />
+                    <PrizeCard v-else :prize="heroPrize" :size="vh < 760 ? 78 : 94" />
                   </span>
                   <span class="k">{{ typeLabel(heroPrize) }}</span>
                   <span class="nm">{{ heroPrize.name }}</span>
                   <span class="rr" :style="{ background: theme(heroPrize).c }">{{ (RARITY_LABEL[heroPrize.rarity] || 'Común').toUpperCase() }}</span>
                 </div>
               </div>
-              <div v-if="sidePrizes.length" class="side">
-                <div v-for="(p, i) in sidePrizes" :key="'s' + i" class="sc" :style="{ animationDelay: (0.3 + i * 0.15) + 's', background: `linear-gradient(170deg, ${theme(p).soft} 0%, rgba(15,23,42,0.92) 75%)`, borderColor: theme(p).ring }">
-                  <span class="tp"><b :style="{ color: theme(p).c }">{{ typeLabel(p) }}</b><i :style="{ background: theme(p).soft }">{{ RARITY_LABEL[p.rarity] || 'Común' }}</i></span>
-                  <span v-if="p.kind === 'title'" class="ttl" :style="{ borderColor: theme(p).c, background: `linear-gradient(180deg, ${theme(p).dark}, #0b1220)` }">{{ p.name }}</span>
-                  <template v-else>
-                    <span class="vis">
-                      <CosmeticIcon v-if="p.kind === 'icon'" :icon-key="p.styleKey || p.iconKey || ''" :rarity="p.rarity" :size="50" />
-                      <PrizeCard v-else :prize="p" :size="50" />
+              <div v-if="sidePrizes.length" class="side" :class="{ two: sidePrizes.length > 1 }">
+                <!-- Mismo formato que la carta grande, en chico: arte con borde de rareza, tipo, nombre y rareza -->
+                <div v-for="(p, i) in sidePrizes" :key="'s' + i" class="sc" :style="{ animationDelay: (0.3 + i * 0.15) + 's', boxShadow: `0 0 16px ${theme(p).ring}, 0 8px 18px rgba(0,0,0,.45)` }">
+                  <span class="spin" :style="{ background: theme(p).spin }" aria-hidden="true"></span>
+                  <div class="in" :style="{ background: `radial-gradient(80% 55% at 50% 38%, ${theme(p).soft}, transparent 70%), ${theme(p).bg}` }">
+                    <span class="new">NUEVO</span>
+                    <span class="art" :class="{ bare: p.kind !== 'icon' && p.kind !== 'title' }" :style="{ borderColor: theme(p).c, boxShadow: `0 0 14px ${theme(p).ring}` }">
+                      <CosmeticIcon v-if="p.kind === 'icon'" :icon-key="p.styleKey || p.iconKey || ''" :rarity="p.rarity" :size="sideArt" />
+                      <span v-else-if="p.kind === 'title'" class="ttl">{{ p.name }}</span>
+                      <PrizeCard v-else :prize="p" :size="sideArt" />
                     </span>
-                    <span class="nm">{{ p.name }}</span>
-                  </template>
+                    <span class="txt">
+                      <span class="k">{{ typeLabel(p) }}</span>
+                      <span class="nm">{{ p.name }}</span>
+                      <span class="rr" :style="{ background: theme(p).c }">{{ (RARITY_LABEL[p.rarity] || 'Común').toUpperCase() }}</span>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -423,6 +434,7 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
               </div>
             </div>
           </section>
+          </div>
 
           <div class="lv4-go">
             <button v-if="lp >= 4" type="button" class="go" @click="collect">
@@ -529,12 +541,13 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
 
 
 /* ═══ Acto nivel V4 ═══ */
-.lv4 { position: fixed; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; overflow-y: auto; color: #f1f5f9;
+.lv4 { position: fixed; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; overflow: hidden; color: #f1f5f9;
   background: radial-gradient(80% 42% at 50% 24%, rgba(99, 102, 241, .45), transparent 72%), #0b1220; padding: env(safe-area-inset-top, 0px) 0 0; }
 .lv4-rays { position: absolute; left: 50%; top: 210px; width: 760px; height: 760px; margin: -380px 0 0 -380px; pointer-events: none; }
 .lv4-rays div { width: 100%; height: 100%; border-radius: 50%; background: repeating-conic-gradient(from 0deg, rgba(199, 210, 254, .10) 0deg 7deg, transparent 7deg 20deg); -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 62%); mask-image: radial-gradient(circle, #000 18%, transparent 62%); animation: lv4-rays 28s linear infinite; }
 @keyframes lv4-rays { to { transform: rotate(360deg); } }
-.lv4-head { position: relative; width: 100%; max-width: 430px; display: flex; flex-direction: column; align-items: center; padding-top: 34px; }
+.lv4-body { position: relative; flex: 1 1 auto; min-height: 0; width: 100%; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; align-items: center; padding-bottom: 8px; }
+.lv4-head { position: relative; flex: none; width: 100%; max-width: 430px; display: flex; flex-direction: column; align-items: center; padding-top: 34px; }
 .lv4-kick { margin: 0; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 26px; letter-spacing: 1.5px; color: #fde68a; text-shadow: 0 2px 0 rgba(120, 53, 15, .8); opacity: 0; transform: translateY(6px); transition: opacity .4s, transform .4s; }
 .lv4-kick.in { opacity: 1; transform: none; }
 .lv4-badge { position: relative; margin-top: 14px; width: 176px; height: 196px; animation: lv4-pop .6s cubic-bezier(.2, .9, .3, 1.2) .1s both; }
@@ -561,7 +574,7 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
 .lv4-bar .track b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-bug); font-weight: 800; font-size: 12px; text-shadow: 0 1px 2px #000; white-space: nowrap; }
 .lv4-bar .ok { width: 22px; height: 22px; border-radius: 50%; background: #22c55e; display: grid; place-items: center; flex: none; }
 
-.lv4-un { position: relative; width: calc(100% - 32px); max-width: 398px; margin-top: 20px; display: flex; flex-direction: column; gap: 10px; animation: lv4-in .4s ease both; }
+.lv4-un { position: relative; flex: none; width: calc(100% - 32px); max-width: 398px; margin-top: 20px; display: flex; flex-direction: column; gap: 10px; animation: lv4-in .4s ease both; }
 @keyframes lv4-in { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
 .lv4-h { display: flex; align-items: center; gap: 10px; }
 .lv4-h span { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(199, 210, 254, .4)); }
@@ -583,14 +596,24 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
 .hero .nm { position: relative; max-width: 92%; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 26px; line-height: .95; text-transform: uppercase; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hero .rr { position: relative; margin-top: 4px; padding: 1px 9px; border-radius: 6px; font-family: var(--font-bug); font-weight: 800; font-size: 13px; letter-spacing: 1.2px; color: #fff; }
 .side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.sc { position: relative; flex: 1; min-height: 0; box-sizing: border-box; border-radius: 16px; padding: 8px; border: 1.5px solid; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; animation: lv4-in .4s cubic-bezier(.2, .9, .3, 1.15) both; min-width: 0; }
-.sc .tp { display: flex; align-items: center; gap: 5px; }
-.sc .tp b { font-size: 10px; font-weight: 800; letter-spacing: 1.4px; }
-.sc .tp i { font-style: normal; padding: 0 6px; border-radius: 5px; font-size: 10px; font-weight: 800; color: #fff; }
-.sc .vis { width: 50px; height: 50px; flex: none; border-radius: 12px; overflow: hidden; display: grid; place-items: center; }
-.sc .vis > * { max-width: 100%; max-height: 100%; }
-.sc .nm { max-width: 100%; font-family: var(--font-bug); font-weight: 800; font-size: 17px; line-height: 1; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sc .ttl { max-width: 100%; padding: 6px 12px; box-sizing: border-box; border-radius: 10px; border: 1.5px solid; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25); font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 20px; line-height: 1; letter-spacing: .5px; color: #fff; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Cartas al costado: mismo formato que la grande (marco que gira, NUEVO, arte con borde, tipo, nombre, rareza) */
+.sc { position: relative; flex: 1; min-height: 0; border-radius: 16px; padding: 2px; overflow: hidden; animation: lv4-in .4s cubic-bezier(.2, .9, .3, 1.15) both; min-width: 0; }
+.sc .spin { position: absolute; left: 50%; top: 50%; width: 300px; height: 300px; margin: -150px 0 0 -150px; display: block; animation: lv4-rays 6s linear infinite; }
+.sc .in { position: relative; height: 100%; box-sizing: border-box; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 22px 8px 10px; }
+.sc .new { position: absolute; left: 8px; top: 8px; z-index: 3; padding: 1px 6px; border-radius: 5px; background: #fbbf24; color: #1c1206; font-family: var(--font-bug); font-weight: 800; font-size: 10px; letter-spacing: .8px; }
+.sc .art { position: relative; flex: none; box-sizing: border-box; border-radius: 14px; border: 2px solid; overflow: hidden; display: grid; place-items: center; background: rgba(0, 0, 0, .25); }
+.sc .art.bare { border: 0; background: none; box-shadow: none !important; overflow: visible; }
+.sc .art .ttl { padding: 6px 8px; max-width: 130px; text-align: center; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 16px; line-height: 1; text-transform: uppercase; color: #fff; }
+.sc .txt { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; max-width: 100%; }
+.sc .k { font-size: 9px; font-weight: 800; letter-spacing: 1.4px; color: #e9d5ff; }
+.sc .nm { max-width: 100%; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 19px; line-height: .95; text-transform: uppercase; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc .rr { margin-top: 2px; padding: 0 7px; border-radius: 5px; font-family: var(--font-bug); font-weight: 800; font-size: 10px; letter-spacing: 1px; color: #fff; }
+/* Dos cartas al costado: arte a la izquierda y texto a la derecha (entran las dos en el alto de la grande) */
+.side.two .sc .in { flex-direction: row; justify-content: flex-start; gap: 8px; padding: 8px 8px 8px 10px; }
+.side.two .sc .new { left: auto; right: 6px; top: 6px; font-size: 9px; padding: 0 5px; }
+.side.two .sc .txt { align-items: flex-start; }
+.side.two .sc .nm { font-size: 16px; }
+.side.two .sc .art .ttl { font-size: 11px; max-width: 64px; padding: 4px; }
 .lv4-more { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .lv4-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .chip { height: 50px; box-sizing: border-box; border-radius: 14px; padding: 0 8px; background: rgba(255, 255, 255, .05); border: 1px solid; display: flex; align-items: center; gap: 8px; min-width: 0; animation: lv4-in .4s cubic-bezier(.2, .9, .3, 1.15) .5s both; }
@@ -599,14 +622,49 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
 .chip .cv { display: flex; flex-direction: column; min-width: 0; }
 .chip .cv b { font-family: var(--font-bug); font-weight: 800; font-size: 19px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chip .cv small { font-size: 10px; font-weight: 700; color: #94a3b8; white-space: nowrap; }
-.lv4-go { position: sticky; bottom: 0; margin-top: auto; width: calc(100% - 32px); max-width: 398px; padding: 16px 0 calc(20px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: center; }
+.lv4-go { position: relative; flex: none; width: calc(100% - 32px); max-width: 398px; padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: center; }
 .lv4-go .go { width: 100%; min-height: 62px; border: 0; border-radius: 16px; background: linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%); border-bottom: 4px solid #b45309; color: #1c1206; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 30px; letter-spacing: 1.5px; cursor: pointer; animation: lv4-in .35s ease both, lv4-pulse 2s ease-in-out 1s infinite; }
 .lv4-go .go:active { transform: translateY(2px); border-bottom-width: 2px; }
 @keyframes lv4-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, .5); } 50% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); } }
 .lv4-go .camino { min-height: 44px; padding: 0 16px; border: 0; background: none; color: #a5b4fc; font-size: 13px; font-weight: 700; cursor: pointer; }
 .lv4-go .skip { min-height: 44px; padding: 0 16px; border: 0; background: none; color: #64748b; font-size: 13px; cursor: pointer; }
+/* Pantallas bajas (iPhone con la barra de Safari ≈ 660 px útiles): escudo, cartas y botón más chicos */
+@media (max-height: 760px) {
+  .lvo { padding: 12px 16px; }
+  .lvo-stage { gap: 8px; padding-top: 4px; min-height: 0; }
+  .forge { height: 268px; }
+  .forge .wrap { width: min(44%, 150px); }
+  .forge .name .n { font-size: 44px; }
+  .lvo-block { gap: 8px; }
+  .lvo-cards { gap: 10px; padding-bottom: 4px; }
+  .lvo-next { font-size: 13px; }
+  .lvo-btn { margin-top: 2px; padding: 10px 34px; }
+  .lv4-head { padding-top: 14px; }
+  .lv4-kick { font-size: 22px; }
+  .lv4-badge { margin-top: 8px; width: 122px; height: 136px; }
+  .lv4-badge .glow { inset: -18px; }
+  .lv4-badge .face { inset: 5px; }
+  .lv4-badge .nv { font-size: 15px; letter-spacing: 3px; margin-top: 4px; }
+  .lv4-badge .n { font-size: 70px; }
+  .lv4-badge .crest { width: 30px; height: 35px; margin-left: -15px; bottom: -13px; }
+  .lv4-tier { margin-top: 18px; font-size: 12px; }
+  .lv4-bar { margin-top: 8px; }
+  .lv4-un { margin-top: 12px; gap: 8px; }
+  .lv4-h b { font-size: 13px; }
+  .lv4-cards { grid-template-columns: 158px minmax(0, 1fr); gap: 8px; }
+  .lv4-cards.solo { grid-template-columns: 172px; }
+  .hero { height: 176px; }
+  .hero .in { padding-top: 6px; }
+  .hero .art { margin-top: 18px; width: 84px; height: 84px; border-radius: 18px; }
+  .hero .nm { font-size: 21px; }
+  .hero .k { margin-top: 6px; }
+  .side, .lv4-chips { gap: 8px; }
+  .chip { height: 44px; }
+  .lv4-go .go { min-height: 52px; font-size: 26px; }
+  .lv4-go .camino { min-height: 44px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .lvo *, .lvo-flash.on { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
-  .lv4-rays div, .hero .spin, .lv4-badge .shine, .lv4-cards .shine { display: none; }
+  .lv4-rays div, .hero .spin, .sc .spin, .lv4-badge .shine, .lv4-cards .shine { display: none; }
 }
 </style>
