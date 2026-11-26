@@ -14,12 +14,15 @@ import { TIERS } from '../services/tiers'
 import { DAILY_GAMES } from '../services/game-modes'
 import { friendlyNameForSlug } from '../services/games'
 import { GAME_POSTER_META } from '../services/game-art'
-import { rarity, frameStyle, bannerStyle } from '../services/cosmetics'
+import { rarity, frameStyle, isSceneFrame, titleClass } from '../services/cosmetics'
+import { RASTER_ICON_KEYS } from '../services/cosmetic-icon-keys'
 import { markWelcomeSeen } from '../services/onboarding'
 import { tap } from '../services/haptics'
 import { shellState } from '../components/shell/shell-state'
 import GamePoster from '../components/game/GamePoster.vue'
 import CosmeticIcon from '../components/rewards/CosmeticIcon.vue'
+import AvatarFrame from '../components/common/AvatarFrame.vue'
+import BannerScene from '../components/common/BannerScene.vue'
 
 const router = useRouter()
 const step = ref(1)
@@ -53,7 +56,7 @@ const maxLevel = TIERS[TIERS.length - 1].maxLevel
 
 // ── Pasos 3 y 4: catálogo real de cosméticos (tabla pública) ──
 const RANK = { legendary: 4, epic: 3, rare: 2, common: 1 }
-const RASTER = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'sun', 'clover', 'sword', 'hat', 'laurel', 'bolt', 'flame', 'gem', 'owl', 'broom', 'chat', 'butterfly', 'globe', 'comet', 'phoenix'])
+const RASTER = RASTER_ICON_KEYS
 const catalog = ref([])
 const catLoaded = ref(false)
 onMounted(async () => {
@@ -74,7 +77,8 @@ const vitrina = computed(() => {
   return catLoaded.value ? ['crown', 'goat', 'phoenix', 'trophy', 'bolt', 'flame', 'boot', 'gloves'].map(k => ({ code: k, style_key: k, name: '', rarity: '' })) : []
 })
 const pickTop = (type, filter = () => true) => catalog.value.filter(c => c.type === type && filter(c)).sort(byRarity)[0] || null
-const showFrame = computed(() => pickTop('frame', c => !!c.style_key && frameStyle(c.style_key).wrap))
+// Vitrina: los bordes del vestuario nuevo primero (los de rango van en El camino)
+const showFrame = computed(() => pickTop('frame', c => isSceneFrame(c.style_key)) || pickTop('frame', c => !!c.style_key && !!frameStyle(c.style_key).wrap && !String(c.style_key).startsWith('medal_')))
 const showBanner = computed(() => pickTop('banner', c => !!c.style_key))
 const showTitle = computed(() => pickTop('title'))
 const showIcon = computed(() => vitrina.value[0] || null)
@@ -148,28 +152,32 @@ function onTouchEnd(e) {
         </div>
 
         <div v-else-if="step === 3" key="3" class="bv-scene">
-          <div class="bv-banner" :class="bannerStyle(showBanner?.style_key || 'pitch')"></div>
-          <span class="bv-avatar" :class="[frameStyle(showFrame?.style_key || 'gold').wrap]">
-            <span class="bv-avatar-in">
-              <CosmeticIcon v-if="showIcon" :icon-key="showIcon.style_key" :size="94" />
-            </span>
+          <BannerScene class="bv-banner" :style-key="showBanner?.style_key || 'pitch'" />
+          <span class="bv-avatar">
+            <AvatarFrame :frame-key="showFrame?.style_key || 'gold'" :size="112" :level="shellState.stats?.level || 1" :streak="Number(shellState.stats?.streak) || 0">
+              <span class="bv-avatar-in">
+                <CosmeticIcon v-if="showIcon" :icon-key="showIcon.style_key" :size="98" />
+              </span>
+            </AvatarFrame>
           </span>
-          <span v-if="showTitle" class="bv-title">{{ showTitle.name }}</span>
+          <span v-if="showTitle" class="bv-title" :class="titleClass(showTitle.rarity)">{{ showTitle.name }}</span>
           <div class="bv-rarities">
             <span v-for="r in rarities" :key="r.k" :style="{ color: RCOLOR[r.k], borderColor: RCOLOR[r.k] }">{{ r.label }}</span>
           </div>
         </div>
 
         <div v-else key="4" class="bv-scene">
-          <div class="bv-showcase" :class="bannerStyle(showBanner?.style_key || 'night')">
-            <span class="bv-sc-av" :class="frameStyle(showFrame?.style_key || 'gold').wrap">
-              <span class="bv-sc-in"><CosmeticIcon v-if="showIcon" :icon-key="showIcon.style_key" :size="62" /></span>
+          <BannerScene class="bv-showcase" :style-key="showBanner?.style_key || 'night'">
+            <span class="bv-sc-av">
+              <AvatarFrame :frame-key="showFrame?.style_key || 'gold'" :size="76" :level="shellState.stats?.level || 1" :streak="Number(shellState.stats?.streak) || 0">
+                <span class="bv-sc-in"><CosmeticIcon v-if="showIcon" :icon-key="showIcon.style_key" :size="66" /></span>
+              </AvatarFrame>
             </span>
             <div class="bv-sc-tags">
               <span v-if="showFrame" class="bv-tag" :style="{ borderColor: RCOLOR[showFrame.rarity] || '#a855f7', color: RCOLOR[showFrame.rarity] || '#d8b4fe' }">BORDE {{ showFrame.name }} · {{ rarity(showFrame.rarity).label }}</span>
               <span v-if="showBanner" class="bv-tag" :style="{ borderColor: RCOLOR[showBanner.rarity] || '#60a5fa', color: RCOLOR[showBanner.rarity] || '#bfdbfe' }">BANNER {{ showBanner.name }} · {{ rarity(showBanner.rarity).label }}</span>
             </div>
-          </div>
+          </BannerScene>
           <div class="bv-vitrina" role="list" aria-label="Íconos que podés ganar">
             <div v-for="(v, i) in vitrina" :key="v.code" role="listitem" class="bv-v" :style="{ animationDelay: i * 45 + 'ms' }">
               <span class="bv-v-ic" :class="v.rarity === 'legendary' ? 'is-leg' : ''" :style="{ boxShadow: `0 0 0 2px ${RCOLOR[v.rarity] || '#475569'}` }">
@@ -251,17 +259,17 @@ function onTouchEnd(e) {
 .bv-float { animation: bv-float 3.2s ease-in-out infinite; }
 @keyframes bv-float { 50% { transform: translateY(-6px); } }
 /* paso 3 */
-.bv-banner { position: absolute; left: 40px; right: 40px; top: 20px; height: 120px; border-radius: 18px; border: 3px solid #a16207; }
-.bv-avatar { position: absolute; left: 50%; top: 96px; margin-left: -56px; width: 112px; height: 112px; border-radius: 30px; padding: 5px; box-sizing: border-box; display: flex; box-shadow: 0 12px 30px rgba(0,0,0,0.55); }
-.bv-avatar-in { width: 100%; height: 100%; border-radius: 25px; border: 3px solid #0b1220; box-sizing: border-box; overflow: hidden; display: grid; place-items: center; background: radial-gradient(circle at 50% 35%, #7c2d12, #431407); }
-.bv-title { position: absolute; left: 50%; top: 222px; transform: translateX(-50%); padding: 4px 14px; border-radius: 999px; background: linear-gradient(90deg, rgba(251,191,36,0.2), rgba(251,191,36,0.05)); border: 1px solid rgba(251,191,36,0.5); font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 17px; color: #fde68a; white-space: nowrap; text-transform: uppercase; }
+.bv-banner { position: absolute; left: 40px; right: 40px; top: 20px; height: 120px; border-radius: 18px; border: 3px solid #a16207; box-sizing: border-box; }
+.bv-avatar { position: absolute; left: 50%; top: 96px; margin-left: -56px; width: 112px; height: 112px; border-radius: 50%; display: flex; box-shadow: 0 12px 30px rgba(0,0,0,0.55); }
+.bv-avatar-in { width: 100%; height: 100%; border-radius: 50%; border: 3px solid #0b1220; box-sizing: border-box; overflow: hidden; display: grid; place-items: center; background: radial-gradient(circle at 50% 35%, #7c2d12, #431407); }
+.bv-title { position: absolute; left: 0; right: 0; margin: 0 auto; width: max-content; top: 226px; font-size: 17px; white-space: nowrap; }
 .bv-rarities { position: absolute; left: 0; right: 0; top: 268px; display: flex; justify-content: center; gap: 6px; }
 .bv-rarities > span { padding: 3px 9px; border-radius: 999px; border: 1px solid; font-size: 11px; font-weight: 700; }
 /* paso 4 */
 .bv-showcase { position: absolute; left: 22px; right: 22px; top: 0; height: 104px; border-radius: 18px; overflow: hidden; border: 2px solid #60a5fa; box-shadow: 0 12px 28px rgba(0,0,0,0.45); }
-.bv-sc-av { position: absolute; left: 14px; top: 14px; width: 76px; height: 76px; border-radius: 22px; padding: 4px; box-sizing: border-box; display: flex; }
-.bv-sc-in { width: 100%; height: 100%; border-radius: 18px; border: 2px solid #0b1220; box-sizing: border-box; overflow: hidden; display: grid; place-items: center; background: #111a2e; }
-.bv-sc-tags { position: absolute; left: 104px; right: 10px; top: 14px; bottom: 10px; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+.bv-sc-av { position: absolute; left: 14px; top: 14px; width: 76px; height: 76px; border-radius: 50%; display: flex; z-index: 2; }
+.bv-sc-in { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #0b1220; box-sizing: border-box; overflow: hidden; display: grid; place-items: center; background: #111a2e; }
+.bv-sc-tags { position: absolute; z-index: 2; left: 104px; right: 10px; top: 14px; bottom: 10px; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
 .bv-tag { align-self: flex-start; max-width: 100%; padding: 2px 7px; border-radius: 6px; background: rgba(0,0,0,0.5); border: 1px solid; font-size: 10px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bv-vitrina { position: absolute; left: 22px; right: 22px; top: 118px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 8px; }
 .bv-v { display: flex; flex-direction: column; align-items: center; gap: 3px; animation: bv-pop .35s ease-out both; }

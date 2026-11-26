@@ -51,7 +51,8 @@ const fmt = (n) => (Number(n) || 0).toLocaleString('es-AR')
 
           <span class="rk-av" :style="MED[r.rank] && (!r.cos?.frameKey || r.cos.frameKey === 'none') ? { boxShadow: `0 0 0 2px ${MED[r.rank].ring}` } : null">
             <UserAvatar :size="MED[r.rank] && !compact ? 42 : 36" :avatar-url="r.avatar_url || ''" :initial="initialOf(r.display_name)"
-              :frame-key="r.cos?.frameKey || 'none'" :icon-glyph="r.cos?.iconGlyph || ''" :icon-bg="r.cos?.iconBg || 'emerald'" :glow="false" />
+              :frame-key="r.cos?.frameKey || 'none'" :icon-glyph="r.cos?.iconGlyph || ''" :icon-bg="r.cos?.iconBg || 'emerald'" :glow="false"
+              :level="r.cos?.frameLevel ?? r.level ?? null" :streak="r.cos?.dailyStreak || 0" />
           </span>
 
           <span class="flex-1 min-w-0 flex flex-col gap-px">
@@ -86,7 +87,7 @@ const fmt = (n) => (Number(n) || 0).toLocaleString('es-AR')
   font-size: 30px; line-height: 1; background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .rk-pos { width: 38px; flex-shrink: 0; text-align: center; font-family: var(--font-shout); font-weight: 800; font-size: 18px; color: #64748b; }
-.rk-av { display: inline-flex; border-radius: 12px; flex-shrink: 0; }
+.rk-av { display: inline-flex; border-radius: 50%; flex-shrink: 0; }
 .rk-name { font-weight: 700; font-size: 14px; }
 .rk-medal .rk-name { font-size: 15px; }
 .rk-xp { font-family: var(--font-display); font-weight: 700; font-size: 13px; color: #e2e8f0; white-space: nowrap; }

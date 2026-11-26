@@ -263,7 +263,7 @@ onBeforeUnmount(() => { clearInterval(tick); clearTimeout(copiedTimer); clearTim
             <TransitionGroup tag="div" name="soc-row" class="soc-card soc-card-gold">
               <div v-for="r in requests" :key="r.connectionId" class="soc-req">
                 <RouterLink :to="`/u/${r.id}`" class="shrink-0" :aria-label="`Ver perfil de ${r.name}`">
-                  <UserAvatar :size="38" :avatar-url="r.avatar_url" :initial="initialOf(r.name)" :frame-key="r.cos.frameKey || 'none'" :icon-glyph="r.cos.iconGlyph || ''" :icon-bg="r.cos.iconBg || 'emerald'" :glow="false" />
+                  <UserAvatar :size="38" :avatar-url="r.avatar_url" :initial="initialOf(r.name)" :frame-key="r.cos.frameKey || 'none'" :icon-glyph="r.cos.iconGlyph || ''" :icon-bg="r.cos.iconBg || 'emerald'" :glow="false" :level="r.cos.frameLevel ?? null" :streak="r.cos.dailyStreak || 0" />
                 </RouterLink>
                 <span class="flex-1 min-w-0">
                   <span class="block font-bold text-sm text-white truncate">{{ r.name }}</span>
@@ -286,7 +286,7 @@ onBeforeUnmount(() => { clearInterval(tick); clearTimeout(copiedTimer); clearTim
               <span v-if="friends.length" class="soc-online">{{ onlineCount }} EN LÍNEA</span>
             </div>
             <div v-if="friendsLoading && !friends.length" class="soc-card">
-              <div v-for="i in 4" :key="i" class="soc-friend"><span class="soc-skel w-11 h-11 rounded-[13px]"></span><span class="flex-1 flex flex-col gap-1.5"><span class="soc-skel h-3 w-28"></span><span class="soc-skel h-2.5 w-36"></span></span></div>
+              <div v-for="i in 4" :key="i" class="soc-friend"><span class="soc-skel w-11 h-11 rounded-full"></span><span class="flex-1 flex flex-col gap-1.5"><span class="soc-skel h-3 w-28"></span><span class="soc-skel h-2.5 w-36"></span></span></div>
             </div>
             <HubState v-else-if="friendsError" error message="No pudimos traer tus amigos." @retry="loadAmigos(true)" />
             <div v-else-if="!friends.length" class="soc-card px-5 py-6 text-center">
@@ -297,7 +297,7 @@ onBeforeUnmount(() => { clearInterval(tick); clearTimeout(copiedTimer); clearTim
               <div v-for="f in friendRows" :key="f.id" class="soc-friend">
                 <RouterLink :to="`/u/${f.id}`" class="flex items-center gap-2.5 flex-1 min-w-0 min-h-[44px]" :aria-label="`Ver perfil de ${f.name}`">
                   <span class="relative shrink-0">
-                    <UserAvatar :size="44" :avatar-url="f.avatar_url" :initial="initialOf(f.name)" :frame-key="f.cos.frameKey || 'none'" :icon-glyph="f.cos.iconGlyph || ''" :icon-bg="f.cos.iconBg || 'emerald'" :frame-premium="false" :glow="false" />
+                    <UserAvatar :size="44" :avatar-url="f.avatar_url" :initial="initialOf(f.name)" :frame-key="f.cos.frameKey || 'none'" :icon-glyph="f.cos.iconGlyph || ''" :icon-bg="f.cos.iconBg || 'emerald'" :frame-premium="false" :glow="false" :level="f.cos.frameLevel ?? null" :streak="f.cos.dailyStreak || 0" />
                     <span class="soc-dot" :class="'st-' + f.st.key" aria-hidden="true"></span>
                   </span>
                   <span class="flex-1 min-w-0 flex flex-col gap-0.5">

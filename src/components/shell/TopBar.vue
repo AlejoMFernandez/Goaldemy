@@ -76,7 +76,8 @@ watch(() => route.path, (to, from) => {
           <button type="button" data-avatar-anchor class="relative shrink-0 w-11 h-11 grid place-items-center rounded-full active:scale-95 transition"
             :aria-label="shellState.notifCount > 0 ? `Tu cuenta y ajustes, ${shellState.notifCount} notificaciones nuevas` : 'Tu cuenta y ajustes'" @click="tapHaptic(); openSettings()">
             <UserAvatar :size="36" :glow="false" :avatar-url="shellState.user?.avatar_url || ''" :initial="initial"
-              :frame-key="shellState.equipped.frameKey" :icon-glyph="shellState.equipped.iconGlyph" :icon-bg="shellState.equipped.iconBg" :frame-premium="shellState.equipped.framePremium" />
+              :frame-key="shellState.equipped.frameKey" :icon-glyph="shellState.equipped.iconGlyph" :icon-bg="shellState.equipped.iconBg" :frame-premium="shellState.equipped.framePremium"
+              :level="Number(shellState.stats.level) || null" :streak="Number(shellState.stats.streak) || 0" />
             <span v-if="shellState.notifCount > 0" class="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-[#0b1220]" aria-hidden="true"></span>
           </button>
         </div>
