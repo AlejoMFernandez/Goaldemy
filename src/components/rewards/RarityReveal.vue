@@ -23,6 +23,10 @@ import { reducedMotion } from '@/services/game-fx'
 const props = defineProps({
   prize: { type: Object, required: true },
   autoplay: { type: Boolean, default: true },
+  // Ancho fijo de la carta (px). Sin esto se adapta sola a la pantalla.
+  size: { type: Number, default: null },
+  // Compacta: la escena mide lo que la carta (para usarla adentro del carrusel de piezas).
+  compact: { type: Boolean, default: false },
 })
 const emit = defineEmits(['revealed', 'ready-to-advance'])
 
@@ -53,7 +57,7 @@ const cardEl = ref(null)
 const vw = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
 const vh = ref(typeof window !== 'undefined' ? window.innerHeight : 900)
 function onResize() { vw.value = window.innerWidth; vh.value = window.innerHeight }
-const cardW = computed(() => Math.round(Math.max(140, Math.min(220, vw.value * 0.52, (Math.min(420, vh.value * 0.62) - 70) / 1.4))))
+const cardW = computed(() => props.size ? Math.round(props.size) : Math.round(Math.max(140, Math.min(220, vw.value * 0.52, (Math.min(420, vh.value * 0.62) - 70) / 1.4))))
 let timers = []
 function T(fn, ms) { timers.push(setTimeout(fn, reducedMotion ? Math.min(ms, 40) : ms)) }
 onBeforeUnmount(() => { timers.forEach(clearTimeout); window.removeEventListener('resize', onResize) })
@@ -141,7 +145,7 @@ const cardStyle = computed(() => revealed.value
 </script>
 
 <template>
-  <div class="rr" :class="['r-' + rar, { revealed }]" :style="{ '--rc': r.c, '--rg': r.g }" @pointermove="onMove" @pointerleave="onLeave">
+  <div class="rr" :class="['r-' + rar, { revealed, compact }]" :style="[{ '--rc': r.c, '--rg': r.g }, compact ? { height: Math.round(cardW * 1.4 + 6) + 'px' } : null]" @pointermove="onMove" @pointerleave="onLeave">
     <div class="rr-dim" :style="{ opacity: dim }" aria-hidden="true"></div>
     <div class="rr-rays" :class="{ on: raysOn }" aria-hidden="true"></div>
     <div :key="'ring' + ringKey" class="rr-ring" :class="{ go: ringKey > 0 }" aria-hidden="true"></div>
@@ -205,6 +209,7 @@ const cardStyle = computed(() => revealed.value
     linear-gradient(115deg, transparent 20%, rgba(255, 0, 170, .25) 35%, rgba(0, 220, 255, .25) 50%, rgba(255, 230, 0, .25) 65%, transparent 80%); }
 .rr.revealed.r-rare .rr-holo, .rr.revealed.r-epic .rr-holo, .rr.revealed.r-legendary .rr-holo { opacity: .55; }
 .rr-stamp { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 6; font-family: var(--font-shout); font-weight: 800; font-style: italic; text-transform: uppercase; font-size: clamp(30px, 7vw, 46px); letter-spacing: .04em; color: var(--rc); opacity: 0; white-space: nowrap; text-shadow: 0 0 20px var(--rg), 0 3px 0 rgba(0, 0, 0, .5); pointer-events: none; }
+.rr.compact .rr-stamp { bottom: -6px; font-size: clamp(26px, 6vw, 38px); }
 .rr-stamp.go { animation: rr-stamp .45s cubic-bezier(.2, 1.6, .4, 1) both; }
 @keyframes rr-stamp { 0% { opacity: 0; transform: translateX(-50%) scale(2.4) rotate(-8deg); } 100% { opacity: 1; transform: translateX(-50%) scale(1) rotate(-4deg); } }
 .rr-fx { position: absolute; inset: 0; z-index: 7; pointer-events: none; overflow: visible; }
