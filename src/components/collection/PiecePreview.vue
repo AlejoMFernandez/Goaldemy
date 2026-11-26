@@ -15,6 +15,7 @@
 import { computed } from 'vue'
 import { titleClass } from '../../services/cosmetics'
 import BannerScene from '../common/BannerScene.vue'
+import { shellState } from '../shell/shell-state'
 import CosmeticIcon from '../rewards/CosmeticIcon.vue'
 import UserAvatar from '../common/UserAvatar.vue'
 import { pieceRarity, hexA, hasArt } from './piece-style'
@@ -62,7 +63,8 @@ const titleCls = computed(() => titleClass(props.cos?.rarity, !!props.cos?.premi
     </span>
 
     <!-- Borde: el aro real alrededor de tu ícono equipado -->
-    <UserAvatar v-else-if="kind === 'frame'" :size="size" :frame-key="key" :icon-glyph="innerIcon" :initial="initial || '?'" :frame-premium="!!cos.premium_only" />
+    <UserAvatar v-else-if="kind === 'frame'" :size="size" :frame-key="key" :icon-glyph="innerIcon" :initial="initial || '?'" :frame-premium="!!cos.premium_only"
+      :level="Number(shellState.stats?.level) || null" :streak="Number(shellState.stats?.streak) || 0" />
 
     <!-- Banner -->
     <BannerScene v-else-if="kind === 'banner'" class="piece-banner" :style-key="key" :premium="!!cos.premium_only" :animate="!locked"

@@ -182,7 +182,7 @@ function onTouchEnd(e) {
             <div v-for="(v, i) in vitrina" :key="v.code" role="listitem" class="bv-v" :style="{ animationDelay: i * 45 + 'ms' }">
               <span class="bv-v-ic" :class="v.rarity === 'legendary' ? 'is-leg' : ''" :style="{ boxShadow: `0 0 0 2px ${RCOLOR[v.rarity] || '#475569'}` }">
                 <CosmeticIcon :icon-key="v.style_key" :size="62" />
-                <span v-if="v.unlock_level > 1" class="bv-v-lock">NV {{ v.unlock_level }}</span>
+                <span v-if="v.unlock_level > 1 && v.unlock_level < 999" class="bv-v-lock">NV {{ v.unlock_level }}</span>
               </span>
               <span v-if="v.name" class="bv-v-n">{{ v.name }}</span>
               <span v-if="v.rarity" class="bv-v-r" :style="{ color: RCOLOR[v.rarity] }">{{ rarity(v.rarity).label }}</span>
