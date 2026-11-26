@@ -1,3 +1,4 @@
+-- ⚠ 2026-11-26: NO CORRER. Reemplazado por 2026-11-26-curva-niveles-1-100.sql (ver APLICAR-2026-11-26.md).
 -- ============================================================
 -- FULVO — CURVA DE XP 51–100 (feature/rangos-100)
 -- Los umbrales 1–50 NO cambian (nadie pierde niveles). Se agregan los niveles 51–100.
