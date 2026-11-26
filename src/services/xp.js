@@ -28,7 +28,7 @@ import { supabase } from './supabase'
 import { pushAchievementToast, pushLevelUpToast } from '../stores/notifications'
 import { setKnownLevel as _setKnownLevelRealtime } from './levelup-realtime'
 import { getXpMultiplier } from './premium'
-import { LEVEL_THRESHOLDS } from './level-curve'
+import { LEVEL_THRESHOLDS, mergeThresholds } from './level-curve'
 
 // Economía en el servidor (supabase/pendientes/2026-11-24-04-xp-servidor.sql).
 // OFF por defecto: con '1' la XP de juego va por award_game_xp, que aplica el
@@ -148,7 +148,7 @@ export async function getUserRank(userId) {
   return { rank: idx >= 0 ? (top[idx].rank ?? (idx + 1)) : null, error: null }
 }
 
-// Curva 1–100. Fuente única: services/level-curve.js
+// Curva 1–100 de rangos-100 (1–50 como siempre, NV 100 = 936.000 XP). Fuente única: services/level-curve.js
 export const FALLBACK_THRESHOLDS = LEVEL_THRESHOLDS
 
 let _levelThresholdsCache = null
@@ -162,7 +162,8 @@ export async function fetchLevelThresholds(force = false) {
   try {
     const { data, error } = await supabase.from('level_thresholds').select('level, xp_required').order('level', { ascending: true })
     if (!error && Array.isArray(data) && data.length > 0) {
-      _levelThresholdsCache = data
+      // La base puede tener menos niveles que la curva (hoy 1–30): se completa con la del cliente
+      _levelThresholdsCache = mergeThresholds(data)
       _levelThresholdsAt = now
       return _levelThresholdsCache
     }
