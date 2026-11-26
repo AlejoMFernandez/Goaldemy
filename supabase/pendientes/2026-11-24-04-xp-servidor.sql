@@ -46,6 +46,19 @@
 --      • Backfill: a los usuarios existentes se les marcan como YA cobrados los
 --        bonus de nivel hasta su nivel actual (no se les regala de nuevo).
 --
+--  AJUSTES 2026-11-26 (esquema real de prod):
+--   • En prod NO existe "Insert xp for self" (no hay INSERT directo): el DROP
+--     POLICY IF EXISTS no hace nada; el REVOKE de INSERT/UPDATE/DELETE igual se
+--     deja como cinturón.
+--   • Correr DESPUÉS de 2026-11-26-curva-niveles-1-100.sql: el backfill de
+--     level_up_bonus_claims usa level_thresholds y con la tabla rota marcaría
+--     niveles equivocados.
+--   • Bonus de nivel alineado con los hitos 60–100 del cliente v4.
+--   • Clientes: main y v4 (flag apagado) llaman award_xp solo con
+--     'correct_answer' (game-xp.js) y 'level_up_bonus' (notifications.js) → las
+--     dos rutas siguen andando. Las demás razones vienen de funciones SECURITY
+--     DEFINER (ruta confiable).
+--
 --  ROLLBACK (vuelve al estado inseguro):
 --      BEGIN;
 --      CREATE POLICY "Insert xp for self" ON public.xp_events FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
@@ -103,16 +116,22 @@ BEGIN
   END IF;
 END $$;
 
--- Monto del bonus por nivel (espejo de getLevelUpXpBonus + MILESTONES en
--- src/services/level-rewards.js: en los hitos el bonus del hito REEMPLAZA al normal).
+-- Monto del bonus por nivel (espejo de getLevelUpXpBonus + MILESTONES del
+-- cliente v4, src/services/level-rewards.js: en los hitos de rango —10, 20 … 100—
+-- el bonus del hito REEMPLAZA al normal; ver stores/notifications.js totalBonus).
 CREATE OR REPLACE FUNCTION public._level_up_bonus_xp(p_level INTEGER)
 RETURNS INTEGER LANGUAGE sql IMMUTABLE AS $$
   SELECT CASE
-    WHEN p_level = 10 THEN 150
-    WHEN p_level = 20 THEN 300
-    WHEN p_level = 30 THEN 500
-    WHEN p_level = 40 THEN 750
-    WHEN p_level = 50 THEN 1000
+    WHEN p_level = 10  THEN 150
+    WHEN p_level = 20  THEN 300
+    WHEN p_level = 30  THEN 500
+    WHEN p_level = 40  THEN 750
+    WHEN p_level = 50  THEN 1000
+    WHEN p_level = 60  THEN 1250
+    WHEN p_level = 70  THEN 1500
+    WHEN p_level = 80  THEN 1750
+    WHEN p_level = 90  THEN 2000
+    WHEN p_level = 100 THEN 3000
     WHEN p_level <= 5  THEN 25
     WHEN p_level <= 10 THEN 50
     WHEN p_level <= 15 THEN 75
@@ -306,6 +325,16 @@ REVOKE ALL ON FUNCTION public.claim_level_up_bonus() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.claim_level_up_bonus() TO authenticated;
 
 COMMIT;
+
+-- Verificación: award_xp ya no es SECURITY DEFINER, xp_events sin escritura directa,
+-- helpers internos cerrados y RPCs nuevas presentes.
+SELECT NOT (SELECT prosecdef FROM pg_proc WHERE oid = 'public.award_xp(int, text, uuid, uuid, jsonb)'::regprocedure)
+   AND NOT has_table_privilege('authenticated', 'public.xp_events', 'INSERT')
+   AND NOT has_function_privilege('authenticated', 'public._award_game_xp_checked(uuid, integer, boolean, uuid, uuid, jsonb)'::regprocedure, 'EXECUTE')
+   AND NOT has_function_privilege('authenticated', 'public._grant_level_up_bonuses(uuid)'::regprocedure, 'EXECUTE')
+   AND to_regprocedure('public.award_game_xp(text, integer, jsonb)') IS NOT NULL
+   AND to_regprocedure('public.claim_level_up_bonus()') IS NOT NULL AS ok,
+       (SELECT count(*) FROM public.level_up_bonus_claims WHERE backfill) AS bonus_backfill;
 
 -- Prueba manual (en STAGING, logueado como un usuario de prueba vía la app/consola):
 --   await supabase.rpc('award_xp', {p_amount: 999999, p_reason: 'daily_challenge'})  → error 42501
