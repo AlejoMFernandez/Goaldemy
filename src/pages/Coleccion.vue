@@ -235,8 +235,8 @@ onMounted(() => { load(); loadShellStats().catch(() => {}) })
 
     <!-- Colecciones por rango -->
     <RouterLink to="/colecciones" aria-label="Ver las colecciones por rango" class="col-cols" @click="tap">
-      <span class="w-[72px] shrink-0 flex flex-col gap-0.5">
-        <strong class="font-display text-[15px] text-slate-100">Colecciones</strong>
+      <span class="w-[86px] shrink-0 flex flex-col gap-0.5">
+        <strong class="font-display text-[14px] text-slate-100">Colecciones</strong>
         <span class="flex items-center gap-0.5 text-[11px] font-bold text-amber-400">Ver todas<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></span>
       </span>
       <span v-for="k in colRows" :key="k.key" class="flex-1 min-w-0 px-[7px] py-1.5 rounded-[10px] flex flex-col gap-[3px]" :style="{ background: k.bg, border: `1px solid ${k.ring}` }">
@@ -262,7 +262,7 @@ onMounted(() => { load(); loadShellStats().catch(() => {}) })
 }
 .col-link::after { content: ''; position: absolute; inset: -6px 0; }
 .col-card {
-  position: relative; box-sizing: border-box; padding: 10px 8px 9px; border-radius: 16px; color: #f1f5f9; font-family: inherit;
+  position: relative; box-sizing: border-box; padding: 20px 8px 9px; border-radius: 16px; color: #f1f5f9; font-family: inherit;
   text-align: left; display: flex; flex-direction: column; gap: 7px; overflow: hidden; min-width: 0; transition: transform 0.12s ease;
 }
 .col-card.is-owned { cursor: pointer; }
