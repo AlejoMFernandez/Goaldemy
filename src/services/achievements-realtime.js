@@ -18,7 +18,7 @@ export function initAchievementsRealtime() {
         .channel('user_achievements_inserts')
         .on(
           'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'user_achievements', filter: `user_id=eq.${currentUserId}` },
+          { event: 'INSERT', schema: 'public', table: 'user_achievements' },
           async payload => {
             const row = payload?.new
             if (!row) return

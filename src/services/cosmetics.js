@@ -551,6 +551,13 @@ async function _check() {
   const seenSet = new Set(seen)
   const fresh = items.filter(c => c.owned && !seenSet.has(c.code) && c.code !== 'frame_none' && c.code !== 'icon_none' && !isStarterCosmetic(c))
   if (fresh.some(c => c.unlock_achievement)) { try { await preloadAchievementsSync() } catch { /* cae al texto genérico */ } }
+  // Hay piezas de un nivel sin escena de subida: antes de mandarlas como cartas sueltas,
+  // confirmar si SUBISTE de nivel recién (ej. con la XP de un logro, que no pasa por
+  // awardXp). Si es así se encola la subida (con la Forja si cambia el rango) y esas piezas
+  // van en su "Desbloqueaste" / "Al llegar ganás", no como cartas.
+  if (fresh.some(c => isLevelCosmetic(c) && !isLevelCovered(c.unlock_level))) {
+    try { const { detectAndToastLevelUp } = await import('./xp'); await detectAndToastLevelUp() } catch { /* sigue con cartas */ }
+  }
   for (const c of fresh) {
     if (isLevelCosmetic(c) && isLevelCovered(c.unlock_level)) continue // ya está en la escena de nivel
     queueCosmeticOverlay({
