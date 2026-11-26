@@ -1,7 +1,10 @@
 <script setup>
 // Cabecera del Abono de temporada: nombre, días restantes, nivel N/30 con
 // barra y, arriba de todo, las dos acciones: "Activar Platea" y "Cobrar todo".
-import { computed } from 'vue'
+// Últimos 3 días: el contador se pone rojo y cuenta horas (artifact "Abono").
+// Colores por tema del mes vía --ab-c1/--ab-c2/--ab-accent (Retro = sepia + grano).
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { countdownText } from './pass-season'
 
 const props = defineProps({
   seasonName: { type: String, default: '' },
@@ -14,6 +17,9 @@ const props = defineProps({
   isPremium: { type: Boolean, default: false },
   readyCount: { type: Number, default: 0 },
   progress: { type: Object, default: null }, // { done, total } mientras cobra todo
+  endsAt: { type: Number, default: null },    // ms del cierre del mes (ART)
+  overtime: { type: Object, default: null },  // tiempo de descuento { earned, max, into, step }
+  grain: { type: Boolean, default: false },   // grano de película (tema Retro)
 })
 const emit = defineEmits(['activate', 'claim-all'])
 
@@ -23,7 +29,17 @@ const allLabel = computed(() => {
   if (props.progress) return `COBRANDO ${props.progress.done}/${props.progress.total}`
   return anyReady.value ? `COBRAR TODO (${props.readyCount})` : 'TODO COBRADO'
 })
-const daysText = computed(() => (props.daysLeft === 1 ? 'Queda 1 día' : `Quedan ${props.daysLeft} días`))
+const now = ref(Date.now())
+let clock = null
+onMounted(() => { clock = setInterval(() => { now.value = Date.now() }, 30000) })
+onBeforeUnmount(() => clearInterval(clock))
+const msLeft = computed(() => (props.endsAt ? props.endsAt - now.value : null))
+// Rojo en los últimos 3 días (por el reloj real si lo hay; si no, por days_left)
+const urgent = computed(() => (msLeft.value != null ? msLeft.value <= 3 * 86400000 : props.daysLeft <= 3))
+const daysText = computed(() => {
+  if (urgent.value && msLeft.value != null) return countdownText(msLeft.value)
+  return props.daysLeft === 1 ? 'Queda 1 día' : `Quedan ${props.daysLeft} días`
+})
 
 function onClaimAll() {
   if (!anyReady.value || props.progress) return
@@ -34,6 +50,7 @@ function onClaimAll() {
 <template>
   <section class="hd" :aria-label="`Abono ${seasonName}`">
     <div class="hd-scan" aria-hidden="true"></div>
+    <div v-if="grain" class="hd-grain" aria-hidden="true"></div>
     <img class="hd-logo" src="/iconclaro.png" alt="" aria-hidden="true" />
 
     <div class="hd-row">
@@ -41,7 +58,7 @@ function onClaimAll() {
         <span class="hd-kicker">ABONO DE TEMPORADA</span>
         <h2 class="hd-name">{{ seasonName }}</h2>
       </div>
-      <span class="hd-days">
+      <span class="hd-days" :class="{ 'hd-days--red': urgent }" role="timer" :aria-label="`${daysText} de temporada`">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l3 2" /></svg>
         {{ daysText }}
       </span>
@@ -59,6 +76,7 @@ function onClaimAll() {
         </span>
         <span class="hd-sub">
           <template v-if="nextLevel">{{ nextLevel.into }} / {{ nextLevel.span }} puntos para el nivel {{ nextLevel.tier }}</template>
+          <template v-else-if="overtime && overtime.earned < overtime.max">Tiempo de descuento: {{ overtime.into }} / {{ overtime.step }} puntos para el próximo talón</template>
           <template v-else>¡Abono completo! {{ points }} puntos</template>
           <template v-if="finalPrize"> · premio final: <strong>{{ finalPrize.name }}</strong> ({{ finalPrize.rarity }})</template>
         </span>
@@ -93,9 +111,18 @@ function onClaimAll() {
 <style scoped>
 .hd {
   position: relative; border-radius: 20px; padding: 14px; overflow: hidden;
-  background: linear-gradient(160deg, #4a2e14 0%, #2a1a0c 55%, #160e07 100%);
+  background: linear-gradient(160deg, var(--ab-c1, #4a2e14) 0%, color-mix(in srgb, var(--ab-c1, #4a2e14) 50%, var(--ab-c2, #160e07)) 55%, var(--ab-c2, #160e07) 100%);
   border: 1px solid rgba(253,230,138,0.25);
 }
+/* Grano de película (Retro) */
+.hd-grain {
+  position: absolute; inset: -50%; pointer-events: none; opacity: .13; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: hd-grain .5s steps(3) infinite;
+}
+@keyframes hd-grain { 0% { transform: translate(0, 0); } 33% { transform: translate(-6%, 4%); } 66% { transform: translate(5%, -3%); } 100% { transform: translate(0, 0); } }
+.hd-days--red { background: rgba(127,29,29,.75); color: #fecaca; box-shadow: 0 0 0 1px rgba(239,68,68,.7); animation: hd-red 1.6s ease-in-out infinite; }
+@keyframes hd-red { 50% { box-shadow: 0 0 0 1px #ef4444, 0 0 12px rgba(239,68,68,.55); } }
 .hd-scan { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 4px); pointer-events: none; }
 .hd-logo { position: absolute; right: -22px; top: -18px; width: 130px; height: 130px; opacity: 0.16; filter: sepia(1); transform: rotate(-12deg); pointer-events: none; }
 .hd-row { position: relative; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
@@ -147,6 +174,7 @@ function onClaimAll() {
 @keyframes hd-shine { 0% { transform: translateX(-120%) skewX(-20deg); } 60%,100% { transform: translateX(260%) skewX(-20deg); } }
 @media (prefers-reduced-motion: reduce) {
   .hd-shine { animation: none; display: none; }
+  .hd-grain, .hd-days--red { animation: none; }
   .hd-btn:active { transform: none; }
   .hd-bar-fill { transition: none; }
 }
