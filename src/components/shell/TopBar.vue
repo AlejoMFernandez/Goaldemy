@@ -67,7 +67,7 @@ watch(() => route.path, (to, from) => {
 
         <div class="ml-auto flex items-center gap-2 min-w-0">
           <!-- Monedas juntas en una sola pastilla → /tienda -->
-          <RouterLink to="/tienda" class="shell-wallet" :aria-label="`${s.fichas} Fichas y ${s.balones} Balones de Oro: ir a la tienda`" @click="tapHaptic()">
+          <RouterLink to="/tienda" class="shell-wallet" data-reward-anchor="fichas" :aria-label="`${s.fichas} Fichas y ${s.balones} Balones de Oro: ir a la tienda`" @click="tapHaptic()">
             <span class="inline-flex items-center gap-1"><CurrencyIcon type="fichas" :size="18" /><span class="tabular-nums">{{ s.loaded ? compact(s.fichas) : '–' }}</span></span>
             <span class="inline-flex items-center gap-1 text-amber-200"><CurrencyIcon type="balones" :size="18" /><span class="tabular-nums">{{ s.loaded ? compact(s.balones) : '–' }}</span></span>
           </RouterLink>

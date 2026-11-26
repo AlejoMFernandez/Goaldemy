@@ -7,7 +7,7 @@
  * respaldo: si no hay destino visible (ej. menú oculto), devuelve false y el
  * que llama muestra el toast de siempre.
  *
- * Destinos: el primer elemento VISIBLE con [data-reward-anchor="xp|powerup"]
+ * Destinos: el primer elemento VISIBLE con [data-reward-anchor="xp|powerup|fichas"]
  * o, si no hay, con [data-avatar-anchor].
  */
 import { flyTo, center, sparks, reducedMotion } from './game-fx'
@@ -54,23 +54,35 @@ function floatLabel(el, text, color = '#fcd34d') {
 }
 
 /** ¿Hay a dónde volar? (si no, el que llama muestra el toast de respaldo) */
+function anchorKind(kind) {
+  return kind === 'powerup' || kind === 'fichas' ? kind : 'xp'
+}
 export function hasRewardAnchor(kind = 'xp') {
-  return typeof document !== 'undefined' && !!visibleAnchor(kind === 'powerup' ? 'powerup' : 'xp')
+  return typeof document !== 'undefined' && !!visibleAnchor(anchorKind(kind))
 }
 
 /**
  * @param {Element} fromEl  botón o tarjeta desde donde sale
- * @param {{ kind:'xp'|'powerup'|'other', amount?:number, powerup?:string, delay?:number }} opts
+ * @param {{ kind:'xp'|'powerup'|'fichas'|'other', amount?:number, powerup?:string, delay?:number }} opts
  * @returns {Promise<boolean>} true si encontró destino (no hace falta toast)
  */
 export async function flyReward(fromEl, { kind = 'xp', amount = 0, powerup = '', delay = 0 } = {}) {
   if (typeof document === 'undefined' || !fromEl) return false
-  const target = visibleAnchor(kind === 'powerup' ? 'powerup' : 'xp')
+  const target = visibleAnchor(anchorKind(kind))
   if (!target) return false
   if (delay) await new Promise(r => setTimeout(r, delay))
   if (reducedMotion) {
     bounce(target)
-    floatLabel(target, kind === 'powerup' ? `+${PU_GLYPH[powerup] || 'Ayuda'}` : `+${amount} XP`)
+    floatLabel(target, kind === 'powerup' ? `+${PU_GLYPH[powerup] || 'Ayuda'}` : kind === 'fichas' ? `+${amount} Fichas` : `+${amount} XP`)
+    return true
+  }
+  if (kind === 'fichas') {
+    // Fichas: una moneda que vuela a la billetera (o al avatar si no está a la vista)
+    const coin = '<span style="display:grid;place-items:center;width:26px;height:26px;border-radius:50%;font:800 11px/1 var(--font-bug);color:#3b2410;background:radial-gradient(circle at 35% 30%,#fff7cc,#fbbf24 55%,#b45309);border:2px solid #fde68a;box-shadow:0 0 12px rgba(251,191,36,.8)">F</span>'
+    await flyTo({ from: fromEl, to: target, html: coin, duration: 620, arc: 80 })
+    soundManager.play('coin')
+    bounce(target)
+    if (amount) floatLabel(target, `+${amount} Fichas`)
     return true
   }
   if (kind === 'powerup') {
