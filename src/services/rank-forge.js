@@ -12,11 +12,13 @@
  *            #sv #wrap #nk #nn #nl adentro
  *   canvas = <canvas> para las chispas (fijo a pantalla, fuera de lo que tiembla)
  * Respeta prefers-reduced-motion (salta directo al escudo final) y se adelanta con skip().
+ * Hápticos (services/haptics.js): heavy en cada golpe, tap en cada estrella, success en el ¡PUM!.
  * Sonidos: mp3 reservados forja-clang / -rumble / -clink / -fuse / -chime; si no existen suenan
  * los sintetizados del moodboard.
  */
 import DATA from '@/data/rank-tiers.json'
 import { soundManager } from '@/services/sounds'
+import { heavy as hapticHeavy, success as hapticSuccess, tap as hapticTap } from '@/services/haptics'
 
 const NS = 'http://www.w3.org/2000/svg'
 const SH = 'M60 6L108 26V72C108 100 84 124 60 134C36 124 12 100 12 72V26L60 6Z'
@@ -221,6 +223,7 @@ export function createForge({ root, canvas, reduced = false }) {
     }).then(() => { el.removeAttribute('filter'); el.setAttribute('transform', ''); el.setAttribute('opacity', 1) })
   }
   function impact(p, x, y, b) {
+    hapticHeavy()
     shake($('#sv'), 3 + p * 7, 240 + p * 140)
     an($('#wrap'), [{ filter: 'blur(0px)' }, { filter: `blur(${(.8 + p * 1.8).toFixed(1)}px)` }, { filter: 'blur(0px)' }], 260)
     S.clang(p)
@@ -377,6 +380,7 @@ export function createForge({ root, canvas, reduced = false }) {
       if (!ok()) return
       olds.forEach(g => g.remove())
       S.fuse()
+      hapticTap()
       an($('#flash'), [{ opacity: 0 }, { opacity: .35 }, { opacity: 0 }], 220)
       const w = document.createElementNS(NS, 'g')
       sg.appendChild(w)
@@ -398,6 +402,7 @@ export function createForge({ root, canvas, reduced = false }) {
         const last = i === NP.length - 1
         await fall(w, { cx: x, cy: y, dy: -110, s0: last ? 2 : 1.5, ms: last ? 260 : 200, blur: 5 })
         S.clink(i)
+        hapticTap()
         const p = last ? .75 : .3
         shake($('#sv'), 2 + p * 6, 200)
         burst(x, y, last ? 26 : 10, [b.stars.c, '#fde68a', '#fff'], 2 + p * 2, 26, 1.8, .1)
@@ -409,6 +414,7 @@ export function createForge({ root, canvas, reduced = false }) {
 
     // 6 · ¡PUM! forjado
     S.pum()
+    hapticSuccess()
     an($('#flash'), [{ opacity: 0 }, { opacity: .9 }, { opacity: 0 }], 380)
     an($('#shield'), [{ transform: 'scale(1)' }, { transform: 'scale(1.14,.9)' }, { transform: 'scale(.96,1.06)' }, { transform: 'scale(1)' }], 520, { e: 'cubic-bezier(.3,1.4,.5,1)' })
     shake(box, 12, 420)
