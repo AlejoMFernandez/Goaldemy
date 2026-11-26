@@ -249,7 +249,7 @@ export function getDifficultyConfig(gameType, difficulty = DIFFICULTY_LEVELS.NOR
 }
 
 const FALLBACK_NAMES = {
-  'guess-player': 'Adivina el jugador',
+  'guess-player': 'Adiviná el jugador',
   'who-is': '¿Quién es?',
   'quien-es': '¿Quién es?',
   'nationality': 'Nacionalidad correcta',
@@ -524,6 +524,9 @@ export function gameRouteForSlug(slug) {
   }
 }
 
+// La tabla `games` tiene "Adivina" sin tilde: la UI usa el voseo ("Adiviná").
+function voseo(name) { return typeof name === 'string' ? name.replace(/^Adivina\b/, 'Adiviná') : name }
+
 function normalizeGame(row) {
   const slug = row?.slug || ''
   const cover = row?.cover_url ?? row?.image ?? fallbackCoverForSlug(slug) ?? null
@@ -532,7 +535,7 @@ function normalizeGame(row) {
     id: (row && row.id != null) ? row.id : (slug || undefined),
     cover_url: cover,
     image: cover,
-    name: row?.name || friendlyNameForSlug(slug),
+    name: voseo(row?.name || friendlyNameForSlug(slug)),
     description: row?.description || friendlyDescForSlug(slug),
   }
 }

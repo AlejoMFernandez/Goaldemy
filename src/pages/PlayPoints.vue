@@ -60,7 +60,7 @@ const prizes = computed(() => {
     return {
       ...m, st,
       label: m.name,
-      sub: m.got ? 'cobrado' : `faltan ${m.left}`,
+      sub: m.got ? 'cobrado' : m.owned ? 'ya es tuyo' : `faltan ${m.left}`,
       aria: `Al ganar ${m.at}: ${m.name}${m.points ? `, +${m.points} XP` : ''}${m.got ? ', cobrado' : ''}`,
     }
   })
@@ -187,7 +187,7 @@ const prizes = computed(() => {
 .jg-prz-row { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 6px; }
 .pz { position: relative; border-radius: 12px; padding: 7px 4px 6px; background: rgba(255, 255, 255, .03); border: 1px solid rgba(255, 255, 255, .07); display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
 .pz .dot { width: 26px; height: 26px; border-radius: 50%; background: #1e293b; display: grid; place-items: center; font-family: var(--font-bug); font-weight: 800; font-size: 13px; color: #cbd5e1; }
-.pz .nm { font-family: var(--font-bug); font-weight: 800; font-size: 13px; line-height: 1; color: #cbd5e1; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pz .nm { font-family: var(--font-bug); font-weight: 800; font-size: 13px; line-height: 1.05; color: #cbd5e1; max-width: 100%; text-align: center; overflow-wrap: anywhere; }
 .pz .sb { font-size: 10px; color: #64748b; white-space: nowrap; }
 .pz.is-done { background: rgba(34, 197, 94, .1); border-color: rgba(74, 222, 128, .35); }
 .pz.is-done .dot { background: #22c55e; }

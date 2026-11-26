@@ -328,7 +328,8 @@ export default {
     const miniArt = computed(() => (GAME_ART[slug.value] || '').replace(/id="(cp[a-z])"/g, 'id="sm$1"').replace(/url\(#(cp[a-z])\)/g, 'url(#sm$1)'))
     const headLine = computed(() => [displayName.value, difficultyLabel.value].filter(Boolean).join(' · ').toUpperCase())
     const fmt = (n) => Number(n || 0).toLocaleString('es-AR')
-    const xpLabel = computed(() => (props.xpAfterTotal > 0 && props.xpToNextAfter != null) ? `${fmt(props.xpAfterTotal)} / ${fmt(props.xpAfterTotal + props.xpToNextAfter)} XP` : '')
+    // XP relativo (lo que falta), no el acumulado de toda la vida: igual que el perfil y la TopBar
+    const xpLabel = computed(() => (props.xpToNextAfter != null && props.xpToNextAfter > 0) ? `faltan ${fmt(props.xpToNextAfter)} XP` : '')
     // Parte "vieja" de la barra (verde→violeta) y lo ganado hoy (dorado, animado)
     const basePct = computed(() => didLevelUp.value ? 0 : Math.min(props.beforePercent || 0, xpBarWidth.value))
     const levelNow = computed(() => props.levelAfter || props.levelBefore || 0)

@@ -263,10 +263,10 @@ export default {
 </script>
 
 <template>
-  <GameShell title="Adivina el jugador" :backPath="backPath()">
+  <GameShell title="Adiviná el jugador" :backPath="backPath()">
     <GamePreviewModal
       :open="overlayOpen && mode === 'challenge' && !reviewMode"
-      gameName="Adivina el jugador"
+      gameName="Adiviná el jugador"
       gameDescription="Hacé 10 aciertos antes de que se acabe el reloj: 60, 45 o 30 s según la dificultad"
       :mechanic="gameMetadata.mechanic"
       :videoUrl="gameMetadata.videoUrl"

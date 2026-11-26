@@ -13,7 +13,7 @@ export const GAME_UNLOCK_LEVELS = {
 }
 
 const GAME_NAMES = {
-  'guess-player': 'Adivina el Jugador',
+  'guess-player': 'Adiviná el jugador',
   'nationality': 'Nacionalidad',
   'player-position': 'Posición del Jugador',
   'shirt-number': 'Número de Camiseta',

@@ -108,11 +108,12 @@ export function useJornada({ withStreaks = true } = {}) {
     return list.filter(m => m.at <= n && !seen.has(m.at) && seen.add(m.at)).map(m => {
       const cat = state.catalog[m.code] || {}
       const owned = state.owned.has(m.code)
-      const got = owned || wins.value >= m.at
+      // 'got' = alcanzado HOY (la barra es del día). 'owned' = logro ya cobrado alguna vez.
+      const got = wins.value >= m.at
       return { ...m, name: cat.name || m.fallback, points: Number(cat.points) || 0, owned, got, left: Math.max(0, m.at - wins.value) }
     })
   })
-  const nextMilestone = computed(() => milestones.value.find(m => !m.got) || null)
+  const nextMilestone = computed(() => milestones.value.find(m => !m.got && !m.owned) || milestones.value.find(m => !m.got) || null)
 
   function toChallenge(slug) {
     return `${gameRouteForSlug(slug)}?mode=${isPlayed(slug) ? 'review' : 'challenge'}`

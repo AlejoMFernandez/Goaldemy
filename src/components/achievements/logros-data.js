@@ -101,6 +101,9 @@ export function buildAchievementList(catalog = {}, owned = [], ctx = {}, now = D
   for (const row of owned || []) {
     const a = row?.achievements
     if (!a?.code) continue
+    // Logros retirados (ya no están en el catálogo activo) no cuentan: así el total
+    // coincide con el del perfil (catálogo = fuente de verdad).
+    if (byCode.size && !byCode.has(a.code)) continue
     byCode.set(a.code, { ...(byCode.get(a.code) || {}), ...a, earnedAt: row.earned_at || null })
   }
 

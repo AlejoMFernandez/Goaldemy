@@ -267,7 +267,7 @@ export default {
           </Transition>
         </RouterView>
       </main>
-      <AppFooter v-if="!isAuthLayout && !isImmersive" :style="shellStyle" />
+      <AppFooter v-if="!isAuthLayout && !isImmersive" :class="showTabBar ? 'hidden lg:block' : ''" :style="shellStyle" />
     </div>
     <AppToast />
     <AchievementUnlockOverlay />

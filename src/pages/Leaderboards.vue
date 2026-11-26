@@ -71,6 +71,8 @@ export default {
     meBar() {
       if (!this.logged || this.scope === 'penias' || this.loading) return null
       const me = this.meRow
+      // Lista corta: tu fila ya se ve entera en pantalla → la barra fija sería repetida.
+      if (me && this.rows.length <= 7) return null
       if (me) {
         const sub = me.rank === 1
           ? '¡Vas primero! Sostenelo.'

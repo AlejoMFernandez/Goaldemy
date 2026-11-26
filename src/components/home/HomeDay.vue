@@ -35,8 +35,8 @@ const nodes = computed(() => props.milestones.map(m => {
   return {
     ...m, st, left,
     icon: m.got ? '' : isNext ? 'XP' : String(m.at),
-    label: `${m.at} · ${m.points ? `+${fmt(m.points)} XP` : m.name}`,
-    aria: `Al ganar ${m.at}: ${m.name}${m.points ? `, más ${m.points} XP` : ''}${m.got ? ' (ya lo tenés)' : ''}`,
+    label: m.owned && !m.got ? `${m.at} · ya es tuyo` : `${m.at} · ${m.points ? `+${fmt(m.points)} XP` : m.name}`,
+    aria: `Al ganar ${m.at}: ${m.name}${m.points ? `, más ${m.points} XP` : ''}${m.owned ? ' (ya lo tenés)' : ''}`,
   }
 }))
 </script>

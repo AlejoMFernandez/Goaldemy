@@ -89,7 +89,7 @@ function busyProg(m) { return props.claiming === 'prog_' + m.code }
 .mp { display: flex; flex-direction: column; gap: 12px; }
 .mp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 0 2px; }
 .mp-h { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #f1f5f9; }
-.mp-clock { font-family: var(--font-bug); font-weight: 800; font-size: 15px; color: #fbbf24; white-space: nowrap; }
+.mp-clock { font-family: var(--font-bug); font-weight: 800; font-size: 12.5px; flex-shrink: 0; color: #fbbf24; white-space: nowrap; }
 .mp-clock.is-muted { color: #94a3b8; }
 .mp-list { border-radius: 18px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; background: rgba(255,255,255,0.015); }
 .mp-done, .mp-note { margin: 0; padding: 0 4px; font-size: 12px; color: #94a3b8; }

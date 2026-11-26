@@ -263,7 +263,7 @@ export const ACHIEVEMENT_HINTS = {
   perfectionist: 'Completá un juego sin ningún error',
   daily_wins_all: 'Ganá todos los juegos del día',
   centurion: 'Acumulá 100 victorias totales',
-  guess_master: 'Ganá 20 partidas de "Adivina el jugador"',
+  guess_master: 'Ganá 20 partidas de "Adiviná el jugador"',
   comeback_king: 'Ganá un juego que perdiste el día anterior',
   lucky_first: 'Acertá al primer intento 10 veces',
   hat_trick: 'Ganá 3 juegos distintos el mismo día',

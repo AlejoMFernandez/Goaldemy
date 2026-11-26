@@ -220,8 +220,10 @@ export default {
       const loadAchievements = async () => {
         try {
           const [{ data: ach }, catalog] = await Promise.all([getUserAchievements(userId), getAchievementsCatalog().catch(() => ({}))])
-          this.achievements = ach || []
-          this.achTotal = Object.keys(catalog || {}).length
+          const codes = new Set(Object.keys(catalog || {}))
+          // Solo los logros del catálogo activo (los retirados no suman al X / total)
+          this.achievements = (ach || []).filter(r => !codes.size || !r?.achievements?.code || codes.has(r.achievements.code))
+          this.achTotal = codes.size
         } catch { this.achievements = [] } finally { this.achLoading = false }
       }
       const loadXpByGame = async () => {
