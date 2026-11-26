@@ -15,11 +15,12 @@ import { logout } from '../../services/auth'
 import { shellState, closeSettings, requestBugReport, requestChallenges, tapHaptic } from './shell-state'
 import { getTierForLevel } from '../../services/tiers'
 import { resolveLevelProgress } from '../../services/xp'
-import { getEquippedCosmetics, bannerStyle, rarity } from '../../services/cosmetics'
+import { getEquippedCosmetics, titleClass } from '../../services/cosmetics'
 import { soundManager } from '../../services/sounds'
 import { ACCOUNT_DELETION_ENABLED, DELETE_CONFIRM_WORD, deleteMyAccount } from '../../services/account'
 import { error as hapticError } from '../../services/haptics'
 import UserAvatar from '../common/UserAvatar.vue'
+import BannerScene from '../common/BannerScene.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -131,20 +132,21 @@ onBeforeUnmount(() => { document.removeEventListener('keydown', onKey); document
         <div class="st-scroll">
           <!-- Perfil -->
           <div class="st-profile">
-            <div class="st-banner" :class="bannerStyle(cos.bannerKey)">
+            <BannerScene class="st-banner" :style-key="cos.bannerKey || 'default'" :premium="!!cos.bannerPremium">
               <button type="button" class="st-close" aria-label="Cerrar" @click="closeSettings()">
                 <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span>
               </button>
-            </div>
+            </BannerScene>
             <div class="flex gap-3 px-3 pb-3 -mt-[26px] relative">
               <RouterLink to="/profile" class="st-av" aria-label="Mi perfil" @click="tapHaptic()">
                 <UserAvatar :size="66" :avatar-url="shellState.user?.avatar_url || ''" :initial="(name.trim()[0] || '?').toUpperCase()"
-                  :frame-key="shellState.equipped.frameKey" :icon-glyph="shellState.equipped.iconGlyph" :icon-bg="shellState.equipped.iconBg" :frame-premium="shellState.equipped.framePremium" />
+                  :frame-key="shellState.equipped.frameKey" :icon-glyph="shellState.equipped.iconGlyph" :icon-bg="shellState.equipped.iconBg" :frame-premium="shellState.equipped.framePremium"
+                  :level="Number(s.level) || null" :streak="Number(shellState.stats.streak) || 0" />
               </RouterLink>
               <div class="flex-1 min-w-0 pt-[30px] flex flex-col gap-1.5">
                 <div class="flex items-center gap-2 min-w-0">
                   <span class="font-display font-bold text-lg leading-none text-white truncate">{{ name }}</span>
-                  <span v-if="cos.titleText" class="st-title" :class="cos.titlePremium ? 'title-premium-anim' : rarity(cos.titleRarity).text">{{ cos.titleText }}</span>
+                  <span v-if="cos.titleText" class="st-title" :class="titleClass(cos.titleRarity, cos.titlePremium)">{{ cos.titleText }}</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <span class="st-nv">NV {{ s.level }}</span>
@@ -257,14 +259,11 @@ onBeforeUnmount(() => { document.removeEventListener('keydown', onKey); document
 }
 .st-scroll > * { flex-shrink: 0; }
 .st-profile { position: relative; border-radius: 18px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: #111a2e; }
-.st-banner { position: relative; height: 58px; }
+.st-banner { height: 58px; }
 .st-close { position: absolute; top: 7px; right: 7px; width: 44px; height: 44px; display: grid; place-items: center; color: #fff; }
 .st-close > span { width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.45); display: grid; place-items: center; }
-.st-av { flex-shrink: 0; border-radius: 18px; box-shadow: 0 6px 16px rgba(0,0,0,0.5); }
-.st-title {
-  padding: 2px 8px; border-radius: 999px; background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.45); white-space: nowrap;
-  font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 12px; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; max-width: 55%;
-}
+.st-av { flex-shrink: 0; border-radius: 50%; box-shadow: 0 6px 16px rgba(0,0,0,0.5); }
+.st-title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
 .st-nv { flex-shrink: 0; height: 22px; padding: 0 7px; border-radius: 6px; background: linear-gradient(180deg, #818cf8, #4f46e5); border: 1.5px solid #c7d2fe; display: flex; align-items: center; font-family: var(--font-shout); font-weight: 800; font-size: 14px; color: #fff; }
 .st-bar { position: relative; flex: 1; height: 14px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; display: block; }
 .st-bar-fill { display: block; height: 100%; background: linear-gradient(90deg, #34d399, #22d3ee, #818cf8); transition: width .7s ease; }
