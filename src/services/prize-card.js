@@ -12,7 +12,7 @@
  * Los logros NO usan carta: tienen su propia escena y medalla (moodboard 02).
  */
 import { getLevelRewards } from './level-rewards'
-import { TIERS, TIER_UNLOCKS } from './tiers'
+import { TIERS, TIER_UNLOCKS, TIER_RARITY } from './tiers'
 
 export const PRIZE_TYPE_LABEL = {
   icon: 'Ícono', frame: 'Borde', banner: 'Banner', title: 'Título',
@@ -63,9 +63,7 @@ export function prizesForLevelRange(oldLevel, newLevel) {
     const tier = TIERS.find(t => t.minLevel === l && l > 1)
     const tu = tier && TIER_UNLOCKS[tier.key]
     if (tu) {
-      out.push({ kind: 'banner', name: `Banner ${tier.label}`, rarity: 'epic', styleKey: tu.banner, level: l, fromTier: true })
-      out.push({ kind: 'frame', name: `Medalla ${tier.label}`, rarity: 'epic', styleKey: tu.frame, level: l, fromTier: true })
-      out.push({ kind: 'icon', name: `Ícono de rango ${tier.label}`, rarity: 'epic', styleKey: tu.icon, level: l, fromTier: true })
+      for (const p of tierPrizes(tier)) out.push({ ...p, level: l, fromTier: true })
     }
   }
   // El XP bonus va en una sola carta, al principio (la más común abre la tanda)
@@ -104,10 +102,12 @@ export function nextRealPrize(level, within = 20) {
 export function tierPrizes(tier) {
   const tu = tier && TIER_UNLOCKS[tier.key]
   if (!tu) return []
+  // Rareza por tramo (igual que el kit en supabase/pendientes/2026-11-24-11-colecciones.sql)
+  const rarity = TIER_RARITY[tier.key] || 'common'
   return [
-    { kind: 'banner', name: `Banner ${tier.label}`, rarity: 'epic', styleKey: tu.banner },
-    { kind: 'frame', name: `Medalla ${tier.label}`, rarity: 'epic', styleKey: tu.frame },
-    { kind: 'icon', name: `Ícono de rango ${tier.label}`, rarity: 'legendary', styleKey: tu.icon },
+    { kind: 'banner', name: `Banner ${tier.label}`, rarity, styleKey: tu.banner },
+    { kind: 'frame', name: `Medallón ${tier.label}`, rarity, styleKey: tu.frame },
+    { kind: 'icon', name: `Ícono de rango ${tier.label}`, rarity, styleKey: tu.icon },
   ]
 }
 

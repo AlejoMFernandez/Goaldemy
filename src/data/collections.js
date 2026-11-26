@@ -47,15 +47,10 @@
  * El SQL (supabase/pendientes/2026-11-24-11-colecciones.sql) se genera desde acá:
  *   node scripts/progresion-colecciones.mjs
  */
-import { TIERS } from '../services/tiers.js'
+import { TIERS, TIER_RARITY } from '../services/tiers.js'
 
-/** Rareza base de cada rango (tramo de la carrera). */
-export const TIER_RARITY = {
-  aficionado: 'common', juvenil: 'common',
-  amateur: 'rare', reserva: 'rare', profesional: 'rare',
-  crack: 'epic', figura: 'epic', idolo: 'epic',
-  icono: 'legendary', leyenda: 'legendary', goat: 'legendary',
-}
+/** Rareza base de cada rango (tramo de la carrera): vive en tiers.js. */
+export { TIER_RARITY }
 const BUMP = { common: 'rare', rare: 'epic', epic: 'legendary', legendary: 'legendary' }
 
 // Nivel (desde el minLevel del rango) de cada pieza del camino: 2 ícono, 4 título, 6 banner, 8 borde

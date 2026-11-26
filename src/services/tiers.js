@@ -21,6 +21,14 @@ export const TIERS = [
   kit: { icon: `/cosmetics/rank/icon-${t.key}.svg`, border: `/cosmetics/rank/border-${t.key}.svg`, banner: `/cosmetics/rank/banner-${t.key}.svg` },
 }))
 
+/** Rareza de las piezas de cada rango (sube con la carrera, artifact "El camino 1–100"). */
+export const TIER_RARITY = {
+  aficionado: 'common', juvenil: 'common',
+  amateur: 'rare', reserva: 'rare', profesional: 'rare',
+  crack: 'epic', figura: 'epic', idolo: 'epic',
+  icono: 'legendary', leyenda: 'legendary', goat: 'legendary',
+}
+
 export const TIER_KEYS = TIERS.map(t => t.key)
 export function getTierByKey(key) { return TIERS.find(t => t.key === key) || null }
 
