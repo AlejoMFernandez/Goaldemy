@@ -560,8 +560,11 @@ export default {
 .lr .bar .base { background: linear-gradient(90deg, #34d399, #22d3ee, #818cf8); }
 .lr .bar .lbl { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-bug); font-weight: 800; font-size: 13px; text-shadow: 0 1px 2px #000; white-space: nowrap; }
 .lr .bar .up { position: absolute; left: 50%; top: -6px; transform: translate(-50%, -100%); font-family: var(--font-bug); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; font-size: 15px; color: #fcd34d; white-space: nowrap; text-shadow: 0 0 14px rgba(252, 211, 77, .8); animation: sm-up 2s ease forwards; }
-@keyframes sm-up { 0% { opacity: 0; } 20%, 80% { opacity: 1; } 100% { opacity: 0; } }
-.lr .bar .combo { position: absolute; right: -6px; top: -26px; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 22px; line-height: 1; color: #fde68a; text-shadow: 0 2px 0 #b45309; transform: rotate(-8deg); }
+/* "¡Nivel N!" sube y se va (moodboard 03, como en main) */
+@keyframes sm-up { 0% { opacity: 0; transform: translate(-50%, -60%) scale(.5); } 20% { opacity: 1; transform: translate(-50%, -100%) scale(1.12); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -130%); } }
+.lr .bar .combo { position: absolute; right: -6px; top: -26px; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 22px; line-height: 1; color: #fde68a; text-shadow: 0 2px 0 #b45309, 0 0 12px rgba(252, 211, 77, .7); transform: rotate(-8deg); animation: sm-combo .4s cubic-bezier(.34, 1.56, .64, 1) both; pointer-events: none; }
+/* ×2, ×3: cada vuelta de la barra estampa el contador (se re-monta por :key) */
+@keyframes sm-combo { from { transform: rotate(-8deg) scale(2.2); opacity: 0; } to { transform: rotate(-8deg); opacity: 1; } }
 .lr .nx { font-family: var(--font-bug); font-weight: 800; font-size: 16px; color: #64748b; }
 .prz { min-height: 52px; box-sizing: border-box; border-radius: 14px; padding: 6px 12px 6px 8px; background: linear-gradient(90deg, rgba(129, 140, 248, .18), rgba(129, 140, 248, .03)); border: 1px solid rgba(129, 140, 248, .35); display: flex; align-items: center; gap: 10px; }
 .prz .pt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -603,7 +606,7 @@ export default {
 .sm-fade-leave-active { transition: opacity .2s ease; }
 .sm-fade-enter-from, .sm-fade-leave-to { opacity: 0; }
 @media (prefers-reduced-motion: reduce) {
-  .sm, .big.in, .stars svg.in, .tbl.in .row, .row .fl .nw, .lr .nv.pop, .lr .bar .up { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .sm, .big.in, .stars svg.in, .tbl.in .row, .row .fl .nw, .lr .nv.pop, .lr .bar .up, .lr .bar .combo { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
   .sm-conf i { animation: none; opacity: .5; }
 }
 </style>
