@@ -26,6 +26,14 @@
  */
 import { supabase } from './supabase'
 
+// Copy en rioplatense aunque la base todavía tenga el texto viejo ("cromos" es de España;
+// supabase/pendientes/2026-11-26-logros-copy.sql lo corrige en la tabla).
+export function fixAchievementCopy(a) {
+  if (!a || typeof a !== 'object') return a
+  const fix = (t) => typeof t === 'string' ? t.replace(/\bcromos\b/g, 'jugadores').replace(/\bCromos\b/g, 'Jugadores').replace(/\bcromo\b/g, 'jugador') : t
+  return { ...a, name: fix(a.name), description: fix(a.description) }
+}
+
 /**
  * Obtiene todos los logros desbloqueados de un usuario
  * @param {string} userId - UUID del usuario
@@ -37,7 +45,7 @@ export async function getUserAchievements(userId) {
     .select('earned_at, metadata, achievements:achievement_id (id, code, name, description, icon_url, points)')
     .eq('user_id', userId)
     .order('earned_at', { ascending: false })
-  return { data, error }
+  return { data: Array.isArray(data) ? data.map(r => (r?.achievements ? { ...r, achievements: fixAchievementCopy(r.achievements) } : r)) : data, error }
 }
 
 // Cache for achievements catalog from DB
@@ -70,7 +78,7 @@ export async function getAchievementsCatalog(force = false) {
   const catalog = {}
   for (const ach of data || []) {
     if (ach?.code) {
-      catalog[ach.code] = ach
+      catalog[ach.code] = fixAchievementCopy(ach)
     }
   }
 

@@ -151,8 +151,10 @@ export function buildAchievementList(catalog = {}, owned = [], ctx = {}, now = D
 
 export function matchesFilter(item, key) {
   if (key === 'todos') return true
-  if (key === 'secretos') return item.secret
-  return item.category === key
+  if (key === 'secretos') return !!item.secret
+  // Cada logro va en UNA sola categoría: los secretos solo en "Secretos" (antes contaban
+  // dos veces y las categorías sumaban 58 contra 54 en total)
+  return !item.secret && item.category === key
 }
 
 /** 'hoy' · 'ayer' · 'dd/mm' */
