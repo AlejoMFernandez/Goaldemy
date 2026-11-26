@@ -1,103 +1,92 @@
 -- ════════════════════════════════════════════════════════════════════
 --  2026-11-24-02 — REVOCAR EXECUTE DE FUNCIONES INTERNAS
+--  (ajustado al esquema REAL de producción leído el 2026-11-26)
 -- ════════════════════════════════════════════════════════════════════
 --  QUÉ:    Saca el permiso EXECUTE a PUBLIC / anon / authenticated de las
---          funciones SECURITY DEFINER que son "internas" (helpers que solo
---          deberían llamar otras funciones del servidor o el service_role).
+--          funciones SECURITY DEFINER "internas" (helpers que solo llaman otras
+--          funciones del servidor, triggers o el service_role de las Edge
+--          Functions). A las de admin (chequean el rol adentro) solo les saca
+--          anon/PUBLIC.
+--          Se revoca POR NOMBRE, en TODAS las sobrecargas que existan (prod tiene
+--          dos activate_subscription: de 6 y de 7 argumentos), así no depende de
+--          adivinar firmas.
 --
---  POR QUÉ: Postgres da EXECUTE a PUBLIC por defecto en toda función nueva y
---          Supabase además se lo da explícitamente a anon y authenticated
---          (ALTER DEFAULT PRIVILEGES). mejoras11 hizo `REVOKE ... FROM PUBLIC`
---          en award_fichas/add_balones, pero eso NO saca el grant directo a
---          authenticated (lo dice el propio guest-game-claim.sql). Resultado:
---          cualquier usuario logueado puede hacer desde la consola:
---             supabase.rpc('award_fichas', {p_uid: miId, p_amount: 999999, p_reason:'x'})
---             supabase.rpc('add_balones',  {...})            ← moneda PAGA
---             supabase.rpc('grant_cosmetic', {...})          ← cosméticos premium
---             supabase.rpc('activate_subscription', {...})   ← PRO gratis para siempre
---          Y como reciben p_uid/p_user_id, también a OTRO usuario.
+--  POR QUÉ: Supabase da EXECUTE a anon y authenticated en toda función nueva
+--          (ALTER DEFAULT PRIVILEGES). Diagnóstico 01 en prod (26/11): award_fichas,
+--          add_balones, grant_cosmetic, grant_powerup y activate_subscription
+--          son EJECUTABLES por authenticated → cualquiera se da Fichas, Balones
+--          (moneda paga), cosméticos o PRO, a sí mismo o a OTRO usuario.
+--          Además unlock_achievement_for_user / settle_prode_* reciben el uuid
+--          del destinatario (pensadas para service_role).
 --
---  RIESGO: Bajo. El cliente (src/) NO llama ninguna de estas funciones (se
---          verificó con grep de `rpc('...')`). Las llaman otras funciones
---          SECURITY DEFINER, que corren como su owner (postgres) y no
---          necesitan el grant. Las Edge Functions usan service_role, al que se
---          le deja/da EXECUTE explícito.
---          Si alguna función no existe en tu base, se saltea (NOTICE).
+--  CLIENTES: grep de rpc('…') en src/ de main y de v4 + supabase/functions:
+--          ninguna de las internas se llama desde el navegador. Las Edge
+--          Functions (payment-webhook, send-streak-reminders) usan
+--          SUPABASE_SERVICE_ROLE_KEY → se les deja EXECUTE a service_role.
+--          NO se tocan:
+--            • generate_referral_code(): la llama el trigger trg_set_referral_code,
+--              que NO es SECURITY DEFINER → corre como authenticated cuando el
+--              cliente hace createUserProfile(). Revocarla rompería el alta.
+--            • count_real_users(): el cliente la llama (achievements.js) y es un
+--              conteo inofensivo.
 --
---  ROLLBACK: (no recomendado) GRANT EXECUTE ON FUNCTION <firma> TO authenticated;
---          para la función puntual que haya que devolver.
+--  ROLLBACK: GRANT EXECUTE ON FUNCTION public.<fn>(<args>) TO authenticated;
+--          (los permisos originales están en backup_20261126).
 -- ════════════════════════════════════════════════════════════════════
 
 BEGIN;
 
 DO $$
 DECLARE
-  -- Internas: nadie del lado cliente. service_role sí (Edge Functions / cron).
+  -- Internas: solo servidor (otras funciones SECURITY DEFINER, triggers, service_role).
   internas TEXT[] := ARRAY[
-    'public.award_fichas(uuid, integer, text, jsonb)',
-    'public.add_balones(uuid, integer, text, jsonb)',
-    'public.grant_cosmetic(uuid, text)',
-    'public.grant_powerup(uuid, text, integer)',
-    'public.activate_subscription(uuid, text, text, text, timestamptz, timestamptz)',
-    'public.ensure_daily_challenges(uuid)',
-    'public.ensure_progressive_challenges(uuid)',
-    'public.owns_cosmetic(uuid, text)',
-    'public.user_level_of(uuid)',
-    'public.user_is_premium(uuid)',
-    'public.trg_xp_to_fichas()',
-    'public.handle_new_user()',
-    'public.set_referral_code_on_insert()',
-    'public.generate_referral_code()',
-    'public._purge_ghost_users_core(integer)',
-    'public._dm_bump_sent_count()',
-    'public._purge_old_direct_messages(interval)',
-    'public.get_streak_reminder_targets()'
+    'award_fichas', 'add_balones', 'grant_cosmetic', 'grant_powerup', 'activate_subscription',
+    'ensure_daily_challenges', 'ensure_progressive_challenges',
+    'owns_cosmetic', 'user_level_of', 'user_is_premium',
+    'unlock_achievement_for_user', 'settle_prode_match_pick', 'settle_prode_champion_pick',
+    'trg_xp_to_fichas', 'handle_new_user', 'set_referral_code_on_insert', '_dm_bump_sent_count',
+    '_purge_ghost_users_core', '_purge_old_direct_messages',
+    'get_streak_reminder_targets'
   ];
-  -- De admin: tienen chequeo de rol adentro; solo les sacamos anon/PUBLIC.
+  -- Admin: chequean role = 'admin' adentro; las usa el panel (authenticated).
   admin_fns TEXT[] := ARRAY[
-    'public.admin_grant_currency(uuid, text, integer)',
-    'public.delete_user_admin(uuid)',
-    'public.change_user_role_admin(uuid, text)',
-    'public.get_users_admin()',
-    'public.purge_ghost_users(integer)',
-    'public.count_real_users()',
-    'public.get_admin_dashboard()'
+    'admin_grant_currency', 'delete_user_admin', 'change_user_role_admin',
+    'get_users_admin', 'purge_ghost_users', 'get_admin_dashboard'
   ];
-  f TEXT;
+  r RECORD;
 BEGIN
-  FOREACH f IN ARRAY internas LOOP
-    IF to_regprocedure(f) IS NULL THEN
-      RAISE NOTICE 'No existe (se saltea): %', f;
-      CONTINUE;
-    END IF;
-    EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC, anon, authenticated', f);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO service_role', f);
-    RAISE NOTICE 'Revocada (solo service_role): %', f;
+  FOR r IN
+    SELECT p.oid::regprocedure AS sig
+    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = ANY (internas)
+  LOOP
+    EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC, anon, authenticated', r.sig);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO service_role', r.sig);
+    RAISE NOTICE 'Solo service_role: %', r.sig;
   END LOOP;
 
-  FOREACH f IN ARRAY admin_fns LOOP
-    IF to_regprocedure(f) IS NULL THEN
-      RAISE NOTICE 'No existe (se saltea): %', f;
-      CONTINUE;
-    END IF;
-    EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC, anon', f);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO authenticated, service_role', f);
-    RAISE NOTICE 'Solo authenticated (chequea admin adentro): %', f;
+  FOR r IN
+    SELECT p.oid::regprocedure AS sig
+    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = ANY (admin_fns)
+  LOOP
+    EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC, anon', r.sig);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO authenticated, service_role', r.sig);
+    RAISE NOTICE 'authenticated + service_role (chequea admin adentro): %', r.sig;
   END LOOP;
 END $$;
 
--- Verificación inmediata: esto tiene que devolver 0 filas.
-SELECT p.proname, pg_get_function_identity_arguments(p.oid) AS args
-FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-WHERE n.nspname = 'public'
-  AND p.proname IN ('award_fichas','add_balones','grant_cosmetic','grant_powerup','activate_subscription')
-  AND (has_function_privilege('authenticated', p.oid, 'EXECUTE') OR has_function_privilege('anon', p.oid, 'EXECUTE'));
-
 COMMIT;
 
--- ── OPCIONAL (recomendado a futuro, NO se aplica acá) ─────────────────
--- Que las funciones NUEVAS no nazcan ejecutables por anon/authenticated.
--- Ojo: después de esto, toda RPC nueva necesita su GRANT explícito a
--- authenticated (las migraciones del repo ya lo hacen casi siempre).
---
--- ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC, anon, authenticated;
+-- Verificación: tiene que dar abiertas = 0.
+SELECT count(*) = 0 AS ok,
+       count(*)     AS abiertas,
+       string_agg(p.oid::regprocedure::text, ', ') AS detalle
+FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname = 'public'
+  AND p.proname IN ('award_fichas','add_balones','grant_cosmetic','grant_powerup','activate_subscription',
+                    'ensure_daily_challenges','ensure_progressive_challenges','owns_cosmetic','user_level_of',
+                    'user_is_premium','unlock_achievement_for_user','settle_prode_match_pick',
+                    'settle_prode_champion_pick','_purge_ghost_users_core','_purge_old_direct_messages',
+                    'get_streak_reminder_targets')
+  AND (has_function_privilege('authenticated', p.oid, 'EXECUTE') OR has_function_privilege('anon', p.oid, 'EXECUTE'));
