@@ -1,4 +1,21 @@
 -- ============================================================
+-- PENDIENTE · NO APLICADO · 2026-11-26 (viene de feature/vestuario-nuevo, 28/09)
+-- QUÉ: suma al catálogo `cosmetics` los 12 bordes, 15 banners y 30 títulos del
+--      vestuario nuevo (moodboard "Vestuario nuevo", docs/vestuario/SPEC.md).
+-- POR QUÉ: la app ya los dibuja (AvatarFrame / BannerScene / titleClass); sin las
+--      filas no se pueden ganar ni equipar. Si no se aplica, la UI sigue igual con lo
+--      que hay en la base.
+-- IDEMPOTENTE: ON CONFLICT (code) DO NOTHING. Si alguna fila ya existe (p. ej. se
+--      aplicó la versión del 28/09 y después se ajustó un nivel), NO se pisa.
+-- CHEQUEAR ANTES: que los logros de unlock_achievement existan y estén activos (query
+--      al final) y que sort_order 100–343 no choque con otras filas.
+-- ROLLBACK: DELETE FROM public.cosmetics WHERE code IN (<los códigos de abajo>)
+--      AND NOT EXISTS (SELECT 1 FROM public.user_cosmetics uc WHERE uc.cosmetic_code = cosmetics.code);
+-- ============================================================
+
+BEGIN;
+
+-- ============================================================
 -- FULVO — VESTUARIO NUEVO (septiembre 2026)
 -- 12 bordes + 15 banners + 30 títulos.
 -- Diseño: docs/vestuario/moodboard.html · Especificación: docs/vestuario/SPEC.md
@@ -81,13 +98,12 @@ VALUES
   ('title_dueno_pelota', 'title', 'Dueño de la pelota',   'legendary', NULL, 999, false, 'grand_slam',         341),
   ('title_campeon_inv',  'title', 'Campeón invicto',      'legendary', NULL, 999, false, 'invicto_temporada',  342),
   ('title_abonado',      'title', 'Abonado de por vida',  'legendary', NULL, 999, false, 'daily_streak_30',    343)
-ON CONFLICT (code) DO UPDATE SET
-  type = EXCLUDED.type, name = EXCLUDED.name, rarity = EXCLUDED.rarity, style_key = EXCLUDED.style_key,
-  unlock_level = EXCLUDED.unlock_level, premium_only = EXCLUDED.premium_only,
-  unlock_achievement = EXCLUDED.unlock_achievement, sort_order = EXCLUDED.sort_order;
+ON CONFLICT (code) DO NOTHING;
 
 -- Chequeo: todos los logros referenciados tienen que existir y estar activos.
 -- SELECT c.code, c.unlock_achievement FROM public.cosmetics c
 -- LEFT JOIN public.achievements a ON a.code = c.unlock_achievement
 -- WHERE c.sort_order BETWEEN 100 AND 399 AND c.unlock_achievement IS NOT NULL
 --   AND (a.id IS NULL OR a.active = false);
+
+COMMIT;

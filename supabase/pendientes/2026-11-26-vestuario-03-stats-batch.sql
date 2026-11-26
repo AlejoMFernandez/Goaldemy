@@ -1,4 +1,19 @@
 -- ============================================================
+-- PENDIENTE · NO APLICADO · 2026-11-26 (viene de feature/vestuario-nuevo, 28/09)
+-- QUÉ: RPC get_users_cosmetic_stats(uuid[]) → nivel + racha diaria de hasta 200
+--      usuarios en una llamada.
+-- POR QUÉ: las chapitas de los bordes "Placa de nivel" y "Racha encendida" de OTROS
+--      usuarios (ranking, Social, chat). Sin la función, getCosmeticStatsBatch()
+--      devuelve {} y los bordes se ven sin chapita: no rompe nada.
+-- RIESGO: SECURITY DEFINER legible por anon: expone nivel y racha, que ya son
+--      públicos en el ranking y el perfil. No expone XP por evento.
+-- IDEMPOTENTE: CREATE OR REPLACE.
+-- ROLLBACK: DROP FUNCTION IF EXISTS public.get_users_cosmetic_stats(uuid[]);
+-- ============================================================
+
+BEGIN;
+
+-- ============================================================
 -- FULVO — VESTUARIO: nivel + racha de VARIOS usuarios en una sola llamada
 -- Para las chapitas reales de los bordes "Placa de nivel" y "Racha encendida"
 -- de otros usuarios (ranking, amigos, chat) sin una consulta por usuario.
@@ -31,3 +46,5 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_users_cosmetic_stats(uuid[]) TO anon, authenticated;
+
+COMMIT;

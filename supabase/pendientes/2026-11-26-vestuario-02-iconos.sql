@@ -1,4 +1,18 @@
 -- ============================================================
+-- PENDIENTE · NO APLICADO · 2026-11-26 (viene de feature/vestuario-nuevo, 28/09)
+-- QUÉ: filas del catálogo para los 23 íconos del vestuario (bufanda, bombo, lobo…).
+--      Los .webp ya están en public/cosmetics/icons/ y las claves en
+--      src/services/cosmetic-icon-keys.js.
+-- POR QUÉ: sin filas no se pueden ganar. En producción parece estar aplicado (la
+--      Colección muestra Bufanda); este archivo queda para staging o bases nuevas.
+-- IDEMPOTENTE: ON CONFLICT (code) DO NOTHING (no pisa ajustes hechos en la base).
+-- ROLLBACK: DELETE FROM public.cosmetics WHERE code LIKE 'icon\_%' AND sort_order BETWEEN 400 AND 432
+--      AND NOT EXISTS (SELECT 1 FROM public.user_cosmetics uc WHERE uc.cosmetic_code = cosmetics.code).
+-- ============================================================
+
+BEGIN;
+
+-- ============================================================
 -- FULVO — ÍCONOS NUEVOS (23) · vestuario septiembre 2026
 -- Los PNG/webp ya están en public/cosmetics/icons y las claves en RASTER_ICONS.
 -- Faltaban las filas del catálogo: sin ellas no se pueden ganar ni equipar.
@@ -37,7 +51,6 @@ VALUES
   ('icon_pelota_oro',   'icon', 'Pelota de oro',      'legendary', 'pelota_oro',   50,  false, NULL,                430),
   ('icon_dragon',       'icon', 'Dragón',             'legendary', 'dragon',       999, false, 'invicto_temporada', 431),
   ('icon_camiseta_10',  'icon', 'La 10',              'legendary', 'camiseta_10',  999, false, 'daily_wins_10',     432)
-ON CONFLICT (code) DO UPDATE SET
-  type = EXCLUDED.type, name = EXCLUDED.name, rarity = EXCLUDED.rarity, style_key = EXCLUDED.style_key,
-  unlock_level = EXCLUDED.unlock_level, premium_only = EXCLUDED.premium_only,
-  unlock_achievement = EXCLUDED.unlock_achievement, sort_order = EXCLUDED.sort_order;
+ON CONFLICT (code) DO NOTHING;
+
+COMMIT;
