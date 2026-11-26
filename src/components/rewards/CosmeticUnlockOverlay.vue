@@ -34,15 +34,24 @@ export default {
       return !notificationsState.suppressOverlays
         && !notificationsState.proWelcome
         && notificationsState.achievementQueue.length === 0
+        && !notificationsState.achievementActive
         && !notificationsState.levelUpActive
         && notificationsState.levelUpQueue.length === 0
     }
     // Carta estándar (moodboard 08) para cada cosmético
     function prizeOf(item) { return prizeFromCosmetic(item) }
 
+    // Un chequeo de desbloqueos en curso puede traer más piezas de la misma salida: se
+    // espera a que termine (máx. 6 s) para mostrarlas TODAS en una sola pantalla.
+    let waitSince = 0
     function showBatch() {
       clearTimers()
       if (!canShow() || active.value) return
+      if (notificationsState.pendingChecks > 0) {
+        if (!waitSince) waitSince = Date.now()
+        if (Date.now() - waitSince < 6000) { timers.push(setTimeout(showBatch, 400)); return }
+      }
+      waitSince = 0
       // Drenar TODA la cola de cosméticos en una sola tanda.
       const drained = []
       let it
@@ -114,6 +123,12 @@ export default {
     })
     // La escena de nivel terminó → ahora sí, los cosméticos exclusivos
     watch(() => notificationsState.levelUpActive, (a) => {
+      if (!a && notificationsState.cosmeticQueue.length > 0 && !active.value) {
+        setTimeout(() => { if (canShow()) showBatch() }, 500)
+      }
+    })
+    // Terminó la escena central de un logro → recién ahí las piezas (nunca encima del logro)
+    watch(() => notificationsState.achievementActive, (a) => {
       if (!a && notificationsState.cosmeticQueue.length > 0 && !active.value) {
         setTimeout(() => { if (canShow()) showBatch() }, 500)
       }
