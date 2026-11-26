@@ -19,6 +19,7 @@
  * espera a que esta escena termine). Tocar el fondo adelanta la animación.
  */
 import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import { notificationsState, shiftLevelUpQueue, setLevelUpActive } from '@/stores/notifications'
 import { TIERS, getTierForLevel, getNextTier, rankKitPrizes, tierGlow } from '@/services/tiers'
 import { prizesForLevelRange, PRIZE_TYPE_LABEL, RARITY_ORDER } from '@/services/prize-card'
@@ -255,6 +256,12 @@ function showNext() {
   else runLevel()
 }
 
+const router = useRouter()
+function goCamino() {
+  collect()
+  router.push('/camino')
+}
+
 function dismiss() {
   clearTimers()
   current.value = null
@@ -412,6 +419,7 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1c1206" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="13" rx="2" /><path d="M3 12h18M12 8v13M12 8c-2-4-6-4-6-1.5S9 8 12 8zM12 8c2-4 6-4 6-1.5S15 8 12 8z" /></svg>{{ hasUnlocks ? 'COBRAR' : 'SEGUIR' }}
             </button>
             <button v-else type="button" class="skip" @click="skip">Tocá para adelantar</button>
+            <button v-if="lp >= 4" type="button" class="camino" @click="goCamino">Ver el camino de niveles</button>
           </div>
         </div>
       </div>
@@ -582,6 +590,7 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
 .lv4-go .go { width: 100%; min-height: 62px; border: 0; border-radius: 16px; background: linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%); border-bottom: 4px solid #b45309; color: #1c1206; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 30px; letter-spacing: 1.5px; cursor: pointer; animation: lv4-in .35s ease both, lv4-pulse 2s ease-in-out 1s infinite; }
 .lv4-go .go:active { transform: translateY(2px); border-bottom-width: 2px; }
 @keyframes lv4-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, .5); } 50% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); } }
+.lv4-go .camino { min-height: 44px; padding: 0 16px; border: 0; background: none; color: #a5b4fc; font-size: 13px; font-weight: 700; cursor: pointer; }
 .lv4-go .skip { min-height: 44px; padding: 0 16px; border: 0; background: none; color: #64748b; font-size: 13px; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .lvo *, .lvo-flash.on { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
