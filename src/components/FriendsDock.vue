@@ -172,7 +172,13 @@ export default {
     // Click en un toast de DM (o cualquier otro disparador externo) → abrir ese chat.
     openChatRequest(req) {
       if (this.embedded) return
-      if (req?.peerId) this.openFromRail(req.peerId)
+      if (!req?.peerId) return
+      // Mobile (shell nuevo): el chat es una pantalla completa → /messages/:id.
+      if (typeof window !== 'undefined' && window.matchMedia?.('(max-width: 1023px)').matches) {
+        this.$router.push(`/messages/${req.peerId}`)
+        return
+      }
+      this.openFromRail(req.peerId)
     },
     // Pedidos desde la hoja de ajustes del shell mobile.
     'shellState.bugRequest'() { if (!this.embedded) this.bugOpen = true },
