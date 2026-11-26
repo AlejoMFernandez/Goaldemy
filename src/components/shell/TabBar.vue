@@ -20,9 +20,9 @@ const rewardCount = computed(() => getUnclaimedCount())
 
 const TABS = [
   { key: 'tienda', to: '/tienda', label: 'Tienda', match: ['/tienda', '/pricing'] },
-  { key: 'coleccion', to: '/coleccion', label: 'Colección', match: ['/coleccion', '/profile-edit'] },
+  { key: 'coleccion', to: '/coleccion', label: 'Colección', match: ['/coleccion', '/colecciones', '/camino', '/profile-edit'] },
   { key: 'jugar', to: '/', label: 'Jugar', match: ['/', '/play/points'], center: true },
-  { key: 'pase', to: '/rewards', label: 'Pase', match: ['/rewards'] },
+  { key: 'pase', to: '/rewards', label: 'Pase', match: ['/rewards', '/racha', '/logros'] },
   { key: 'social', to: '/social', label: 'Social', match: ['/social', '/leaderboards', '/competiciones', '/leagues', '/teams', '/team', '/messages', '/notifications'] },
 ]
 
