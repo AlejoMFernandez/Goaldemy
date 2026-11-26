@@ -202,6 +202,8 @@ function onLeave() { tiltStyle.value = {}; shinePos.value = null }
 .pc-av { background: #1e293b; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .4); }
 .pc-sil { width: 62%; height: 62%; fill: #64748b; margin-top: 14%; }
 .pc-banner { position: absolute; inset: 0; }
+/* Banners de rango: la izquierda es la zona libre (degradé) → en la ventana cuadrada se muestra la escena */
+.pc-banner[class*="bnr-tier-"] { background-position: 78% center !important; }
 .pc-bav { position: absolute; left: 9%; bottom: 12%; width: 30%; aspect-ratio: 1; border-radius: 50%; background: #1e293b; border: 1.5cqw solid #0b1024; display: grid; place-items: center; overflow: hidden; }
 .pc-banner .l1, .pc-banner .l2 { position: absolute; left: 44%; height: 5cqw; border-radius: 3cqw; background: rgba(255, 255, 255, .85); }
 .pc-banner .l1 { bottom: 30%; width: 36%; }

@@ -195,7 +195,7 @@ export function createForge({ root, canvas, reduced = false }) {
   function tween(ms, fn, ease = t => t) {
     return new Promise(r => {
       const t0 = performance.now()
-      ;(function f(n) { const t = Math.min(1, (n - t0) / ms); fn(ease(t)); t < 1 ? requestAnimationFrame(f) : r() })(t0)
+      ;(function f(n) { const t = Math.max(0, Math.min(1, (n - t0) / ms)); fn(ease(t)); t < 1 ? requestAnimationFrame(f) : r() })(t0)
     })
   }
 
