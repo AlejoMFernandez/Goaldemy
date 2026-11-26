@@ -99,3 +99,7 @@ Desde ahí:
 3. Aplicás a staging/prod con `npx supabase db push` (aplica solo las que faltan y las registra en `supabase_migrations.schema_migrations`).
 4. Mover los `.sql` viejos sueltos a `supabase/legacy/` (quedan como historia; la verdad pasa a ser `migrations/`).
 5. Opcional: GitHub Action que corra `supabase db lint` en cada PR.
+
+## Progresión y rangos (aparte de los parches de seguridad)
+
+Orden: `2026-11-24-10-curva-31-50.sql` → `2026-10-03-rangos-curva-xp-51-100.sql` → `2026-10-02-rangos-iconos-nombre.sql` y `2026-10-03-rangos-nuevos-cosmeticos.sql` → `2026-11-24-11-colecciones.sql`. Detalle en `docs/relanzamiento/PROGRESION.md` §6.

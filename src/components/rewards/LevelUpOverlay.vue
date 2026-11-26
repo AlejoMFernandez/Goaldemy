@@ -2,11 +2,11 @@
 /**
  * SUBIR DE NIVEL / SUBIR DE RANGO (Moodboard 03 + cartas del 08)
  *
- * Acto RANGO (solo si cambió el rango): ¡GOL! que abre la ceremonia → el escudo
- * viejo tiembla y estalla → FORJA: el escudo nuevo (kit v2, RankCrest) se arma pieza
- * por pieza (aro, campo, medallón con emblema, cinta) y cada una se encastra con un
- * golpe metálico → "Al llegar ganás" (cartas del rango, boca abajo, se dan vuelta de
- * a una) → próximo rango a la vista. Con reduced-motion el escudo aparece entero.
+ * Acto RANGO (solo si cambió el rango): ¡GOL! que abre la ceremonia → la FORJA
+ * (services/rank-forge.js, moodboard ascenso-forja: se calienta, se desarma, cae el
+ * filo, cae el emblema, caen las estrellas, ¡PUM! con el nombre) → "Al llegar ganás"
+ * (cartas del rango, boca abajo, se dan vuelta de a una) → próximo rango a la vista.
+ * Tocar adelanta la forja. Con reduced-motion el escudo aparece entero.
  *
  * Acto NIVEL (diseño V4 aprobado: V4SubidaNivel): el escudo hexagonal con el
  * número (un ¡PUM! por nivel, ×2, ×3 si subiste varios), el escudo del rango
@@ -21,8 +21,8 @@
 import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { notificationsState, shiftLevelUpQueue, setLevelUpActive } from '@/stores/notifications'
-import { TIERS, getTierForLevel, getNextTier, rankKitPrizes, tierGlow } from '@/services/tiers'
-import { prizesForLevelRange, PRIZE_TYPE_LABEL, RARITY_ORDER } from '@/services/prize-card'
+import { TIERS, getTierForLevel, getNextTier } from '@/services/tiers'
+import { prizesForLevelRange, tierPrizes, PRIZE_TYPE_LABEL, RARITY_ORDER } from '@/services/prize-card'
 import { revealPrizes } from '@/services/prize-reveal'
 import { soundManager } from '@/services/sounds'
 import { sparks, center, fxOnTop, reducedMotion } from '@/services/game-fx'
@@ -30,7 +30,8 @@ import PrizeCard from './PrizeCard.vue'
 import PowerupIcon from './PowerupIcon.vue'
 import CosmeticIcon from './CosmeticIcon.vue'
 import { success as hapticSuccess, tap as hapticTap } from '@/services/haptics'
-import RankCrest from '@/components/ranks/RankCrest.vue'
+import { createForge, FORGE_SOUNDS } from '@/services/rank-forge'
+import { RARITY } from '@/services/rarity'
 
 const current = ref(null)
 const stage = ref('level')      // 'rank' | 'level'
@@ -43,14 +44,17 @@ const flashKey = ref(0)
 const rankFaceDown = ref([])    // por carta del rango
 const rankCardEls = []
 const numEl = ref(null)
-const badgeEl = ref(null)
+const forgeRoot = ref(null)
+const forgeCanvas = ref(null)
 const stageEl = ref(null)
 let timers = []
 let cancelReveal = null
+let forge = null
 
 function T(fn, ms) { timers.push(setTimeout(fn, reducedMotion ? Math.min(ms, 60) : ms)) }
 function clearTimers() { timers.forEach(clearTimeout); timers = []; cancelReveal?.(); cancelReveal = null }
-onBeforeUnmount(clearTimers)
+function destroyForge() { const f = forge; forge = null; f?.destroy() }
+onBeforeUnmount(() => { clearTimers(); destroyForge() })
 
 const oldTier = computed(() => current.value ? getTierForLevel(current.value.oldLevel) : null)
 const newTier = computed(() => current.value ? getTierForLevel(current.value.newLevel) : null)
@@ -64,8 +68,8 @@ const prizes = computed(() => {
   const all = prizesForLevelRange(current.value.oldLevel, current.value.newLevel)
   return tierChanged.value ? all.filter(p => p.kind !== 'tier' && !p.fromTier) : all
 })
-// Kit del rango con el copy acordado ("Ícono de rango Ícono"); tierPrizes() queda para compat.
-const rankCards = computed(() => tierChanged.value ? rankKitPrizes(newTier.value) : [])
+// Kit del rango con el copy acordado ("Ícono de rango Ícono"), desde prize-card.
+const rankCards = computed(() => tierChanged.value ? tierPrizes(newTier.value) : [])
 // Cartas = solo recompensas reales (cosméticos, rango, juegos). XP y ayudas van como fichas.
 const cardPrizes = computed(() => prizes.value.filter(p => p.kind !== 'xp' && p.kind !== 'powerup'))
 const xpTotal = computed(() => prizes.value.filter(p => p.kind === 'xp').reduce((a, p) => a + (Number(p.amount) || 0), 0))
@@ -74,13 +78,13 @@ const hasUnlocks = computed(() => cardPrizes.value.length > 0 || xpTotal.value >
 const xpShown = ref(0)
 
 // ── V4: carta grande (la más rara), dos al costado y el resto en fichas ──
-const RARITY_LABEL = { common: 'Común', rare: 'Raro', epic: 'Épico', legendary: 'Legendario' }
-const RARITY_THEME = {
-  common: { c: '#34d399', soft: 'rgba(52,211,153,0.28)', ring: 'rgba(52,211,153,0.6)', dark: '#064e3b', spin: 'conic-gradient(from 0deg,#34d399,#a7f3d0,#047857,#6ee7b7,#34d399)', bg: 'linear-gradient(180deg,#064e3b,#052e24 70%,#03140f)' },
-  rare: { c: '#60a5fa', soft: 'rgba(96,165,250,0.28)', ring: 'rgba(96,165,250,0.65)', dark: '#1e3a8a', spin: 'conic-gradient(from 0deg,#3b82f6,#bfdbfe,#1e3a8a,#93c5fd,#3b82f6)', bg: 'linear-gradient(180deg,#1e3a8a,#111c44 70%,#0a1028)' },
-  epic: { c: '#a855f7', soft: 'rgba(192,132,252,0.28)', ring: 'rgba(192,132,252,0.65)', dark: '#3b0764', spin: 'conic-gradient(from 0deg,#a855f7,#f0abfc,#6d28d9,#c084fc,#a855f7)', bg: 'linear-gradient(180deg,#3b0764,#1e1036 70%,#12091f)' },
-  legendary: { c: '#fbbf24', soft: 'rgba(251,191,36,0.28)', ring: 'rgba(251,191,36,0.7)', dark: '#78350f', spin: 'conic-gradient(from 0deg,#f59e0b,#fef3c7,#b45309,#fcd34d,#f59e0b)', bg: 'linear-gradient(180deg,#78350f,#3a1d08 70%,#1c0f05)' },
-}
+const RARITY_LABEL = Object.fromEntries(Object.entries(RARITY).map(([k, r]) => [k, r.label]))
+// Colores de la carta por rareza: todos salen de services/rarity.js (fuente única)
+const RARITY_THEME = Object.fromEntries(Object.entries(RARITY).map(([k, r]) => [k, {
+  c: r.c, soft: `rgb(${r.rgb} / .28)`, ring: `rgb(${r.rgb} / .65)`, dark: r.dark,
+  spin: `conic-gradient(from 0deg,${r.c},${r.light},${r.dark},${r.c})`,
+  bg: `linear-gradient(180deg, color-mix(in srgb, ${r.dark} 70%, #0b1220), #0b1220 70%, #060a14)`,
+}]))
 const theme = (p) => RARITY_THEME[p?.rarity] || RARITY_THEME.common
 // Más rara primero; a igual rareza, el ícono manda (es la carta que mejor luce en grande)
 const KIND_ORDER = { icon: 0, frame: 1, banner: 2, game: 3, tier: 4, title: 5 }
@@ -109,44 +113,38 @@ function flash() { flashKey.value++ }
 // ─── Acto RANGO ─────────────────────────────────────────────
 function runRank() {
   stage.value = 'rank'; rp.value = 0
+  destroyForge()
   rankFaceDown.value = rankCards.value.map(() => true)
+  soundManager.preload(FORGE_SOUNDS)
   nextTick(() => {
     T(() => { rp.value = 1; flash(); soundManager.playBig('goal') }, 150)        // ¡GOL!
-    T(() => { rp.value = 2 }, 1300)                                              // escudo viejo
-    T(() => { rp.value = 3 }, 1750)                                              // tiembla
-    T(() => {                                                                    // estalla → arranca la FORJA
-      rp.value = 4; flash()
-      if (reducedMotion) soundManager.playBig('forge')
-    }, 2400)
-    // La Forja dura ~1,6 s (RankCrest emite hit por pieza y forged al final)
-    T(() => { rp.value = 5 }, reducedMotion ? 2500 : 4050)                      // nombre del rango
-    T(() => {                                                                    // "Al llegar ganás"
-      rp.value = 6
-      nextTick(() => {
-        cancelReveal = revealPrizes(rankCards.value, i => { rankFaceDown.value[i] = false }, i => rankCardEls[i], {
-          startDelay: 400,
-          onDone: () => { rp.value = 7 },
-        })
-      })
-    }, reducedMotion ? 2600 : 4450)
+    T(startForge, 1300)                                                          // la forja
   })
 }
 
-// Cada pieza del escudo nuevo que se encastra: golpe metálico + chispas del color del rango.
-// El medallón central es el golpe fuerte (suena la forja); el resto, golpes cortos.
-function onForgeHit(part) {
-  const el = badgeEl.value
-  const glow = tierGlow(newTier.value)
-  if (part === 'roundel') {
-    soundManager.playBig('forge'); flash()
-    if (el) { const c = center(el); sparks(c.x, c.y, 40, [glow, '#fff', '#fcd34d'], 150) }
-    el?.animate?.([
-      { transform: 'translate(0,0)' }, { transform: 'translate(-4px,3px)' }, { transform: 'translate(3px,-2px)' }, { transform: 'translate(0,0)' },
-    ], { duration: 260, easing: 'ease-out' })
-  } else {
-    soundManager.play('stamp')
-    if (el) { const c = center(el); sparks(c.x, c.y, 12, [glow, '#fff'], 70) }
-  }
+function startForge() {
+  rp.value = 2
+  nextTick(() => {
+    destroyForge()
+    if (!forgeRoot.value || !forgeCanvas.value) { rp.value = 5; T(showRankCards, 300); return }
+    const f = createForge({ root: forgeRoot.value, canvas: forgeCanvas.value, reduced: reducedMotion })
+    forge = f
+    f.play(oldTier.value.key, newTier.value.key).then(() => {
+      if (forge !== f) return
+      rp.value = 5                                                               // nombre estampado
+      T(showRankCards, 500)
+    })
+  })
+}
+
+function showRankCards() {                                                       // "Al llegar ganás"
+  rp.value = 6
+  nextTick(() => {
+    cancelReveal = revealPrizes(rankCards.value, i => { rankFaceDown.value[i] = false; hapticTap() }, i => rankCardEls[i], {
+      startDelay: 400,
+      onDone: () => { rp.value = 7 },
+    })
+  })
 }
 
 // ─── Acto NIVEL ─────────────────────────────────────────────
@@ -215,6 +213,13 @@ function runLevel() {
 function skip() {
   if (stage.value === 'rank') {
     if (rp.value >= 7) return goToLevel()
+    // Durante la forja, tocar la adelanta (deja el escudo ya forjado) y sigue el flujo normal.
+    if (rp.value >= 2 && rp.value < 5 && forge?.skip()) return
+    if (rp.value < 2) {                                                          // ¡GOL!: saltar directo a la forja ya hecha
+      clearTimers(); startForge()
+      nextTick(() => nextTick(() => forge?.skip()))
+      return
+    }
     clearTimers()
     rp.value = 7
     rankFaceDown.value = rankCards.value.map(() => false)
@@ -228,7 +233,7 @@ function skip() {
   lp.value = 4
 }
 
-function goToLevel() { clearTimers(); runLevel() }
+function goToLevel() { clearTimers(); destroyForge(); runLevel() }
 
 function showNext() {
   clearTimers()
@@ -264,6 +269,7 @@ function goCamino() {
 
 function dismiss() {
   clearTimers()
+  destroyForge()
   current.value = null
   rp.value = 0; lp.value = 0
   window.removeEventListener('resize', onResize)
@@ -304,15 +310,19 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
           </div>
 
           <template v-if="rp >= 2">
-            <p class="lvo-kick" :class="{ in: rp >= 5 }">¡Ascendiste de rango!</p>
-            <div ref="badgeEl" class="lvo-badge" :style="{ '--rk-glow': tierGlow(newTier) }">
-              <RankCrest v-if="rp < 4 && oldTier" :tier="oldTier" :size="180" class="old" :class="{ shake: rp === 3 }" />
-              <template v-else-if="rp >= 4 && newTier">
-                <span class="ring" aria-hidden="true"></span>
-                <RankCrest :tier="newTier" :size="180" class="new" forge @hit="onForgeHit" />
-              </template>
+            <p class="lvo-kick" :class="{ in: rp >= 2 }">¡Ascendiste de rango!</p>
+            <div ref="forgeRoot" class="lvo-forge">
+              <div class="forge">
+                <div id="rays" class="rays" aria-hidden="true"></div>
+                <div id="wrap" class="wrap"><svg id="sv" viewBox="0 0 120 140" role="img" :aria-label="'Escudo ' + newTier?.label"></svg></div>
+                <div class="name" aria-live="polite">
+                  <div id="nk" class="k">Nuevo rango</div>
+                  <div id="nn" class="n"></div>
+                  <div id="nl" class="l"></div>
+                </div>
+              </div>
+              <div class="fx" aria-hidden="true"><div id="flash" class="flash"></div><canvas ref="forgeCanvas"></canvas></div>
             </div>
-            <h2 class="lvo-tier" :class="{ in: rp >= 5 }">{{ newTier?.label }}</h2>
 
             <div v-if="rp >= 6" class="lvo-block">
               <p class="lvo-h">Al llegar ganás</p>
@@ -328,7 +338,7 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
 
             <div v-if="rp >= 7" class="lvo-next">
               <template v-if="nextTier">
-                <RankCrest :tier="nextTier" :size="36" :ribbon="false" locked />
+                <img :src="nextTier.image" alt="" />
                 <span>Próximo rango: <b>{{ nextTier.label }}</b> en el nivel {{ nextTier.minLevel }}</span>
               </template>
               <span v-else>Llegaste al rango máximo. ¡Sos el GOAT!</span>
@@ -494,20 +504,23 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
 @keyframes lvo-gol { 0% { transform: scale(2.6) rotate(-4deg); opacity: 0; filter: blur(10px); } 30% { transform: scale(1) rotate(-4deg); opacity: 1; filter: none; } 80% { transform: scale(1.05) rotate(-4deg); opacity: 1; } 100% { transform: scale(1.6) rotate(-4deg); opacity: 0; } }
 @keyframes lvo-stretch { 0% { letter-spacing: -.08em; } 60% { letter-spacing: .06em; } 100% { letter-spacing: .03em; } }
 
-/* escudo */
-.lvo-badge { position: relative; width: clamp(130px, 32vw, 180px); aspect-ratio: 120 / 140; display: grid; place-items: center; }
-.lvo-badge :deep(svg) { width: 100%; height: auto; }
-.lvo-badge .old { filter: grayscale(.5) brightness(.8); animation: lvo-in .4s ease both; }
-.lvo-badge .old.shake { animation: lvo-shake .6s ease-in-out infinite; filter: brightness(1.4) saturate(1.3); }
-@keyframes lvo-shake { 10%, 90% { transform: translate(-1px, 1px); } 20%, 80% { transform: translate(3px, -2px) rotate(2deg); } 30%, 50%, 70% { transform: translate(-5px, 3px) rotate(-3deg); } 40%, 60% { transform: translate(5px, -3px) rotate(3deg); } }
-/* El escudo nuevo se arma por piezas (RankCrest forge); acá solo el resplandor del rango al final */
-.lvo-badge .new { animation: lvo-forge-glow .5s ease-out 1.6s both; }
-@keyframes lvo-forge-glow { from { filter: none; } to { filter: drop-shadow(0 0 26px color-mix(in srgb, var(--rk-glow, #fcd34d) 60%, transparent)); } }
-.lvo-badge .ring { position: absolute; inset: 10%; border-radius: 50%; border: 4px solid var(--rk-glow, #fcd34d); animation: lvo-shock .8s ease-out 1.18s both; }
-.lvo-tier { margin: 0; font-family: var(--font-shout); font-weight: 800; font-style: italic; text-transform: uppercase; font-size: clamp(40px, 9vw, 64px); line-height: .95; color: #fff; opacity: 0; transform: scale(.8); transition: opacity .4s, transform .5s cubic-bezier(.34, 1.56, .64, 1); }
-.lvo-tier.in { opacity: 1; transform: none; }
+/* FORJA (moodboard ascenso-forja). El SVG se arma por partes en rank-forge.js */
+.lvo-forge { position: relative; width: min(100%, 360px); }
+.forge { position: relative; height: clamp(330px, 48vh, 390px); }
+.forge .rays { position: absolute; left: 50%; top: 38%; width: 170%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; background: repeating-conic-gradient(from 0deg, var(--glow, #fcd34d) 0 7deg, transparent 7deg 20deg); -webkit-mask: radial-gradient(closest-side, #000 15%, transparent 72%); mask: radial-gradient(closest-side, #000 15%, transparent 72%); opacity: 0; pointer-events: none; animation: lvo-spin 18s linear infinite; }
+.forge .rays.holo { background: repeating-conic-gradient(from 0deg, #f0abfc 0 6deg, transparent 6deg 12deg, #a5f3fc 12deg 18deg, transparent 18deg 24deg, #fde68a 24deg 30deg, transparent 30deg 36deg); }
+@keyframes lvo-spin { to { rotate: 360deg; } }
+.forge .wrap { position: absolute; left: 50%; top: 38%; width: min(52%, 180px); translate: -50% -50%; }
+.forge #sv { width: 100%; overflow: visible; display: block; filter: drop-shadow(0 14px 26px rgba(0, 0, 0, .55)); }
+.forge .name { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; pointer-events: none; }
+.forge .name .k { font: 600 13px var(--font-sans); color: #93a0bf; opacity: 0; }
+.forge .name .n { font: 800 clamp(44px, 12vw, 64px)/.95 var(--font-shout); letter-spacing: .02em; color: #fff; opacity: 0; text-shadow: 0 0 30px var(--glow, #fcd34d), 0 4px 0 rgba(0, 0, 0, .35); }
+.forge .name .l { font: 600 17px var(--font-shout); color: var(--glow, #fcd34d); opacity: 0; letter-spacing: .04em; }
+.lvo-forge .fx { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
+.lvo-forge .fx canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lvo-forge .flash { position: absolute; inset: 0; background: #fff; opacity: 0; mix-blend-mode: screen; }
 .lvo-next { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #cbd5e1; animation: lvo-in .4s ease both; }
-.lvo-next :deep(svg) { flex: none; }
+.lvo-next img { width: 40px; height: 40px; flex: none; object-fit: contain; filter: grayscale(.4) brightness(.8); }
 .lvo-next b { color: #fcd34d; }
 
 .lvo-fade-enter-active { transition: opacity .3s ease; }

@@ -1,18 +1,14 @@
 /**
  * Estilo compartido de las "piezas" del vestuario (V4: Colección, Colecciones,
- * Tienda, Perfil). Módulo puro: colores por rareza, etiquetas y si una pieza
+ * Tienda, Perfil). Módulo puro: colores por rareza (de services/rarity.js), etiquetas y si una pieza
  * tiene arte para dibujarse (las piezas nuevas de colecciones todavía no lo
  * tienen → se muestran apagadas).
  */
 import { FRAME_STYLES, BANNER_STYLES } from '../../services/cosmetics'
+import { RARITY } from '../../services/rarity'
 
-// Paleta del diseño V4 (gema de rareza / borde de la carta).
-export const PIECE_RARITY = {
-  common:    { label: 'Común',      c: '#94a3b8', t: '#e2e8f0' },
-  rare:      { label: 'Raro',       c: '#60a5fa', t: '#bfdbfe' },
-  epic:      { label: 'Épico',      c: '#a855f7', t: '#e9d5ff' },
-  legendary: { label: 'Legendario', c: '#fbbf24', t: '#fde68a' },
-}
+// Colores de rareza: fuente única en services/rarity.js (paleta de los moodboards de motion).
+export const PIECE_RARITY = RARITY
 export function pieceRarity(r) { return PIECE_RARITY[r] || PIECE_RARITY.common }
 
 export const KIND_LABEL = { icon: 'Ícono', frame: 'Borde', banner: 'Banner', title: 'Título' }
@@ -24,7 +20,7 @@ export function hexA(hex, a) {
 }
 
 // Íconos que CosmeticIcon sabe dibujar (SVG propio o .webp en public/cosmetics/icons).
-const ICON_KEYS = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel', 'chat', 'butterfly', 'globe', 'comet', 'phoenix', 'rank_bronze', 'rank_silver', 'rank_gold', 'rank_emerald', 'rank_cyan', 'rank_champion', '⚽', '👟', '🧤', '🏅', '🏆', '🐐', '👑', '⭐', '🛡️', '🛡'])
+const ICON_KEYS = new Set(['ball', 'boot', 'gloves', 'medal', 'trophy', 'goat', 'crown', 'star', 'shield', 'bolt', 'flame', 'gem', 'owl', 'broom', 'sun', 'clover', 'sword', 'hat', 'laurel', 'chat', 'butterfly', 'globe', 'comet', 'phoenix', 'rank_bronze', 'rank_silver', 'rank_gold', 'rank_emerald', 'rank_cyan', 'rank_champion', 'rank_figura', 'rank_idolo', 'rank_icono', 'rank_leyenda', 'rank_goat', '⚽', '👟', '🧤', '🏅', '🏆', '🐐', '👑', '⭐', '🛡️', '🛡'])
 
 /** ¿La pieza tiene arte real para dibujarse? (type + style_key del catálogo) */
 export function hasArt(c) {

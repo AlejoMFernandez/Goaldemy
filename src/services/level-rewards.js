@@ -47,16 +47,16 @@ export function getLevelUpXpBonus(level) {
 // Hitos de rango (relanzamiento 1–100): XP bonus al ascender de categoría.
 // El bonus crece con el rango; se suma al modelo de XP/día (docs/relanzamiento/PROGRESION.md).
 const MILESTONE_COPY = {
-  juvenil:     { xpBonus: 150,  description: 'Saliste del potrero: ahora jugás en las inferiores' },
-  amateur:     { xpBonus: 300,  description: 'Primera de ascenso: barro, lluvia y reflectores' },
-  reserva:     { xpBonus: 500,  description: 'Ya entendés la pizarra: el DT te tiene en cuenta' },
-  profesional: { xpBonus: 750,  description: 'Día de partido: túnel, silbato y cámaras' },
-  crack:       { xpBonus: 1000, description: 'Te toca jugar el clásico' },
-  figura:      { xpBonus: 1250, description: 'Noches de Copa: se prenden las luces' },
-  idolo:       { xpBonus: 1500, description: 'La hinchada canta tu nombre' },
+  juvenil:     { xpBonus: 150,  description: 'Te pusiste los botines: ahora jugás en las inferiores' },
+  amateur:     { xpBonus: 300,  description: 'Firmaste el carnet: cancha de ascenso y tribuna de tablones' },
+  reserva:     { xpBonus: 500,  description: 'Ya calentás en el banco: el DT te tiene en cuenta' },
+  profesional: { xpBonus: 750,  description: 'Firmaste tu primer contrato: flashes y sala de prensa' },
+  crack:       { xpBonus: 1000, description: 'Te dieron la 10' },
+  figura:      { xpBonus: 1250, description: 'Levantaste la copa bajo el reflector' },
+  idolo:       { xpBonus: 1500, description: 'La hinchada cuelga tu bandera con el 10' },
   icono:       { xpBonus: 1750, description: 'Ganaste el Balón de Oro: sos un Ícono' },
-  leyenda:     { xpBonus: 2000, description: 'Lo sostuviste años: sos Leyenda' },
-  goat:        { xpBonus: 3000, description: 'Álbum completo. El más grande de todos' },
+  leyenda:     { xpBonus: 2000, description: 'Tu camiseta ya está enmarcada en el museo' },
+  goat:        { xpBonus: 3000, description: '¡Nivel 100! El más grande de todos los tiempos' },
 }
 
 export const MILESTONES = TIERS.filter(t => MILESTONE_COPY[t.key]).map(t => {
@@ -116,8 +116,9 @@ const COSMETIC_BY_LEVEL = [
   { level: 40, kind: 'banner', name: 'Fuego',    styleKey: 'fire',    rarity: 'epic' },
   { level: 50, kind: 'frame',  name: 'Leyenda',  styleKey: 'legend',  rarity: 'legendary' },
   { level: 50, kind: 'title',  name: 'Leyenda Mundial',    rarity: 'legendary' },
-  { level: 55, kind: 'icon',   name: 'GOAT',     styleKey: 'goat',    rarity: 'legendary' },
   { level: 60, kind: 'banner', name: 'Galaxia',  styleKey: 'galaxy',  rarity: 'legendary' },
+  // La cabra se mudó del 55 al 100 (Camino 1–100); quien ya la tiene la conserva
+  { level: 100, kind: 'icon',  name: 'GOAT',     styleKey: 'goat',    rarity: 'legendary' },
 ]
 const COSMETIC_KIND_LABEL = { frame: 'Borde', title: 'Título', icon: 'Ícono', banner: 'Banner' }
 

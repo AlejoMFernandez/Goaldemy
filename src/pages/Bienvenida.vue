@@ -6,6 +6,7 @@
  * CTA: jugar el primer juego sin registrarse (Adiviná el jugador admite invitado)
  * o "Ya tengo cuenta". Datos: tiers.js, games.js y la tabla pública `cosmetics`.
  */
+import { RARITY } from '../services/rarity'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { supabase } from '../services/supabase'
@@ -78,7 +79,7 @@ const showBanner = computed(() => pickTop('banner', c => !!c.style_key))
 const showTitle = computed(() => pickTop('title'))
 const showIcon = computed(() => vitrina.value[0] || null)
 const rarities = ['common', 'rare', 'epic', 'legendary'].map(k => ({ k, label: rarity(k).label }))
-const RCOLOR = { common: '#94a3b8', rare: '#60a5fa', epic: '#a855f7', legendary: '#fbbf24' }
+const RCOLOR = Object.fromEntries(Object.entries(RARITY).map(([k, r]) => [k, r.c]))
 
 const COPY = {
   1: { t: `${DAILY_GAMES.length} juegos de fútbol, todos los días`, s: 'Adiviná jugadores, ordená planteles y armá tu once. Un intento por juego: se renuevan a las 00:00.', glow: 'rgba(16,185,129,0.22)' },
