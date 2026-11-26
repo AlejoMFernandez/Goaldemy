@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { rarityOf } from '@/services/rarity'
 
 // Gema facetada que representa la rareza (estilo LoL): color distintivo por rareza.
 const props = defineProps({
@@ -7,13 +8,7 @@ const props = defineProps({
   size: { type: Number, default: 16 },
 })
 
-const GEM = {
-  common:    { fill: '#cbd5e1', dark: '#64748b', light: '#f8fafc' },
-  rare:      { fill: '#38bdf8', dark: '#0369a1', light: '#bae6fd' },
-  epic:      { fill: '#e879f9', dark: '#a21caf', light: '#f5d0fe' },
-  legendary: { fill: '#fbbf24', dark: '#b45309', light: '#fef3c7' },
-}
-const g = computed(() => GEM[props.rarity] || GEM.common)
+const g = computed(() => { const r = rarityOf(props.rarity); return { fill: r.c, dark: r.dark, light: r.light } })
 </script>
 
 <template>

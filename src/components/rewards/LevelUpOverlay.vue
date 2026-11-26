@@ -31,6 +31,7 @@ import PowerupIcon from './PowerupIcon.vue'
 import CosmeticIcon from './CosmeticIcon.vue'
 import { success as hapticSuccess, tap as hapticTap } from '@/services/haptics'
 import { createForge, FORGE_SOUNDS } from '@/services/rank-forge'
+import { RARITY } from '@/services/rarity'
 
 const current = ref(null)
 const stage = ref('level')      // 'rank' | 'level'
@@ -77,13 +78,13 @@ const hasUnlocks = computed(() => cardPrizes.value.length > 0 || xpTotal.value >
 const xpShown = ref(0)
 
 // ── V4: carta grande (la más rara), dos al costado y el resto en fichas ──
-const RARITY_LABEL = { common: 'Común', rare: 'Raro', epic: 'Épico', legendary: 'Legendario' }
-const RARITY_THEME = {
-  common: { c: '#34d399', soft: 'rgba(52,211,153,0.28)', ring: 'rgba(52,211,153,0.6)', dark: '#064e3b', spin: 'conic-gradient(from 0deg,#34d399,#a7f3d0,#047857,#6ee7b7,#34d399)', bg: 'linear-gradient(180deg,#064e3b,#052e24 70%,#03140f)' },
-  rare: { c: '#60a5fa', soft: 'rgba(96,165,250,0.28)', ring: 'rgba(96,165,250,0.65)', dark: '#1e3a8a', spin: 'conic-gradient(from 0deg,#3b82f6,#bfdbfe,#1e3a8a,#93c5fd,#3b82f6)', bg: 'linear-gradient(180deg,#1e3a8a,#111c44 70%,#0a1028)' },
-  epic: { c: '#a855f7', soft: 'rgba(192,132,252,0.28)', ring: 'rgba(192,132,252,0.65)', dark: '#3b0764', spin: 'conic-gradient(from 0deg,#a855f7,#f0abfc,#6d28d9,#c084fc,#a855f7)', bg: 'linear-gradient(180deg,#3b0764,#1e1036 70%,#12091f)' },
-  legendary: { c: '#fbbf24', soft: 'rgba(251,191,36,0.28)', ring: 'rgba(251,191,36,0.7)', dark: '#78350f', spin: 'conic-gradient(from 0deg,#f59e0b,#fef3c7,#b45309,#fcd34d,#f59e0b)', bg: 'linear-gradient(180deg,#78350f,#3a1d08 70%,#1c0f05)' },
-}
+const RARITY_LABEL = Object.fromEntries(Object.entries(RARITY).map(([k, r]) => [k, r.label]))
+// Colores de la carta por rareza: todos salen de services/rarity.js (fuente única)
+const RARITY_THEME = Object.fromEntries(Object.entries(RARITY).map(([k, r]) => [k, {
+  c: r.c, soft: `rgb(${r.rgb} / .28)`, ring: `rgb(${r.rgb} / .65)`, dark: r.dark,
+  spin: `conic-gradient(from 0deg,${r.c},${r.light},${r.dark},${r.c})`,
+  bg: `linear-gradient(180deg, color-mix(in srgb, ${r.dark} 70%, #0b1220), #0b1220 70%, #060a14)`,
+}]))
 const theme = (p) => RARITY_THEME[p?.rarity] || RARITY_THEME.common
 // Más rara primero; a igual rareza, el ícono manda (es la carta que mejor luce en grande)
 const KIND_ORDER = { icon: 0, frame: 1, banner: 2, game: 3, tier: 4, title: 5 }

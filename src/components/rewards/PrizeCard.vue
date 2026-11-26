@@ -19,6 +19,7 @@
 import { computed, ref, watch } from 'vue'
 import { frameStyle, bannerStyle } from '@/services/cosmetics'
 import { PRIZE_TYPE_LABEL } from '@/services/prize-card'
+import { rarityOf } from '@/services/rarity'
 import CosmeticIcon from './CosmeticIcon.vue'
 import PowerupIcon from './PowerupIcon.vue'
 
@@ -36,6 +37,7 @@ const SIZES = { s: 72, m: 150, l: 240 }
 const width = computed(() => typeof props.size === 'number' ? props.size : (SIZES[props.size] || 150))
 const small = computed(() => props.size === 's' || width.value < 96)
 const rarity = computed(() => props.prize?.rarity || 'common')
+const rarVars = computed(() => { const r = rarityOf(rarity.value); return { '--rk': r.c, '--rk2': r.dark } })
 const kind = computed(() => props.prize?.kind || 'icon')
 const typeLabel = computed(() => PRIZE_TYPE_LABEL[kind.value] || 'Recompensa')
 const longName = computed(() => (props.prize?.name || '').length > 16)
@@ -85,7 +87,7 @@ function onLeave() { tiltStyle.value = {}; shinePos.value = null }
     ref="rootEl"
     class="pcard"
     :class="[`r-${rarity}`, { 'is-s': small, 'is-locked': state === 'locked', 'is-flipping': flipping, 'is-tilt': tilt }]"
-    :style="[{ '--w': width + 'px' }, tiltStyle]"
+    :style="[{ '--w': width + 'px' }, rarVars, tiltStyle]"
     @pointermove="onMove"
     @pointerleave="onLeave"
   >
@@ -162,6 +164,7 @@ function onLeave() { tiltStyle.value = {}; shinePos.value = null }
 /* La carta es su propio contenedor: TODO lo de adentro se mide en cqw. Las
    propiedades de la carta misma NO usan cqw (se medirían contra el padre). */
 .pcard {
+  /* --rk / --rk2 vienen de services/rarity.js (style en el template) */
   --rk: #cbd5e1; --rk2: #64748b;
   position: relative; flex: none; align-self: flex-start; width: var(--w); height: auto; aspect-ratio: 5 / 7; container-type: inline-size;
   border-radius: 9% / 6.4%; color: #fff; isolation: isolate;
@@ -170,9 +173,7 @@ function onLeave() { tiltStyle.value = {}; shinePos.value = null }
   transition: transform .2s ease-out, filter .3s;
   user-select: none; -webkit-user-select: none;
 }
-.pcard.r-rare { --rk: #7dd3fc; --rk2: #1d4ed8; }
-.pcard.r-epic { --rk: #f0abfc; --rk2: #7e22ce; }
-.pcard.r-legendary { --rk: #fde68a; --rk2: #b45309; background: conic-gradient(from var(--pc-ang, 0deg), #fde68a, #f59e0b, #fef3c7, #d97706, #fde68a); animation: pc-rot 6s linear infinite; }
+.pcard.r-legendary { background: conic-gradient(from var(--pc-ang, 0deg), #fde68a, #f59e0b, #fef3c7, #d97706, #fde68a); animation: pc-rot 6s linear infinite; }
 @property --pc-ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
 @keyframes pc-rot { to { --pc-ang: 360deg; } }
 .pcard.is-s { aspect-ratio: 1; border-radius: 14%; }

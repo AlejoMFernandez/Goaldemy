@@ -5,12 +5,14 @@
  * carta, más espera antes de darse vuelta (suspenso) y más fuerte suena.
  * Común ~0,25 s · Rara ~0,5 s · Épica ~0,8 s · Legendaria ~1,3 s (con temblor).
  */
+import { RARITY } from './rarity'
 import { soundManager } from './sounds'
 import { reducedMotion, sparks, center } from './game-fx'
 
 export const RARITY_WAIT = { common: 250, rare: 500, epic: 800, legendary: 1300 }
 export const RARITY_SOUND = { common: 'cardFlip', rare: 'cardRare', epic: 'cardEpic', legendary: 'cardLegendary' }
-export const RARITY_COLOR = { common: '#cbd5e1', rare: '#38bdf8', epic: '#e879f9', legendary: '#fbbf24' }
+// Colores de rareza: fuente única en services/rarity.js
+export const RARITY_COLOR = Object.fromEntries(Object.entries(RARITY).map(([k, r]) => [k, r.c]))
 const RARITY_SPARKS = { common: 0, rare: 16, epic: 32, legendary: 64 }
 const RARITY_SHAKE = { common: 0, rare: 400, epic: 800, legendary: 1300 }
 const RARITY_LABEL = { epic: 'Épica', legendary: 'Legendaria' }

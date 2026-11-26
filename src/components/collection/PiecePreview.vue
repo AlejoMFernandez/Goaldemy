@@ -33,8 +33,8 @@ const key = computed(() => props.cos?.style_key || props.cos?.styleKey || '')
 const art = computed(() => hasArt(props.cos))
 const glow = computed(() => {
   if (props.locked) return 'none'
-  if (props.cos?.rarity === 'legendary') return '0 0 16px rgba(251,191,36,0.45)'
-  if (props.cos?.rarity === 'epic') return '0 0 12px rgba(168,85,247,0.3)'
+  if (props.cos?.rarity === 'legendary') return `0 0 16px ${hexA(r.value.c, 0.45)}`
+  if (props.cos?.rarity === 'epic') return `0 0 12px ${hexA(r.value.c, 0.3)}`
   return 'none'
 })
 const dimStyle = computed(() => (props.locked ? { filter: 'grayscale(1)', opacity: 0.4 } : null))
