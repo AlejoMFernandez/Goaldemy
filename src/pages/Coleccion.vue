@@ -8,12 +8,12 @@
  */
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { getCosmetics, equipCosmetic, hintFor, titleClass } from '../services/cosmetics'
+import { getCosmetics, equipCosmetic, hintFor, titleClass, clearAlbumNew } from '../services/cosmetics'
 import { getShop } from '../services/shop'
 import { collectionsState } from '../services/collections'
 import { getTierForLevel } from '../services/tiers'
 import { shellState, loadShellStats } from '../components/shell/shell-state'
-import { pushErrorToast } from '../stores/notifications'
+import { pushErrorToast, notificationsState } from '../stores/notifications'
 import { tap, success } from '../services/haptics'
 import { soundManager } from '../services/sounds'
 import { sparks, center } from '../services/game-fx'
@@ -69,7 +69,9 @@ const SEEN_KEY = 'fulvo:album_seen'
 function readSeen() { try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')) } catch { return new Set() } }
 const seen = ref(readSeen())
 const firstVisit = ref(seen.value.size === 0)
-const isNew = (c) => c.owned && !c.equipped && !firstVisit.value && !seen.value.has(c.code)
+// + lo que checkCosmeticUnlocks marcó como nuevo (también en la 1ª visita de una cuenta nueva)
+const newOnLoad = new Set(notificationsState.albumNew) // foto al entrar: el NUEVO de la pieza dura toda la visita
+const isNew = (c) => c.owned && !c.equipped && (newOnLoad.has(c.code) || (!firstVisit.value && !seen.value.has(c.code)))
 watch(loading, (l) => {
   if (l) return
   setTimeout(() => {
@@ -77,6 +79,9 @@ watch(loading, (l) => {
     for (const c of items.value) if (c.owned) next.add(c.code)
     try { localStorage.setItem(SEEN_KEY, JSON.stringify([...next])) } catch {}
   }, 400)
+  // El badge NUEVO de la pestaña se apaga al pasar por acá; la etiqueta de cada pieza
+  // se mantiene mientras estás en la página (isNew lee el estado de esta carga).
+  setTimeout(() => clearAlbumNew(), 3000)
 })
 
 function how(c) {

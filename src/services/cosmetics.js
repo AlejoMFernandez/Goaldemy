@@ -5,7 +5,7 @@
  */
 import { supabase } from './supabase'
 import { getAuthUser } from './auth'
-import { pushClaimNotification, queueCosmeticOverlay } from '../stores/notifications'
+import { queueCosmeticOverlay, isLevelCovered, notificationsState, beginPendingCheck, endPendingCheck } from '../stores/notifications'
 import { achievementSync, preloadAchievementsSync } from './achievements'
 
 /** Catálogo de cosméticos con estado owned/equipped del usuario. */
@@ -415,8 +415,10 @@ export function hintFor(c, progressByCode) {
 export function unlockReason(c) {
   if (!c) return ''
   if (c.unlock_achievement) {
+    // Dice de qué logro viene, así la carta no parece un logro repetido
     const a = achievementSync(c.unlock_achievement)
-    return a ? (a.description || a.name) : 'Conseguiste un logro secreto'
+    if (!a) return 'Premio de un logro secreto'
+    return a.description && a.name ? `Premio del logro «${a.name}»: ${a.description}` : `Premio del logro «${a.name || a.description}»`
   }
   if (c.premium_only) return 'Recompensa Premium'
   if (c.unlock_level > 100) return 'Completar el Pase mensual'
@@ -459,11 +461,65 @@ export function isExclusiveCosmetic(c) {
   return c.rarity === 'legendary' || c.rarity === 'epic' || !!c.unlock_achievement || !!c.premium_only
 }
 
+// Pieza de arranque (nivel 1, sin logro ni premium): la tenés desde que creás la cuenta
+// (ej. Borde Bronce del kit Aficionado). Nunca se anuncia como nueva.
+export function isStarterCosmetic(c) {
+  return !!c && !(Number(c.unlock_level) > 1) && !c.unlock_achievement && !c.premium_only
+}
+// Por nivel: se ve en el "Desbloqueaste" de la subida de nivel (LevelUpOverlay).
+export function isLevelCosmetic(c) {
+  const l = Number(c?.unlock_level) || 0
+  return l > 1 && l <= 100 && !c.unlock_achievement && !c.premium_only
+}
+
+// ── Badge NUEVO (pestaña Colección y la pieza) ──
+// Códigos desbloqueados que todavía no viste en la Colección. Por usuario.
+const albumNewKey = (id) => `fulvo:album_new:${id}`
+function loadAlbumNew(id) {
+  try { notificationsState.albumNew = id ? (JSON.parse(localStorage.getItem(albumNewKey(id)) || '[]') || []) : [] } catch { notificationsState.albumNew = [] }
+}
+function addAlbumNew(id, codes) {
+  if (!id || !codes.length) return
+  const next = [...new Set([...notificationsState.albumNew, ...codes])]
+  notificationsState.albumNew = next
+  try { localStorage.setItem(albumNewKey(id), JSON.stringify(next)) } catch {}
+}
+/** La Colección ya mostró estas piezas: se les saca el NUEVO. Sin argumento, todas. */
+export function clearAlbumNew(codes = null) {
+  const { id } = getAuthUser() || {}
+  if (!id) return
+  notificationsState.albumNew = codes ? notificationsState.albumNew.filter(c => !codes.includes(c)) : []
+  try { localStorage.setItem(albumNewKey(id), JSON.stringify(notificationsState.albumNew)) } catch {}
+}
+export function isAlbumNew(code) { return notificationsState.albumNew.includes(code) }
+
+// Revisión con debounce: la piden los logros, las subidas de nivel, el fin de partida,
+// el pase, la tienda… y se hace una sola vez por tanda.
+let _checkTimer = null
+let _checking = null
+export function scheduleCosmeticCheck(ms = 1200) {
+  if (_checkTimer) clearTimeout(_checkTimer)
+  else beginPendingCheck()
+  _checkTimer = setTimeout(() => { _checkTimer = null; checkCosmeticUnlocks().catch(() => {}).finally(endPendingCheck) }, ms)
+}
+
 /**
- * Compara los cosméticos que tenés ahora con los ya vistos y avisa los nuevos.
- * La primera vez solo cachea (no spamea con los que ya tenías).
+ * Compara los cosméticos que tenés ahora con los ya vistos y avisa TODOS los nuevos
+ * (regla de Alejo: siempre te enterás de lo que desbloqueás):
+ *  · de arranque (nivel 1): nunca se anuncian;
+ *  · por nivel: se ven en la escena de subida de nivel; si esa escena no existió en esta
+ *    sesión (subiste en otro dispositivo), van como carta;
+ *  · el resto (logro, colección, tienda, sobre, abono, premium): carta por rareza.
+ * Cuenta nueva sin caché: lo que no es de arranque se anuncia (antes la 1ª vez solo
+ * cacheaba y una cuenta nueva se perdía todo lo de su primera partida). Cuenta vieja
+ * en un dispositivo nuevo: solo cachea, para no llenar la pantalla con lo que ya tenía.
  */
 export async function checkCosmeticUnlocks() {
+  if (_checking) return _checking
+  _checking = _check().finally(() => { _checking = null })
+  return _checking
+}
+async function _check() {
   const { id } = getAuthUser() || {}
   if (!id) return
   let items
@@ -472,39 +528,36 @@ export async function checkCosmeticUnlocks() {
 
   // Limpiar la clave global vieja (filtraba estado entre cuentas).
   try { localStorage.removeItem(SEEN_KEY_PREFIX) } catch {}
+  loadAlbumNew(id)
 
   const seenKey = seenKeyFor(id)
   const owned = items.filter(c => c.owned).map(c => c.code)
-  let seen = []
-  let hadCache = false
+  let seen = null
   try {
     const raw = localStorage.getItem(seenKey)
-    if (raw) { seen = JSON.parse(raw) || []; hadCache = true }
+    if (raw) seen = JSON.parse(raw) || []
   } catch {}
 
-  if (hadCache) {
-    const seenSet = new Set(seen)
-    const fresh = items.filter(c => c.owned && !seenSet.has(c.code) && c.code !== 'frame_none' && c.code !== 'icon_none')
-    // unlockReason() lee el catálogo de logros de una caché sincrónica: precargarla acá
-    // (si ya está tibia por los 5 min de TTL, esto no pega a la red).
-    if (fresh.some(c => c.unlock_achievement)) { try { await preloadAchievementsSync() } catch { /* cae al texto genérico */ } }
-    for (const c of fresh) {
-      // Los cosméticos por NIVEL ya se muestran como cartas en la escena de nivel
-      // ("Desbloqueaste", moodboard 03/08): no se repiten en la escena grande.
-      const byLevel = c.unlock_level > 1 && c.unlock_level <= 100 && !c.unlock_achievement && !c.premium_only
-      if (isExclusiveCosmetic(c) && !byLevel) {
-        // Exclusivos (legendarios/épicos, por logro o premium): escena premium tipo logro.
-        queueCosmeticOverlay({ code: c.code, name: c.name, type: c.type, rarity: c.rarity, styleKey: c.style_key, reason: unlockReason(c) })
-      } else {
-        // Default (por nivel, común/raro): solo notificación apilada chica.
-        pushClaimNotification({
-          type: 'cosmetic',
-          title: `${TYPE_LABEL[c.type] || 'Cosmético'}: ${c.name}`,
-          emoji: RARITY_EMOJI[c.rarity] || '🎨',
-        })
-      }
-    }
+  if (!seen) {
+    let isNewAccount = false
+    try {
+      const { data } = await supabase.auth.getUser()
+      const created = Date.parse(data?.user?.created_at || '')
+      isNewAccount = Number.isFinite(created) && Date.now() - created < 3 * 86400000
+    } catch {}
+    seen = isNewAccount ? items.filter(c => c.owned && isStarterCosmetic(c)).map(c => c.code) : owned
   }
 
+  const seenSet = new Set(seen)
+  const fresh = items.filter(c => c.owned && !seenSet.has(c.code) && c.code !== 'frame_none' && c.code !== 'icon_none' && !isStarterCosmetic(c))
+  if (fresh.some(c => c.unlock_achievement)) { try { await preloadAchievementsSync() } catch { /* cae al texto genérico */ } }
+  for (const c of fresh) {
+    if (isLevelCosmetic(c) && isLevelCovered(c.unlock_level)) continue // ya está en la escena de nivel
+    queueCosmeticOverlay({
+      code: c.code, name: c.name, type: c.type, rarity: c.rarity, styleKey: c.style_key, reason: unlockReason(c),
+      level: isLevelCosmetic(c) ? Number(c.unlock_level) : null,
+    })
+  }
+  addAlbumNew(id, fresh.map(c => c.code))
   try { localStorage.setItem(seenKey, JSON.stringify(owned)) } catch {}
 }

@@ -22,7 +22,7 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getMonthlyPass, claimPassTier, claimPassOvertime } from '../../services/rewards'
 import { getAuthUser } from '../../services/auth'
-import { pushClaimNotification } from '../../stores/notifications'
+import { pushClaimNotification, queueCosmeticOverlay } from '../../stores/notifications'
 import { soundManager } from '../../services/sounds'
 import { flyReward } from '../../services/reward-flight'
 import { tap, success, heavy, error as hapticError } from '../../services/haptics'
@@ -354,10 +354,14 @@ async function claimOne(tier, track, el, { batch = false } = {}) {
       ? flyReward(from, { kind: 'powerup', powerup: res.powerup })
       : (res.xp > 0 ? flyReward(from, { kind: 'xp', amount: res.xp }) : Promise.resolve(false))
     const flyingFichas = fichas > 0 ? flyReward(from, { kind: 'fichas', amount: fichas, delay: res.xp > 0 || res.powerup ? 160 : 0 }) : Promise.resolve(true)
+    // Cosmético del abono: su carta de desbloqueo por rareza (también al "Cortar todo"),
+    // nunca un aviso chico. La cola evita que se repita cuando lo detecte checkCosmeticUnlocks.
+    if (reward?.kind === 'cosmetic') {
+      const c = reward.cos
+      queueCosmeticOverlay({ code: c.code, name: c.name, type: c.type, rarity: c.rarity, styleKey: c.style_key ?? c.styleKey ?? '', reason: title })
+    }
     if (!batch) {
-      if (reward?.kind === 'cosmetic') {
-        pushClaimNotification({ type: 'cosmetic', title: `${title} — ${reward.cos.name}`, emoji: '🎁' })
-      } else {
+      if (reward?.kind !== 'cosmetic') {
         flying.then((flown) => {
           if (flown) return
           if (res.powerup) pushClaimNotification({ type: 'powerup', title, emoji: POWERUP_TOAST_EMOJI[res.powerup] || '🎁' })
@@ -401,8 +405,8 @@ async function claimAll() {
   if (ok) {
     success()
     const title = `${seasonName.value} · cortaste ${ok} ${ok === 1 ? 'talón' : 'talones'}${fichas ? ` · +${fichas} Fichas` : ''}`
-    if (cosmetics.length) pushClaimNotification({ type: 'cosmetic', title: `${title} (${cosmetics.map(c => c.name).join(', ')})`, emoji: '🎁' })
-    else pushClaimNotification({ type: 'xp', title, xp, emoji: '🎟️' })
+    // Los cosméticos ya tienen su carta (claimOne): el aviso solo resume el resto.
+    if (xp || fichas || !cosmetics.length) pushClaimNotification({ type: 'xp', title, xp, emoji: '🎟️' })
   }
   // Si algo falló a mitad de camino, resincronizamos con el servidor.
   if (ok < list.length) load()

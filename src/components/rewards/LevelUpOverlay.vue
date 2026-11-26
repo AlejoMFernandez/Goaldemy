@@ -21,8 +21,9 @@
 import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { notificationsState, shiftLevelUpQueue, setLevelUpActive } from '@/stores/notifications'
-import { TIERS, getTierForLevel, getNextTier } from '@/services/tiers'
-import { prizesForLevelRange, tierPrizes, PRIZE_TYPE_LABEL, RARITY_ORDER } from '@/services/prize-card'
+import { TIERS, TIER_UNLOCKS, getTierForLevel, getNextTier } from '@/services/tiers'
+import { prizesForLevelRange, tierPrizes, prizeFromCosmetic, PRIZE_TYPE_LABEL, RARITY_ORDER } from '@/services/prize-card'
+import { getCosmetics, isLevelCosmetic } from '@/services/cosmetics'
 import { revealPrizes } from '@/services/prize-reveal'
 import { soundManager } from '@/services/sounds'
 import { sparks, center, fxOnTop, reducedMotion } from '@/services/game-fx'
@@ -62,10 +63,26 @@ const tierChanged = computed(() => !!(oldTier.value && newTier.value && oldTier.
 const nextTier = computed(() => current.value ? getNextTier(current.value.newLevel) : null)
 const levelsUp = computed(() => current.value ? Math.max(1, current.value.newLevel - current.value.oldLevel) : 1)
 
+// Catálogo REAL de cosméticos (tabla cosmetics, unlock_level): lo que el servidor de verdad
+// otorgó entre el nivel anterior y el nuevo. El mapa de level-rewards.js es viejo (le faltaban
+// Tiza, Pibe de potrero, Bufanda…) y queda solo de respaldo si el catálogo no cargó.
+const dbCosmetics = ref(null)
+async function loadDbCosmetics() {
+  try { const list = await getCosmetics(); dbCosmetics.value = Array.isArray(list) && list.length ? list : null } catch { dbCosmetics.value = null }
+}
+const KIT_KEYS = new Set(Object.values(TIER_UNLOCKS).flatMap(t => [t.banner, t.frame, t.icon]))
+const COSMETIC_KINDS = new Set(['icon', 'frame', 'banner', 'title'])
 // Cartas ganadas en el acto nivel (sin las del rango si ya se mostraron en su acto)
 const prizes = computed(() => {
   if (!current.value) return []
-  const all = prizesForLevelRange(current.value.oldLevel, current.value.newLevel)
+  const { oldLevel, newLevel } = current.value
+  let all = prizesForLevelRange(oldLevel, newLevel)
+  if (dbCosmetics.value) {
+    const real = dbCosmetics.value
+      .filter(c => isLevelCosmetic(c) && c.unlock_level > oldLevel && c.unlock_level <= newLevel && !KIT_KEYS.has(c.style_key))
+      .map(c => ({ ...prizeFromCosmetic(c), level: Number(c.unlock_level) }))
+    all = [...all.filter(p => !COSMETIC_KINDS.has(p.kind) || p.fromTier), ...real]
+  }
   return tierChanged.value ? all.filter(p => p.kind !== 'tier' && !p.fromTier) : all
 })
 // Kit del rango con el copy acordado ("Ícono de rango Ícono"), desde prize-card.
@@ -248,6 +265,9 @@ function showNext() {
     if (!current.value) setLevelUpActive(false)
     return
   }
+  // Una carta de desbloqueo ya en pantalla (ej. detectada al abrir la app) no se pisa:
+  // la subida espera a que la cierres.
+  if (!current.value && notificationsState.cosmeticActive) return
   const item = shiftLevelUpQueue()
   if (!item) { current.value = null; setLevelUpActive(false); fxOnTop(false); return }
   // Varias subidas encoladas seguidas → una sola escena de oldLevel al máximo
@@ -257,6 +277,8 @@ function showNext() {
     merged = { ...merged, newLevel: Math.max(merged.newLevel, n.newLevel), xpBonus: (merged.xpBonus || 0) + (n.xpBonus || 0) }
   }
   if (!current.value) fxOnTop(true)
+  dbCosmetics.value = null
+  loadDbCosmetics()
   current.value = merged
   setLevelUpActive(true)
   window.addEventListener('resize', onResize)
@@ -289,6 +311,9 @@ watch(() => notificationsState.suppressOverlays, (suppressed) => {
 })
 watch(() => notificationsState.proWelcome, (pw) => {
   if (!pw && notificationsState.levelUpQueue.length > 0 && !current.value) setTimeout(showNext, 400)
+})
+watch(() => notificationsState.cosmeticActive, (active) => {
+  if (!active && notificationsState.levelUpQueue.length > 0 && !current.value) setTimeout(showNext, 400)
 })
 // Cuando termina la escena del logro (o se vacía la cola), sigue el nivel
 watch(() => notificationsState.achievementActive, (active) => {
@@ -419,11 +444,12 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
               </div>
             </div>
 
-            <div v-if="morePrizes.length" class="lv4-more">
-              <PrizeCard v-for="(p, i) in morePrizes" :key="'m' + i" :prize="p" :size="56" />
-            </div>
-
-            <div v-if="xpTotal || helpPrizes.length" class="lv4-chips" :style="{ '--n': (xpTotal ? 1 : 0) + helpPrizes.length }">
+            <div v-if="xpTotal || helpPrizes.length || morePrizes.length" class="lv4-chips" :style="{ '--n': (xpTotal ? 1 : 0) + helpPrizes.length + morePrizes.length }">
+              <!-- Del 4º premio en adelante: ficha chica con su carta, nombre y tipo (entra todo sin scroll) -->
+              <div v-for="(p, i) in morePrizes" :key="'m' + i" class="chip more" :style="{ borderColor: theme(p).ring, animationDelay: (0.1 + i * 0.08) + 's' }">
+                <span class="ci pc"><PrizeCard :prize="p" :size="32" /></span>
+                <span class="cv"><b>{{ p.name }}</b><small>{{ PRIZE_TYPE_LABEL[p.kind] || 'Premio' }}</small></span>
+              </div>
               <div v-if="xpTotal" class="chip" style="border-color: rgba(34,211,238,0.35)">
                 <span class="ci" style="background: linear-gradient(135deg,#34d399,#22d3ee,#818cf8)"><b>XP</b></span>
                 <span class="cv"><b style="color:#a5f3fc">+{{ xpShown.toLocaleString('es-AR') }}</b><small>XP</small></span>
@@ -617,11 +643,13 @@ watch(() => notificationsState.achievementQueue.length, (len) => {
 .lv4-more { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .lv4-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .chip { height: 50px; box-sizing: border-box; border-radius: 14px; padding: 0 8px; background: rgba(255, 255, 255, .05); border: 1px solid; display: flex; align-items: center; gap: 8px; min-width: 0; animation: lv4-in .4s cubic-bezier(.2, .9, .3, 1.15) .5s both; }
+.chip .ci.pc { background: none !important; box-shadow: none; overflow: visible; }
+.chip.more .cv b { font-size: 15px; color: #fff; }
 .chip .ci { width: 32px; height: 32px; flex-shrink: 0; border-radius: 10px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4); display: grid; place-items: center; }
 .chip .ci b { font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 15px; line-height: 1; color: #0b1220; }
 .chip .cv { display: flex; flex-direction: column; min-width: 0; }
 .chip .cv b { font-family: var(--font-bug); font-weight: 800; font-size: 19px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chip .cv small { font-size: 10px; font-weight: 700; color: #94a3b8; white-space: nowrap; }
+.chip .cv small { font-size: 10px; font-weight: 700; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lv4-go { position: relative; flex: none; width: calc(100% - 32px); max-width: 398px; padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: center; }
 .lv4-go .go { width: 100%; min-height: 62px; border: 0; border-radius: 16px; background: linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%); border-bottom: 4px solid #b45309; color: #1c1206; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--font-shout); font-weight: 800; font-style: italic; font-size: 30px; letter-spacing: 1.5px; cursor: pointer; animation: lv4-in .35s ease both, lv4-pulse 2s ease-in-out 1s infinite; }
 .lv4-go .go:active { transform: translateY(2px); border-bottom-width: 2px; }

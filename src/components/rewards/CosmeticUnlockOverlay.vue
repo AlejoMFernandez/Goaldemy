@@ -1,6 +1,6 @@
 <script>
 import { ref, computed, watch, nextTick } from 'vue'
-import { notificationsState, shiftCosmeticQueue, setCosmeticActive } from '@/stores/notifications'
+import { notificationsState, shiftCosmeticQueue, setCosmeticActive, isLevelCovered } from '@/stores/notifications'
 import { soundManager } from '@/services/sounds'
 import { equipCosmetic } from '@/services/cosmetics'
 import RarityGem from './RarityGem.vue'
@@ -86,8 +86,9 @@ export default {
       // Drenar TODA la cola de cosméticos en una sola tanda.
       const drained = []
       let it
-      while ((it = shiftCosmeticQueue())) drained.push(it)
-      if (!drained.length) return
+      // Los de nivel que mientras tanto ya salieron en la escena de subida no se repiten
+      while ((it = shiftCosmeticQueue())) { if (!(it.level && isLevelCovered(it.level))) drained.push(it) }
+      if (!drained.length) { setCosmeticActive(false); return }
 
       items.value = drained
       equipped.value = {}

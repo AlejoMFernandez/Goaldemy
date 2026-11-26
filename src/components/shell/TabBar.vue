@@ -11,12 +11,14 @@
  */
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getUnclaimedCount } from '../../stores/notifications'
+import { getUnclaimedCount, notificationsState } from '../../stores/notifications'
 import { tapHaptic } from './shell-state'
 
 const route = useRoute()
 const router = useRouter()
 const rewardCount = computed(() => getUnclaimedCount())
+// Piezas nuevas sin ver en la Colección (services/cosmetics.js → checkCosmeticUnlocks)
+const newCount = computed(() => notificationsState.albumNew.length)
 
 const TABS = [
   { key: 'tienda', to: '/tienda', label: 'Tienda', match: ['/tienda', '/pricing'] },
@@ -59,6 +61,7 @@ function go(tab) {
             <svg v-else-if="t.key === 'pase'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 21V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
             <!-- Social -->
             <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.6c2.8.2 5 2 5 4.9"/></svg>
+            <span v-if="t.key === 'coleccion' && newCount > 0" class="shell-tab-new" :aria-label="`${newCount} piezas nuevas`">NUEVO</span>
             <span v-if="t.key === 'pase' && rewardCount > 0" class="shell-tab-badge">{{ rewardCount > 9 ? '9+' : rewardCount }}</span>
           </span>
           <span class="shell-tab-label">{{ t.label }}</span>
@@ -98,6 +101,7 @@ function go(tab) {
   content: ''; position: absolute; bottom: 4px; width: 18px; height: 3px; border-radius: 9999px;
   background: #fbbf24; box-shadow: 0 0 10px rgba(251,191,36,.8);
 }
+.shell-tab-new { position: absolute; top: -6px; left: 50%; margin-left: 2px; padding: 1px 4px; border-radius: 5px; background: #f43f5e; color: #fff; font-family: var(--font-bug); font-weight: 800; font-size: 9px; letter-spacing: .06em; line-height: 1.2; box-shadow: 0 0 0 2px #0b1220; animation: shell-badge-pop .4s cubic-bezier(.34, 1.56, .64, 1); }
 .shell-tab-badge {
   position: absolute; top: -6px; right: -10px; min-width: 18px; height: 18px; padding: 0 4px;
   border-radius: 9999px; display: grid; place-items: center;
@@ -134,6 +138,6 @@ function go(tab) {
   .shell-tab, .shell-tab-icon, .shell-tab-center, .shell-tab-center-disc { transition: none; }
   .shell-tab.is-active .shell-tab-icon { transform: none; }
   .shell-tab-center.is-active .shell-tab-center-disc { animation: none; }
-  .shell-tab-badge { animation: none; }
+  .shell-tab-badge, .shell-tab-new { animation: none; }
 }
 </style>
