@@ -127,16 +127,18 @@ onBeforeUnmount(() => { document.removeEventListener('keydown', onKey); document
     </Transition>
     <Transition name="sheet-up">
       <section v-if="open" class="st-sheet" role="dialog" aria-modal="true" aria-label="Tu cuenta y ajustes">
-        <span class="st-grab" aria-hidden="true"></span>
+        <!-- La X va en su propia franja, arriba del banner: antes tapaba el escudo del banner de rango -->
+        <div class="st-top">
+          <span class="st-grab" aria-hidden="true"></span>
+          <button type="button" class="st-close" aria-label="Cerrar" @click="closeSettings()">
+            <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span>
+          </button>
+        </div>
 
         <div class="st-scroll">
           <!-- Perfil -->
           <div class="st-profile">
-            <BannerScene class="st-banner" :style-key="cos.bannerKey || 'default'" :premium="!!cos.bannerPremium">
-              <button type="button" class="st-close" aria-label="Cerrar" @click="closeSettings()">
-                <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span>
-              </button>
-            </BannerScene>
+            <BannerScene class="st-banner" :style-key="cos.bannerKey || 'default'" :premium="!!cos.bannerPremium" />
             <div class="flex gap-3 px-3 pb-3 -mt-[26px] relative">
               <RouterLink to="/profile" class="st-av" aria-label="Mi perfil" @click="tapHaptic()">
                 <UserAvatar :size="66" :avatar-url="shellState.user?.avatar_url || ''" :initial="(name.trim()[0] || '?').toUpperCase()"
@@ -252,16 +254,17 @@ onBeforeUnmount(() => { document.removeEventListener('keydown', onKey); document
   border-radius: 24px 24px 0 0; background: #0f172a; border-top: 1px solid rgba(255,255,255,0.12); box-shadow: 0 -20px 40px rgba(0,0,0,0.5);
 }
 @media (min-height: 900px) { .st-sheet { top: auto; max-height: 88dvh; } }
-.st-grab { align-self: center; flex-shrink: 0; width: 42px; height: 5px; margin: 8px 0 2px; border-radius: 999px; background: rgba(255,255,255,0.22); }
+.st-top { position: relative; flex-shrink: 0; height: 44px; display: grid; place-items: center; }
+.st-grab { width: 42px; height: 5px; border-radius: 999px; background: rgba(255,255,255,0.22); }
 .st-scroll {
   flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 10px;
-  padding: 8px 14px calc(18px + env(safe-area-inset-bottom, 0px));
+  padding: 0 14px calc(18px + env(safe-area-inset-bottom, 0px));
 }
 .st-scroll > * { flex-shrink: 0; }
 .st-profile { position: relative; border-radius: 18px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: #111a2e; }
 .st-banner { height: 58px; }
-.st-close { position: absolute; top: 7px; right: 7px; width: 44px; height: 44px; display: grid; place-items: center; color: #fff; }
-.st-close > span { width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.45); display: grid; place-items: center; }
+.st-close { position: absolute; top: 0; right: 8px; width: 44px; height: 44px; display: grid; place-items: center; color: #fff; }
+.st-close > span { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); display: grid; place-items: center; }
 .st-av { flex-shrink: 0; border-radius: 50%; box-shadow: 0 6px 16px rgba(0,0,0,0.5); }
 .st-title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
 .st-nv { flex-shrink: 0; height: 22px; padding: 0 7px; border-radius: 6px; background: linear-gradient(180deg, #818cf8, #4f46e5); border: 1.5px solid #c7d2fe; display: flex; align-items: center; font-family: var(--font-shout); font-weight: 800; font-size: 14px; color: #fff; }
