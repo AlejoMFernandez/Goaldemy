@@ -17,7 +17,8 @@
  * Usar con services/prize-card.js para convertir cualquier recompensa.
  */
 import { computed, ref, watch } from 'vue'
-import { frameStyle, isSceneFrame, titleClass } from '@/services/cosmetics'
+import { titleClass } from '@/services/cosmetics'
+import { shellState } from '@/components/shell/shell-state'
 import AvatarFrame from '@/components/common/AvatarFrame.vue'
 import BannerScene from '@/components/common/BannerScene.vue'
 import { PRIZE_TYPE_LABEL } from '@/services/prize-card'
@@ -45,7 +46,9 @@ const typeLabel = computed(() => PRIZE_TYPE_LABEL[kind.value] || 'Recompensa')
 const longName = computed(() => (props.prize?.name || '').length > 16)
 // Tamaño en px de la ventana (para los componentes que dibujan con `size`)
 const win = computed(() => Math.round(small.value ? width.value * 0.92 : width.value * 0.856))
-const fr = computed(() => frameStyle(props.prize?.styleKey))
+// Chapitas de los bordes vivos (Placa de nivel / Racha): con tus datos reales
+const myLevel = computed(() => Number(shellState.stats?.level) || null)
+const myStreak = computed(() => Number(shellState.stats?.streak) || 0)
 
 const GAME_COLORS = {
   'guess-player': ['#10b981', '#064e3b'], 'nationality': ['#06b6d4', '#083344'], 'player-position': ['#3b82f6', '#172554'],
@@ -100,14 +103,10 @@ function onLeave() { tiltStyle.value = {}; shinePos.value = null }
         </div>
 
         <!-- BORDE: el borde solo, con una silueta gris donde va tu ícono -->
-        <!-- (bordes del vestuario nuevo: AvatarFrame, con nivel 24 / racha 12 de ejemplo) -->
-        <AvatarFrame v-else-if="kind === 'frame' && isSceneFrame(prize.styleKey)" :frame-key="prize.styleKey" :size="Math.round(win * 0.66)" :level="24" :streak="12" :animate="win >= 96">
+        <!-- (todos los bordes con AvatarFrame; las chapitas de nivel/racha muestran tus datos) -->
+        <AvatarFrame v-else-if="kind === 'frame'" :frame-key="prize.styleKey" :size="Math.round(win * 0.66)" :level="myLevel" :streak="myStreak" :animate="win >= 96">
           <div class="pc-av w-full h-full rounded-full overflow-hidden grid place-items-center"><svg class="pc-sil" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="15" r="7.5" /><path d="M6 38c0-8.5 6.3-13 14-13s14 4.5 14 13z" /></svg></div>
         </AvatarFrame>
-        <div v-else-if="kind === 'frame'" class="rounded-full" :class="[fr.wrap]"
-             :style="{ width: Math.round(win * 0.66) + 'px', height: Math.round(win * 0.66) + 'px', padding: Math.max(3, Math.round(win * 0.045)) + 'px' }">
-          <div class="pc-av w-full h-full rounded-full overflow-hidden grid place-items-center"><svg class="pc-sil" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="15" r="7.5" /><path d="M6 38c0-8.5 6.3-13 14-13s14 4.5 14 13z" /></svg></div>
-        </div>
 
         <!-- BANNER: perfil en miniatura (silueta gris en el lugar del ícono) -->
         <BannerScene v-else-if="kind === 'banner'" class="pc-banner" :style-key="prize.styleKey" :animate="win >= 96">
