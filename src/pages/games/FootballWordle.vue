@@ -30,10 +30,13 @@ function getContinent(countryName) {
   return 'other'
 }
 
-const POS_LABELS = { 0: 'POR', 1: 'DEF', 2: 'MED', 3: 'DEL' }
+const POS_LABELS = { 0: 'ARQ', 1: 'DEF', 2: 'MED', 3: 'DEL' } // ARQ como en el resto de la app
 
 const LEAGUE_LOGOS = { 47: 'https://images.fotmob.com/image_resources/logo/leaguelogo/47.png', 87: 'https://images.fotmob.com/image_resources/logo/leaguelogo/87.png', 55: 'https://images.fotmob.com/image_resources/logo/leaguelogo/55.png', 54: 'https://images.fotmob.com/image_resources/logo/leaguelogo/54.png', 53: 'https://images.fotmob.com/image_resources/logo/leaguelogo/53.png' }
 function leagueLogoForId(id) { return LEAGUE_LOGOS[id] || null }
+// Respaldo si el logo no carga (o la liga no tiene logo): la sigla, así la columna nunca queda vacía
+const LEAGUE_SHORT = { 47: 'ING', 87: 'ESP', 55: 'ITA', 54: 'ALE', 53: 'FRA' }
+function leagueShortForId(id) { return LEAGUE_SHORT[id] || 'OTRA' }
 
 function evaluateGuess(g, t) {
   return {
@@ -42,6 +45,7 @@ function evaluateGuess(g, t) {
     teamLogo: g.teamLogo,
     leagueResult: g.leagueId === t.leagueId ? 'green' : 'gray',
     leagueLogo: leagueLogoForId(g.leagueId),
+    leagueShort: leagueShortForId(g.leagueId),
     countryResult: g.cname === t.cname ? 'green' : getContinent(g.cname) === getContinent(t.cname) ? 'yellow' : 'gray',
     posResult: g.positionId === t.positionId ? 'green' : 'gray',
     posLabel: POS_LABELS[g.positionId] || 'MED',
@@ -342,7 +346,7 @@ export default {
                 <div class="text-center">Pos</div>
                 <div class="text-center">Edad</div>
                 <div class="text-center">Alt</div>
-                <div class="text-center">Dorsal</div>
+                <div class="text-center"><span class="wd-lbl-long">Dorsal</span><span class="wd-lbl-short" aria-label="Dorsal">N.º</span></div>
               </div>
               <TransitionGroup name="guess-row" tag="div">
                 <div v-for="row in guessesReversed" :key="row.player.id" class="wd-row">
@@ -353,7 +357,9 @@ export default {
                     <img v-if="row.teamLogo" :src="row.teamLogo" alt="" @error="e => e.target.style.display='none'" />
                   </div>
                   <div class="wd-flap" :class="cellColor(row.leagueResult)" style="animation-delay:130ms">
-                    <img v-if="row.leagueResult === 'green' && row.leagueLogo" :src="row.leagueLogo" alt="" />
+                    <!-- La liga del jugador que probaste, verde o gris (antes solo en verde: la columna quedaba vacía) -->
+                    <img v-if="row.leagueLogo && !row.leagueImgFail" :src="row.leagueLogo" :alt="row.leagueShort" @error="row.leagueImgFail = true" />
+                    <span v-else class="text-[10px] font-bold">{{ row.leagueShort }}</span>
                   </div>
                   <div class="wd-flap" :class="cellColor(row.countryResult)" style="animation-delay:260ms">
                     <img v-if="playerFlagUrl(row.player)" :src="playerFlagUrl(row.player)" class="!rounded-sm" />
@@ -444,6 +450,9 @@ export default {
 .wd-main { min-width: 0; }
 .wd-table { display: flex; flex-direction: column; gap: 4px; width: 100%; }
 .wd-row { display: grid; grid-template-columns: 34px repeat(7, minmax(0, 1fr)); gap: 3px; }
+.wd-row-head > div { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wd-lbl-short { display: none; }
+@media (max-width: 400px) { .wd-lbl-long { display: none; } .wd-lbl-short { display: inline; } }
 .wd-row-head { font-size: 9px; color: rgb(100,116,139); text-transform: uppercase; letter-spacing: 0.03em; font-weight: 700; margin-bottom: 2px; }
 .wd-avatar { border-radius: 0.5rem; overflow: hidden; aspect-ratio: 1; background: rgba(51,65,85,0.4); }
 .wd-avatar img { width: 100%; height: 100%; object-fit: cover; }
