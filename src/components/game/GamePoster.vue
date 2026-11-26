@@ -76,8 +76,6 @@ onBeforeUnmount(() => io?.disconnect())
           <svg v-if="state === 'win'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
           <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></svg>
         </span>
-        <span class="sc">{{ score }}</span>
-        <span v-if="state === 'win' && starsText" class="st">{{ starsText }}</span>
       </span>
       <span v-if="state === 'locked'" class="gp-lock">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
@@ -87,9 +85,10 @@ onBeforeUnmount(() => io?.disconnect())
     <span class="gp-pf">
       <span class="gp-nm">{{ name }}</span>
       <template v-if="state === 'win' || state === 'loss'">
+        <!-- Ficha del partido de hoy (diseño V4): ✓ 9/10 ★★★ · ✕ 4/10 · revancha -->
         <span class="gp-res">
-          <template v-if="state === 'win'">Ganado hoy</template>
-          <template v-else>Perdido<span v-if="revenge" class="rv"> · {{ revenge }}</span></template>
+          <template v-if="state === 'win'">✓ {{ score || 'Ganado' }}<span v-if="starsText" class="st">{{ starsText }}</span></template>
+          <template v-else>✕ {{ score || 'Perdido' }}<span v-if="revenge" class="rv"> · {{ revenge }}</span></template>
         </span>
       </template>
       <template v-else-if="state === 'locked'">
@@ -137,7 +136,7 @@ a:hover > .gposter, a:focus-visible > .gposter, .gposter:hover, .gposter.play { 
 .gposter.is-loss .gp-artw { filter: blur(3px) brightness(.45) grayscale(.85); }
 .gposter.is-win .gp-pa, .gposter.is-loss .gp-pa { background-blend-mode: normal; }
 .gposter .gp-stamp { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; align-content: center; gap: .25em; font-family: var(--font-bug); font-weight: 800; }
-.gposter .gp-stamp .mark { width: 42%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; border: 4px solid rgba(255, 255, 255, .9); animation: gp-stamp .5s cubic-bezier(.34, 1.56, .64, 1) both; }
+.gposter .gp-stamp .mark { width: 36%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; border: 3px solid rgba(255, 255, 255, .9); animation: gp-stamp .5s cubic-bezier(.34, 1.56, .64, 1) both; }
 .gposter .gp-stamp .mark svg { width: 62%; height: 62%; }
 .gposter.is-win .gp-stamp .mark { background: #22c55e; color: #fff; box-shadow: 0 8px 22px rgba(0, 0, 0, .45), 0 0 26px rgba(74, 222, 128, .55); }
 .gposter.is-loss .gp-stamp .mark { background: #dc2626; color: #fff; box-shadow: 0 8px 22px rgba(0, 0, 0, .45), 0 0 22px rgba(239, 68, 68, .45); }
